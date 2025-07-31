@@ -73,7 +73,7 @@ class Extension
 
     public function hasDependency(string $extensionKey): bool
     {
-        return isset($this->dependencies[$extensionKey]);
+        return array_key_exists($extensionKey, $this->dependencies);
     }
 
     public function addFile(string $filePath): void

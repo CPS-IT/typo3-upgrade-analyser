@@ -412,7 +412,11 @@ class PackagistClientTest extends TestCase
         ];
 
         foreach ($testCases as [$constraint, $targetVersionString, $expected]) {
-            // Arrange
+            // Arrange - create fresh mocks for each iteration
+            $response = $this->createMock(ResponseInterface::class);
+            $httpClient = $this->createMock(HttpClientInterface::class);
+            $client = new PackagistClient($httpClient, $this->logger);
+            
             $packageName = 'vendor/test-package';
             $targetVersion = new Version($targetVersionString);
             
@@ -428,12 +432,12 @@ class PackagistClientTest extends TestCase
                 ]
             ];
 
-            $this->response->method('getStatusCode')->willReturn(200);
-            $this->response->method('toArray')->willReturn($responseData);
-            $this->httpClient->method('request')->willReturn($this->response);
+            $response->method('getStatusCode')->willReturn(200);
+            $response->method('toArray')->willReturn($responseData);
+            $httpClient->method('request')->willReturn($response);
 
             // Act
-            $result = $this->client->hasVersionFor($packageName, $targetVersion);
+            $result = $client->hasVersionFor($packageName, $targetVersion);
 
             // Assert
             self::assertEquals($expected, $result, 

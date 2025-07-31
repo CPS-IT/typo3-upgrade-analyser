@@ -165,17 +165,19 @@ class PackagistClient
         // Simplified constraint checking - in real implementation, use Composer's constraint parser
         $majorVersion = $typo3Version->getMajor();
         
-        // Check for common patterns
-        if (str_contains($constraint, (string)$majorVersion)) {
-            return true;
-        }
-        
+        // Check for wildcard
         if (str_contains($constraint, '*')) {
             return true;
         }
 
-        // Parse constraint for version ranges (simplified)
+        // Parse constraint for caret version ranges (e.g., ^12.0)
         if (preg_match('/\^(\d+)\./', $constraint, $matches)) {
+            $constraintMajor = (int)$matches[1];
+            return $constraintMajor === $majorVersion;
+        }
+        
+        // Check for exact major version match (e.g., 12.0)
+        if (preg_match('/^(\d+)\./', $constraint, $matches)) {
             $constraintMajor = (int)$matches[1];
             return $constraintMajor === $majorVersion;
         }

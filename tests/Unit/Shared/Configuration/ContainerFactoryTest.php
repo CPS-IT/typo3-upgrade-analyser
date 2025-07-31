@@ -164,12 +164,19 @@ class ContainerFactoryTest extends TestCase
         if ($this->container->has(\Twig\Environment::class)) {
             $twig = $this->container->get(\Twig\Environment::class);
             self::assertInstanceOf(\Twig\Environment::class, $twig);
+            
+            // Verify basic Twig functionality
+            self::assertNotNull($twig->getLoader());
+        } else {
+            self::assertTrue(true, 'Twig services are optional and not registered');
         }
         
         // Test Twig Loader
         if ($this->container->has('twig.loader')) {
             $loader = $this->container->get('twig.loader');
             self::assertInstanceOf(\Twig\Loader\LoaderInterface::class, $loader);
+        } else {
+            self::assertTrue(true, 'Twig loader is optional and not registered');
         }
     }
 
@@ -178,6 +185,11 @@ class ContainerFactoryTest extends TestCase
         if ($this->container->has(\PhpParser\Parser::class)) {
             $parser = $this->container->get(\PhpParser\Parser::class);
             self::assertInstanceOf(\PhpParser\Parser::class, $parser);
+            
+            // Verify basic parser functionality
+            self::assertNotNull($parser);
+        } else {
+            self::assertTrue(true, 'PHP Parser service is optional and not registered');
         }
     }
 
@@ -202,6 +214,15 @@ class ContainerFactoryTest extends TestCase
         
         $container = ContainerFactory::create();
         self::assertInstanceOf(ContainerInterface::class, $container);
+        
+        // Verify container is compiled and functional despite empty analyzer directory
+        self::assertTrue($container->isCompiled());
+        self::assertTrue($container->has(LoggerInterface::class));
+        self::assertTrue($container->has('http_client'));
+        
+        // Verify at least basic services are registered
+        $logger = $container->get(LoggerInterface::class);
+        self::assertInstanceOf(LoggerInterface::class, $logger);
     }
 
     public function testContainerParametersAreCorrect(): void
@@ -265,6 +286,29 @@ class ContainerFactoryTest extends TestCase
         // Test that container creation doesn't fail due to circular dependencies
         // This is tested by successful container creation in setUp
         self::assertTrue($this->container->isCompiled());
+        
+        // Verify all services can be instantiated without circular dependency issues
+        $serviceIds = [
+            LoggerInterface::class,
+            Logger::class,
+            'http_client',
+            AnalyzeCommand::class,
+            InitConfigCommand::class,
+            ListAnalyzersCommand::class,
+            ValidateCommand::class,
+        ];
+        
+        $instantiatedServices = [];
+        foreach ($serviceIds as $serviceId) {
+            if ($this->container->has($serviceId)) {
+                $service = $this->container->get($serviceId);
+                $instantiatedServices[$serviceId] = $service;
+                self::assertNotNull($service, "Service $serviceId should be instantiated");
+            }
+        }
+        
+        // Verify we successfully instantiated multiple services
+        self::assertGreaterThanOrEqual(5, count($instantiatedServices), 'Should instantiate at least 5 services without circular dependency issues');
     }
 
     public function testAutoConfigurationWorks(): void

@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Installation Discovery System is a core component of the TYPO3 Upgrade Analyzer that automatically detects and analyzes TYPO3 installations from filesystem paths. It operates as a standalone service that can identify TYPO3 installations regardless of their setup mode (Classic vs Composer), extract metadata, and validate the installation integrity - all without requiring TYPO3 to be loaded or operational.
+The Installation Discovery System is a core component of the TYPO3 Upgrade Analyzer that automatically detects and analyzes TYPO3 installations from filesystem paths. It operates as a standalone service that can identify TYPO3 installations  (Composer setup mode only), extract metadata, and validate the installation integrity - all without requiring TYPO3 to be loaded or operational.
 
 ### Business Value
 - **Automated Detection**: Eliminates manual installation discovery and metadata gathering
@@ -21,8 +21,6 @@ The Installation Discovery System is a core component of the TYPO3 Upgrade Analy
 
 2. **Installation Mode Recognition**
    - **Composer Mode**: Modern TYPO3 installations via Composer
-   - **Classic Mode**: Traditional TYPO3 installations with manual file placement
-   - **Mixed Mode**: Hybrid installations with both approaches
 
 3. **Version Detection**
    - Extract TYPO3 version from multiple sources with fallback chain:
@@ -65,21 +63,6 @@ project-root/
         └── settings.php   # Main configuration
 ```
 
-#### Classic Installations
-```
-web-root/
-├── index.php              # TYPO3 frontend entry
-├── typo3/                 # TYPO3 core directory
-│   ├── index.php          # Backend entry point
-│   └── sysext/            # System extensions
-├── typo3conf/             # Configuration directory
-│   ├── LocalConfiguration.php
-│   ├── PackageStates.php
-│   └── ext/               # Local extensions
-├── typo3temp/             # Temporary files
-└── fileadmin/             # File storage
-```
-
 ## Implementation Strategy
 
 ### Service-Oriented Architecture
@@ -118,13 +101,13 @@ class Installation
     private InstallationMetadata $metadata;
     private bool $isValid;
     private array $validationErrors;
-    
+
     public function __construct(
         string $path,
         Version $version,
         InstallationMode $mode
     );
-    
+
     public function addExtension(Extension $extension): void;
     public function getExtensions(): array;
     public function getExtensionByKey(string $key): ?Extension;
@@ -132,11 +115,10 @@ class Installation
     public function getSystemExtensions(): array;
     public function getLocalExtensions(): array;
     public function getComposerExtensions(): array;
-    
+
     public function isComposerMode(): bool;
-    public function isClassicMode(): bool;
     public function isMixedMode(): bool;
-    
+
     public function markAsInvalid(string $error): void;
     public function isValid(): bool;
     public function getValidationErrors(): array;
@@ -155,13 +137,13 @@ class Extension
     private array $conflicts;
     private ExtensionMetadata $metadata;
     private bool $isActive;
-    
+
     public function getDependencies(): array;
     public function getConflicts(): array;
     public function getMetadata(): ExtensionMetadata;
     public function isActive(): bool;
     public function setActive(bool $active): void;
-    
+
     public function hasComposerManifest(): bool;
     public function hasEmconfFile(): bool;
     public function getFiles(): array;
@@ -176,15 +158,11 @@ class Extension
 enum InstallationMode: string
 {
     case COMPOSER = 'composer';
-    case CLASSIC = 'classic';
-    case MIXED = 'mixed';
 }
 
 // src/Domain/ValueObject/ExtensionType.php
 enum ExtensionType: string
 {
-    case SYSTEM = 'system';
-    case LOCAL = 'local';
     case COMPOSER = 'composer';
 }
 
@@ -228,11 +206,11 @@ class InstallationDiscoveryCoordinator
         private readonly InstallationValidator $validator,
         private readonly LoggerInterface $logger
     );
-    
+
     public function discover(string $path): ?Installation;
     public function discoverRecursive(string $basePath, int $maxDepth = 3): array;
     public function supportsPath(string $path): bool;
-    
+
     private function selectBestStrategy(string $path): ?DetectionStrategyInterface;
     private function validateDiscoveredInstallation(Installation $installation): void;
 }
@@ -255,24 +233,13 @@ class ComposerInstallationDetector implements DetectionStrategyInterface
         private readonly ExtensionScanner $extensionScanner,
         private readonly LoggerInterface $logger
     );
-    
+
     public function detect(string $path): ?Installation;
     public function supports(string $path): bool;
-    
+
     private function findWebRoot(string $projectPath): ?string;
     private function extractTypo3Version(array $composerData): ?Version;
     private function isTypo3Project(array $composerData): bool;
-}
-
-// src/Infrastructure/Discovery/ClassicInstallationDetector.php
-class ClassicInstallationDetector implements DetectionStrategyInterface
-{
-    public function detect(string $path): ?Installation;
-    public function supports(string $path): bool;
-    
-    private function extractVersionFromCore(string $corePath): ?Version;
-    private function parsePackageStates(string $packageStatesPath): array;
-    private function validateCoreStructure(string $path): bool;
 }
 ```
 
@@ -285,14 +252,14 @@ class ExtensionScanner
         private readonly array $metadataExtractors,
         private readonly LoggerInterface $logger
     );
-    
+
     public function scanInstallation(Installation $installation): array;
     public function scanPath(string $path, ExtensionType $type): array;
-    
+
     private function scanSystemExtensions(string $corePath): array;
     private function scanLocalExtensions(string $extensionPath): array;
     private function scanComposerExtensions(string $vendorPath): array;
-    
+
     private function createExtensionFromPath(string $path, ExtensionType $type): ?Extension;
 }
 
@@ -303,9 +270,9 @@ class ExtensionMetadataExtractor
         private readonly EmconfParser $emconfParser,
         private readonly ComposerJsonParser $composerJsonParser
     );
-    
+
     public function extract(string $extensionPath): ExtensionMetadata;
-    
+
     private function parseEmconfFile(string $emconfPath): array;
     private function parseComposerJson(string $composerPath): array;
     private function mergeMetadata(array $emconf, array $composer): ExtensionMetadata;
@@ -321,9 +288,9 @@ class VersionExtractor
         private readonly array $versionStrategies,
         private readonly LoggerInterface $logger
     );
-    
+
     public function extractVersion(string $installationPath): ?Version;
-    
+
     private function tryComposerLock(string $path): ?Version;
     private function tryComposerJson(string $path): ?Version;
     private function tryPackageStates(string $path): ?Version;
@@ -337,7 +304,7 @@ class ComposerVersionStrategy implements VersionStrategyInterface
     public function extractVersion(string $installationPath): ?Version;
     public function supports(string $installationPath): bool;
     public function getPriority(): int;
-    
+
     private function parseComposerLock(string $lockPath): ?Version;
     private function parseComposerJson(string $jsonPath): ?Version;
     private function resolveConstraintToVersion(string $constraint): ?Version;
@@ -353,9 +320,9 @@ class InstallationValidator
         private readonly array $validationRules,
         private readonly LoggerInterface $logger
     );
-    
+
     public function validate(Installation $installation): ValidationResult;
-    
+
     private function validateStructure(Installation $installation): array;
     private function validateExtensions(Installation $installation): array;
     private function validateConfiguration(Installation $installation): array;
@@ -374,7 +341,7 @@ interface ValidationRuleInterface
 class CoreFilesValidationRule implements ValidationRuleInterface
 {
     public function validate(Installation $installation): array;
-    
+
     private function getRequiredFiles(Version $version): array;
     private function validateFileExists(string $filePath): bool;
     private function validateFileIntegrity(string $filePath): bool;
@@ -393,11 +360,11 @@ class InstallationDiscoveryService
         private readonly InstallationRepository $repository,
         private readonly EventDispatcherInterface $eventDispatcher
     );
-    
+
     public function discoverFromPath(string $path): Installation;
     public function discoverMultiple(array $paths): array;
     public function rediscover(Installation $installation): Installation;
-    
+
     private function cacheDiscoveredInstallation(Installation $installation): void;
     private function dispatchDiscoveryEvents(Installation $installation): void;
 }
@@ -414,17 +381,17 @@ class ValidateCommand extends Command
         private readonly InstallationDiscoveryService $discoveryService,
         private readonly InstallationValidator $validator
     );
-    
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $path = $input->getArgument('path');
-        
+
         try {
             $installation = $this->discoveryService->discoverFromPath($path);
             $validationResult = $this->validator->validate($installation);
-            
+
             $this->displayValidationResults($output, $validationResult);
-            
+
             return $validationResult->isValid() ? 0 : 1;
         } catch (InstallationNotFoundException $e) {
             $output->writeln('<error>No TYPO3 installation found at: ' . $path . '</error>');
@@ -445,21 +412,21 @@ class DiscoverCommand extends Command
             ->addOption('max-depth', null, InputOption::VALUE_REQUIRED, 'Maximum search depth', 3)
             ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (table, json)', 'table');
     }
-    
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $path = $input->getArgument('path');
         $recursive = $input->getOption('recursive');
-        
+
         if ($recursive) {
             $installations = $this->discoveryService->discoverRecursive($path);
         } else {
             $installation = $this->discoveryService->discoverFromPath($path);
             $installations = $installation ? [$installation] : [];
         }
-        
+
         $this->displayInstallations($output, $installations, $input->getOption('format'));
-        
+
         return 0;
     }
 }
@@ -485,21 +452,21 @@ class ComposerInstallationDetectorTest extends TestCase
             'composer.lock' => $this->createComposerLock('12.4.10'),
             'public/index.php' => '<?php // TYPO3 entry point',
         ]);
-        
+
         // Act
         $installation = $this->detector->detect($testPath);
-        
+
         // Assert
         $this->assertInstanceOf(Installation::class, $installation);
         $this->assertEquals('12.4.10', $installation->getVersion()->toString());
         $this->assertEquals(InstallationMode::COMPOSER, $installation->getMode());
     }
-    
+
     public function testRejectsNonTypo3Project(): void
     {
         // Test that regular Composer projects without TYPO3 are not detected
     }
-    
+
     public function testHandlesMalformedComposerFiles(): void
     {
         // Test graceful handling of corrupted composer.json/lock files
@@ -513,7 +480,7 @@ class ExtensionScannerTest extends TestCase
     {
         // Test discovery of system, local, and composer extensions
     }
-    
+
     public function testParsesExtensionMetadata(): void
     {
         // Test extraction of metadata from ext_emconf.php and composer.json
@@ -530,9 +497,9 @@ class InstallationDiscoveryIntegrationTest extends TestCase
     {
         // Test complete workflow from path input to validated Installation entity
         $testInstallation = $this->createCompleteTestInstallation();
-        
+
         $installation = $this->discoveryService->discoverFromPath($testInstallation['path']);
-        
+
         $this->assertInstanceOf(Installation::class, $installation);
         $this->assertTrue($installation->isValid());
         $this->assertCount(3, $installation->getExtensions());
@@ -549,12 +516,7 @@ class InstallationFixtureBuilder
     {
         // Creates complete test installation with proper structure
     }
-    
-    public function createClassicInstallation(string $version = '12.4.0'): string
-    {
-        // Creates classic TYPO3 installation structure
-    }
-    
+
     public function addExtension(string $installationPath, array $extensionConfig): void
     {
         // Adds test extension with specified configuration

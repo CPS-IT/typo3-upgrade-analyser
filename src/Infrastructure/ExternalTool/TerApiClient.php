@@ -137,9 +137,36 @@ class TerApiClient
         $typo3Versions = $versionData['typo3_versions'];
         $majorVersion = $typo3Version->getMajor();
         
-        // Check if the extension supports the target TYPO3 major version
-        return in_array($majorVersion . '.0', $typo3Versions, true) ||
-               in_array($majorVersion . '.*', $typo3Versions, true) ||
-               in_array('*', $typo3Versions, true);
+        // Check for universal compatibility
+        if (in_array('*', $typo3Versions, true)) {
+            return true;
+        }
+        
+        // Check each supported version for compatibility
+        foreach ($typo3Versions as $supportedVersion) {
+            // Check for wildcard patterns like "12.*"
+            if (str_ends_with($supportedVersion, '.*')) {
+                $supportedMajor = (int)substr($supportedVersion, 0, -2);
+                if ($supportedMajor === $majorVersion) {
+                    return true;
+                }
+            }
+            // Check for exact major version match like "12.0"
+            elseif (preg_match('/^(\d+)\.0$/', $supportedVersion, $matches)) {
+                $supportedMajor = (int)$matches[1];
+                if ($supportedMajor === $majorVersion) {
+                    return true;
+                }
+            }
+            // Check for plain version number like "12" or "11"
+            elseif (preg_match('/^(\d+)$/', $supportedVersion, $matches)) {
+                $supportedMajor = (int)$matches[1];
+                if ($supportedMajor === $majorVersion) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 }

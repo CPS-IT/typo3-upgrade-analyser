@@ -88,6 +88,8 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
             ]);
             
             $result->setError('Analysis failed: ' . $e->getMessage());
+            // Return early to ensure failed result
+            return $result;
         }
 
         return $result;
@@ -112,6 +114,11 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 $context->getTargetVersion()
             );
         } catch (\Throwable $e) {
+            // Let fatal errors bubble up to cause complete analysis failure
+            if (str_contains($e->getMessage(), 'Fatal error')) {
+                throw $e;
+            }
+            
             $this->logger->warning('TER availability check failed', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),

@@ -46,15 +46,13 @@ class ContainerFactory
     
     private static function registerCoreServices(ContainerBuilder $container): void
     {
-        // Logger - use proper service definition instead of synthetic
-        $container->register(LoggerInterface::class, Logger::class)
+        // Logger - register single instance for both interfaces
+        $container->register(Logger::class)
             ->setArguments(['typo3-upgrade-analyzer'])
             ->addMethodCall('pushHandler', [new StreamHandler('php://stdout', Logger::INFO)])
             ->setPublic(true);
         
-        $container->register(Logger::class)
-            ->setArguments(['typo3-upgrade-analyzer'])
-            ->addMethodCall('pushHandler', [new StreamHandler('php://stdout', Logger::INFO)])
+        $container->setAlias(LoggerInterface::class, Logger::class)
             ->setPublic(true);
         
         // HTTP Client - register as a service definition  
