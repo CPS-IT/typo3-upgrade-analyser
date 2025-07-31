@@ -97,6 +97,11 @@ class GitVersionParser
             return false;
         }
         
+        // Exclude pre-release versions
+        if ($tag->isPreRelease()) {
+            return false;
+        }
+        
         // Extract major and minor versions
         $major = $tag->getMajorVersion();
         $minor = $tag->getMinorVersion();
@@ -112,20 +117,18 @@ class GitVersionParser
         // - Major version might correspond to TYPO3 major version
         // - Or extensions might use their own versioning scheme
         
-        // Strategy 1: Tag major version matches TYPO3 major version
+        // For Git tags, we use exact major version matching
+        // Tag major version must match TYPO3 major version
         if ($major === $targetMajor) {
+            // For extensions with TYPO3-style versioning, 
+            // we need at least the same minor version
+            if ($minor !== null && $targetMinor !== null) {
+                return $minor >= $targetMinor;
+            }
             return true;
         }
         
-        // Strategy 2: Tag major version is for TYPO3 LTS versions (e.g., 11, 12, 13)
-        // and is compatible with target
-        if ($major >= $targetMajor - 1 && $major <= $targetMajor + 1) {
-            return true;
-        }
-        
-        // Strategy 3: Extension uses its own versioning - we'll need composer.json to determine
-        // For now, we'll be permissive for semantic versions
-        return !$tag->isPreRelease();
+        return false;
     }
 
     /**

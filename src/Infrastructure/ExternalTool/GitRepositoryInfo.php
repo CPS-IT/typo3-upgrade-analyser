@@ -27,7 +27,8 @@ class GitRepositoryInfo
         private readonly array $allTags,
         private readonly array $compatibleVersions,
         private readonly float $healthScore,
-        private readonly ?array $composerJson = null
+        private readonly ?array $composerJson = null,
+        private readonly ?GitRepositoryHealth $health = null
     ) {
     }
 
@@ -95,5 +96,10 @@ class GitRepositoryInfo
     public function isWellMaintained(): bool
     {
         return $this->healthScore > 0.8;
+    }
+
+    public function getHealth(): ?GitRepositoryHealth
+    {
+        return $this->health;
     }
 }

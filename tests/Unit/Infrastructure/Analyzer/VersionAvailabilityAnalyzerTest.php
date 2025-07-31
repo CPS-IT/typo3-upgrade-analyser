@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
@@ -46,6 +47,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->analyzer = new VersionAvailabilityAnalyzer(
             $this->terClient,
             $this->packagistClient,
+            null, // GitRepositoryAnalyzer is optional
             $this->logger
         );
 
@@ -124,7 +126,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('packagist_available'));
         
         // Low risk score for extensions available in both repositories
-        self::assertEquals(2.0, $result->getRiskScore());
+        self::assertEquals(1.5, $result->getRiskScore());
         self::assertEquals('low', $result->getRiskLevel());
     }
 
@@ -148,7 +150,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // Assert
         self::assertTrue($result->getMetric('ter_available'));
         self::assertFalse($result->getMetric('packagist_available'));
-        self::assertEquals(4.0, $result->getRiskScore());
+        self::assertEquals(2.5, $result->getRiskScore());
         self::assertEquals('medium', $result->getRiskLevel());
     }
 
@@ -172,7 +174,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // Assert
         self::assertFalse($result->getMetric('ter_available'));
         self::assertTrue($result->getMetric('packagist_available'));
-        self::assertEquals(4.0, $result->getRiskScore());
+        self::assertEquals(5.0, $result->getRiskScore());
         
         // Should have recommendation about Composer mode
         $recommendations = $result->getRecommendations();
@@ -200,13 +202,13 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // Assert
         self::assertFalse($result->getMetric('ter_available'));
         self::assertFalse($result->getMetric('packagist_available'));
-        self::assertEquals(8.0, $result->getRiskScore());
-        self::assertEquals('high', $result->getRiskLevel());
+        self::assertEquals(9.0, $result->getRiskScore());
+        self::assertEquals('critical', $result->getRiskLevel());
         
         // Should have recommendation about contacting author
         $recommendations = $result->getRecommendations();
         self::assertNotEmpty($recommendations);
-        self::assertStringContainsString('contacting extension author', $recommendations[0]);
+        self::assertStringContainsString('contacting author', $recommendations[0]);
     }
 
     public function testAnalyzeWithSystemExtension(): void

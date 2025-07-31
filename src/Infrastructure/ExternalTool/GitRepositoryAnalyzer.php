@@ -57,7 +57,8 @@ class GitRepositoryAnalyzer
             $compatibleVersions = $this->versionParser->findCompatibleVersions($tags, $targetVersion);
             
             // Get repository health metrics
-            $healthScore = $this->calculateRepositoryHealth($provider, $repositoryUrl);
+            $health = $provider->getRepositoryHealth($repositoryUrl);
+            $healthScore = $health->calculateHealthScore();
             
             // Try to get composer.json for additional compatibility info
             $composerJson = null;
@@ -76,7 +77,8 @@ class GitRepositoryAnalyzer
                 $tags,
                 $compatibleVersions,
                 $healthScore,
-                $composerJson
+                $composerJson,
+                $health
             );
 
         } catch (\Throwable $e) {
@@ -88,7 +90,6 @@ class GitRepositoryAnalyzer
             
             throw new GitAnalysisException(
                 'Failed to analyze Git repository: ' . $e->getMessage(),
-                0,
                 $e
             );
         }
@@ -100,9 +101,18 @@ class GitRepositoryAnalyzer
     private function extractRepositoryUrl(Extension $extension): ?string
     {
         // Check if extension has direct Git repository information
-        if (method_exists($extension, 'getRepositoryUrl')) {
+        if ($extension->hasRepositoryUrl()) {
             $url = $extension->getRepositoryUrl();
             if ($url && $this->isGitRepository($url)) {
+                return $url;
+            }
+        }
+
+        // Check em_conf configuration for repository URL
+        $emConfiguration = $extension->getEmConfiguration();
+        if (!empty($emConfiguration['git_repository_url'])) {
+            $url = $emConfiguration['git_repository_url'];
+            if ($this->isGitRepository($url)) {
                 return $url;
             }
         }

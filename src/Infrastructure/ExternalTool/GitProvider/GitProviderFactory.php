@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,7 +37,7 @@ class GitProviderFactory
         $availableProviders = array_filter($this->providers, fn($provider) => $provider->isAvailable());
         
         if (empty($availableProviders)) {
-            throw new GitProviderException('No Git providers are available');
+            throw new GitAnalysisException(sprintf('No suitable Git provider found for repository: %s', $repositoryUrl));
         }
 
         // Sort by priority (highest first)
@@ -54,8 +55,8 @@ class GitProviderFactory
             }
         }
 
-        throw new GitProviderException(
-            sprintf('No Git provider found that supports repository URL: %s', $repositoryUrl)
+        throw new GitAnalysisException(
+            sprintf('No suitable Git provider found for repository: %s', $repositoryUrl)
         );
     }
 

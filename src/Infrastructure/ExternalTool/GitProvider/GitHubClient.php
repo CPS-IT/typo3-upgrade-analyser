@@ -292,12 +292,13 @@ class GitHubClient extends AbstractGitProvider
         
         if (isset($data['errors'])) {
             throw new GitProviderException(
-                'GitHub GraphQL errors: ' . json_encode($data['errors'])
+                'GitHub GraphQL errors: ' . json_encode($data['errors']),
+                'github'
             );
         }
 
         if (!isset($data['data'])) {
-            throw new GitProviderException('Invalid GraphQL response from GitHub');
+            throw new GitProviderException('Invalid GraphQL response from GitHub', 'github');
         }
 
         return $data;

@@ -109,4 +109,86 @@ class GitRepositoryHealth
     {
         return $this->hasReadme && $this->hasLicense;
     }
+
+    public function calculateHealthScore(): float
+    {
+        $score = 0.0;
+        $maxScore = 0.0;
+        
+        // Activity score (30% weight)
+        $maxScore += 0.3;
+        if ($this->lastCommitDate) {
+            $daysSinceCommit = $this->getDaysSinceLastCommit();
+            if ($daysSinceCommit <= 30) {
+                $score += 0.3;
+            } elseif ($daysSinceCommit <= 90) {
+                $score += 0.2;
+            } elseif ($daysSinceCommit <= 365) {
+                $score += 0.1;
+            }
+        }
+        
+        // Popularity score (20% weight)
+        $maxScore += 0.2;
+        if ($this->starCount >= 100) {
+            $score += 0.2;
+        } elseif ($this->starCount >= 50) {
+            $score += 0.15;
+        } elseif ($this->starCount >= 10) {
+            $score += 0.1;
+        } elseif ($this->starCount >= 1) {
+            $score += 0.05;
+        }
+        
+        // Issue management score (20% weight)
+        $maxScore += 0.2;
+        if ($this->hasGoodIssueManagement()) {
+            $score += 0.2;
+        } elseif ($this->getIssueResolutionRate() >= 0.5) {
+            $score += 0.1;
+        }
+        
+        // Documentation score (15% weight)
+        $maxScore += 0.15;
+        if ($this->hasGoodDocumentation()) {
+            $score += 0.15;
+        } elseif ($this->hasReadme || $this->hasLicense) {
+            $score += 0.075;
+        }
+        
+        // Community score (10% weight)
+        $maxScore += 0.1;
+        if ($this->contributorCount >= 10) {
+            $score += 0.1;
+        } elseif ($this->contributorCount >= 5) {
+            $score += 0.075;
+        } elseif ($this->contributorCount >= 2) {
+            $score += 0.05;
+        } elseif ($this->contributorCount >= 1) {
+            $score += 0.025;
+        }
+        
+        // Archive penalty (5% weight)
+        $maxScore += 0.05;
+        if (!$this->isArchived) {
+            $score += 0.05;
+        }
+        
+        return $score;
+    }
+
+    public function getTotalIssuesCount(): int
+    {
+        return $this->openIssuesCount + $this->closedIssuesCount;
+    }
+
+    public function getIssueResolutionRate(): float
+    {
+        $totalIssues = $this->getTotalIssuesCount();
+        if ($totalIssues === 0) {
+            return 1.0; // Perfect score when no issues
+        }
+        
+        return $this->closedIssuesCount / $totalIssues;
+    }
 }

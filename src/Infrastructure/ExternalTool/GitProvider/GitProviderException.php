@@ -19,4 +19,16 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
  */
 class GitProviderException extends ExternalToolException
 {
+    public function __construct(
+        string $message,
+        private readonly string $providerName,
+        ?\Throwable $previous = null
+    ) {
+        parent::__construct($message, 'git-provider-' . $providerName, $previous);
+    }
+
+    public function getProviderName(): string
+    {
+        return $this->providerName;
+    }
 }

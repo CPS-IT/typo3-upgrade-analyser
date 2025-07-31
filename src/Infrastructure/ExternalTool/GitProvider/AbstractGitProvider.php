@@ -58,7 +58,7 @@ abstract class AbstractGitProvider implements GitProviderInterface
             ];
         }
         
-        throw new GitProviderException("Unable to parse repository URL: {$repositoryUrl}");
+        throw new GitProviderException("Unable to parse repository URL: {$repositoryUrl}", $this->getName());
     }
 
     /**
@@ -81,7 +81,8 @@ abstract class AbstractGitProvider implements GitProviderInterface
                         'Git provider request failed with status %d: %s',
                         $response->getStatusCode(),
                         $response->getContent(false)
-                    )
+                    ),
+                    $this->getName()
                 );
             }
             
@@ -97,7 +98,7 @@ abstract class AbstractGitProvider implements GitProviderInterface
             
             throw new GitProviderException(
                 sprintf('Git provider request failed: %s', $e->getMessage()),
-                0,
+                $this->getName(),
                 $e
             );
         }

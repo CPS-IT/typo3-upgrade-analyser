@@ -17,4 +17,10 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
  */
 class GitAnalysisException extends ExternalToolException
 {
+    public function __construct(
+        string $message,
+        ?\Throwable $previous = null
+    ) {
+        parent::__construct($message, 'git', $previous);
+    }
 }
