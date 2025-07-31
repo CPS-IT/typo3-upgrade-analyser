@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 Upgrade Analyzer.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ */
+
+// Check if we're running from vendor/bin or directly
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+    __DIR__ . '/../../../../vendor/autoload.php',
+];
+
+$autoloadFile = null;
+foreach ($autoloadPaths as $path) {
+    if (file_exists($path)) {
+        $autoloadFile = $path;
+        break;
+    }
+}
+
+if ($autoloadFile === null) {
+    echo 'Unable to find Composer autoloader. Please run "composer install".' . PHP_EOL;
+    exit(1);
+}
+
+require $autoloadFile;
+
+use CPSIT\UpgradeAnalyzer\Application\AnalyzerApplication;
+
+$application = new AnalyzerApplication();
+$application->run();

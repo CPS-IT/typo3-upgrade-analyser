@@ -1,0 +1,15 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    tmpDir: var/phpstan
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    ignoreErrors:
+        # Allow mixed types in configuration arrays
+        - '#Parameter \#1 \$config of method .* expects array<string, mixed>, array given#'
+        # Allow dynamic property access in some cases
+        - '#Cannot access property \$\w+ on mixed#'
+    bootstrapFiles:
+        - vendor/autoload.php

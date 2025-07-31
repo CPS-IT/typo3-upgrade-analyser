@@ -1,0 +1,61 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Build artifacts
+/build/
+/dist/
+
+# Runtime files
+/var/
+/tmp/
+
+# Cache directories
+/.phpunit.cache/
+/var/cache/
+/var/log/
+/var/phpstan/
+/var/coverage/
+
+# IDE files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Configuration overrides
+/config/local.yaml
+/typo3-analyzer.yaml
+
+# Test output
+/tests/output/
+/tests/fixtures/temp/
+
+# Composer
+composer.phar
+/auth.json
+
+# PHPUnit
+/.phpunit.result.cache
+
+# Coverage reports
+/coverage/
+/clover.xml
+/junit.xml
+.claude/prompts/
+.claude/settings.local.json

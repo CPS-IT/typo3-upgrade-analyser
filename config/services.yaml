@@ -1,0 +1,67 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # Commands
+  CPSIT\UpgradeAnalyzer\Application\Command\:
+    resource: '../src/Application/Command/*'
+    public: true
+
+  # Services
+  CPSIT\UpgradeAnalyzer\Application\Service\:
+    resource: '../src/Application/Service/*'
+
+  CPSIT\UpgradeAnalyzer\Domain\Service\:
+    resource: '../src/Domain/Service/*'
+
+  # Infrastructure services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
+    resource: '../src/Infrastructure/Discovery/*'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\:
+    resource: '../src/Infrastructure/Parser/*'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\:
+    resource: '../src/Infrastructure/Analyzer/*'
+    tags: ['analyzer']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\:
+    resource: '../src/Infrastructure/ExternalTool/*'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Database\:
+    resource: '../src/Infrastructure/Database/*'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\FileSystem\:
+    resource: '../src/Infrastructure/FileSystem/*'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Report\:
+    resource: '../src/Infrastructure/Report/*'
+
+  # Shared services
+  CPSIT\UpgradeAnalyzer\Shared\Configuration\:
+    resource: '../src/Shared/Configuration/*'
+
+  CPSIT\UpgradeAnalyzer\Shared\Logger\:
+    resource: '../src/Shared/Logger/*'
+
+  # Twig
+  Twig\Environment:
+    arguments:
+      $loader: '@twig.loader'
+      $options:
+        cache: '%app.root_dir%/var/cache/twig'
+        debug: false
+
+  twig.loader:
+    class: Twig\Loader\FilesystemLoader
+    arguments:
+      - '%app.resources_dir%/templates'
+
+  # PHP Parser
+  PhpParser\Parser:
+    class: PhpParser\Parser\Php7
+    factory: ['PhpParser\ParserFactory', 'create']
+    arguments:
+      - 4  # PhpParser\ParserFactory::PREFER_PHP7
