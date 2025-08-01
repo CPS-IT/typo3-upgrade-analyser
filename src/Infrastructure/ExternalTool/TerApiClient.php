@@ -21,12 +21,20 @@ use Psr\Log\LoggerInterface;
  */
 class TerApiClient
 {
-    private const API_BASE_URL = 'https://extensions.typo3.org/api/v1';
+    private readonly TerApiHttpClient $httpClient;
+    private readonly TerApiResponseParser $responseParser;
+    private readonly VersionCompatibilityChecker $compatibilityChecker;
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger
     ) {
+        // Load TER token from environment
+        $terToken = $_ENV['TER_TOKEN'] ?? getenv('TER_TOKEN') ?: null;
+        
+        $this->httpClient = new TerApiHttpClient($httpClient, $logger, $terToken);
+        $this->responseParser = new TerApiResponseParser();
+        $this->compatibilityChecker = new VersionCompatibilityChecker();
     }
 
     /**
@@ -35,25 +43,30 @@ class TerApiClient
     public function hasVersionFor(string $extensionKey, Version $typo3Version): bool
     {
         try {
-            $response = $this->httpClient->request('GET', self::API_BASE_URL . '/extension/' . $extensionKey);
+            $extensionWithVersions = $this->getExtensionWithVersions($extensionKey);
             
-            if ($response->getStatusCode() !== 200) {
+            if ($extensionWithVersions['versions'] === null) {
                 return false;
             }
-
-            $data = $response->toArray();
             
-            return $this->checkVersionCompatibility($data, $typo3Version);
+            $versions = $this->responseParser->parseVersionsData($extensionWithVersions['versions']);
+            if ($versions === null) {
+                return false;
+            }
             
+            return $this->compatibilityChecker->hasCompatibleVersion($versions, $typo3Version);
+            
+        } catch (TerExtensionNotFoundException $e) {
+            // Extension doesn't exist - return false gracefully
+            return false;
         } catch (\Throwable $e) {
             $this->logger->error('TER API request failed', [
                 'extension_key' => $extensionKey,
                 'error' => $e->getMessage(),
             ]);
             
-            throw new ExternalToolException(
+            throw new TerApiException(
                 sprintf('Failed to check TER for extension "%s": %s', $extensionKey, $e->getMessage()),
-                'ter_api',
                 $e
             );
         }
@@ -65,108 +78,47 @@ class TerApiClient
     public function getLatestVersion(string $extensionKey, Version $typo3Version): ?string
     {
         try {
-            $response = $this->httpClient->request('GET', self::API_BASE_URL . '/extension/' . $extensionKey);
+            $extensionWithVersions = $this->getExtensionWithVersions($extensionKey);
             
-            if ($response->getStatusCode() !== 200) {
+            if ($extensionWithVersions['versions'] === null) {
                 return null;
             }
-
-            $data = $response->toArray();
             
-            return $this->findLatestCompatibleVersion($data, $typo3Version);
+            $versions = $this->responseParser->parseVersionsData($extensionWithVersions['versions']);
+            if ($versions === null) {
+                return null;
+            }
             
+            return $this->compatibilityChecker->getLatestCompatibleVersion($versions, $typo3Version);
+            
+        } catch (TerExtensionNotFoundException $e) {
+            // Extension doesn't exist - return null gracefully
+            return null;
         } catch (\Throwable $e) {
             $this->logger->error('TER API request failed', [
                 'extension_key' => $extensionKey,
                 'error' => $e->getMessage(),
             ]);
             
-            throw new ExternalToolException(
+            throw new TerApiException(
                 sprintf('Failed to get latest version from TER for extension "%s": %s', $extensionKey, $e->getMessage()),
-                'ter_api',
                 $e
             );
         }
     }
-
-    private function checkVersionCompatibility(array $extensionData, Version $typo3Version): bool
+    
+    /**
+     * Get extension and versions data in a single operation
+     * This reduces the N+1 API calls problem
+     */
+    private function getExtensionWithVersions(string $extensionKey): array
     {
-        if (!isset($extensionData['versions']) || !is_array($extensionData['versions'])) {
-            return false;
-        }
-
-        foreach ($extensionData['versions'] as $versionData) {
-            if ($this->isVersionCompatible($versionData, $typo3Version)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function findLatestCompatibleVersion(array $extensionData, Version $typo3Version): ?string
-    {
-        if (!isset($extensionData['versions']) || !is_array($extensionData['versions'])) {
-            return null;
-        }
-
-        $compatibleVersions = [];
+        $data = $this->httpClient->getExtensionWithVersions($extensionKey);
         
-        foreach ($extensionData['versions'] as $versionData) {
-            if ($this->isVersionCompatible($versionData, $typo3Version)) {
-                $compatibleVersions[] = $versionData['version'];
-            }
-        }
-
-        if (empty($compatibleVersions)) {
-            return null;
-        }
-
-        // Sort versions and return the latest
-        usort($compatibleVersions, 'version_compare');
-        
-        return end($compatibleVersions);
-    }
-
-    private function isVersionCompatible(array $versionData, Version $typo3Version): bool
-    {
-        if (!isset($versionData['typo3_versions'])) {
-            return false;
-        }
-
-        $typo3Versions = $versionData['typo3_versions'];
-        $majorVersion = $typo3Version->getMajor();
-        
-        // Check for universal compatibility
-        if (in_array('*', $typo3Versions, true)) {
-            return true;
+        if ($data['extension'] === null) {
+            throw new TerExtensionNotFoundException($extensionKey);
         }
         
-        // Check each supported version for compatibility
-        foreach ($typo3Versions as $supportedVersion) {
-            // Check for wildcard patterns like "12.*"
-            if (str_ends_with($supportedVersion, '.*')) {
-                $supportedMajor = (int)substr($supportedVersion, 0, -2);
-                if ($supportedMajor === $majorVersion) {
-                    return true;
-                }
-            }
-            // Check for exact major version match like "12.0"
-            elseif (preg_match('/^(\d+)\.0$/', $supportedVersion, $matches)) {
-                $supportedMajor = (int)$matches[1];
-                if ($supportedMajor === $majorVersion) {
-                    return true;
-                }
-            }
-            // Check for plain version number like "12" or "11"
-            elseif (preg_match('/^(\d+)$/', $supportedVersion, $matches)) {
-                $supportedMajor = (int)$matches[1];
-                if ($supportedMajor === $majorVersion) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
+        return $data;
     }
 }
