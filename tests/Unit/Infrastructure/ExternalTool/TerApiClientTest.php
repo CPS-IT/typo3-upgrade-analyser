@@ -18,11 +18,11 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Test case for the TerApiClient
+ * Test case for the refactored TerApiClient
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
  */
@@ -31,313 +31,268 @@ class TerApiClientTest extends TestCase
     private TerApiClient $client;
     private MockObject&HttpClientInterface $httpClient;
     private MockObject&LoggerInterface $logger;
-    private MockObject&ResponseInterface $response;
 
     protected function setUp(): void
     {
         $this->httpClient = $this->createMock(HttpClientInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->response = $this->createMock(ResponseInterface::class);
         
         $this->client = new TerApiClient($this->httpClient, $this->logger);
     }
 
     public function testHasVersionForWithCompatibleVersion(): void
     {
-        // Arrange
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
         
-        $responseData = [
-            'versions' => [
+        $extensionData = [['key' => 'news', 'name' => 'News']];
+        $versionsData = [
+            [
                 [
-                    'version' => '8.7.0',
-                    'typo3_versions' => ['12.0', '12.*']
-                ],
-                [
-                    'version' => '8.6.0',
-                    'typo3_versions' => ['11.0', '11.*']
+                    'number' => '8.7.0',
+                    'typo3_versions' => [11, 12]
                 ]
             ]
         ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
-        $this->response->expects(self::once())
-            ->method('getStatusCode')
-            ->willReturn(200);
-            
-        $this->response->expects(self::once())
-            ->method('toArray')
-            ->willReturn($responseData);
-
-        $this->httpClient->expects(self::once())
-            ->method('request')
-            ->with('GET', 'https://extensions.typo3.org/api/v1/extension/news')
-            ->willReturn($this->response);
-
-        // Act
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
 
-        // Assert
         self::assertTrue($result);
     }
 
     public function testHasVersionForWithIncompatibleVersion(): void
     {
-        // Arrange
         $extensionKey = 'news';
         $typo3Version = new Version('13.0.0');
         
-        $responseData = [
-            'versions' => [
+        $extensionData = [['key' => 'news', 'name' => 'News']];
+        $versionsData = [
+            [
                 [
-                    'version' => '8.7.0',
-                    'typo3_versions' => ['12.0', '12.*']
-                ],
-                [
-                    'version' => '8.6.0',
-                    'typo3_versions' => ['11.0', '11.*']
+                    'number' => '8.7.0',
+                    'typo3_versions' => [11, 12]
                 ]
             ]
         ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
 
-        // Assert
         self::assertFalse($result);
     }
 
-    public function testHasVersionForWithWildcardSupport(): void
+    public function testHasVersionForWithNonExistentExtension(): void
     {
-        // Arrange
-        $extensionKey = 'universal_ext';
-        $typo3Version = new Version('12.4.0');
-        
-        $responseData = [
-            'versions' => [
-                [
-                    'version' => '1.0.0',
-                    'typo3_versions' => ['*']
-                ]
-            ]
-        ];
-
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
-        $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
-
-        // Assert
-        self::assertTrue($result);
-    }
-
-    public function testHasVersionForWith404Response(): void
-    {
-        // Arrange
         $extensionKey = 'non_existent';
         $typo3Version = new Version('12.4.0');
+        
+        $this->mockExtensionNotFound($extensionKey);
 
-        $this->response->method('getStatusCode')->willReturn(404);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
 
-        // Assert
         self::assertFalse($result);
     }
 
-    public function testHasVersionForWithNetworkError(): void
+    public function testHasVersionForWithApiException(): void
     {
-        // Arrange
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
         
-        $this->httpClient->expects(self::once())
+        $this->httpClient
+            ->expects(self::once())
             ->method('request')
             ->willThrowException(new \RuntimeException('Network error'));
 
-        $this->logger->expects(self::once())
+        $this->logger
+            ->expects(self::once())
             ->method('error')
             ->with('TER API request failed', self::isType('array'));
 
-        // Assert
-        $this->expectException(ExternalToolException::class);
+        $this->expectException(TerApiException::class);
         $this->expectExceptionMessage('Failed to check TER for extension "news"');
 
-        // Act
         $this->client->hasVersionFor($extensionKey, $typo3Version);
     }
 
     public function testGetLatestVersionWithMultipleVersions(): void
     {
-        // Arrange
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
         
-        $responseData = [
-            'versions' => [
+        $extensionData = [['key' => 'news', 'name' => 'News']];
+        $versionsData = [
+            [
                 [
-                    'version' => '8.5.0',
-                    'typo3_versions' => ['12.0', '12.*']
+                    'number' => '8.5.0',
+                    'typo3_versions' => [12]
                 ],
                 [
-                    'version' => '8.7.0',
-                    'typo3_versions' => ['12.0', '12.*']
+                    'number' => '8.7.0',
+                    'typo3_versions' => [12]
                 ],
                 [
-                    'version' => '8.6.0',
-                    'typo3_versions' => ['12.0', '12.*']
+                    'number' => '8.6.0',
+                    'typo3_versions' => [12]
                 ]
             ]
         ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
 
-        // Assert
-        self::assertEquals('8.7.0', $result);
+        self::assertSame('8.7.0', $result);
     }
 
     public function testGetLatestVersionWithNoCompatibleVersions(): void
     {
-        // Arrange
         $extensionKey = 'news';
-        $typo3Version = new Version('13.0.0');
+        $typo3Version = new Version('14.0.0');
         
-        $responseData = [
-            'versions' => [
+        $extensionData = [['key' => 'news', 'name' => 'News']];
+        $versionsData = [
+            [
                 [
-                    'version' => '8.7.0',
-                    'typo3_versions' => ['12.0', '12.*']
+                    'number' => '8.7.0',
+                    'typo3_versions' => [11, 12]
                 ]
             ]
         ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
 
-        // Assert
         self::assertNull($result);
     }
 
-    public function testGetLatestVersionWithEmptyVersionsArray(): void
+    public function testGetLatestVersionWithNonExistentExtension(): void
     {
-        // Arrange
-        $extensionKey = 'empty_ext';
+        $extensionKey = 'non_existent';
         $typo3Version = new Version('12.4.0');
         
-        $responseData = [
-            'versions' => []
-        ];
+        $this->mockExtensionNotFound($extensionKey);
 
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
 
-        // Assert
         self::assertNull($result);
     }
 
-    public function testGetLatestVersionWithMalformedResponse(): void
+    public function testGetLatestVersionWithVersionsApiFailure(): void
     {
-        // Arrange
-        $extensionKey = 'malformed_ext';
-        $typo3Version = new Version('12.4.0');
-        
-        $responseData = [
-            'invalid' => 'structure'
-        ];
-
-        $this->response->method('getStatusCode')->willReturn(200);
-        $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
-
-        // Act
-        $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
-
-        // Assert
-        self::assertNull($result);
-    }
-
-    public function testVersionCompatibilityWithDifferentPatterns(): void
-    {
-        $testCases = [
-            // [typo3_versions_array, target_version, expected_result]
-            [['12.0'], '12.4.0', true],
-            [['12.*'], '12.4.0', true],
-            [['*'], '12.4.0', true],
-            [['11.0'], '12.4.0', false],
-            [['11.*'], '12.4.0', false],
-            [['12.0', '13.0'], '12.4.0', true],
-            [['13.0'], '12.4.0', false],
-        ];
-
-        foreach ($testCases as [$typo3Versions, $targetVersionString, $expected]) {
-            // Arrange - create fresh mocks for each iteration
-            $response = $this->createMock(ResponseInterface::class);
-            $httpClient = $this->createMock(HttpClientInterface::class);
-            $client = new TerApiClient($httpClient, $this->logger);
-            
-            $extensionKey = 'test_ext';
-            $targetVersion = new Version($targetVersionString);
-            
-            $responseData = [
-                'versions' => [
-                    [
-                        'version' => '1.0.0',
-                        'typo3_versions' => $typo3Versions
-                    ]
-                ]
-            ];
-
-            $response->method('getStatusCode')->willReturn(200);
-            $response->method('toArray')->willReturn($responseData);
-            $httpClient->method('request')->willReturn($response);
-
-            // Act
-            $result = $client->hasVersionFor($extensionKey, $targetVersion);
-
-            // Assert
-            self::assertEquals($expected, $result, 
-                sprintf('Failed for TYPO3 versions %s with target %s', 
-                    implode(',', $typo3Versions), $targetVersionString));
-        }
-    }
-
-    public function testExceptionContainsCorrectToolName(): void
-    {
-        // Arrange
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
         
-        $this->httpClient->method('request')
-            ->willThrowException(new \RuntimeException('Network error'));
+        $extensionData = [['key' => 'news', 'name' => 'News']];
+        
+        $this->mockApiCallsWithVersionsFailure($extensionKey, $extensionData);
 
-        try {
-            // Act
-            $this->client->hasVersionFor($extensionKey, $typo3Version);
-            self::fail('Expected ExternalToolException was not thrown');
-        } catch (ExternalToolException $e) {
-            // Assert
-            self::assertEquals('ter_api', $e->getToolName());
-        }
+        $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
+
+        self::assertNull($result);
+    }
+
+    public function testHasVersionForWithUniversalCompatibility(): void
+    {
+        $extensionKey = 'universal_ext';
+        $typo3Version = new Version('12.4.0');
+        
+        $extensionData = [['key' => 'universal_ext', 'name' => 'Universal Extension']];
+        $versionsData = [
+            [
+                [
+                    'number' => '1.0.0',
+                    'typo3_versions' => ['*']
+                ]
+            ]
+        ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
+
+        $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
+
+        self::assertTrue($result);
+    }
+
+    public function testVersionCompatibilityWithMixedVersionTypes(): void
+    {
+        $extensionKey = 'mixed_ext';
+        $typo3Version = new Version('12.4.0');
+        
+        $extensionData = [['key' => 'mixed_ext', 'name' => 'Mixed Extension']];
+        $versionsData = [
+            [
+                [
+                    'number' => '1.0.0',
+                    'typo3_versions' => [11, '12.*', '13.0']
+                ]
+            ]
+        ];
+        
+        $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
+
+        $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
+
+        self::assertTrue($result);
+    }
+
+    private function mockSuccessfulApiCalls(string $extensionKey, array $extensionData, array $versionsData): void
+    {
+        $extensionResponse = $this->createMock(ResponseInterface::class);
+        $versionsResponse = $this->createMock(ResponseInterface::class);
+        
+        $extensionResponse->method('getStatusCode')->willReturn(200);
+        $extensionResponse->method('toArray')->willReturn($extensionData);
+        
+        $versionsResponse->method('getStatusCode')->willReturn(200);
+        $versionsResponse->method('toArray')->willReturn($versionsData);
+
+        $this->httpClient
+            ->expects(self::exactly(2))
+            ->method('request')
+            ->willReturnCallback(
+                fn(string $method, string $url) => match($url) {
+                    "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
+                    "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
+                    default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
+                }
+            );
+    }
+
+    private function mockExtensionNotFound(string $extensionKey): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(400);
+
+        $this->httpClient
+            ->expects(self::once())
+            ->method('request')
+            ->with('GET', "https://extensions.typo3.org/api/v1/extension/{$extensionKey}")
+            ->willReturn($response);
+    }
+
+    private function mockApiCallsWithVersionsFailure(string $extensionKey, array $extensionData): void
+    {
+        $extensionResponse = $this->createMock(ResponseInterface::class);
+        $versionsResponse = $this->createMock(ResponseInterface::class);
+        
+        $extensionResponse->method('getStatusCode')->willReturn(200);
+        $extensionResponse->method('toArray')->willReturn($extensionData);
+        
+        $versionsResponse->method('getStatusCode')->willReturn(500);
+
+        $this->httpClient
+            ->expects(self::exactly(2))
+            ->method('request')
+            ->willReturnCallback(
+                fn(string $method, string $url) => match($url) {
+                    "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
+                    "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
+                    default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
+                }
+            );
     }
 }
