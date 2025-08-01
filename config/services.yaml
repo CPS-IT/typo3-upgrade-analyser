@@ -17,6 +17,7 @@ services:
 
   # Override VersionAvailabilityAnalyzer to include GitRepositoryAnalyzer
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
+    public: true
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
