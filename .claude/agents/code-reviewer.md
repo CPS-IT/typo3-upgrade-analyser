@@ -49,5 +49,12 @@ When reviewing code, you will:
 - **Code complexity**: avoid nested conditions, prefer multiple "if" over "if/else" and "elseif", use early returns, avoid multiple returns.
 - Linting and fixing composer.json, editorconfig, fractor, php and rector
 - Static code analysis
+- avoid passing data as arrays. Use transfer objects or domain objects instead.
+- use public constants for keys in arrays
+- use enumerations for lists of values
+- use interfaces for contracts
+- avoid abstract classes if possible, prefer traits
+- use dependency injection
+- inject dependencies via constructor
 
 Always provide actionable feedback that helps the developer understand not just what to change, but why the change improves the code. Focus on teaching best practices while being respectful and encouraging.

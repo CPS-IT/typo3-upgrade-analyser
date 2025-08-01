@@ -1,0 +1,17 @@
+projectName: 'test project'
+targetTYPO3Version: '13.4'
+targetPHPVersions:
+  - 8.3
+  - 8.4
+paths:
+  instanceRoot: '../../foo/bar/'
+  reports: '../../reports/upgradeAnalysis/'
+tests:
+  availability:
+    sources:
+      packagist: []
+      ter:
+        disabled: false
+      github:
+        disabled: true
+      localDirectory: []
