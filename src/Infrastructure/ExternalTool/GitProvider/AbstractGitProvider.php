@@ -76,17 +76,31 @@ abstract class AbstractGitProvider implements GitProviderInterface
             $response = $this->httpClient->request($method, $url, $options);
             
             if ($response->getStatusCode() >= 400) {
+                $errorContent = $response->getContent(false);
+                
+                // Detect rate limiting
+                if ($response->getStatusCode() === 403 && str_contains($errorContent, 'rate limit')) {
+                    throw new GitProviderException(
+                        sprintf('API rate limit exceeded: %s', $errorContent),
+                        $this->getName()
+                    );
+                }
+                
                 throw new GitProviderException(
                     sprintf(
                         'Git provider request failed with status %d: %s',
                         $response->getStatusCode(),
-                        $response->getContent(false)
+                        $errorContent
                     ),
                     $this->getName()
                 );
             }
             
             return $response;
+            
+        } catch (GitProviderException $e) {
+            // Re-throw Git provider exceptions without wrapping
+            throw $e;
             
         } catch (\Throwable $e) {
             $this->logger->error('Git provider request failed', [

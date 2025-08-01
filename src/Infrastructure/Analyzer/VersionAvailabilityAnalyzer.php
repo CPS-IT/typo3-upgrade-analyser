@@ -131,10 +131,13 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 throw $e;
             }
             
-            $this->logger->warning('TER availability check failed', [
+            $this->logger->warning('TER availability check failed, checking fallback sources', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
+            
+            // TER specifically failed, return false for TER availability
+            // Packagist will be checked separately
             return false;
         }
     }

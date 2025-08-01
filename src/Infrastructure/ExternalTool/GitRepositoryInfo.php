@@ -51,6 +51,15 @@ class GitRepositoryInfo
     }
 
     /**
+     * Alias for getAllTags() for backward compatibility
+     * @return array<GitTag>
+     */
+    public function getAvailableVersions(): array
+    {
+        return $this->getAllTags();
+    }
+
+    /**
      * @return array<GitTag>
      */
     public function getCompatibleVersions(): array

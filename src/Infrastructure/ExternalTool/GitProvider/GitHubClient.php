@@ -235,9 +235,6 @@ class GitHubClient extends AbstractGitProvider
                     license: licenseInfo {
                         name
                     }
-                    collaborators {
-                        totalCount
-                    }
                 }
             }
         ';
@@ -254,6 +251,9 @@ class GitHubClient extends AbstractGitProvider
             $lastCommitDate = $this->parseDate($repo['object']['committedDate']);
         }
 
+        // Get contributor count separately using REST API if authenticated
+        $contributorCount = $this->getContributorCount($repositoryUrl);
+
         return new GitRepositoryHealth(
             lastCommitDate: $lastCommitDate,
             starCount: $repo['stargazerCount'],
@@ -263,8 +263,50 @@ class GitHubClient extends AbstractGitProvider
             isArchived: $repo['isArchived'],
             hasReadme: isset($repo['readme']['id']),
             hasLicense: isset($repo['license']['name']),
-            contributorCount: $repo['collaborators']['totalCount']
+            contributorCount: $contributorCount
         );
+    }
+
+    /**
+     * Get contributor count using the REST API (fallback when GraphQL collaborators field is not accessible)
+     */
+    private function getContributorCount(string $repositoryUrl): int
+    {
+        try {
+            $repoPath = $this->extractRepositoryPath($repositoryUrl);
+            
+            $url = sprintf(
+                '%s/repos/%s/%s/contributors?per_page=1',
+                self::REST_ENDPOINT,
+                $repoPath['owner'],
+                $repoPath['name']
+            );
+            
+            $headers = [];
+            if ($this->accessToken) {
+                $headers['Authorization'] = 'Bearer ' . $this->accessToken;
+            }
+
+            $response = $this->makeRequest('GET', $url, ['headers' => $headers]);
+            $responseHeaders = $response->getHeaders();
+            
+            // Extract total count from Link header if available
+            if (isset($responseHeaders['link'][0])) {
+                $linkHeader = $responseHeaders['link'][0];
+                if (preg_match('/[?&]page=(\d+)>; rel="last"/', $linkHeader, $matches)) {
+                    return (int)$matches[1];
+                }
+            }
+            
+            // If we can't get exact count, return at least the number of contributors we got
+            $contributors = $response->toArray();
+            return count($contributors);
+            
+        } catch (GitProviderException $e) {
+            // If we can't get contributor count, return 0 (not critical for health metric)
+            $this->logger->warning('Could not fetch contributor count', ['error' => $e->getMessage()]);
+            return 0;
+        }
     }
 
     /**

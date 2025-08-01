@@ -15,6 +15,7 @@
 
 # Cache directories
 /.phpunit.cache/
+/.php-cs-fixer.cache
 /var/cache/
 /var/log/
 /var/phpstan/
