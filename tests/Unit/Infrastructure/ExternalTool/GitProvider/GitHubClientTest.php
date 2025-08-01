@@ -44,7 +44,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::getName
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getName
      */
     public function testGetName(): void
     {
@@ -52,7 +52,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::supports
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::supports
      */
     public function testSupportsGitHubUrls(): void
     {
@@ -63,7 +63,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::isAvailable
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::isAvailable
      */
     public function testIsAvailable(): void
     {
@@ -71,7 +71,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::getRepositoryInfo
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
      */
     public function testGetRepositoryInfo(): void
     {
@@ -123,7 +123,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::getTags
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getTags
      */
     public function testGetTags(): void
     {
@@ -171,7 +171,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::getComposerJson
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getComposerJson
      */
     public function testGetComposerJson(): void
     {
@@ -201,7 +201,7 @@ class GitHubClientTest extends TestCase
     }
 
     /**
-     * @covers ::getComposerJson
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getComposerJson
      */
     public function testGetComposerJsonNotFound(): void
     {
@@ -220,12 +220,13 @@ new GitProviderException('404 Not Found', 'github')
     }
 
     /**
-     * @covers ::getRepositoryHealth
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryHealth
      */
     public function testGetRepositoryHealth(): void
     {
-        $response = $this->createMock(ResponseInterface::class);
-        $response->method('toArray')->willReturn([
+        // Mock GraphQL response (without collaborators field)
+        $graphqlResponse = $this->createMock(ResponseInterface::class);
+        $graphqlResponse->method('toArray')->willReturn([
             'data' => [
                 'repository' => [
                     'isArchived' => false,
@@ -245,17 +246,26 @@ new GitProviderException('404 Not Found', 'github')
                     ],
                     'license' => [
                         'name' => 'MIT License'
-                    ],
-                    'collaborators' => [
-                        'totalCount' => 4
                     ]
                 ]
             ]
         ]);
 
-        $this->httpClient->expects($this->once())
+        // Mock REST API response for contributors
+        $contributorsResponse = $this->createMock(ResponseInterface::class);
+        $contributorsResponse->method('toArray')->willReturn([
+            ['login' => 'user1'],
+            ['login' => 'user2'],
+            ['login' => 'user3'],
+            ['login' => 'user4']
+        ]);
+        $contributorsResponse->method('getHeaders')->willReturn([
+            'link' => ['<https://api.github.com/repositories/123/contributors?per_page=1&page=4>; rel="last"']
+        ]);
+
+        $this->httpClient->expects($this->exactly(2))
             ->method('request')
-            ->willReturn($response);
+            ->willReturnOnConsecutiveCalls($graphqlResponse, $contributorsResponse);
 
         $health = $this->client->getRepositoryHealth('https://github.com/user/repo');
 
@@ -271,7 +281,7 @@ new GitProviderException('404 Not Found', 'github')
     }
 
     /**
-     * @covers ::makeGraphqlRequest
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::graphqlRequest
      */
     public function testGraphqlErrorHandling(): void
     {
@@ -296,7 +306,7 @@ new GitProviderException('404 Not Found', 'github')
     }
 
     /**
-     * @covers ::extractRepositoryPath
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\AbstractGitProvider::extractRepositoryPath
      */
     public function testExtractRepositoryPath(): void
     {
@@ -318,7 +328,7 @@ new GitProviderException('404 Not Found', 'github')
     }
 
     /**
-     * @covers ::extractRepositoryPath
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\AbstractGitProvider::extractRepositoryPath
      */
     public function testExtractRepositoryPathInvalid(): void
     {

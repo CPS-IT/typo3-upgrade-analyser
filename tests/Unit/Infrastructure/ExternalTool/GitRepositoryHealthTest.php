@@ -23,16 +23,16 @@ use PHPUnit\Framework\TestCase;
 class GitRepositoryHealthTest extends TestCase
 {
     /**
-     * @covers ::__construct
-     * @covers ::getLastCommitDate
-     * @covers ::getStarCount
-     * @covers ::getForkCount
-     * @covers ::getOpenIssuesCount
-     * @covers ::getClosedIssuesCount
-     * @covers ::isArchived
-     * @covers ::hasReadme
-     * @covers ::hasLicense
-     * @covers ::getContributorCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::__construct
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getLastCommitDate
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getStarCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getForkCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getOpenIssuesCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getClosedIssuesCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::isArchived
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::hasReadme
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::hasLicense
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getContributorCount
      */
     public function testConstructorAndGetters(): void
     {
@@ -62,7 +62,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::calculateHealthScore
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
      */
     public function testCalculateHealthScoreHealthyRepository(): void
     {
@@ -86,7 +86,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::calculateHealthScore
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
      */
     public function testCalculateHealthScoreArchivedRepository(): void
     {
@@ -110,7 +110,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::calculateHealthScore
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
      */
     public function testCalculateHealthScoreInactiveRepository(): void
     {
@@ -134,7 +134,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::calculateHealthScore
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
      */
     public function testCalculateHealthScoreModerateRepository(): void
     {
@@ -158,7 +158,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::calculateHealthScore
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
      */
     public function testCalculateHealthScoreWithNullLastCommit(): void
     {
@@ -183,7 +183,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::getTotalIssuesCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getTotalIssuesCount
      */
     public function testGetTotalIssuesCount(): void
     {
@@ -203,7 +203,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::getIssueResolutionRate
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getIssueResolutionRate
      */
     public function testGetIssueResolutionRate(): void
     {
@@ -223,7 +223,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::getIssueResolutionRate
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getIssueResolutionRate
      */
     public function testGetIssueResolutionRateWithNoIssues(): void
     {
@@ -243,7 +243,7 @@ class GitRepositoryHealthTest extends TestCase
     }
 
     /**
-     * @covers ::__construct
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::__construct
      */
     public function testReadonlyProperties(): void
     {

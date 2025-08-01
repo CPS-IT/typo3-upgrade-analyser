@@ -23,15 +23,15 @@ use PHPUnit\Framework\TestCase;
 class GitRepositoryMetadataTest extends TestCase
 {
     /**
-     * @covers ::__construct
-     * @covers ::getName
-     * @covers ::getDescription
-     * @covers ::isArchived
-     * @covers ::isFork
-     * @covers ::getStarCount
-     * @covers ::getForkCount
-     * @covers ::getLastUpdated
-     * @covers ::getDefaultBranch
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getName
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDescription
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::isArchived
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::isFork
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getStarCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getForkCount
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getLastUpdated
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDefaultBranch
      */
     public function testConstructorAndGetters(): void
     {
@@ -59,9 +59,9 @@ class GitRepositoryMetadataTest extends TestCase
     }
 
     /**
-     * @covers ::__construct
-     * @covers ::getDescription
-     * @covers ::getDefaultBranch
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDescription
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDefaultBranch
      */
     public function testWithEmptyDescription(): void
     {
@@ -81,7 +81,7 @@ class GitRepositoryMetadataTest extends TestCase
     }
 
     /**
-     * @covers ::__construct
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
      */
     public function testReadonlyProperties(): void
     {

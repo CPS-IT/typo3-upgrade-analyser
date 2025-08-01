@@ -52,7 +52,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     }
 
     /**
-     * @covers ::analyzeExtension
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testAnalyzeExtensionWithGitRepositoryUrl(): void
     {
@@ -130,7 +130,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     }
 
     /**
-     * @covers ::analyzeExtension
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testAnalyzeExtensionWithoutRepositoryUrl(): void
     {
@@ -144,7 +144,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     }
 
     /**
-     * @covers ::analyzeExtension
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testAnalyzeExtensionWithUnsupportedRepository(): void
     {
@@ -164,7 +164,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     }
 
     /**
-     * @covers ::analyzeExtension
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testAnalyzeExtensionWithProviderError(): void
     {
@@ -188,7 +188,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     }
 
     /**
-     * @covers ::analyzeExtension
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testExtractRepositoryUrlFromEmExtConf(): void
     {

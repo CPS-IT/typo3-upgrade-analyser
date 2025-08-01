@@ -32,7 +32,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::findCompatibleVersions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
      */
     public function testFindCompatibleVersionsWithSemanticTags(): void
     {
@@ -51,7 +51,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::findCompatibleVersions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
      */
     public function testFindCompatibleVersionsWithNonSemanticTags(): void
     {
@@ -68,7 +68,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::isComposerCompatible
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
      */
     public function testIsComposerCompatibleWithCaretConstraint(): void
     {
@@ -85,7 +85,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::isComposerCompatible
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
      */
     public function testIsComposerCompatibleWithTildeConstraint(): void
     {
@@ -102,7 +102,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::isComposerCompatible
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
      */
     public function testIsComposerCompatibleWithIncompatibleVersion(): void
     {
@@ -119,7 +119,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::isComposerCompatible
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
      */
     public function testIsComposerCompatibleWithoutTypo3Requirements(): void
     {
@@ -136,7 +136,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::isComposerCompatible
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
      */
     public function testIsComposerCompatibleWithNullInput(): void
     {
@@ -147,7 +147,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::findCompatibleVersions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
      */
     public function testFindCompatibleVersionsSortsByDate(): void
     {
@@ -168,7 +168,7 @@ class GitVersionParserTest extends TestCase
     }
 
     /**
-     * @covers ::findCompatibleVersions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
      */
     public function testFindCompatibleVersionsExcludesPreReleases(): void
     {

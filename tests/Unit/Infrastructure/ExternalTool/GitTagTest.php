@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 class GitTagTest extends TestCase
 {
     /**
-     * @covers ::getSemanticVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
      */
     public function testGetSemanticVersionFromVersionPrefix(): void
     {
@@ -34,7 +34,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getSemanticVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
      */
     public function testGetSemanticVersionFromReleasePrefix(): void
     {
@@ -45,7 +45,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getSemanticVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
      */
     public function testGetSemanticVersionWithPreRelease(): void
     {
@@ -57,7 +57,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getSemanticVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
      */
     public function testGetSemanticVersionWithoutPrefix(): void
     {
@@ -68,7 +68,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getSemanticVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
      */
     public function testGetSemanticVersionWithNonSemantic(): void
     {
@@ -80,7 +80,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getMajorVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMajorVersion
      */
     public function testGetMajorVersion(): void
     {
@@ -90,7 +90,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getMinorVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMinorVersion
      */
     public function testGetMinorVersion(): void
     {
@@ -100,8 +100,8 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getMajorVersion
-     * @covers ::getMinorVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMajorVersion
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMinorVersion
      */
     public function testGetVersionsWithNonSemantic(): void
     {
@@ -112,7 +112,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::isNewerThan
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::isNewerThan
      */
     public function testIsNewerThanWithDates(): void
     {
@@ -124,7 +124,7 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::isNewerThan
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::isNewerThan
      */
     public function testIsNewerThanWithoutDates(): void
     {
@@ -137,9 +137,9 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getName
-     * @covers ::getDate
-     * @covers ::getCommit
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getName
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getDate
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getCommit
      */
     public function testGettersWithAllData(): void
     {
@@ -152,9 +152,9 @@ class GitTagTest extends TestCase
     }
 
     /**
-     * @covers ::getName
-     * @covers ::getDate
-     * @covers ::getCommit
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getName
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getDate
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getCommit
      */
     public function testGettersWithMinimalData(): void
     {

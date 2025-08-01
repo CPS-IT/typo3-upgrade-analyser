@@ -36,7 +36,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::createProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
      */
     public function testCreateProviderWithSupportedUrl(): void
     {
@@ -58,7 +58,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::createProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
      */
     public function testCreateProviderWithUnsupportedUrl(): void
     {
@@ -75,7 +75,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::createProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
      */
     public function testCreateProviderWithUnavailableProvider(): void
     {
@@ -92,7 +92,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::createProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
      */
     public function testCreateProviderSelectsHighestPriority(): void
     {
@@ -123,7 +123,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::createProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
      */
     public function testCreateProviderWithEmptyProviders(): void
     {
@@ -136,7 +136,7 @@ class GitProviderFactoryTest extends TestCase
     }
 
     /**
-     * @covers ::getAvailableProviders
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::getAvailableProviders
      */
     public function testGetAvailableProviders(): void
     {
