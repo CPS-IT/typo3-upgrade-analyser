@@ -153,7 +153,7 @@ class InitConfigCommand extends Command
         $formats = $io->choice(
             'Report formats (multiple selection allowed)',
             ['html', 'json', 'csv', 'markdown'],
-            $config['reporting']['formats']
+            $config['reporting']['formats'][0] ?? 'html'
         );
         $config['reporting']['formats'] = is_array($formats) ? $formats : [$formats];
         
