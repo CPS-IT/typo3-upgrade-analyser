@@ -16,6 +16,8 @@ use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 
 /**
  * Test case for the Installation entity
@@ -229,5 +231,239 @@ class InstallationTest extends TestCase
     public function testEmptyConfigurationReturnsEmptyArray(): void
     {
         self::assertEquals([], $this->installation->getConfiguration());
+    }
+
+    // Tests for new discovery system methods
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setMode
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getMode
+     */
+    public function testSetAndGetMode(): void
+    {
+        self::assertNull($this->installation->getMode());
+        
+        $mode = InstallationMode::COMPOSER;
+        $this->installation->setMode($mode);
+        
+        self::assertSame($mode, $this->installation->getMode());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setMetadata
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getMetadata
+     */
+    public function testSetAndGetMetadata(): void
+    {
+        self::assertNull($this->installation->getMetadata());
+        
+        $metadata = new InstallationMetadata(
+            ['required' => '8.1'],
+            ['driver' => 'mysqli'],
+            ['frontend'],
+            new \DateTimeImmutable(),
+            []
+        );
+        
+        $this->installation->setMetadata($metadata);
+        
+        self::assertSame($metadata, $this->installation->getMetadata());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtensionByKey
+     */
+    public function testGetExtensionByKeyIsAliasForGetExtension(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
+        $this->installation->addExtension($extension);
+        
+        self::assertSame($extension, $this->installation->getExtensionByKey('test_ext'));
+        self::assertSame(
+            $this->installation->getExtension('test_ext'),
+            $this->installation->getExtensionByKey('test_ext')
+        );
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getSystemExtensions
+     */
+    public function testGetSystemExtensions(): void
+    {
+        $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
+        $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
+        $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
+        
+        $this->installation->addExtension($systemExt);
+        $this->installation->addExtension($localExt);
+        $this->installation->addExtension($composerExt);
+        
+        $systemExtensions = $this->installation->getSystemExtensions();
+        
+        self::assertCount(1, $systemExtensions);
+        self::assertContains($systemExt, $systemExtensions);
+        self::assertNotContains($localExt, $systemExtensions);
+        self::assertNotContains($composerExt, $systemExtensions);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getLocalExtensions
+     */
+    public function testGetLocalExtensions(): void
+    {
+        $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
+        $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
+        $localExt2 = new Extension('my_ext2', 'My Extension 2', new Version('1.0.0'), 'local');
+        $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
+        
+        $this->installation->addExtension($systemExt);
+        $this->installation->addExtension($localExt);
+        $this->installation->addExtension($localExt2);
+        $this->installation->addExtension($composerExt);
+        
+        $localExtensions = $this->installation->getLocalExtensions();
+        
+        self::assertCount(2, $localExtensions);
+        self::assertContains($localExt, $localExtensions);
+        self::assertContains($localExt2, $localExtensions);
+        self::assertNotContains($systemExt, $localExtensions);
+        self::assertNotContains($composerExt, $localExtensions);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getComposerExtensions
+     */
+    public function testGetComposerExtensions(): void
+    {
+        $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
+        $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
+        $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
+        $composerExt2 = new Extension('another_ext', 'Another Extension', new Version('1.5.0'), 'local', 'vendor/another');
+        
+        $this->installation->addExtension($systemExt);
+        $this->installation->addExtension($localExt);
+        $this->installation->addExtension($composerExt);
+        $this->installation->addExtension($composerExt2);
+        
+        $composerExtensions = $this->installation->getComposerExtensions();
+        
+        self::assertCount(2, $composerExtensions);
+        self::assertContains($composerExt, $composerExtensions);
+        self::assertContains($composerExt2, $composerExtensions);
+        self::assertNotContains($systemExt, $composerExtensions);
+        self::assertNotContains($localExt, $composerExtensions);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
+     */
+    public function testIsMixedModeWithBothLocalAndComposerExtensions(): void
+    {
+        $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
+        $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
+        
+        $this->installation->addExtension($localExt);
+        $this->installation->addExtension($composerExt);
+        
+        self::assertTrue($this->installation->isMixedMode());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
+     */
+    public function testIsMixedModeWithOnlyLocalExtensions(): void
+    {
+        $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
+        
+        $this->installation->addExtension($localExt);
+        
+        self::assertFalse($this->installation->isMixedMode());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
+     */
+    public function testIsMixedModeWithOnlyComposerExtensions(): void
+    {
+        $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
+        
+        $this->installation->addExtension($composerExt);
+        
+        self::assertFalse($this->installation->isMixedMode());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
+     */
+    public function testIsMixedModeWithNoExtensions(): void
+    {
+        self::assertFalse($this->installation->isMixedMode());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::markAsInvalid
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
+     */
+    public function testMarkAsInvalid(): void
+    {
+        self::assertTrue($this->installation->isValid());
+        self::assertEmpty($this->installation->getValidationErrors());
+        
+        $this->installation->markAsInvalid('Missing composer.json');
+        
+        self::assertFalse($this->installation->isValid());
+        self::assertSame(['Missing composer.json'], $this->installation->getValidationErrors());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addValidationError
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
+     */
+    public function testAddValidationError(): void
+    {
+        self::assertTrue($this->installation->isValid());
+        
+        $this->installation->addValidationError('First error');
+        
+        self::assertFalse($this->installation->isValid());
+        self::assertSame(['First error'], $this->installation->getValidationErrors());
+        
+        $this->installation->addValidationError('Second error');
+        
+        self::assertFalse($this->installation->isValid());
+        self::assertSame(['First error', 'Second error'], $this->installation->getValidationErrors());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::clearValidationErrors
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
+     */
+    public function testClearValidationErrors(): void
+    {
+        $this->installation->addValidationError('Some error');
+        $this->installation->addValidationError('Another error');
+        
+        self::assertFalse($this->installation->isValid());
+        self::assertCount(2, $this->installation->getValidationErrors());
+        
+        $this->installation->clearValidationErrors();
+        
+        self::assertTrue($this->installation->isValid());
+        self::assertEmpty($this->installation->getValidationErrors());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addValidationError
+     */
+    public function testAddValidationErrorWhenAlreadyInvalid(): void
+    {
+        $this->installation->markAsInvalid('First error');
+        $this->installation->addValidationError('Second error');
+        
+        self::assertFalse($this->installation->isValid());
+        self::assertSame(['First error', 'Second error'], $this->installation->getValidationErrors());
     }
 }

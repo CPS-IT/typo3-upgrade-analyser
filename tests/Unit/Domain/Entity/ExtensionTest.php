@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
 
 /**
  * Test case for the Extension entity
@@ -235,5 +236,158 @@ class ExtensionTest extends TestCase
         $extension = new Extension('empty_ext', 'Empty Extension', new Version('1.0.0'));
         
         self::assertEquals(0, $extension->getLinesOfCode());
+    }
+
+    // Tests for repository URL functionality
+
+    public function testSetAndGetRepositoryUrl(): void
+    {
+        self::assertNull($this->extension->getRepositoryUrl());
+        self::assertFalse($this->extension->hasRepositoryUrl());
+        
+        $url = 'https://github.com/vendor/extension';
+        $this->extension->setRepositoryUrl($url);
+        
+        self::assertSame($url, $this->extension->getRepositoryUrl());
+        self::assertTrue($this->extension->hasRepositoryUrl());
+    }
+
+    public function testSetRepositoryUrlToNull(): void
+    {
+        $this->extension->setRepositoryUrl('https://github.com/vendor/extension');
+        $this->extension->setRepositoryUrl(null);
+        
+        self::assertNull($this->extension->getRepositoryUrl());
+        self::assertFalse($this->extension->hasRepositoryUrl());
+    }
+
+    // Tests for EM configuration functionality
+
+    public function testSetAndGetEmConfiguration(): void
+    {
+        $emConfig = [
+            'title' => 'Test Extension',
+            'description' => 'A test extension',
+            'version' => '1.0.0',
+            'dependencies' => ['core' => '12.4.0']
+        ];
+        
+        $this->extension->setEmConfiguration($emConfig);
+        
+        self::assertSame($emConfig, $this->extension->getEmConfiguration());
+    }
+
+    public function testGetEmConfigurationValue(): void
+    {
+        $emConfig = [
+            'title' => 'Test Extension',
+            'description' => 'A test extension',
+            'version' => '1.0.0'
+        ];
+        
+        $this->extension->setEmConfiguration($emConfig);
+        
+        self::assertSame('Test Extension', $this->extension->getEmConfigurationValue('title'));
+        self::assertSame('A test extension', $this->extension->getEmConfigurationValue('description'));
+        self::assertSame('1.0.0', $this->extension->getEmConfigurationValue('version'));
+        self::assertNull($this->extension->getEmConfigurationValue('nonexistent'));
+    }
+
+    public function testGetEmConfigurationValueWithEmptyConfig(): void
+    {
+        self::assertNull($this->extension->getEmConfigurationValue('any_key'));
+    }
+
+    // Tests for new discovery system methods
+
+    public function testGetAndAddConflicts(): void
+    {
+        self::assertEmpty($this->extension->getConflicts());
+        
+        $this->extension->addConflict('conflicting_ext', '1.0.0');
+        $this->extension->addConflict('another_conflict');
+        
+        $conflicts = $this->extension->getConflicts();
+        
+        self::assertCount(2, $conflicts);
+        self::assertArrayHasKey('conflicting_ext', $conflicts);
+        self::assertArrayHasKey('another_conflict', $conflicts);
+        self::assertEquals('1.0.0', $conflicts['conflicting_ext']);
+        self::assertNull($conflicts['another_conflict']);
+    }
+
+    public function testHasConflict(): void
+    {
+        self::assertFalse($this->extension->hasConflict('conflicting_ext'));
+        
+        $this->extension->addConflict('conflicting_ext', '1.0.0');
+        
+        self::assertTrue($this->extension->hasConflict('conflicting_ext'));
+        self::assertFalse($this->extension->hasConflict('non_conflicting_ext'));
+    }
+
+    public function testSetAndGetMetadata(): void
+    {
+        self::assertNull($this->extension->getMetadata());
+        self::assertFalse($this->extension->hasMetadata());
+        
+        $metadata = new ExtensionMetadata(
+            'Test extension description',
+            'Test Author',
+            'test@example.com',
+            ['test', 'typo3'],
+            'GPL-2.0-or-later',
+            ['8.1', '8.2'],
+            ['12.4', '13.0'],
+            new \DateTimeImmutable()
+        );
+        
+        $this->extension->setMetadata($metadata);
+        
+        self::assertSame($metadata, $this->extension->getMetadata());
+        self::assertTrue($this->extension->hasMetadata());
+    }
+
+    public function testIsActiveAndSetActive(): void
+    {
+        self::assertFalse($this->extension->isActive());
+        
+        $this->extension->setActive(true);
+        
+        self::assertTrue($this->extension->isActive());
+        
+        $this->extension->setActive(false);
+        
+        self::assertFalse($this->extension->isActive());
+    }
+
+    public function testHasComposerManifest(): void
+    {
+        // This should be an alias for hasComposerName
+        self::assertTrue($this->extension->hasComposerManifest());
+        self::assertSame(
+            $this->extension->hasComposerName(),
+            $this->extension->hasComposerManifest()
+        );
+        
+        $extensionWithoutComposer = new Extension('test_ext', 'Test', new Version('1.0.0'));
+        self::assertFalse($extensionWithoutComposer->hasComposerManifest());
+        self::assertSame(
+            $extensionWithoutComposer->hasComposerName(),
+            $extensionWithoutComposer->hasComposerManifest()
+        );
+    }
+
+    public function testHasEmconfFile(): void
+    {
+        self::assertFalse($this->extension->hasEmconfFile());
+        
+        $this->extension->setEmConfiguration(['title' => 'Test']);
+        
+        self::assertTrue($this->extension->hasEmconfFile());
+        
+        $this->extension->setEmConfiguration([]);
+        
+        self::assertFalse($this->extension->hasEmconfFile());
     }
 }

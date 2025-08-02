@@ -13,6 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
 
 /**
  * Represents a TYPO3 installation to be analyzed
@@ -21,6 +24,10 @@ class Installation
 {
     private array $extensions = [];
     private array $configuration = [];
+    private ?InstallationMode $mode = null;
+    private ?InstallationMetadata $metadata = null;
+    private bool $isValid = true;
+    private array $validationErrors = [];
 
     public function __construct(
         private readonly string $path,
@@ -97,5 +104,114 @@ class Installation
     public function isLegacyMode(): bool
     {
         return $this->type === 'legacy';
+    }
+
+    // New discovery system methods
+
+    public function setMode(InstallationMode $mode): void
+    {
+        $this->mode = $mode;
+    }
+
+    public function getMode(): ?InstallationMode
+    {
+        return $this->mode;
+    }
+
+    public function setMetadata(InstallationMetadata $metadata): void
+    {
+        $this->metadata = $metadata;
+    }
+
+    public function getMetadata(): ?InstallationMetadata
+    {
+        return $this->metadata;
+    }
+
+    public function getExtensionByKey(string $key): ?Extension
+    {
+        return $this->getExtension($key);
+    }
+
+    public function getSystemExtensions(): array
+    {
+        return array_filter($this->extensions, fn(Extension $ext) => $ext->getType() === 'system');
+    }
+
+    public function getLocalExtensions(): array
+    {
+        return array_filter($this->extensions, fn(Extension $ext) => $ext->getType() === 'local');
+    }
+
+    public function getComposerExtensions(): array
+    {
+        return array_filter($this->extensions, fn(Extension $ext) => $ext->hasComposerName());
+    }
+
+    public function isMixedMode(): bool
+    {
+        // Mixed mode would combine local and composer extensions
+        return $this->hasLocalExtensions() && $this->hasComposerExtensions();
+    }
+
+    private function hasLocalExtensions(): bool
+    {
+        return count($this->getLocalExtensions()) > 0;
+    }
+
+    private function hasComposerExtensions(): bool
+    {
+        return count($this->getComposerExtensions()) > 0;
+    }
+
+    public function markAsInvalid(string $error): void
+    {
+        $this->isValid = false;
+        $this->validationErrors[] = $error;
+    }
+
+    public function isValid(): bool
+    {
+        return $this->isValid;
+    }
+
+    public function getValidationErrors(): array
+    {
+        return $this->validationErrors;
+    }
+
+    public function clearValidationErrors(): void
+    {
+        $this->isValid = true;
+        $this->validationErrors = [];
+    }
+
+    public function addValidationError(string $error): void
+    {
+        $this->validationErrors[] = $error;
+        if ($this->isValid) {
+            $this->isValid = false;
+        }
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'path' => $this->path,
+            'version' => $this->version->toString(),
+            'type' => $this->type,
+            'mode' => $this->mode?->value,
+            'extensions' => array_map(fn($ext) => $ext->toArray(), $this->extensions),
+            'configuration' => $this->configuration,
+            'metadata' => $this->metadata?->toArray(),
+            'is_valid' => $this->isValid,
+            'validation_errors' => $this->validationErrors,
+        ];
+    }
+
+    public function setValidationErrors(array $errors): void
+    {
+        $this->validationErrors = $errors;
+        $this->isValid = empty($errors);
     }
 }

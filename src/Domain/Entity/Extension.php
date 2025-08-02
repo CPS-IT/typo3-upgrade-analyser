@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
 
 /**
  * Represents a TYPO3 extension
@@ -23,6 +25,9 @@ class Extension
     private array $files = [];
     private ?string $repositoryUrl = null;
     private array $emConfiguration = [];
+    private array $conflicts = [];
+    private ?ExtensionMetadata $metadata = null;
+    private bool $isActive = false;
 
     public function __construct(
         private readonly string $key,
@@ -157,5 +162,75 @@ class Extension
     public function getEmConfigurationValue(string $key): mixed
     {
         return $this->emConfiguration[$key] ?? null;
+    }
+
+    // New discovery system methods
+
+    public function getConflicts(): array
+    {
+        return $this->conflicts;
+    }
+
+    public function addConflict(string $extensionKey, ?string $version = null): void
+    {
+        $this->conflicts[$extensionKey] = $version;
+    }
+
+    public function hasConflict(string $extensionKey): bool
+    {
+        return array_key_exists($extensionKey, $this->conflicts);
+    }
+
+    public function getMetadata(): ?ExtensionMetadata
+    {
+        return $this->metadata;
+    }
+
+    public function setMetadata(ExtensionMetadata $metadata): void
+    {
+        $this->metadata = $metadata;
+    }
+
+    public function hasMetadata(): bool
+    {
+        return $this->metadata !== null;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setActive(bool $active): void
+    {
+        $this->isActive = $active;
+    }
+
+    public function hasComposerManifest(): bool
+    {
+        return $this->hasComposerName();
+    }
+
+    public function hasEmconfFile(): bool
+    {
+        return !empty($this->emConfiguration);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'key' => $this->key,
+            'title' => $this->title,
+            'version' => $this->version->toString(),
+            'type' => $this->type,
+            'composer_name' => $this->composerName,
+            'dependencies' => $this->dependencies,
+            'conflicts' => $this->conflicts,
+            'files' => $this->files,
+            'repository_url' => $this->repositoryUrl,
+            'em_configuration' => $this->emConfiguration,
+            'metadata' => $this->metadata?->toArray(),
+            'is_active' => $this->isActive,
+        ];
     }
 }
