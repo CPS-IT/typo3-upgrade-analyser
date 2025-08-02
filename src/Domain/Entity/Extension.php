@@ -21,6 +21,8 @@ class Extension
 {
     private array $dependencies = [];
     private array $files = [];
+    private ?string $repositoryUrl = null;
+    private array $emConfiguration = [];
 
     public function __construct(
         private readonly string $key,
@@ -125,5 +127,35 @@ class Extension
             }
         }
         return $lines;
+    }
+
+    public function setRepositoryUrl(?string $repositoryUrl): void
+    {
+        $this->repositoryUrl = $repositoryUrl;
+    }
+
+    public function getRepositoryUrl(): ?string
+    {
+        return $this->repositoryUrl;
+    }
+
+    public function hasRepositoryUrl(): bool
+    {
+        return $this->repositoryUrl !== null;
+    }
+
+    public function setEmConfiguration(array $emConfiguration): void
+    {
+        $this->emConfiguration = $emConfiguration;
+    }
+
+    public function getEmConfiguration(): array
+    {
+        return $this->emConfiguration;
+    }
+
+    public function getEmConfigurationValue(string $key): mixed
+    {
+        return $this->emConfiguration[$key] ?? null;
     }
 }

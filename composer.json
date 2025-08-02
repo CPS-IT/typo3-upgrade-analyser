@@ -54,7 +54,15 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
+        "test:unit": "phpunit --testsuite=Unit",
+        "test:integration": "phpunit --testsuite=Integration --no-coverage",
+        "test:functional": "phpunit --testsuite=Functional",
+        "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
+        "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
+        "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
+        "test:performance": "phpunit --group=performance --no-coverage",
+        "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
         "static-analysis": "phpstan analyse"

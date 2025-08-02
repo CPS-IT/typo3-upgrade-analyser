@@ -17,6 +17,8 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -27,6 +29,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
     public function __construct(
         private readonly TerApiClient $terClient,
         private readonly PackagistClient $packagistClient,
+        private readonly ?GitRepositoryAnalyzer $gitAnalyzer,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -67,6 +70,15 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 $result->addMetric('packagist_available', $packagistAvailable);
             } else {
                 $result->addMetric('packagist_available', false);
+            }
+
+            // Check Git repository availability (if Git analyzer is available)
+            $gitInfo = $this->checkGitAvailability($extension, $context);
+            $result->addMetric('git_available', $gitInfo['available']);
+            $result->addMetric('git_repository_health', $gitInfo['health']);
+            $result->addMetric('git_repository_url', $gitInfo['url']);
+            if ($gitInfo['latest_version']) {
+                $result->addMetric('git_latest_version', $gitInfo['latest_version']);
             }
 
             // Calculate risk score based on availability
@@ -119,10 +131,13 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 throw $e;
             }
             
-            $this->logger->warning('TER availability check failed', [
+            $this->logger->warning('TER availability check failed, checking fallback sources', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
+            
+            // TER specifically failed, return false for TER availability
+            // Packagist will be checked separately
             return false;
         }
     }
@@ -148,44 +163,124 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         }
     }
 
+    private function checkGitAvailability(Extension $extension, AnalysisContext $context): array
+    {
+        // Default response when Git analysis is not available
+        $defaultResponse = [
+            'available' => false,
+            'health' => null,
+            'url' => null,
+            'latest_version' => null
+        ];
+
+        if (!$this->gitAnalyzer) {
+            return $defaultResponse;
+        }
+
+        try {
+            $gitInfo = $this->gitAnalyzer->analyzeExtension($extension, $context->getTargetVersion());
+            
+            return [
+                'available' => $gitInfo->hasCompatibleVersion(),
+                'health' => $gitInfo->getHealthScore(),
+                'url' => $gitInfo->getRepositoryUrl(),
+                'latest_version' => $gitInfo->getLatestCompatibleVersion()?->getName()
+            ];
+            
+        } catch (GitAnalysisException $e) {
+            $this->logger->info('Git analysis skipped for extension', [
+                'extension' => $extension->getKey(),
+                'reason' => $e->getMessage()
+            ]);
+            
+            return $defaultResponse;
+            
+        } catch (\Throwable $e) {
+            $this->logger->warning('Git availability check failed', [
+                'extension' => $extension->getKey(),
+                'error' => $e->getMessage(),
+            ]);
+            
+            return $defaultResponse;
+        }
+    }
+
     private function calculateRiskScore(array $metrics, Extension $extension): float
     {
         $terAvailable = $metrics['ter_available'] ?? false;
         $packagistAvailable = $metrics['packagist_available'] ?? false;
+        $gitAvailable = $metrics['git_available'] ?? false;
+        $gitHealth = $metrics['git_repository_health'] ?? null;
 
         // System extensions are low risk (maintained by TYPO3 core team)
         if ($extension->isSystemExtension()) {
             return 1.0;
         }
 
-        // If available in both TER and Packagist - very low risk
-        if ($terAvailable && $packagistAvailable) {
-            return 2.0;
+        // Calculate base availability score
+        $availabilityScore = 0;
+        if ($terAvailable) $availabilityScore += 4; // TER is most trusted
+        if ($packagistAvailable) $availabilityScore += 3; // Packagist is second
+        if ($gitAvailable) {
+            // Git availability weighted by repository health
+            $gitWeight = $gitHealth ? (2 * $gitHealth) : 1;
+            $availabilityScore += $gitWeight;
         }
 
-        // If available in either TER or Packagist - low to medium risk
-        if ($terAvailable || $packagistAvailable) {
-            return 4.0;
-        }
-
-        // If not available anywhere - high risk
-        return 8.0;
+        // Convert to risk score (higher availability = lower risk)
+        if ($availabilityScore >= 6) return 1.5; // Multiple high-quality sources
+        if ($availabilityScore >= 4) return 2.5; // At least one high-quality source  
+        if ($availabilityScore >= 2) return 5.0; // Some availability
+        if ($availabilityScore >= 1) return 7.0; // Limited availability
+        return 9.0; // No availability
     }
 
     private function addRecommendations(AnalysisResult $result, Extension $extension): void
     {
         $terAvailable = $result->getMetric('ter_available');
         $packagistAvailable = $result->getMetric('packagist_available');
+        $gitAvailable = $result->getMetric('git_available');
+        $gitHealth = $result->getMetric('git_repository_health');
+        $gitUrl = $result->getMetric('git_repository_url');
 
-        if (!$terAvailable && !$packagistAvailable) {
-            $result->addRecommendation('No compatible version found in public repositories. Consider contacting extension author or finding alternative.');
-        } elseif (!$terAvailable && $packagistAvailable) {
+        // No availability anywhere
+        if (!$terAvailable && !$packagistAvailable && !$gitAvailable) {
+            $result->addRecommendation('Extension not available in any known repository. Consider finding alternative or contacting author.');
+            return;
+        }
+
+        // Git-specific recommendations
+        if ($gitAvailable && !$terAvailable && !$packagistAvailable) {
+            if ($gitHealth && $gitHealth > 0.7) {
+                $result->addRecommendation('Extension only available via Git repository. Repository appears well-maintained.');
+            } else {
+                $result->addRecommendation('Extension only available via Git repository. Consider repository maintenance status before upgrade.');
+            }
+            
+            if ($gitUrl) {
+                $result->addRecommendation("Git repository: {$gitUrl}");
+            }
+        }
+
+        // Mixed availability recommendations
+        if ($gitAvailable && ($terAvailable || $packagistAvailable)) {
+            $result->addRecommendation('Extension available in multiple sources. Consider using most stable source for production.');
+        }
+
+        // Standard TER/Packagist recommendations
+        if (!$terAvailable && $packagistAvailable && !$gitAvailable) {
             $result->addRecommendation('Extension is only available via Composer/Packagist. Ensure Composer mode is used.');
-        } elseif ($terAvailable && !$packagistAvailable && $extension->hasComposerName()) {
+        } elseif ($terAvailable && !$packagistAvailable && !$gitAvailable && $extension->hasComposerName()) {
             $result->addRecommendation('Extension is only available in TER. Consider migrating to Composer if needed.');
         }
 
-        if ($extension->isLocalExtension() && ($terAvailable || $packagistAvailable)) {
+        // Git repository health warnings
+        if ($gitAvailable && $gitHealth && $gitHealth < 0.3) {
+            $result->addRecommendation('Git repository shows signs of poor maintenance. Consider alternative sources or extensions.');
+        }
+
+        // Local extension with alternatives
+        if ($extension->isLocalExtension() && ($terAvailable || $packagistAvailable || $gitAvailable)) {
             $result->addRecommendation('Local extension has public alternatives available. Consider using official version.');
         }
     }

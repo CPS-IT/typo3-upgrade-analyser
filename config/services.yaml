@@ -15,6 +15,16 @@ services:
     resource: '../src/Infrastructure/Analyzer/*'
     tags: ['analyzer']
 
+  # Override VersionAvailabilityAnalyzer to include GitRepositoryAnalyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
+      - '@logger'
+    tags: ['analyzer']
+
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\:
     resource: '../src/Infrastructure/ExternalTool/*'
 
@@ -41,3 +51,28 @@ services:
     factory: ['PhpParser\ParserFactory', 'create']
     arguments:
       - 4  # PhpParser\ParserFactory::PREFER_PHP7
+
+  # Git Provider Factory and implementations
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory:
+    arguments:
+      - [
+          '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient'
+        ]
+      - '@logger'
+
+  # Git Provider Implementations
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient:
+    arguments:
+      - '@http_client'
+      - '@logger'
+      - '%env(GITHUB_ACCESS_TOKEN)%'
+
+  # Git Repository Analyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser'
+      - '@logger'
+
+  # Git Version Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser: ~

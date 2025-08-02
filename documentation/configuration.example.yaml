@@ -1,0 +1,37 @@
+analysis:
+  target_version: '12.4'
+  php_versions:
+    - '8.1'
+    - '8.2'
+    - '8.3'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, github]
+      timeout: 30
+    static_analysis:
+      enabled: true
+      tools: { phpstan: { level: 6, config: null } }
+    deprecation_scanner:
+      enabled: true
+    tca_migration:
+      enabled: true
+    code_quality:
+      enabled: true
+      complexity_threshold: 10
+      loc_threshold: 1000
+reporting:
+  formats:
+    - markdown
+  output_directory: foo/bar
+  include_charts: true
+external_tools:
+  rector:
+    binary: vendor/bin/rector
+    config: null
+  fractor:
+    binary: vendor/bin/fractor
+    config: null
+  typoscript_lint:
+    binary: vendor/bin/typoscript-lint
+    config: typoscript-lint.yml
