@@ -30,18 +30,22 @@ use CPSIT\UpgradeAnalyzer\Application\Command\ValidateCommand;
  */
 class ContainerFactoryTest extends TestCase
 {
-    private ContainerInterface $container;
+    private static ContainerInterface $container;
+
+    public static function setUpBeforeClass(): void
+    {
+        self::$container = ContainerFactory::create();
+    }
 
     protected function setUp(): void
     {
-        $this->container = ContainerFactory::create();
+        $this->container = self::$container;
     }
 
     public function testCreateReturnsContainerInterface(): void
     {
-        $container = ContainerFactory::create();
-        
-        self::assertInstanceOf(ContainerInterface::class, $container);
+        // Use the shared container instead of creating a new one
+        self::assertInstanceOf(ContainerInterface::class, $this->container);
     }
 
     public function testContainerIsCompiled(): void
@@ -212,16 +216,16 @@ class ContainerFactoryTest extends TestCase
         // Test that the analyzer auto-registration doesn't fail when analyzer directory doesn't exist
         // This is tested implicitly by the container creation not throwing exceptions
         
-        $container = ContainerFactory::create();
-        self::assertInstanceOf(ContainerInterface::class, $container);
+        // Use the shared container instead of creating a new one
+        self::assertInstanceOf(ContainerInterface::class, $this->container);
         
         // Verify container is compiled and functional despite empty analyzer directory
-        self::assertTrue($container->isCompiled());
-        self::assertTrue($container->has(LoggerInterface::class));
-        self::assertTrue($container->has('http_client'));
+        self::assertTrue($this->container->isCompiled());
+        self::assertTrue($this->container->has(LoggerInterface::class));
+        self::assertTrue($this->container->has('http_client'));
         
         // Verify at least basic services are registered
-        $logger = $container->get(LoggerInterface::class);
+        $logger = $this->container->get(LoggerInterface::class);
         self::assertInstanceOf(LoggerInterface::class, $logger);
     }
 

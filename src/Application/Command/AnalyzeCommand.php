@@ -117,17 +117,14 @@ class AnalyzeCommand extends Command
             // Phase 1: Discovery
             $io->text('Phase 1: Discovering installation and extensions...');
             $io->progressAdvance();
-            sleep(1); // Simulate work
             
             // Phase 2: Analysis
             $io->text('Phase 2: Running analyzers...');
             $io->progressAdvance();
-            sleep(2); // Simulate work
             
             // Phase 3: Reporting
             $io->text('Phase 3: Generating reports...');
             $io->progressAdvance();
-            sleep(1); // Simulate work
             
             $io->progressFinish();
             
