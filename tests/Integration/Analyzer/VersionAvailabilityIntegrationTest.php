@@ -166,7 +166,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
         // Assert expected availability for archived extension
         $this->assertTrue($metrics['ter_available'] || !$metrics['ter_available'], 'TER availability check completed');
         $this->assertTrue($metrics['packagist_available'] || !$metrics['packagist_available'], 'Packagist availability check completed');
-        $this->assertTrue($metrics['git_available'], 'Git repository should still be accessible');
+        $this->assertFalse($metrics['git_available'], 'Archived extension should not be compatible with TYPO3 12.4');
         
         // Assert archived repository has lower health score
         if ($metrics['git_repository_health'] !== null) {

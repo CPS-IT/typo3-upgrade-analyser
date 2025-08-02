@@ -54,13 +54,8 @@ class GitRepositoryAnalyzer
             
             // Get tags and analyze compatibility
             $tags = $provider->getTags($repositoryUrl);
-            $compatibleVersions = $this->versionParser->findCompatibleVersions($tags, $targetVersion);
             
-            // Get repository health metrics
-            $health = $provider->getRepositoryHealth($repositoryUrl);
-            $healthScore = $health->calculateHealthScore();
-            
-            // Try to get composer.json for additional compatibility info
+            // Try to get composer.json for compatibility analysis
             $composerJson = null;
             try {
                 $composerJson = $provider->getComposerJson($repositoryUrl);
@@ -70,6 +65,12 @@ class GitRepositoryAnalyzer
                     'error' => $e->getMessage()
                 ]);
             }
+            
+            $compatibleVersions = $this->versionParser->findCompatibleVersions($tags, $targetVersion, $composerJson);
+            
+            // Get repository health metrics
+            $health = $provider->getRepositoryHealth($repositoryUrl);
+            $healthScore = $health->calculateHealthScore();
 
             return new GitRepositoryInfo(
                 $repositoryUrl,

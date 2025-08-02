@@ -266,13 +266,23 @@ abstract class AbstractIntegrationTest extends TestCase
             $type = 'ter';
         }
         
-        return new \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension(
+        $extension = new \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension(
             key: $key,
             title: ucfirst(str_replace('_', ' ', $key)),
             version: new \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version('1.0.0'),
             type: $type,
             composerName: $composerName
         );
+
+        // Add repository URL from fixtures if available
+        if ($composerName) {
+            $fixtures = $this->loadTestData('known_extensions.json');
+            if (isset($fixtures['extensions'][$composerName]['github_url'])) {
+                $extension->setRepositoryUrl($fixtures['extensions'][$composerName]['github_url']);
+            }
+        }
+        
+        return $extension;
     }
 
     /**

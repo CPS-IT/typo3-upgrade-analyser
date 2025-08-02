@@ -21,38 +21,25 @@ class GitVersionParser
 {
     /**
      * Find Git tags that are compatible with the target TYPO3 version
+     * 
+     * For Git repositories, we need to check composer.json to determine TYPO3 compatibility
+     * since extension version numbers are independent from TYPO3 versions.
      *
      * @param array<GitTag> $tags
      * @return array<GitTag>
      */
-    public function findCompatibleVersions(array $tags, Version $targetVersion): array
+    public function findCompatibleVersions(array $tags, Version $targetVersion, ?array $composerJson = null): array
     {
-        $compatibleTags = [];
-        
-        foreach ($tags as $tag) {
-            if ($this->isTagCompatibleWithTypo3Version($tag, $targetVersion)) {
-                $compatibleTags[] = $tag;
-            }
+        // If we have composer.json from the main branch, check if it's compatible
+        if ($composerJson && $this->isComposerCompatible($composerJson, $targetVersion)) {
+            // If main branch is compatible, return all stable tags
+            // This is a simplified approach - ideally we'd check composer.json for each tag
+            return array_filter($tags, fn($tag) => !$tag->isPreRelease());
         }
         
-        // Sort by date (newest first) or by semantic version
-        usort($compatibleTags, function (GitTag $a, GitTag $b) {
-            if ($a->getDate() && $b->getDate()) {
-                return $b->getDate() <=> $a->getDate();
-            }
-            
-            // Fall back to version comparison
-            $aVersion = $a->getSemanticVersion();
-            $bVersion = $b->getSemanticVersion();
-            
-            if ($aVersion && $bVersion) {
-                return version_compare($bVersion, $aVersion);
-            }
-            
-            return 0;
-        });
-        
-        return $compatibleTags;
+        // Fallback: without composer.json analysis, we can't reliably determine compatibility
+        // Return empty array to be conservative
+        return [];
     }
 
     /**
