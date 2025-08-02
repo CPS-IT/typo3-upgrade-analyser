@@ -1,0 +1,91 @@
+rootPageId: 1
+base: 'https://example.com/'
+baseVariants: []
+errorHandling:
+  - errorCode: 404
+    errorHandler: Page
+    errorContentSource: 't3://page?uid=404'
+  - errorCode: 403
+    errorHandler: Page
+    errorContentSource: 't3://page?uid=403'
+  - errorCode: 500
+    errorHandler: Page
+    errorContentSource: 't3://page?uid=500'
+
+languages:
+  -
+    title: English
+    enabled: true
+    languageId: 0
+    base: /
+    typo3Language: default
+    locale: en_US.UTF-8
+    iso-639-1: en
+    navigationTitle: English
+    hreflang: en-US
+    direction: ltr
+    flag: us
+  -
+    title: German
+    enabled: true
+    languageId: 1
+    base: /de/
+    typo3Language: de
+    locale: de_DE.UTF-8
+    iso-639-1: de
+    navigationTitle: Deutsch
+    hreflang: de-DE
+    direction: ltr
+    flag: de
+    fallbackType: strict
+    fallbacks: '0'
+
+routes:
+  -
+    route: robots.txt
+    type: staticText
+    content: |
+      User-agent: *
+      Disallow: /typo3/
+      Disallow: /typo3conf/
+      Allow: /typo3conf/ext/*/Resources/Public/
+      Sitemap: https://example.com/sitemap.xml
+
+routeEnhancers:
+  PageTypeSuffix:
+    type: PageType
+    default: /
+    index: ''
+    suffix: /
+    map:
+      '/': 0
+      'sitemap.xml': 1533906435
+
+  NewsPlugin:
+    type: Extbase
+    extension: News
+    plugin: Pi1
+    routes:
+      - routePath: '/news/{news_title}'
+        _controller: 'News::detail'
+        _arguments:
+          news_title: news
+      - routePath: '/news/page/{page}'
+        _controller: 'News::list'
+        _arguments:
+          page: '@widget_0/currentPage'
+    defaultController: 'News::list'
+    defaults:
+      page: '0'
+    requirements:
+      news_title: '^[a-zA-Z0-9\-]+$'
+      page: '\d+'
+    aspects:
+      news_title:
+        type: PersistedAliasMapper
+        tableName: tx_news_domain_model_news
+        routeFieldName: path_segment
+      page:
+        type: StaticRangeMapper
+        start: '1'
+        end: '100'
