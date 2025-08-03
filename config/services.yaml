@@ -76,3 +76,45 @@ services:
 
   # Git Version Parser
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser: ~
+
+  # Configuration Parsers
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\:
+    resource: '../src/Infrastructure/Parser/*'
+    exclude: '../src/Infrastructure/Parser/Exception/*'
+    tags: ['configuration_parser']
+
+  # PHP Configuration Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser:
+    arguments:
+      - '@PhpParser\Parser'
+      - '@logger'
+    tags: ['configuration_parser']
+
+  # YAML Configuration Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser:
+    arguments:
+      - '@logger'
+    tags: ['configuration_parser']
+
+  # Configuration Discovery Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService:
+    arguments:
+      - !tagged_iterator 'configuration_parser'
+      - '@logger'
+
+  # Discovery Services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
+    resource: '../src/Infrastructure/Discovery/*'
+    exclude: '../src/Infrastructure/Discovery/ConfigurationDiscoveryService.php'
+
+  # Installation Discovery Service with Configuration Discovery
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService:
+    arguments:
+      - !tagged_iterator 'detection_strategy'
+      - !tagged_iterator 'validation_rule'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService'
+      - '@logger'
+
+  # Detection Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector:
+    tags: ['detection_strategy']

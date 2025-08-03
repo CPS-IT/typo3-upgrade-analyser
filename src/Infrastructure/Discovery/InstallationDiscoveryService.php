@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,11 +33,13 @@ final class InstallationDiscoveryService
     /**
      * @param array<DetectionStrategyInterface> $detectionStrategies Available detection strategies
      * @param array<ValidationRuleInterface> $validationRules Installation validation rules
+     * @param ConfigurationDiscoveryService|null $configurationDiscoveryService Configuration discovery service
      * @param LoggerInterface $logger Logger instance
      */
     public function __construct(
         array $detectionStrategies,
         private readonly array $validationRules,
+        private readonly ?ConfigurationDiscoveryService $configurationDiscoveryService,
         private readonly LoggerInterface $logger
     ) {
         // Sort detection strategies by priority (highest first)
@@ -112,6 +115,18 @@ final class InstallationDiscoveryService
                         'result' => 'success',
                         'priority' => $strategy->getPriority()
                     ];
+
+                    // Discover configuration files if configuration discovery service is available
+                    if ($this->configurationDiscoveryService !== null) {
+                        try {
+                            $installation = $this->configurationDiscoveryService->discoverConfiguration($installation);
+                        } catch (\Throwable $e) {
+                            $this->logger->warning('Configuration discovery failed during installation discovery', [
+                                'installation_path' => $installation->getPath(),
+                                'exception_message' => $e->getMessage(),
+                            ]);
+                        }
+                    }
 
                     // Run validation if requested
                     $validationIssues = [];

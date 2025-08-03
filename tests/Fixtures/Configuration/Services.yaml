@@ -1,0 +1,94 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # Make classes in src/ available for dependency injection
+  App\:
+    resource: '../src/*'
+    exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+  # Controllers are imported separately to make sure services can be injected
+  # as action arguments even if you don't extend any base controller class
+  App\Controller\:
+    resource: '../src/Controller'
+    tags: ['controller.service_arguments']
+
+  # TYPO3 specific services
+  TYPO3\CMS\Core\Authentication\BackendUserAuthentication:
+    public: true
+
+  TYPO3\CMS\Core\Database\ConnectionPool:
+    public: true
+
+  TYPO3\CMS\Extbase\Object\ObjectManager:
+    public: true
+
+  # Custom services
+  App\Service\DatabaseService:
+    arguments:
+      $connectionPool: '@TYPO3\CMS\Core\Database\ConnectionPool'
+
+  App\Service\ConfigurationService:
+    arguments:
+      $settings:
+        database:
+          host: '%env(DB_HOST)%'
+          name: '%env(DB_NAME)%'
+          user: '%env(DB_USER)%'
+          password: '%env(DB_PASSWORD)%'
+        cache:
+          enabled: true
+          ttl: 3600
+        features:
+          debug: '%env(bool:APP_DEBUG)%'
+          maintenance: false
+
+  # Event listeners
+  App\EventListener\UserLoginListener:
+    tags:
+      - name: event.listener
+        event: 'TYPO3\CMS\Core\Authentication\Event\BeforeUserLoginEvent'
+        method: onBeforeUserLogin
+
+  # Command controllers
+  App\Command\ImportCommand:
+    tags: ['console.command']
+
+parameters:
+  locale: 'en'
+  app.version: '1.0.0'
+  app.name: 'TYPO3 Test Application'
+
+when@dev:
+  services:
+    _defaults:
+      autowire: true
+      autoconfigure: true
+      public: false
+
+    App\Service\DebugService:
+      public: true
+
+when@prod:
+  services:
+    _defaults:
+      autowire: true
+      autoconfigure: true
+      public: false
+      
+  services.App.Service.ConfigurationService:
+    arguments:
+      $settings:
+        database:
+          host: '%env(DB_HOST)%'
+          name: '%env(DB_NAME)%'
+          user: '%env(DB_USER)%'
+          password: '%env(DB_PASSWORD)%'
+        cache:
+          enabled: true
+          ttl: 7200
+        features:
+          debug: false
+          maintenance: false

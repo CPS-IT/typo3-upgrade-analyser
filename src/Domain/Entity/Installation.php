@@ -16,6 +16,8 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
 
 /**
  * Represents a TYPO3 installation to be analyzed
@@ -28,6 +30,12 @@ class Installation
     private ?InstallationMetadata $metadata = null;
     private bool $isValid = true;
     private array $validationErrors = [];
+    
+    /** @var array<string, ConfigurationData> */
+    private array $configurationData = [];
+    
+    /** @var array<string, ConfigurationMetadata> */
+    private array $configurationMetadata = [];
 
     public function __construct(
         private readonly string $path,
@@ -213,5 +221,183 @@ class Installation
     {
         $this->validationErrors = $errors;
         $this->isValid = empty($errors);
+    }
+
+    // Configuration management methods
+    
+    /**
+     * Add parsed configuration data
+     * 
+     * @param string $identifier Configuration identifier (e.g., 'LocalConfiguration', 'Services')
+     * @param ConfigurationData $configData Parsed configuration data
+     */
+    public function addConfigurationData(string $identifier, ConfigurationData $configData): void
+    {
+        $this->configurationData[$identifier] = $configData;
+    }
+    
+    /**
+     * Add configuration metadata
+     * 
+     * @param string $identifier Configuration identifier
+     * @param ConfigurationMetadata $metadata Configuration metadata
+     */
+    public function addConfigurationMetadata(string $identifier, ConfigurationMetadata $metadata): void
+    {
+        $this->configurationMetadata[$identifier] = $metadata;
+    }
+    
+    /**
+     * Get configuration data by identifier
+     * 
+     * @param string $identifier Configuration identifier
+     * @return ConfigurationData|null Configuration data or null if not found
+     */
+    public function getConfigurationData(string $identifier): ?ConfigurationData
+    {
+        return $this->configurationData[$identifier] ?? null;
+    }
+    
+    /**
+     * Get configuration metadata by identifier
+     * 
+     * @param string $identifier Configuration identifier
+     * @return ConfigurationMetadata|null Configuration metadata or null if not found
+     */
+    public function getConfigurationMetadata(string $identifier): ?ConfigurationMetadata
+    {
+        return $this->configurationMetadata[$identifier] ?? null;
+    }
+    
+    /**
+     * Get all configuration data
+     * 
+     * @return array<string, ConfigurationData> All configuration data
+     */
+    public function getAllConfigurationData(): array
+    {
+        return $this->configurationData;
+    }
+    
+    /**
+     * Get all configuration metadata
+     * 
+     * @return array<string, ConfigurationMetadata> All configuration metadata
+     */
+    public function getAllConfigurationMetadata(): array
+    {
+        return $this->configurationMetadata;
+    }
+    
+    /**
+     * Check if configuration exists
+     * 
+     * @param string $identifier Configuration identifier
+     * @return bool True if configuration exists
+     */
+    public function hasConfiguration(string $identifier): bool
+    {
+        return isset($this->configurationData[$identifier]);
+    }
+    
+    /**
+     * Get configuration value from any configuration file
+     * 
+     * @param string $identifier Configuration identifier
+     * @param string $keyPath Key path using dot notation
+     * @param mixed $default Default value
+     * @return mixed Configuration value or default
+     */
+    public function getConfigValue(string $identifier, string $keyPath, mixed $default = null): mixed
+    {
+        $configData = $this->getConfigurationData($identifier);
+        return $configData?->getValue($keyPath, $default) ?? $default;
+    }
+    
+    /**
+     * Get database configuration from LocalConfiguration
+     * 
+     * @return array<string, mixed> Database configuration
+     */
+    public function getDatabaseConfiguration(): array
+    {
+        return $this->getConfigValue('LocalConfiguration', 'DB', []);
+    }
+    
+    /**
+     * Get system configuration from LocalConfiguration
+     * 
+     * @return array<string, mixed> System configuration
+     */
+    public function getSystemConfiguration(): array
+    {
+        return $this->getConfigValue('LocalConfiguration', 'SYS', []);
+    }
+    
+    /**
+     * Get mail configuration from LocalConfiguration
+     * 
+     * @return array<string, mixed> Mail configuration
+     */
+    public function getMailConfiguration(): array
+    {
+        return $this->getConfigValue('LocalConfiguration', 'MAIL', []);
+    }
+    
+    /**
+     * Check if configuration has validation errors
+     * 
+     * @return bool True if any configuration has validation errors
+     */
+    public function hasConfigurationErrors(): bool
+    {
+        foreach ($this->configurationData as $configData) {
+            if ($configData->hasValidationErrors()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Get all configuration validation errors
+     * 
+     * @return array<string, array<string>> Configuration errors grouped by identifier
+     */
+    public function getConfigurationErrors(): array
+    {
+        $errors = [];
+        foreach ($this->configurationData as $identifier => $configData) {
+            if ($configData->hasValidationErrors()) {
+                $errors[$identifier] = $configData->getValidationErrors();
+            }
+        }
+        return $errors;
+    }
+    
+    /**
+     * Get configuration summary for analysis
+     * 
+     * @return array<string, mixed> Configuration summary
+     */
+    public function getConfigurationSummary(): array
+    {
+        return [
+            'total_configurations' => count($this->configurationData),
+            'configurations' => array_keys($this->configurationData),
+            'has_errors' => $this->hasConfigurationErrors(),
+            'error_count' => array_sum(array_map(
+                fn(ConfigurationData $config) => count($config->getValidationErrors()),
+                $this->configurationData
+            )),
+            'file_sizes' => array_map(
+                fn(ConfigurationMetadata $meta) => $meta->getFileSize(),
+                $this->configurationMetadata
+            ),
+            'last_modified' => array_map(
+                fn(ConfigurationMetadata $meta) => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
+                $this->configurationMetadata
+            ),
+        ];
     }
 }
