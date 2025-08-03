@@ -28,11 +28,11 @@ use Symfony\Component\Finder\Finder;
 class ConfigurationDiscoveryService
 {
     /**
-     * @param array<ConfigurationParserInterface> $parsers Available configuration parsers
+     * @param iterable<ConfigurationParserInterface> $parsers Available configuration parsers
      * @param LoggerInterface $logger Logger instance
      */
     public function __construct(
-        private readonly array $parsers,
+        private readonly iterable $parsers,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -341,7 +341,7 @@ class ConfigurationDiscoveryService
      */
     public function getParsers(): array
     {
-        return $this->parsers;
+        return iterator_to_array($this->parsers);
     }
 
     /**

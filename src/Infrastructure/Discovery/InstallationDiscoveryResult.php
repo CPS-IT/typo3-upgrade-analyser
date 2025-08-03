@@ -13,15 +13,17 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
 /**
  * Result of installation discovery operation
- * 
+ *
  * Contains the discovered installation (if successful), validation results,
  * and detailed information about the discovery process including which
  * strategies were attempted.
  */
-final class InstallationDiscoveryResult
+final readonly class InstallationDiscoveryResult implements SerializableInterface
 {
     /**
      * @param Installation|null $installation Discovered installation (null if not found)
@@ -32,18 +34,18 @@ final class InstallationDiscoveryResult
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
      */
     private function __construct(
-        private readonly ?Installation $installation,
-        private readonly bool $isSuccessful,
-        private readonly string $errorMessage,
-        private readonly ?DetectionStrategyInterface $successfulStrategy,
-        private readonly array $validationIssues,
-        private readonly array $attemptedStrategies
+        private ?Installation               $installation,
+        private bool                        $isSuccessful,
+        private string                      $errorMessage,
+        private ?DetectionStrategyInterface $successfulStrategy,
+        private array                       $validationIssues,
+        private array                       $attemptedStrategies
     ) {
     }
 
     /**
      * Create a successful installation discovery result
-     * 
+     *
      * @param Installation $installation Discovered installation
      * @param DetectionStrategyInterface $strategy Strategy that succeeded
      * @param array<ValidationIssue> $validationIssues Validation issues found
@@ -61,7 +63,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Create a failed installation discovery result
-     * 
+     *
      * @param string $errorMessage Error message describing the failure
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
      * @return self Failed result
@@ -73,7 +75,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get the discovered installation
-     * 
+     *
      * @return Installation|null Installation if discovery was successful, null otherwise
      */
     public function getInstallation(): ?Installation
@@ -83,7 +85,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Check if installation discovery was successful
-     * 
+     *
      * @return bool True if installation was discovered successfully
      */
     public function isSuccessful(): bool
@@ -93,7 +95,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get error message if discovery failed
-     * 
+     *
      * @return string Error message (empty string if successful)
      */
     public function getErrorMessage(): string
@@ -103,7 +105,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get the strategy that successfully discovered the installation
-     * 
+     *
      * @return DetectionStrategyInterface|null Successful strategy, null if discovery failed
      */
     public function getSuccessfulStrategy(): ?DetectionStrategyInterface
@@ -113,7 +115,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get validation issues found during discovery
-     * 
+     *
      * @return array<ValidationIssue> Array of validation issues
      */
     public function getValidationIssues(): array
@@ -123,7 +125,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get information about all attempted detection strategies
-     * 
+     *
      * @return array<array<string, mixed>> Array of strategy attempt information
      */
     public function getAttemptedStrategies(): array
@@ -133,7 +135,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Check if the discovered installation has validation issues
-     * 
+     *
      * @return bool True if validation issues were found
      */
     public function hasValidationIssues(): bool
@@ -143,7 +145,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get validation issues of specific severity level
-     * 
+     *
      * @param ValidationSeverity $severity Severity level to filter by
      * @return array<ValidationIssue> Issues of specified severity
      */
@@ -157,7 +159,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Check if installation has blocking validation issues
-     * 
+     *
      * @return bool True if blocking issues are present
      */
     public function hasBlockingIssues(): bool
@@ -170,13 +172,13 @@ final class InstallationDiscoveryResult
 
     /**
      * Get validation issues grouped by category
-     * 
+     *
      * @return array<string, array<ValidationIssue>> Issues grouped by category
      */
     public function getValidationIssuesByCategory(): array
     {
         $grouped = [];
-        
+
         foreach ($this->validationIssues as $issue) {
             $category = $issue->getCategory();
             if (!isset($grouped[$category])) {
@@ -190,7 +192,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get a human-readable summary of the discovery result
-     * 
+     *
      * @return string Summary string
      */
     public function getSummary(): string
@@ -198,7 +200,7 @@ final class InstallationDiscoveryResult
         if (!$this->isSuccessful) {
             $attemptedCount = count($this->attemptedStrategies);
             $supportedCount = count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false));
-            
+
             return sprintf(
                 'Installation discovery failed: %s (attempted %d strategies, %d supported)',
                 $this->errorMessage,
@@ -210,7 +212,7 @@ final class InstallationDiscoveryResult
         $version = $this->installation?->getVersion()->toString() ?? 'unknown';
         $mode = $this->installation?->getMode()?->value ?? 'unknown';
         $strategyName = $this->successfulStrategy?->getName() ?? 'unknown';
-        
+
         $summary = sprintf(
             'TYPO3 %s installation discovered using %s (%s mode)',
             $version,
@@ -221,7 +223,7 @@ final class InstallationDiscoveryResult
         if ($this->hasValidationIssues()) {
             $issueCount = count($this->validationIssues);
             $blockingCount = count(array_filter($this->validationIssues, fn($issue) => $issue->isBlockingAnalysis()));
-            
+
             $summary .= sprintf(
                 ' - %d validation issue%s found%s',
                 $issueCount,
@@ -235,7 +237,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get detailed discovery statistics
-     * 
+     *
      * @return array<string, mixed> Discovery statistics
      */
     public function getStatistics(): array
@@ -253,7 +255,6 @@ final class InstallationDiscoveryResult
             $stats['typo3_version'] = $this->installation?->getVersion()->toString();
             $stats['installation_mode'] = $this->installation?->getMode()?->value;
             $stats['successful_strategy'] = $this->successfulStrategy?->getName();
-            $stats['extensions_count'] = $this->installation?->getExtensions() ? count($this->installation->getExtensions()) : 0;
         }
 
         return $stats;
@@ -261,7 +262,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Convert result to array for serialization
-     * 
+     *
      * @return array<string, mixed> Array representation
      */
     public function toArray(): array
@@ -269,7 +270,7 @@ final class InstallationDiscoveryResult
         return [
             'successful' => $this->isSuccessful,
             'error_message' => $this->errorMessage,
-            'installation' => $this->installation?->toArray(),
+            'installation' => $this->installation?->toArray(false), // Exclude extensions in discovery context
             'successful_strategy' => $this->successfulStrategy?->getName(),
             'validation_issues' => array_map(fn(ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
             'validation_summary' => [
@@ -286,7 +287,7 @@ final class InstallationDiscoveryResult
 
     /**
      * Get validation issue counts by severity level
-     * 
+     *
      * @return array<string, int> Issue counts by severity
      */
     private function getValidationIssueCountsBySeverity(): array
@@ -306,5 +307,37 @@ final class InstallationDiscoveryResult
         }
 
         return $counts;
+    }
+
+    /**
+     * Create result from array data
+     * 
+     * @param array<string, mixed> $data Array representation to deserialize from
+     * @return static Deserialized result instance
+     */
+    public static function fromArray(array $data): static
+    {
+        if ($data['successful']) {
+            // Use Installation's own fromArray method for proper deserialization
+            $installation = Installation::fromArray($data['installation']);
+            
+            return new self(
+                $installation,
+                true,
+                '',
+                null, // Strategy cannot be reconstructed from cache
+                [], // Skip validation issues for cached results
+                $data['attempted_strategies'] ?? []
+            );
+        } else {
+            return new self(
+                null,
+                false,
+                $data['error_message'] ?? 'Unknown cached error',
+                null,
+                [],
+                $data['attempted_strategies'] ?? []
+            );
+        }
     }
 }

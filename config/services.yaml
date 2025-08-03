@@ -47,10 +47,7 @@ services:
 
   # PHP Parser
   PhpParser\Parser:
-    class: PhpParser\Parser\Php7
-    factory: ['PhpParser\ParserFactory', 'create']
-    arguments:
-      - 4  # PhpParser\ParserFactory::PREFER_PHP7
+    factory: ['PhpParser\ParserFactory', 'createForHostVersion']
 
   # Git Provider Factory and implementations
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory:
@@ -106,6 +103,15 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
     resource: '../src/Infrastructure/Discovery/*'
     exclude: '../src/Infrastructure/Discovery/ConfigurationDiscoveryService.php'
+    tags: ['discovery_service']
+
+  # Extension Discovery Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService:
+    arguments:
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+    tags: ['discovery_service']
 
   # Installation Discovery Service with Configuration Discovery
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService:
@@ -114,7 +120,30 @@ services:
       - !tagged_iterator 'validation_rule'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService'
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+
+  # Version Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy:
+    tags: ['version_strategy']
+
+  # Version Extractor
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor:
+    arguments:
+      - !tagged_iterator 'version_strategy'
+      - '@logger'
 
   # Detection Strategies
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector:
     tags: ['detection_strategy']
+
+  # Configuration Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService:
+    arguments:
+      - '@logger'
+
+  # Cache Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService:
+    arguments:
+      - '@logger'
+      - '%app.root_dir%'

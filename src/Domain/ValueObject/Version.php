@@ -21,6 +21,8 @@ class Version
     private int $minor;
     private int $patch;
     private ?string $suffix;
+    private bool $isBranchVersion = false;
+    private ?string $originalVersion = null;
 
     public function __construct(string $version)
     {
@@ -54,6 +56,11 @@ class Version
 
     public function toString(): string
     {
+        // For branch versions, return the original branch name
+        if ($this->isBranchVersion && $this->originalVersion !== null) {
+            return $this->originalVersion;
+        }
+        
         $version = "{$this->major}.{$this->minor}.{$this->patch}";
         if ($this->suffix !== null) {
             $version .= "-{$this->suffix}";
@@ -116,6 +123,19 @@ class Version
 
     private function parseVersion(string $version): void
     {
+        $originalInput = $version;
+        
+        // Handle development branch versions (dev-*)
+        if (str_starts_with($version, 'dev-')) {
+            $this->isBranchVersion = true;
+            $this->originalVersion = $originalInput;
+            $this->major = 999;
+            $this->minor = 999;
+            $this->patch = 999;
+            $this->suffix = 'dev';
+            return;
+        }
+        
         // Remove common prefixes
         $version = ltrim($version, 'v^~>=<');
         

@@ -30,16 +30,17 @@ final class VersionExtractor
     private readonly array $strategies;
 
     /**
-     * @param array<VersionStrategyInterface> $strategies Version extraction strategies
+     * @param iterable<VersionStrategyInterface> $strategies Version extraction strategies
      * @param LoggerInterface $logger Logger instance
      */
     public function __construct(
-        array $strategies,
+        iterable $strategies,
         private readonly LoggerInterface $logger
     ) {
-        // Sort strategies by priority (highest first)
-        usort($strategies, fn(VersionStrategyInterface $a, VersionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
-        $this->strategies = $strategies;
+        // Convert iterable to array and sort strategies by priority (highest first)
+        $strategiesArray = iterator_to_array($strategies);
+        usort($strategiesArray, fn(VersionStrategyInterface $a, VersionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
+        $this->strategies = $strategiesArray;
     }
 
     /**

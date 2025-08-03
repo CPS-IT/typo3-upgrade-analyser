@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
+use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ValidateCommand;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
 
@@ -37,6 +38,7 @@ class AnalyzerApplication extends Application
             $this->container->get(AnalyzeCommand::class),
             $this->container->get(InitConfigCommand::class),
             $this->container->get(ListAnalyzersCommand::class),
+            $this->container->get(ListExtensionsCommand::class),
             $this->container->get(ValidateCommand::class),
         ]);
     }

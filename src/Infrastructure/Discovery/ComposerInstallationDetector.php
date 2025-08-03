@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
-use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
@@ -82,16 +81,12 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             $installation->setMode(InstallationMode::COMPOSER);
             $installation->setMetadata($metadata);
 
-            // Discover and add extensions (basic discovery for now)
-            $extensions = $this->discoverExtensions($path);
-            foreach ($extensions as $extension) {
-                $installation->addExtension($extension);
-            }
+            // Note: Extensions are discovered separately by ExtensionDiscoveryService
+            // to maintain proper separation of concerns
 
             $this->logger->info('Composer TYPO3 installation detected', [
                 'path' => $path,
-                'version' => $version->toString(),
-                'extensions_count' => count($extensions)
+                'version' => $version->toString()
             ]);
 
             return $installation;
@@ -120,21 +115,32 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             }
         }
 
-        // Check for TYPO3 indicators
+        // Check if composer.json contains TYPO3 packages first
+        if (!$this->hasTypo3Packages($path)) {
+            return false;
+        }
+
+        // Detect custom paths from composer.json
+        $customPaths = $this->detectCustomPaths($path);
+        $webDir = $customPaths['web-dir'];
+
+        // Check for TYPO3 indicators using custom paths
+        $typo3Indicators = [
+            $webDir . '/typo3conf',
+            $webDir . '/typo3',
+            'config/system',
+            'var/log'
+        ];
+
         $foundIndicators = 0;
-        foreach (self::TYPO3_INDICATORS as $indicator) {
+        foreach ($typo3Indicators as $indicator) {
             if (file_exists($path . '/' . $indicator)) {
                 $foundIndicators++;
             }
         }
 
         // Require at least 2 TYPO3 indicators for confidence
-        if ($foundIndicators < 2) {
-            return false;
-        }
-
-        // Check if composer.json contains TYPO3 packages
-        return $this->hasTypo3Packages($path);
+        return $foundIndicators >= 2;
     }
 
     public function getPriority(): int
@@ -144,7 +150,8 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
 
     public function getRequiredIndicators(): array
     {
-        return array_merge(self::REQUIRED_COMPOSER_FILES, self::TYPO3_INDICATORS);
+        // Only require composer.json - TYPO3 paths can be customized
+        return self::REQUIRED_COMPOSER_FILES;
     }
 
     public function getName(): string
@@ -315,23 +322,62 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
      */
     private function detectCustomPaths(string $path): array
     {
-        $paths = [];
+        $paths = [
+            'vendor-dir' => 'vendor',
+            'web-dir' => 'public',
+            'typo3conf-dir' => 'public/typo3conf',
+            'var' => 'var',
+            'config' => 'config'
+        ];
 
-        // Standard Composer TYPO3 paths
-        $paths['public'] = 'public';
-        $paths['var'] = 'var';
-        $paths['config'] = 'config';
-
-        // Check for custom public directory name
-        $possiblePublicDirs = ['public', 'web', 'htdocs', 'www'];
-        foreach ($possiblePublicDirs as $dir) {
-            if (is_dir($path . '/' . $dir) && file_exists($path . '/' . $dir . '/index.php')) {
-                $paths['public'] = $dir;
-                break;
-            }
+        $composerJsonPath = $path . '/composer.json';
+        
+        if (!file_exists($composerJsonPath)) {
+            $this->logger->debug('composer.json not found, using default paths');
+            return $paths;
         }
 
-        return $paths;
+        try {
+            $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
+            
+            if (!is_array($composerData)) {
+                return $paths;
+            }
+
+            // Read composer config section
+            if (isset($composerData['config'])) {
+                $composerConfig = $composerData['config'];
+                
+                if (isset($composerConfig['vendor-dir'])) {
+                    $paths['vendor-dir'] = $composerConfig['vendor-dir'];
+                }
+            }
+
+            // Read TYPO3-specific configuration from extra section
+            if (isset($composerData['extra']['typo3/cms'])) {
+                $typo3Config = $composerData['extra']['typo3/cms'];
+                
+                if (isset($typo3Config['web-dir'])) {
+                    $paths['web-dir'] = $typo3Config['web-dir'];
+                }
+            }
+
+            // Update typo3conf-dir based on web-dir
+            $paths['typo3conf-dir'] = $paths['web-dir'] . '/typo3conf';
+
+            $this->logger->debug('Custom paths detected from composer.json', [
+                'paths' => $paths
+            ]);
+
+            return $paths;
+
+        } catch (\JsonException $e) {
+            $this->logger->warning('Failed to parse composer.json for custom paths', [
+                'path' => $composerJsonPath,
+                'error' => $e->getMessage()
+            ]);
+            return $paths;
+        }
     }
 
     /**
@@ -355,107 +401,4 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         return new \DateTimeImmutable();
     }
 
-    /**
-     * Basic extension discovery for Composer installations
-     * 
-     * This is a simplified implementation. Full extension discovery
-     * will be implemented in Phase 3.
-     * 
-     * @param string $path Installation path
-     * @return array<Extension> Discovered extensions
-     */
-    private function discoverExtensions(string $path): array
-    {
-        $extensions = [];
-
-        // Check composer.lock for installed packages
-        $composerLockPath = $path . '/composer.lock';
-        if (!file_exists($composerLockPath)) {
-            return $extensions;
-        }
-
-        try {
-            $lockData = json_decode(file_get_contents($composerLockPath), true, 512, JSON_THROW_ON_ERROR);
-            
-            if (!isset($lockData['packages']) || !is_array($lockData['packages'])) {
-                return $extensions;
-            }
-
-            foreach ($lockData['packages'] as $package) {
-                if (!is_array($package) || !isset($package['name'], $package['version'])) {
-                    continue;
-                }
-
-                // Skip non-TYPO3 packages for now
-                if (!str_starts_with($package['name'], 'typo3/') && 
-                    !isset($package['type']) || 
-                    $package['type'] !== 'typo3-cms-extension') {
-                    continue;
-                }
-
-                // Create basic extension entity
-                $extensionKey = $this->extractExtensionKey($package['name']);
-                if ($extensionKey !== null) {
-                    $version = Version::fromString($this->normalizeVersion($package['version']));
-                    $extension = new Extension($extensionKey, $version);
-                    $extension->setType('composer');
-                    $extensions[] = $extension;
-                }
-            }
-
-        } catch (\JsonException $e) {
-            $this->logger->warning('Failed to parse composer.lock for extension discovery', [
-                'path' => $composerLockPath,
-                'error' => $e->getMessage()
-            ]);
-        }
-
-        return $extensions;
-    }
-
-    /**
-     * Extract extension key from package name
-     * 
-     * @param string $packageName Composer package name
-     * @return string|null Extension key
-     */
-    private function extractExtensionKey(string $packageName): ?string
-    {
-        // Handle TYPO3 core packages
-        if (in_array($packageName, self::TYPO3_CORE_PACKAGES, true)) {
-            return null; // Core packages are not extensions
-        }
-
-        // Extract extension key from package name
-        if (str_starts_with($packageName, 'typo3/cms-')) {
-            return substr($packageName, 10); // Remove 'typo3/cms-' prefix
-        }
-
-        // For third-party extensions, use the part after the slash
-        $parts = explode('/', $packageName);
-        if (count($parts) === 2) {
-            return $parts[1];
-        }
-
-        return null;
-    }
-
-    /**
-     * Normalize version string from composer.lock
-     * 
-     * @param string $version Raw version
-     * @return string Normalized version
-     */
-    private function normalizeVersion(string $version): string
-    {
-        // Remove 'v' prefix
-        $version = ltrim($version, 'v');
-        
-        // Handle dev versions
-        if (str_starts_with($version, 'dev-')) {
-            return '0.0.0'; // Fallback for dev versions
-        }
-
-        return $version;
-    }
 }

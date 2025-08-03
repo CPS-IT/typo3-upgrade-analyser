@@ -18,11 +18,12 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
 /**
  * Represents a TYPO3 installation to be analyzed
  */
-class Installation
+class Installation implements SerializableInterface
 {
     private array $extensions = [];
     private array $configuration = [];
@@ -202,19 +203,73 @@ class Installation
         }
     }
 
-    public function toArray(): array
+    public function toArray(bool $includeExtensions = true): array
     {
-        return [
+        $data = [
             'path' => $this->path,
             'version' => $this->version->toString(),
             'type' => $this->type,
             'mode' => $this->mode?->value,
-            'extensions' => array_map(fn($ext) => $ext->toArray(), $this->extensions),
             'configuration' => $this->configuration,
             'metadata' => $this->metadata?->toArray(),
             'is_valid' => $this->isValid,
             'validation_errors' => $this->validationErrors,
         ];
+
+        // Extensions are only included when explicitly requested
+        // In discovery context, extensions are managed separately by ExtensionDiscoveryService
+        if ($includeExtensions) {
+            $data['extensions'] = array_map(fn($ext) => $ext->toArray(), $this->extensions);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Create Installation instance from array data
+     * 
+     * @param array<string, mixed> $data Array representation to deserialize from
+     * @return static Deserialized Installation instance
+     */
+    public static function fromArray(array $data): static
+    {
+        $installation = new self(
+            $data['path'],
+            Version::fromString($data['version']),
+            $data['type'] ?? 'composer'
+        );
+        
+        if (isset($data['mode'])) {
+            $installation->setMode(InstallationMode::from($data['mode']));
+        }
+        
+        if (isset($data['metadata'])) {
+            $metadataArray = $data['metadata'];
+            $metadata = new InstallationMetadata(
+                $metadataArray['php_versions'] ?? [],
+                $metadataArray['database_config'] ?? [],
+                $metadataArray['enabled_features'] ?? [],
+                isset($metadataArray['last_modified']) ? 
+                    new \DateTimeImmutable($metadataArray['last_modified']) : 
+                    new \DateTimeImmutable(),
+                $metadataArray['custom_paths'] ?? [],
+                $metadataArray['discovery_data'] ?? []
+            );
+            $installation->setMetadata($metadata);
+        }
+        
+        if (isset($data['configuration'])) {
+            $installation->setConfiguration($data['configuration']);
+        }
+        
+        if (isset($data['validation_errors'])) {
+            $installation->setValidationErrors($data['validation_errors']);
+        }
+        
+        // Note: Extensions are not reconstructed from serialized data in discovery context
+        // Extensions are managed separately by ExtensionDiscoveryService
+        
+        return $installation;
     }
 
     public function setValidationErrors(array $errors): void

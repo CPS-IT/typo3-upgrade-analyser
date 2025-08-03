@@ -55,6 +55,10 @@ class ContainerFactory
         $container->setAlias(LoggerInterface::class, Logger::class)
             ->setPublic(true);
         
+        // Add 'logger' alias for services.yaml compatibility
+        $container->setAlias('logger', Logger::class)
+            ->setPublic(true);
+        
         // HTTP Client - register as a service definition  
         $container->register('http_client', \Symfony\Contracts\HttpClient\HttpClientInterface::class)
             ->setFactory([HttpClient::class, 'create'])

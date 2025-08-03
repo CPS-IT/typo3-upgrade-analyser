@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use Psr\Log\LoggerInterface;
 
@@ -31,20 +33,25 @@ final class InstallationDiscoveryService
     private readonly array $detectionStrategies;
 
     /**
-     * @param array<DetectionStrategyInterface> $detectionStrategies Available detection strategies
-     * @param array<ValidationRuleInterface> $validationRules Installation validation rules
+     * @param iterable<DetectionStrategyInterface> $detectionStrategies Available detection strategies
+     * @param iterable<ValidationRuleInterface> $validationRules Installation validation rules
      * @param ConfigurationDiscoveryService|null $configurationDiscoveryService Configuration discovery service
      * @param LoggerInterface $logger Logger instance
+     * @param ConfigurationService|null $configService Configuration service for cache settings
+     * @param CacheService|null $cacheService Cache service for result caching
      */
     public function __construct(
-        array $detectionStrategies,
-        private readonly array $validationRules,
+        iterable $detectionStrategies,
+        private readonly iterable $validationRules,
         private readonly ?ConfigurationDiscoveryService $configurationDiscoveryService,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly ?ConfigurationService $configService = null,
+        private readonly ?CacheService $cacheService = null
     ) {
-        // Sort detection strategies by priority (highest first)
-        usort($detectionStrategies, fn(DetectionStrategyInterface $a, DetectionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
-        $this->detectionStrategies = $detectionStrategies;
+        // Convert iterables to arrays and sort detection strategies by priority (highest first)
+        $strategiesArray = iterator_to_array($detectionStrategies);
+        usort($strategiesArray, fn(DetectionStrategyInterface $a, DetectionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
+        $this->detectionStrategies = $strategiesArray;
     }
 
     /**
@@ -63,6 +70,17 @@ final class InstallationDiscoveryService
                 'Path does not exist or is not a directory',
                 []
             );
+        }
+
+        // Check cache if enabled
+        if ($this->isCacheEnabled()) {
+            $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
+            $cachedResult = $this->cacheService->get($cacheKey);
+            
+            if ($cachedResult !== null) {
+                $this->logger->debug('Found cached installation discovery result', ['cache_key' => $cacheKey]);
+                return $this->deserializeResult($cachedResult);
+            }
         }
 
         $attemptedStrategies = [];
@@ -135,12 +153,20 @@ final class InstallationDiscoveryService
                         $installation->setValidationErrors($validationIssues);
                     }
 
-                    return InstallationDiscoveryResult::success(
+                    $result = InstallationDiscoveryResult::success(
                         $installation,
                         $strategy,
                         $validationIssues,
                         $attemptedStrategies
                     );
+
+                    // Cache the result if enabled
+                    if ($this->isCacheEnabled()) {
+                        $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
+                        $this->cacheService->set($cacheKey, $this->serializeResult($result));
+                    }
+
+                    return $result;
                 }
 
                 $this->logger->debug('Strategy returned null installation', ['strategy' => $strategyName]);
@@ -244,7 +270,7 @@ final class InstallationDiscoveryService
      */
     public function getValidationRules(): array
     {
-        return $this->validationRules;
+        return iterator_to_array($this->validationRules);
     }
 
     /**
@@ -337,5 +363,28 @@ final class InstallationDiscoveryService
         }
 
         return true;
+    }
+
+    private function isCacheEnabled(): bool
+    {
+        return $this->configService !== null 
+            && $this->cacheService !== null 
+            && $this->configService->isResultCacheEnabled();
+    }
+
+    private function serializeResult(InstallationDiscoveryResult $result): array
+    {
+        $data = $result->toArray();
+        $data['cached_at'] = time();
+        return $data;
+    }
+
+    private function deserializeResult(array $data): InstallationDiscoveryResult
+    {
+        $this->logger->info('Using cached installation discovery result', [
+            'cached_at' => $data['cached_at'] ?? 'unknown'
+        ]);
+        
+        return InstallationDiscoveryResult::fromArray($data);
     }
 }
