@@ -31,7 +31,7 @@ final class ComposerVersionStrategyTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->strategy = new ComposerVersionStrategy($this->logger);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($this->testDir, 0755, true);
+        mkdir($this->testDir, 0o755, true);
     }
 
     protected function tearDown(): void
@@ -59,7 +59,7 @@ final class ComposerVersionStrategyTest extends TestCase
     public function testGetRequiredFiles(): void
     {
         $requiredFiles = $this->strategy->getRequiredFiles();
-        
+
         self::assertCount(2, $requiredFiles);
         self::assertContains('composer.lock', $requiredFiles);
         self::assertContains('composer.json', $requiredFiles);
@@ -102,11 +102,11 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => '12.4.8'
-                ]
-            ]
+                    'version' => '12.4.8',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -122,11 +122,11 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms',
-                    'version' => 'v11.5.23'
-                ]
-            ]
+                    'version' => 'v11.5.23',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -142,11 +142,11 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/minimal',
-                    'version' => '13.0.0'
-                ]
-            ]
+                    'version' => '13.0.0',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -162,11 +162,11 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => 'dev-12.4'
-                ]
-            ]
+                    'version' => 'dev-12.4',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -182,11 +182,11 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => 'dev-main'
-                ]
-            ]
+                    'version' => 'dev-main',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -201,19 +201,19 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'some/other-package',
-                    'version' => '1.0.0'
+                    'version' => '1.0.0',
                 ],
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => '12.4.8'
+                    'version' => '12.4.8',
                 ],
                 [
                     'name' => 'another/package',
-                    'version' => '2.0.0'
-                ]
-            ]
+                    'version' => '2.0.0',
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -236,9 +236,9 @@ final class ComposerVersionStrategyTest extends TestCase
     public function testExtractVersionFromComposerLockWithMissingPackages(): void
     {
         $lockData = [
-            'some-other-key' => []
+            'some-other-key' => [],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -253,16 +253,16 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 'invalid-package-structure',
                 [
-                    'name' => 'typo3/cms-core'
+                    'name' => 'typo3/cms-core',
                     // missing version
                 ],
                 [
-                    'version' => '12.4.8'
+                    'version' => '12.4.8',
                     // missing name
-                ]
-            ]
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
@@ -275,10 +275,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -292,10 +292,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require-dev' => [
-                'typo3/cms' => '~11.5.0'
-            ]
+                'typo3/cms' => '~11.5.0',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -309,10 +309,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'typo3/minimal' => '>=12.0 <13.0'
-            ]
+                'typo3/minimal' => '>=12.0 <13.0',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -326,10 +326,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => '^12.4.5 || ^13.0'
-            ]
+                'typo3/cms-core' => '^12.4.5 || ^13.0',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -343,10 +343,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => 'invalid-constraint'
-            ]
+                'typo3/cms-core' => 'invalid-constraint',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -359,10 +359,10 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'some/other-package' => '^1.0'
-            ]
+                'some/other-package' => '^1.0',
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
@@ -398,17 +398,17 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => '12.4.8'
-                ]
-            ]
+                    'version' => '12.4.8',
+                ],
+            ],
         ];
-        
+
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => '^11.5'
-            ]
+                'typo3/cms-core' => '^11.5',
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($lockPath, json_encode($lockData));
@@ -427,17 +427,17 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'some/other-package',
-                    'version' => '1.0.0'
-                ]
-            ]
+                    'version' => '1.0.0',
+                ],
+            ],
         ];
-        
+
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($lockPath, json_encode($lockData));
@@ -460,14 +460,14 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode(['packages' => []]));
-        
+
         // Make file unreadable (this might not work on all systems)
-        if (chmod($lockPath, 0000)) {
+        if (chmod($lockPath, 0o000)) {
             $version = $this->strategy->extractVersion($this->testDir);
             self::assertNull($version);
-            
+
             // Restore permissions for cleanup
-            chmod($lockPath, 0644);
+            chmod($lockPath, 0o644);
         } else {
             self::markTestSkipped('Cannot make file unreadable on this system');
         }
@@ -482,17 +482,17 @@ final class ComposerVersionStrategyTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => $inputVersion
-                ]
-            ]
+                    'version' => $inputVersion,
+                ],
+            ],
         ];
-        
+
         $lockPath = $this->testDir . '/composer.lock';
         file_put_contents($lockPath, json_encode($lockData));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
-        if ($expectedVersion === null) {
+        if (null === $expectedVersion) {
             self::assertNull($version);
         } else {
             self::assertInstanceOf(Version::class, $version);
@@ -522,16 +522,16 @@ final class ComposerVersionStrategyTest extends TestCase
     {
         $jsonData = [
             'require' => [
-                'typo3/cms-core' => $constraint
-            ]
+                'typo3/cms-core' => $constraint,
+            ],
         ];
-        
+
         $jsonPath = $this->testDir . '/composer.json';
         file_put_contents($jsonPath, json_encode($jsonData));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
-        if ($expectedVersion === null) {
+        if (null === $expectedVersion) {
             self::assertNull($version);
         } else {
             self::assertInstanceOf(Version::class, $version);

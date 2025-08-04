@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Client for interacting with the TYPO3 Extension Repository (TER) API
+ * Client for interacting with the TYPO3 Extension Repository (TER) API.
  */
 class TerApiClient
 {
@@ -27,35 +27,34 @@ class TerApiClient
 
     public function __construct(
         HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
         // Load TER token from environment
         $terToken = $_ENV['TER_TOKEN'] ?? getenv('TER_TOKEN') ?: null;
-        
+
         $this->httpClient = new TerApiHttpClient($httpClient, $logger, $terToken);
         $this->responseParser = new TerApiResponseParser();
         $this->compatibilityChecker = new VersionCompatibilityChecker();
     }
 
     /**
-     * Check if a version compatible with the target TYPO3 version exists
+     * Check if a version compatible with the target TYPO3 version exists.
      */
     public function hasVersionFor(string $extensionKey, Version $typo3Version): bool
     {
         try {
             $extensionWithVersions = $this->getExtensionWithVersions($extensionKey);
-            
-            if ($extensionWithVersions['versions'] === null) {
+
+            if (null === $extensionWithVersions['versions']) {
                 return false;
             }
-            
+
             $versions = $this->responseParser->parseVersionsData($extensionWithVersions['versions']);
-            if ($versions === null) {
+            if (null === $versions) {
                 return false;
             }
-            
+
             return $this->compatibilityChecker->hasCompatibleVersion($versions, $typo3Version);
-            
         } catch (TerExtensionNotFoundException $e) {
             // Extension doesn't exist - return false gracefully
             return false;
@@ -64,33 +63,29 @@ class TerApiClient
                 'extension_key' => $extensionKey,
                 'error' => $e->getMessage(),
             ]);
-            
-            throw new TerApiException(
-                sprintf('Failed to check TER for extension "%s": %s', $extensionKey, $e->getMessage()),
-                $e
-            );
+
+            throw new TerApiException(\sprintf('Failed to check TER for extension "%s": %s', $extensionKey, $e->getMessage()), $e);
         }
     }
 
     /**
-     * Get the latest version for a specific TYPO3 version
+     * Get the latest version for a specific TYPO3 version.
      */
     public function getLatestVersion(string $extensionKey, Version $typo3Version): ?string
     {
         try {
             $extensionWithVersions = $this->getExtensionWithVersions($extensionKey);
-            
-            if ($extensionWithVersions['versions'] === null) {
+
+            if (null === $extensionWithVersions['versions']) {
                 return null;
             }
-            
+
             $versions = $this->responseParser->parseVersionsData($extensionWithVersions['versions']);
-            if ($versions === null) {
+            if (null === $versions) {
                 return null;
             }
-            
+
             return $this->compatibilityChecker->getLatestCompatibleVersion($versions, $typo3Version);
-            
         } catch (TerExtensionNotFoundException $e) {
             // Extension doesn't exist - return null gracefully
             return null;
@@ -99,26 +94,23 @@ class TerApiClient
                 'extension_key' => $extensionKey,
                 'error' => $e->getMessage(),
             ]);
-            
-            throw new TerApiException(
-                sprintf('Failed to get latest version from TER for extension "%s": %s', $extensionKey, $e->getMessage()),
-                $e
-            );
+
+            throw new TerApiException(\sprintf('Failed to get latest version from TER for extension "%s": %s', $extensionKey, $e->getMessage()), $e);
         }
     }
-    
+
     /**
      * Get extension and versions data in a single operation
-     * This reduces the N+1 API calls problem
+     * This reduces the N+1 API calls problem.
      */
     private function getExtensionWithVersions(string $extensionKey): array
     {
         $data = $this->httpClient->getExtensionWithVersions($extensionKey);
-        
-        if ($data['extension'] === null) {
+
+        if (null === $data['extension']) {
             throw new TerExtensionNotFoundException($extensionKey);
         }
-        
+
         return $data;
     }
 }

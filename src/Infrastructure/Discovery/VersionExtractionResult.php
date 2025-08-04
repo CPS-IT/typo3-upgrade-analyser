@@ -15,50 +15,52 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Result of version extraction operation
- * 
+ * Result of version extraction operation.
+ *
  * Contains the extracted version (if successful), metadata about the extraction
  * process, and information about which strategies were attempted.
  */
 final class VersionExtractionResult
 {
     /**
-     * @param Version|null $version Extracted version (null if extraction failed)
-     * @param bool $isSuccessful Whether extraction was successful
-     * @param string $errorMessage Error message if extraction failed
-     * @param VersionStrategyInterface|null $successfulStrategy Strategy that succeeded
-     * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     * @param Version|null                  $version             Extracted version (null if extraction failed)
+     * @param bool                          $isSuccessful        Whether extraction was successful
+     * @param string                        $errorMessage        Error message if extraction failed
+     * @param VersionStrategyInterface|null $successfulStrategy  Strategy that succeeded
+     * @param array<array<string, mixed>>   $attemptedStrategies Information about attempted strategies
      */
     private function __construct(
         private readonly ?Version $version,
         private readonly bool $isSuccessful,
         private readonly string $errorMessage,
         private readonly ?VersionStrategyInterface $successfulStrategy,
-        private readonly array $attemptedStrategies
+        private readonly array $attemptedStrategies,
     ) {
     }
 
     /**
-     * Create a successful version extraction result
-     * 
-     * @param Version $version Extracted version
-     * @param VersionStrategyInterface $strategy Strategy that succeeded
+     * Create a successful version extraction result.
+     *
+     * @param Version                     $version             Extracted version
+     * @param VersionStrategyInterface    $strategy            Strategy that succeeded
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Successful result
      */
     public static function success(
         Version $version,
         VersionStrategyInterface $strategy,
-        array $attemptedStrategies = []
+        array $attemptedStrategies = [],
     ): self {
         return new self($version, true, '', $strategy, $attemptedStrategies);
     }
 
     /**
-     * Create a failed version extraction result
-     * 
-     * @param string $errorMessage Error message describing the failure
+     * Create a failed version extraction result.
+     *
+     * @param string                      $errorMessage        Error message describing the failure
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Failed result
      */
     public static function failed(string $errorMessage, array $attemptedStrategies = []): self
@@ -67,8 +69,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get the extracted version
-     * 
+     * Get the extracted version.
+     *
      * @return Version|null Version if extraction was successful, null otherwise
      */
     public function getVersion(): ?Version
@@ -77,8 +79,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Check if version extraction was successful
-     * 
+     * Check if version extraction was successful.
+     *
      * @return bool True if version was extracted successfully
      */
     public function isSuccessful(): bool
@@ -87,8 +89,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get error message if extraction failed
-     * 
+     * Get error message if extraction failed.
+     *
      * @return string Error message (empty string if successful)
      */
     public function getErrorMessage(): string
@@ -97,8 +99,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get the strategy that successfully extracted the version
-     * 
+     * Get the strategy that successfully extracted the version.
+     *
      * @return VersionStrategyInterface|null Successful strategy, null if extraction failed
      */
     public function getSuccessfulStrategy(): ?VersionStrategyInterface
@@ -107,8 +109,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get information about all attempted extraction strategies
-     * 
+     * Get information about all attempted extraction strategies.
+     *
      * @return array<array<string, mixed>> Array of strategy attempt information
      */
     public function getAttemptedStrategies(): array
@@ -117,8 +119,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get the reliability score of the successful extraction
-     * 
+     * Get the reliability score of the successful extraction.
+     *
      * @return float|null Reliability score (0.0-1.0), null if extraction failed
      */
     public function getReliabilityScore(): ?float
@@ -127,8 +129,8 @@ final class VersionExtractionResult
     }
 
     /**
-     * Get a human-readable summary of the extraction result
-     * 
+     * Get a human-readable summary of the extraction result.
+     *
      * @return string Summary string
      */
     public function getSummary(): string
@@ -136,29 +138,29 @@ final class VersionExtractionResult
         if ($this->isSuccessful) {
             $reliability = $this->getReliabilityScore();
             $strategyName = $this->successfulStrategy?->getName() ?? 'unknown';
-            
-            return sprintf(
+
+            return \sprintf(
                 'Version %s extracted using %s strategy (reliability: %.1f%%)',
                 $this->version?->toString() ?? 'unknown',
                 $strategyName,
-                ($reliability ?? 0.0) * 100
+                ($reliability ?? 0.0) * 100,
             );
         }
 
-        $attemptedCount = count($this->attemptedStrategies);
-        $supportedCount = count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false));
+        $attemptedCount = \count($this->attemptedStrategies);
+        $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false));
 
-        return sprintf(
+        return \sprintf(
             'Version extraction failed: %s (attempted %d strategies, %d supported)',
             $this->errorMessage,
             $attemptedCount,
-            $supportedCount
+            $supportedCount,
         );
     }
 
     /**
-     * Convert result to array for serialization
-     * 
+     * Convert result to array for serialization.
+     *
      * @return array<string, mixed> Array representation
      */
     public function toArray(): array

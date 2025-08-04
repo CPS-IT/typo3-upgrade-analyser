@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 
 /**
- * GitHub API client for repository analysis
+ * GitHub API client for repository analysis.
  */
 class GitHubClient extends AbstractGitProvider
 {
@@ -46,7 +46,7 @@ class GitHubClient extends AbstractGitProvider
     public function getRepositoryInfo(string $repositoryUrl): GitRepositoryMetadata
     {
         $repoPath = $this->extractRepositoryPath($repositoryUrl);
-        
+
         $query = '
             query($owner: String!, $name: String!) {
                 repository(owner: $owner, name: $name) {
@@ -66,11 +66,11 @@ class GitHubClient extends AbstractGitProvider
 
         $response = $this->graphqlRequest($query, [
             'owner' => $repoPath['owner'],
-            'name' => $repoPath['name']
+            'name' => $repoPath['name'],
         ]);
 
         $repo = $response['data']['repository'];
-        
+
         return new GitRepositoryMetadata(
             name: $repo['name'],
             description: $repo['description'] ?? '',
@@ -79,14 +79,14 @@ class GitHubClient extends AbstractGitProvider
             starCount: $repo['stargazerCount'],
             forkCount: $repo['forkCount'],
             lastUpdated: $this->parseDate($repo['updatedAt']) ?? new \DateTimeImmutable(),
-            defaultBranch: $repo['defaultBranchRef']['name'] ?? 'main'
+            defaultBranch: $repo['defaultBranchRef']['name'] ?? 'main',
         );
     }
 
     public function getTags(string $repositoryUrl): array
     {
         $repoPath = $this->extractRepositoryPath($repositoryUrl);
-        
+
         $query = '
             query($owner: String!, $name: String!, $first: Int!) {
                 repository(owner: $owner, name: $name) {
@@ -113,24 +113,24 @@ class GitHubClient extends AbstractGitProvider
         $response = $this->graphqlRequest($query, [
             'owner' => $repoPath['owner'],
             'name' => $repoPath['name'],
-            'first' => 100 // Get up to 100 most recent tags
+            'first' => 100, // Get up to 100 most recent tags
         ]);
 
         $tags = [];
         foreach ($response['data']['repository']['refs']['nodes'] as $tagData) {
             $date = null;
             $commit = null;
-            
+
             if (isset($tagData['target']['tagger']['date'])) {
                 $date = $this->parseDate($tagData['target']['tagger']['date']);
             } elseif (isset($tagData['target']['committedDate'])) {
                 $date = $this->parseDate($tagData['target']['committedDate']);
             }
-            
+
             if (isset($tagData['target']['oid'])) {
                 $commit = $tagData['target']['oid'];
             }
-            
+
             $tags[] = new GitTag($tagData['name'], $date, $commit);
         }
 
@@ -140,7 +140,7 @@ class GitHubClient extends AbstractGitProvider
     public function getBranches(string $repositoryUrl): array
     {
         $repoPath = $this->extractRepositoryPath($repositoryUrl);
-        
+
         $query = '
             query($owner: String!, $name: String!, $first: Int!) {
                 repository(owner: $owner, name: $name) {
@@ -156,7 +156,7 @@ class GitHubClient extends AbstractGitProvider
         $response = $this->graphqlRequest($query, [
             'owner' => $repoPath['owner'],
             'name' => $repoPath['name'],
-            'first' => 50
+            'first' => 50,
         ]);
 
         $branches = [];
@@ -170,17 +170,17 @@ class GitHubClient extends AbstractGitProvider
     public function getComposerJson(string $repositoryUrl, string $ref = 'main'): ?array
     {
         $repoPath = $this->extractRepositoryPath($repositoryUrl);
-        
+
         try {
             // Use GitHub's REST API to get file content
-            $url = sprintf(
+            $url = \sprintf(
                 '%s/repos/%s/%s/contents/composer.json?ref=%s',
                 self::REST_ENDPOINT,
                 $repoPath['owner'],
                 $repoPath['name'],
-                $ref
+                $ref,
             );
-            
+
             $headers = [];
             if ($this->accessToken) {
                 $headers['Authorization'] = 'Bearer ' . $this->accessToken;
@@ -188,22 +188,21 @@ class GitHubClient extends AbstractGitProvider
 
             $response = $this->makeRequest('GET', $url, ['headers' => $headers]);
             $data = $response->toArray();
-            
+
             if (!isset($data['content'])) {
                 return null;
             }
-            
+
             // Content is base64 encoded
-            $content = base64_decode($data['content']);
-            
+            $content = base64_decode($data['content'], true);
+
             return $this->parseComposerJson($content);
-            
         } catch (GitProviderException $e) {
             if (str_contains($e->getMessage(), '404')) {
                 // composer.json not found - this is normal for many repositories
                 return null;
             }
-            
+
             throw $e;
         }
     }
@@ -211,7 +210,7 @@ class GitHubClient extends AbstractGitProvider
     public function getRepositoryHealth(string $repositoryUrl): GitRepositoryHealth
     {
         $repoPath = $this->extractRepositoryPath($repositoryUrl);
-        
+
         $query = '
             query($owner: String!, $name: String!) {
                 repository(owner: $owner, name: $name) {
@@ -241,11 +240,11 @@ class GitHubClient extends AbstractGitProvider
 
         $response = $this->graphqlRequest($query, [
             'owner' => $repoPath['owner'],
-            'name' => $repoPath['name']
+            'name' => $repoPath['name'],
         ]);
 
         $repo = $response['data']['repository'];
-        
+
         $lastCommitDate = null;
         if (isset($repo['object']['committedDate'])) {
             $lastCommitDate = $this->parseDate($repo['object']['committedDate']);
@@ -263,25 +262,25 @@ class GitHubClient extends AbstractGitProvider
             isArchived: $repo['isArchived'],
             hasReadme: isset($repo['readme']['id']),
             hasLicense: isset($repo['license']['name']),
-            contributorCount: $contributorCount
+            contributorCount: $contributorCount,
         );
     }
 
     /**
-     * Get contributor count using the REST API (fallback when GraphQL collaborators field is not accessible)
+     * Get contributor count using the REST API (fallback when GraphQL collaborators field is not accessible).
      */
     private function getContributorCount(string $repositoryUrl): int
     {
         try {
             $repoPath = $this->extractRepositoryPath($repositoryUrl);
-            
-            $url = sprintf(
+
+            $url = \sprintf(
                 '%s/repos/%s/%s/contributors?per_page=1',
                 self::REST_ENDPOINT,
                 $repoPath['owner'],
-                $repoPath['name']
+                $repoPath['name'],
             );
-            
+
             $headers = [];
             if ($this->accessToken) {
                 $headers['Authorization'] = 'Bearer ' . $this->accessToken;
@@ -289,35 +288,36 @@ class GitHubClient extends AbstractGitProvider
 
             $response = $this->makeRequest('GET', $url, ['headers' => $headers]);
             $responseHeaders = $response->getHeaders();
-            
+
             // Extract total count from Link header if available
             if (isset($responseHeaders['link'][0])) {
                 $linkHeader = $responseHeaders['link'][0];
                 if (preg_match('/[?&]page=(\d+)>; rel="last"/', $linkHeader, $matches)) {
-                    return (int)$matches[1];
+                    return (int) $matches[1];
                 }
             }
-            
+
             // If we can't get exact count, return at least the number of contributors we got
             $contributors = $response->toArray();
-            return count($contributors);
-            
+
+            return \count($contributors);
         } catch (GitProviderException $e) {
             // If we can't get contributor count, return 0 (not critical for health metric)
             $this->logger->warning('Could not fetch contributor count', ['error' => $e->getMessage()]);
+
             return 0;
         }
     }
 
     /**
-     * Make GraphQL request to GitHub API
+     * Make GraphQL request to GitHub API.
      */
     private function graphqlRequest(string $query, array $variables = []): array
     {
         $headers = [
             'Content-Type' => 'application/json',
         ];
-        
+
         if ($this->accessToken) {
             $headers['Authorization'] = 'Bearer ' . $this->accessToken;
         }
@@ -326,17 +326,14 @@ class GitHubClient extends AbstractGitProvider
             'headers' => $headers,
             'json' => [
                 'query' => $query,
-                'variables' => $variables
-            ]
+                'variables' => $variables,
+            ],
         ]);
 
         $data = $response->toArray();
-        
+
         if (isset($data['errors'])) {
-            throw new GitProviderException(
-                'GitHub GraphQL errors: ' . json_encode($data['errors']),
-                'github'
-            );
+            throw new GitProviderException('GitHub GraphQL errors: ' . json_encode($data['errors']), 'github');
         }
 
         if (!isset($data['data'])) {

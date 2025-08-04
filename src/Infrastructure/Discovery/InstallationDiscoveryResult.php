@@ -13,57 +13,60 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
 /**
- * Result of installation discovery operation
- * 
+ * Result of installation discovery operation.
+ *
  * Contains the discovered installation (if successful), validation results,
  * and detailed information about the discovery process including which
  * strategies were attempted.
  */
-final class InstallationDiscoveryResult
+final readonly class InstallationDiscoveryResult implements SerializableInterface
 {
     /**
-     * @param Installation|null $installation Discovered installation (null if not found)
-     * @param bool $isSuccessful Whether discovery was successful
-     * @param string $errorMessage Error message if discovery failed
-     * @param DetectionStrategyInterface|null $successfulStrategy Strategy that succeeded
-     * @param array<ValidationIssue> $validationIssues Validation issues found
-     * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     * @param Installation|null               $installation        Discovered installation (null if not found)
+     * @param bool                            $isSuccessful        Whether discovery was successful
+     * @param string                          $errorMessage        Error message if discovery failed
+     * @param DetectionStrategyInterface|null $successfulStrategy  Strategy that succeeded
+     * @param array<ValidationIssue>          $validationIssues    Validation issues found
+     * @param array<array<string, mixed>>     $attemptedStrategies Information about attempted strategies
      */
     private function __construct(
-        private readonly ?Installation $installation,
-        private readonly bool $isSuccessful,
-        private readonly string $errorMessage,
-        private readonly ?DetectionStrategyInterface $successfulStrategy,
-        private readonly array $validationIssues,
-        private readonly array $attemptedStrategies
+        private ?Installation $installation,
+        private bool $isSuccessful,
+        private string $errorMessage,
+        private ?DetectionStrategyInterface $successfulStrategy,
+        private array $validationIssues,
+        private array $attemptedStrategies,
     ) {
     }
 
     /**
-     * Create a successful installation discovery result
-     * 
-     * @param Installation $installation Discovered installation
-     * @param DetectionStrategyInterface $strategy Strategy that succeeded
-     * @param array<ValidationIssue> $validationIssues Validation issues found
+     * Create a successful installation discovery result.
+     *
+     * @param Installation                $installation        Discovered installation
+     * @param DetectionStrategyInterface  $strategy            Strategy that succeeded
+     * @param array<ValidationIssue>      $validationIssues    Validation issues found
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Successful result
      */
     public static function success(
         Installation $installation,
         DetectionStrategyInterface $strategy,
         array $validationIssues = [],
-        array $attemptedStrategies = []
+        array $attemptedStrategies = [],
     ): self {
         return new self($installation, true, '', $strategy, $validationIssues, $attemptedStrategies);
     }
 
     /**
-     * Create a failed installation discovery result
-     * 
-     * @param string $errorMessage Error message describing the failure
+     * Create a failed installation discovery result.
+     *
+     * @param string                      $errorMessage        Error message describing the failure
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Failed result
      */
     public static function failed(string $errorMessage, array $attemptedStrategies = []): self
@@ -72,8 +75,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get the discovered installation
-     * 
+     * Get the discovered installation.
+     *
      * @return Installation|null Installation if discovery was successful, null otherwise
      */
     public function getInstallation(): ?Installation
@@ -82,8 +85,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Check if installation discovery was successful
-     * 
+     * Check if installation discovery was successful.
+     *
      * @return bool True if installation was discovered successfully
      */
     public function isSuccessful(): bool
@@ -92,8 +95,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get error message if discovery failed
-     * 
+     * Get error message if discovery failed.
+     *
      * @return string Error message (empty string if successful)
      */
     public function getErrorMessage(): string
@@ -102,8 +105,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get the strategy that successfully discovered the installation
-     * 
+     * Get the strategy that successfully discovered the installation.
+     *
      * @return DetectionStrategyInterface|null Successful strategy, null if discovery failed
      */
     public function getSuccessfulStrategy(): ?DetectionStrategyInterface
@@ -112,8 +115,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get validation issues found during discovery
-     * 
+     * Get validation issues found during discovery.
+     *
      * @return array<ValidationIssue> Array of validation issues
      */
     public function getValidationIssues(): array
@@ -122,8 +125,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get information about all attempted detection strategies
-     * 
+     * Get information about all attempted detection strategies.
+     *
      * @return array<array<string, mixed>> Array of strategy attempt information
      */
     public function getAttemptedStrategies(): array
@@ -132,8 +135,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Check if the discovered installation has validation issues
-     * 
+     * Check if the discovered installation has validation issues.
+     *
      * @return bool True if validation issues were found
      */
     public function hasValidationIssues(): bool
@@ -142,41 +145,42 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get validation issues of specific severity level
-     * 
+     * Get validation issues of specific severity level.
+     *
      * @param ValidationSeverity $severity Severity level to filter by
+     *
      * @return array<ValidationIssue> Issues of specified severity
      */
     public function getValidationIssuesBySeverity(ValidationSeverity $severity): array
     {
         return array_filter(
             $this->validationIssues,
-            fn(ValidationIssue $issue) => $issue->getSeverity() === $severity
+            fn (ValidationIssue $issue) => $issue->getSeverity() === $severity,
         );
     }
 
     /**
-     * Check if installation has blocking validation issues
-     * 
+     * Check if installation has blocking validation issues.
+     *
      * @return bool True if blocking issues are present
      */
     public function hasBlockingIssues(): bool
     {
         return !empty(array_filter(
             $this->validationIssues,
-            fn(ValidationIssue $issue) => $issue->isBlockingAnalysis()
+            fn (ValidationIssue $issue) => $issue->isBlockingAnalysis(),
         ));
     }
 
     /**
-     * Get validation issues grouped by category
-     * 
+     * Get validation issues grouped by category.
+     *
      * @return array<string, array<ValidationIssue>> Issues grouped by category
      */
     public function getValidationIssuesByCategory(): array
     {
         $grouped = [];
-        
+
         foreach ($this->validationIssues as $issue) {
             $category = $issue->getCategory();
             if (!isset($grouped[$category])) {
@@ -189,44 +193,44 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get a human-readable summary of the discovery result
-     * 
+     * Get a human-readable summary of the discovery result.
+     *
      * @return string Summary string
      */
     public function getSummary(): string
     {
         if (!$this->isSuccessful) {
-            $attemptedCount = count($this->attemptedStrategies);
-            $supportedCount = count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false));
-            
-            return sprintf(
+            $attemptedCount = \count($this->attemptedStrategies);
+            $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false));
+
+            return \sprintf(
                 'Installation discovery failed: %s (attempted %d strategies, %d supported)',
                 $this->errorMessage,
                 $attemptedCount,
-                $supportedCount
+                $supportedCount,
             );
         }
 
         $version = $this->installation?->getVersion()->toString() ?? 'unknown';
         $mode = $this->installation?->getMode()?->value ?? 'unknown';
         $strategyName = $this->successfulStrategy?->getName() ?? 'unknown';
-        
-        $summary = sprintf(
+
+        $summary = \sprintf(
             'TYPO3 %s installation discovered using %s (%s mode)',
             $version,
             $strategyName,
-            $mode
+            $mode,
         );
 
         if ($this->hasValidationIssues()) {
-            $issueCount = count($this->validationIssues);
-            $blockingCount = count(array_filter($this->validationIssues, fn($issue) => $issue->isBlockingAnalysis()));
-            
-            $summary .= sprintf(
+            $issueCount = \count($this->validationIssues);
+            $blockingCount = \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis()));
+
+            $summary .= \sprintf(
                 ' - %d validation issue%s found%s',
                 $issueCount,
-                $issueCount === 1 ? '' : 's',
-                $blockingCount > 0 ? " ({$blockingCount} blocking)" : ''
+                1 === $issueCount ? '' : 's',
+                $blockingCount > 0 ? " ({$blockingCount} blocking)" : '',
             );
         }
 
@@ -234,18 +238,18 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get detailed discovery statistics
-     * 
+     * Get detailed discovery statistics.
+     *
      * @return array<string, mixed> Discovery statistics
      */
     public function getStatistics(): array
     {
         $stats = [
             'successful' => $this->isSuccessful,
-            'attempted_strategies' => count($this->attemptedStrategies),
-            'supported_strategies' => count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false)),
-            'validation_issues' => count($this->validationIssues),
-            'blocking_issues' => count(array_filter($this->validationIssues, fn($issue) => $issue->isBlockingAnalysis())),
+            'attempted_strategies' => \count($this->attemptedStrategies),
+            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false)),
+            'validation_issues' => \count($this->validationIssues),
+            'blocking_issues' => \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis())),
         ];
 
         if ($this->isSuccessful) {
@@ -253,15 +257,14 @@ final class InstallationDiscoveryResult
             $stats['typo3_version'] = $this->installation?->getVersion()->toString();
             $stats['installation_mode'] = $this->installation?->getMode()?->value;
             $stats['successful_strategy'] = $this->successfulStrategy?->getName();
-            $stats['extensions_count'] = $this->installation?->getExtensions() ? count($this->installation->getExtensions()) : 0;
         }
 
         return $stats;
     }
 
     /**
-     * Convert result to array for serialization
-     * 
+     * Convert result to array for serialization.
+     *
      * @return array<string, mixed> Array representation
      */
     public function toArray(): array
@@ -269,11 +272,11 @@ final class InstallationDiscoveryResult
         return [
             'successful' => $this->isSuccessful,
             'error_message' => $this->errorMessage,
-            'installation' => $this->installation?->toArray(),
+            'installation' => $this->installation?->toArray(false), // Exclude extensions in discovery context
             'successful_strategy' => $this->successfulStrategy?->getName(),
-            'validation_issues' => array_map(fn(ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
+            'validation_issues' => array_map(fn (ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
             'validation_summary' => [
-                'total_issues' => count($this->validationIssues),
+                'total_issues' => \count($this->validationIssues),
                 'by_severity' => $this->getValidationIssueCountsBySeverity(),
                 'by_category' => array_map('count', $this->getValidationIssuesByCategory()),
                 'has_blocking_issues' => $this->hasBlockingIssues(),
@@ -285,8 +288,8 @@ final class InstallationDiscoveryResult
     }
 
     /**
-     * Get validation issue counts by severity level
-     * 
+     * Get validation issue counts by severity level.
+     *
      * @return array<string, int> Issue counts by severity
      */
     private function getValidationIssueCountsBySeverity(): array
@@ -301,10 +304,43 @@ final class InstallationDiscoveryResult
         foreach ($this->validationIssues as $issue) {
             $severity = $issue->getSeverity()->value;
             if (isset($counts[$severity])) {
-                $counts[$severity]++;
+                ++$counts[$severity];
             }
         }
 
         return $counts;
+    }
+
+    /**
+     * Create result from array data.
+     *
+     * @param array<string, mixed> $data Array representation to deserialize from
+     *
+     * @return static Deserialized result instance
+     */
+    public static function fromArray(array $data): static
+    {
+        if ($data['successful']) {
+            // Use Installation's own fromArray method for proper deserialization
+            $installation = Installation::fromArray($data['installation']);
+
+            return new self(
+                $installation,
+                true,
+                '',
+                null, // Strategy cannot be reconstructed from cache
+                [], // Skip validation issues for cached results
+                $data['attempted_strategies'] ?? [],
+            );
+        } else {
+            return new self(
+                null,
+                false,
+                $data['error_message'] ?? 'Unknown cached error',
+                null,
+                [],
+                $data['attempted_strategies'] ?? [],
+            );
+        }
     }
 }

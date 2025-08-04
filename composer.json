@@ -65,6 +65,6 @@
         "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
-        "static-analysis": "phpstan analyse"
+        "static-analysis": "phpstan analyse --memory-limit=2G"
     }
 }

@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
-use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for ConfigurationData value object
+ * Test case for ConfigurationData value object.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData
  */
@@ -78,7 +78,7 @@ class ConfigurationDataTest extends TestCase
         $config = new ConfigurationData(
             $this->sampleData,
             'php',
-            '/path/to/config.php'
+            '/path/to/config.php',
         );
 
         self::assertSame($this->sampleData, $config->getData());
@@ -101,7 +101,7 @@ class ConfigurationDataTest extends TestCase
             $this->sampleErrors,
             $this->sampleWarnings,
             $this->sampleTimestamp,
-            $this->sampleMetadata
+            $this->sampleMetadata,
         );
 
         self::assertSame($this->sampleData, $config->getData());
@@ -294,7 +294,7 @@ class ConfigurationDataTest extends TestCase
         self::assertSame('php', $systemSection->getFormat());
         self::assertSame('/path/to/config.php.system', $systemSection->getSource());
         self::assertSame('system', $systemSection->getMetadataValue('section'));
-        
+
         // Original metadata should be preserved
         self::assertSame('1.0.0', $systemSection->getMetadataValue('parser_version'));
     }
@@ -341,12 +341,12 @@ class ConfigurationDataTest extends TestCase
     public function testWithMetadata(): void
     {
         $config = new ConfigurationData($this->sampleData, 'php', '/path/to/config.php', [], [], null, $this->sampleMetadata);
-        
+
         $additionalMetadata = [
             'new_key' => 'new_value',
             'parser_version' => '2.0.0', // Override existing
         ];
-        
+
         $newConfig = $config->withMetadata($additionalMetadata);
 
         // Original should be unchanged
@@ -367,10 +367,10 @@ class ConfigurationDataTest extends TestCase
     public function testWithValidation(): void
     {
         $config = new ConfigurationData($this->sampleData, 'php', '/path/to/config.php', ['existing_error'], ['existing_warning']);
-        
+
         $additionalErrors = ['new_error_1', 'new_error_2'];
         $additionalWarnings = ['new_warning'];
-        
+
         $newConfig = $config->withValidation($additionalErrors, $additionalWarnings);
 
         // Original should be unchanged
@@ -393,7 +393,7 @@ class ConfigurationDataTest extends TestCase
     public function testWithValidationWithErrorsOnly(): void
     {
         $config = new ConfigurationData($this->sampleData, 'php', '/path/to/config.php');
-        
+
         $errors = ['validation_error'];
         $newConfig = $config->withValidation($errors);
 
@@ -413,7 +413,7 @@ class ConfigurationDataTest extends TestCase
             $this->sampleErrors,
             $this->sampleWarnings,
             $this->sampleTimestamp,
-            $this->sampleMetadata
+            $this->sampleMetadata,
         );
 
         $array = $config->toArray();
@@ -577,7 +577,7 @@ class ConfigurationDataTest extends TestCase
         // Test section extraction
         $serviceSection = $config->getSection('services');
         self::assertSame('App\\Service\\Service1', $serviceSection->getValue('service1.class'));
-        
+
         $service1Section = $serviceSection->getSection('service1');
         self::assertSame('App\\Service\\Service1', $service1Section->getValue('class'));
         self::assertSame(['@dependency1', '%param%'], $service1Section->getValue('arguments'));

@@ -15,12 +15,12 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Checks version compatibility for TER extension versions
+ * Checks version compatibility for TER extension versions.
  */
 class VersionCompatibilityChecker
 {
     /**
-     * Check if any version is compatible with the target TYPO3 version
+     * Check if any version is compatible with the target TYPO3 version.
      */
     public function hasCompatibleVersion(array $versions, Version $typo3Version): bool
     {
@@ -29,17 +29,17 @@ class VersionCompatibilityChecker
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
-     * Find all versions compatible with the target TYPO3 version
+     * Find all versions compatible with the target TYPO3 version.
      */
     public function findCompatibleVersions(array $versions, Version $typo3Version): array
     {
         $compatibleVersions = [];
-        
+
         foreach ($versions as $versionData) {
             if ($this->isVersionCompatible($versionData, $typo3Version)) {
                 if (isset($versionData['number'])) {
@@ -47,29 +47,29 @@ class VersionCompatibilityChecker
                 }
             }
         }
-        
+
         return $compatibleVersions;
     }
-    
+
     /**
-     * Get the latest compatible version
+     * Get the latest compatible version.
      */
     public function getLatestCompatibleVersion(array $versions, Version $typo3Version): ?string
     {
         $compatibleVersions = $this->findCompatibleVersions($versions, $typo3Version);
-        
+
         if (empty($compatibleVersions)) {
             return null;
         }
-        
+
         // Sort versions and return the latest
         usort($compatibleVersions, 'version_compare');
-        
+
         return end($compatibleVersions);
     }
-    
+
     /**
-     * Check if a specific version is compatible with TYPO3 version
+     * Check if a specific version is compatible with TYPO3 version.
      */
     public function isVersionCompatible(array $versionData, Version $typo3Version): bool
     {
@@ -79,53 +79,56 @@ class VersionCompatibilityChecker
 
         $typo3Versions = $versionData['typo3_versions'];
         $majorVersion = $typo3Version->getMajor();
-        
+
         // Check for universal compatibility
-        if (in_array('*', $typo3Versions, true)) {
+        if (\in_array('*', $typo3Versions, true)) {
             return true;
         }
-        
+
         // Check each supported version for compatibility
         foreach ($typo3Versions as $supportedVersion) {
             if ($this->isVersionSupported($supportedVersion, $majorVersion)) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
-     * Check if a supported version matches the target major version
+     * Check if a supported version matches the target major version.
      */
     private function isVersionSupported($supportedVersion, int $majorVersion): bool
     {
         // Handle integer versions (TER API returns integers like 8, 9, 10)
-        if (is_int($supportedVersion)) {
+        if (\is_int($supportedVersion)) {
             return $supportedVersion === $majorVersion;
         }
-        
+
         // Handle string versions
-        $supportedVersionStr = (string)$supportedVersion;
-        
+        $supportedVersionStr = (string) $supportedVersion;
+
         // Check for wildcard patterns like "12.*"
         if (str_ends_with($supportedVersionStr, '.*')) {
-            $supportedMajor = (int)substr($supportedVersionStr, 0, -2);
+            $supportedMajor = (int) substr($supportedVersionStr, 0, -2);
+
             return $supportedMajor === $majorVersion;
         }
-        
+
         // Check for exact major version match like "12.0"
         if (preg_match('/^(\d+)\.0$/', $supportedVersionStr, $matches)) {
-            $supportedMajor = (int)$matches[1];
+            $supportedMajor = (int) $matches[1];
+
             return $supportedMajor === $majorVersion;
         }
-        
+
         // Check for plain version number like "12" or "11"
         if (preg_match('/^(\d+)$/', $supportedVersionStr, $matches)) {
-            $supportedMajor = (int)$matches[1];
+            $supportedMajor = (int) $matches[1];
+
             return $supportedMajor === $majorVersion;
         }
-        
+
         return false;
     }
 }

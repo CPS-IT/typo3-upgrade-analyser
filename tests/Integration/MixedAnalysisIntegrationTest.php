@@ -12,17 +12,17 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 
 /**
- * Integration tests for mixed analysis scenarios with real-world complexity
+ * Integration tests for mixed analysis scenarios with real-world complexity.
  *
  * @group integration
  * @group real-world
@@ -38,7 +38,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
         $this->requiresRealApiCalls();
         $this->requiresTerToken();
-        
+
         // Load test extension data
         $this->testExtensions = $this->loadTestData('known_extensions.json');
 
@@ -48,6 +48,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testCompleteTypo3InstallationAnalysis(): void
@@ -56,16 +57,16 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         $extensions = [
             // System extension (should be low risk)
             $this->createTestExtension('core', 'typo3/cms-core', true),
-            
+
             // Popular third-party extension (should be low risk)
             $this->createTestExtension('news', 'georgringer/news'),
-            
+
             // Community maintained extension (should be medium risk)
             $this->createTestExtension('extension_builder', 'friendsoftypo3/extension-builder'),
-            
+
             // Archived extension (should be high risk)
             $this->createTestExtension('realurl', 'dmitryd/typo3-realurl'),
-            
+
             // Local extension (should be very high risk)
             $this->createTestExtension('local_custom', null, false, true),
         ];
@@ -76,15 +77,15 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
         foreach ($extensions as $extension) {
             $startTime = microtime(true);
-            
+
             $result = $this->analyzer->analyze($extension, $context);
             $analysisTime = microtime(true) - $startTime;
-            
+
             $this->assertAnalysisResultValid($result);
-            
+
             $results[$extension->getKey()] = [
                 'result' => $result,
-                'time' => $analysisTime
+                'time' => $analysisTime,
             ];
         }
 
@@ -98,18 +99,19 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
         // Assert performance is acceptable for complete analysis
         $this->assertLessThan(60.0, $totalTime, "Complete installation analysis took too long: {$totalTime}s");
-        
+
         foreach ($results as $key => $data) {
             $this->assertLessThan(
-                20.0, 
-                $data['time'], 
-                "Individual extension analysis for {$key} took too long: {$data['time']}s"
+                20.0,
+                $data['time'],
+                "Individual extension analysis for {$key} took too long: {$data['time']}s",
             );
         }
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAvailabilityConsistencyAcrossSources(): void
@@ -117,37 +119,44 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         // Test that availability information is consistent across different sources
         $extension = $this->createTestExtension('news', 'georgringer/news');
         $context = $this->createTestAnalysisContext('12.4.0');
-        
+
         $result = $this->analyzer->analyze($extension, $context);
         $metrics = $result->getMetrics();
 
         // News extension should be available in multiple sources
         $availableSources = [];
-        if ($metrics['ter_available']) $availableSources[] = 'TER';
-        if ($metrics['packagist_available']) $availableSources[] = 'Packagist';
-        if ($metrics['git_available']) $availableSources[] = 'Git';
+        if ($metrics['ter_available']) {
+            $availableSources[] = 'TER';
+        }
+        if ($metrics['packagist_available']) {
+            $availableSources[] = 'Packagist';
+        }
+        if ($metrics['git_available']) {
+            $availableSources[] = 'Git';
+        }
 
-        $this->assertGreaterThan(1, count($availableSources), 'Popular extension should be available in multiple sources');
-        
+        $this->assertGreaterThan(1, \count($availableSources), 'Popular extension should be available in multiple sources');
+
         // When multiple sources are available, risk should be lower
         $this->assertLessThan(4.0, $result->getRiskScore(), 'Multiple source availability should result in lower risk');
 
         // Recommendations should acknowledge multiple sources
         $recommendations = implode(' ', $result->getRecommendations());
-        if (count($availableSources) > 1) {
+        if (\count($availableSources) > 1) {
             $this->assertStringContainsString('multiple', strtolower($recommendations));
         }
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testVersionCompatibilityAcrossTypo3Versions(): void
     {
         $extension = $this->createTestExtension('news', 'georgringer/news');
         $typo3Versions = ['11.5.0', '12.4.0'];
-        
+
         $results = [];
         foreach ($typo3Versions as $version) {
             $context = $this->createTestAnalysisContext($version);
@@ -158,22 +167,23 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         foreach ($results as $version => $result) {
             $metrics = $result->getMetrics();
             $hasAnyAvailability = $metrics['ter_available'] || $metrics['packagist_available'] || $metrics['git_available'];
-            
+
             $this->assertTrue(
                 $hasAnyAvailability,
-                "News extension should be available for TYPO3 {$version}"
+                "News extension should be available for TYPO3 {$version}",
             );
-            
+
             $this->assertLessThan(
                 5.0,
                 $result->getRiskScore(),
-                "News extension should have low risk for TYPO3 {$version}"
+                "News extension should have low risk for TYPO3 {$version}",
             );
         }
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testArchivedExtensionMigrationScenario(): void
@@ -181,7 +191,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         // Test scenario where archived extension needs migration
         $archivedExtension = $this->createTestExtension('realurl', 'dmitryd/typo3-realurl');
         $context = $this->createTestAnalysisContext('12.4.0');
-        
+
         $result = $this->analyzer->analyze($archivedExtension, $context);
         $metrics = $result->getMetrics();
 
@@ -199,13 +209,14 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testSystemExtensionSpecialHandling(): void
     {
         $systemExtension = $this->createTestExtension('core', 'typo3/cms-core', true);
         $context = $this->createTestAnalysisContext('12.4.0');
-        
+
         $result = $this->analyzer->analyze($systemExtension, $context);
         $metrics = $result->getMetrics();
 
@@ -223,6 +234,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testNetworkFailureResilience(): void
@@ -230,14 +242,14 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         // Test that analysis handles partial network failures gracefully
         $extension = $this->createTestExtension('news', 'georgringer/news');
         $context = $this->createTestAnalysisContext('12.4.0');
-        
+
         // Analysis should complete even if some services are unreachable
         $result = $this->analyzer->analyze($extension, $context);
-        
+
         $this->assertAnalysisResultValid($result);
         $this->assertIsFloat($result->getRiskScore());
         $this->assertIsArray($result->getMetrics());
-        
+
         // Should have some availability information even with partial failures
         $metrics = $result->getMetrics();
         $this->assertArrayHasKey('ter_available', $metrics);
@@ -247,6 +259,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testBatchAnalysisEfficiency(): void
@@ -254,23 +267,23 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         // Test analyzing multiple extensions efficiently
         $extensionKeys = ['news', 'extension_builder'];
         $extensions = array_map(
-            fn($key) => $this->createTestExtension(
+            fn ($key) => $this->createTestExtension(
                 $key,
-                $this->testExtensions['extensions'][$this->getFullKey($key)]['composer_name'] ?? null
+                $this->testExtensions['extensions'][$this->getFullKey($key)]['composer_name'] ?? null,
             ),
-            $extensionKeys
+            $extensionKeys,
         );
 
         $context = $this->createTestAnalysisContext('12.4.0');
         $startTime = microtime(true);
-        
+
         $results = [];
         foreach ($extensions as $extension) {
             $results[] = $this->analyzer->analyze($extension, $context);
         }
-        
+
         $totalTime = microtime(true) - $startTime;
-        $averageTime = $totalTime / count($extensions);
+        $averageTime = $totalTime / \count($extensions);
 
         // Batch processing should be efficient
         $this->assertLessThan(15.0, $averageTime, "Average analysis time too high: {$averageTime}s");
@@ -284,6 +297,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testRiskScoreConsistency(): void
@@ -302,10 +316,10 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
             $extension = $this->createTestExtension(
                 $extData['key'],
                 $extData['composer'],
-                $extData['system']
+                $extData['system'],
             );
 
-            if ($extData['key'] === 'local_test') {
+            if ('local_test' === $extData['key']) {
                 $extension = $this->createTestExtension($extData['key'], null, false, true);
             }
 
@@ -315,7 +329,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
         // Assert risk order: system < popular < local
         $this->assertLessThan($risks['news'], $risks['core'], 'System extension should have lower risk than third-party');
-        
+
         if (isset($risks['local_test'])) {
             $this->assertLessThan($risks['local_test'], $risks['news'], 'Third-party should have lower risk than local');
         }
@@ -329,7 +343,9 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @group performance
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testConcurrentAnalysisPerformance(): void
@@ -358,7 +374,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
 
         // Performance assertions
         $maxTime = max($times);
-        $avgTime = array_sum($times) / count($times);
+        $avgTime = array_sum($times) / \count($times);
 
         $this->assertLessThan(20.0, $maxTime, "Slowest analysis took too long: {$maxTime}s");
         $this->assertLessThan(15.0, $avgTime, "Average analysis time too high: {$avgTime}s");
@@ -368,25 +384,25 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     {
         $terClient = new TerApiClient($this->httpClient, $this->createLogger());
         $packagistClient = new PackagistClient($this->httpClient, $this->createLogger());
-        
+
         $gitHubClient = new GitHubClient(
             $this->createAuthenticatedGitHubClient(),
             $this->createLogger(),
-            $this->getGitHubToken()
+            $this->getGitHubToken(),
         );
-        
+
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
             new GitVersionParser(),
-            $this->createLogger()
+            $this->createLogger(),
         );
 
         return new VersionAvailabilityAnalyzer(
             $terClient,
             $packagistClient,
             $gitAnalyzer,
-            $this->createLogger()
+            $this->createLogger(),
         );
     }
 

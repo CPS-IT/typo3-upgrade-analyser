@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
-use PHPUnit\Framework\TestCase;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for YamlParseException
+ * Test case for YamlParseException.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException
  */
@@ -76,7 +76,7 @@ class YamlParseExceptionTest extends TestCase
             null,
             $context,
             $code,
-            $previous
+            $previous,
         );
 
         self::assertSame($context, $exception->getContext());
@@ -120,8 +120,15 @@ class YamlParseExceptionTest extends TestCase
         // Create a mock that simulates Symfony's ParseException methods
         $originalMessage = 'Mock YAML parse error';
         $mockException = new class($originalMessage, 500) extends \Exception {
-            public function getParsedLine(): int { return 42; }
-            public function getSnippet(): string { return "services:\n  invalid: syntax"; }
+            public function getParsedLine(): int
+            {
+                return 42;
+            }
+
+            public function getSnippet(): string
+            {
+                return "services:\n  invalid: syntax";
+            }
         };
 
         $sourcePath = '/path/to/broken.yaml';
@@ -273,16 +280,16 @@ class YamlParseExceptionTest extends TestCase
         $line = 78;
         $column = 12;
         $yamlSnippet = <<<YAML
-framework:
-  cache:
-    app: cache.adapter.filesystem
-    system: cache.adapter.system
-      default_redis_provider: redis://localhost  # Incorrect indentation
-    pools:
-      cache.app:
-        adapter: cache.adapter.redis
-        default_lifetime: 3600
-YAML;
+            framework:
+              cache:
+                app: cache.adapter.filesystem
+                system: cache.adapter.system
+                  default_redis_provider: redis://localhost  # Incorrect indentation
+                pools:
+                  cache.app:
+                    adapter: cache.adapter.redis
+                    default_lifetime: 3600
+            YAML;
         $problemMark = 'found character that cannot start any token at line 78, column 12';
         $context = [
             'yaml_version' => '1.2',
@@ -302,7 +309,7 @@ YAML;
             $problemMark,
             $context,
             $code,
-            $previous
+            $previous,
         );
 
         // Verify all properties are correctly set
@@ -366,26 +373,26 @@ YAML;
     public function testYamlSnippetHandling(): void
     {
         $multiLineSnippet = <<<YAML
-services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-  
-  App\Controller\:
-    resource: '../src/Controller'
-    tags: ['controller.service_arguments']
+            services:
+              _defaults:
+                autowire: true
+                autoconfigure: true
+              
+              App\Controller\:
+                resource: '../src/Controller'
+                tags: ['controller.service_arguments']
 
-  # This is where the error occurs
-  App\Service\BadService
-    arguments: ['@doctrine.orm.entity_manager']  # Missing colon after service name
-YAML;
+              # This is where the error occurs
+              App\Service\BadService
+                arguments: ['@doctrine.orm.entity_manager']  # Missing colon after service name
+            YAML;
 
         $exception = new YamlParseException(
             'Missing colon after service name',
             '/path/to/services.yaml',
             45,
             25,
-            $multiLineSnippet
+            $multiLineSnippet,
         );
 
         self::assertTrue($exception->hasYamlSnippet());

@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Exception thrown when Git repository analysis fails
+ * Exception thrown when Git repository analysis fails.
  */
 class GitAnalysisException extends ExternalToolException
 {
     public function __construct(
         string $message,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 'git', $previous);
     }

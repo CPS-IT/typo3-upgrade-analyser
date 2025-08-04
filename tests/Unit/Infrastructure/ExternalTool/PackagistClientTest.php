@@ -12,17 +12,17 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
-use PHPUnit\Framework\TestCase;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Test case for the PackagistClient
+ * Test case for the PackagistClient.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient
  */
@@ -38,7 +38,7 @@ class PackagistClientTest extends TestCase
         $this->httpClient = $this->createMock(HttpClientInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->response = $this->createMock(ResponseInterface::class);
-        
+
         $this->client = new PackagistClient($this->httpClient, $this->logger);
     }
 
@@ -47,28 +47,28 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '8.7.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '8.6.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^11.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^11.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->expects(self::once())
             ->method('getStatusCode')
             ->willReturn(200);
-            
+
         $this->response->expects(self::once())
             ->method('toArray')
             ->willReturn($responseData);
@@ -90,22 +90,22 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('13.0.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '8.7.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '8.6.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^11.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^11.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -124,17 +124,17 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/universal-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '1.0.0' => [
                         'require' => [
-                            'typo3/cms-core' => '*'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '*',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -153,17 +153,17 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/generic-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '1.0.0' => [
                         'require' => [
-                            'php' => '^8.1'
-                        ]
-                    ]
-                ]
-            ]
+                            'php' => '^8.1',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -198,7 +198,7 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('12.4.0');
-        
+
         $this->httpClient->expects(self::once())
             ->method('request')
             ->willThrowException(new \RuntimeException('Network error'));
@@ -220,27 +220,27 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '8.5.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '8.7.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '8.6.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -259,17 +259,17 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('13.0.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '8.7.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -288,27 +288,27 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/test-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '1.0.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '1.1.0-dev' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '1.2.0' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -327,22 +327,22 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/dev-only-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
                 'versions' => [
                     '1.0.0-dev' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
                     ],
                     '1.1.0-dev' => [
                         'require' => [
-                            'typo3/cms-core' => '^12.0'
-                        ]
-                    ]
-                ]
-            ]
+                            'typo3/cms-core' => '^12.0',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -361,11 +361,11 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/empty-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
             'package' => [
-                'versions' => []
-            ]
+                'versions' => [],
+            ],
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -384,9 +384,9 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'vendor/malformed-package';
         $typo3Version = new Version('12.4.0');
-        
+
         $responseData = [
-            'invalid' => 'structure'
+            'invalid' => 'structure',
         ];
 
         $this->response->method('getStatusCode')->willReturn(200);
@@ -416,20 +416,20 @@ class PackagistClientTest extends TestCase
             $response = $this->createMock(ResponseInterface::class);
             $httpClient = $this->createMock(HttpClientInterface::class);
             $client = new PackagistClient($httpClient, $this->logger);
-            
+
             $packageName = 'vendor/test-package';
             $targetVersion = new Version($targetVersionString);
-            
+
             $responseData = [
                 'package' => [
                     'versions' => [
                         '1.0.0' => [
                             'require' => [
-                                'typo3/cms-core' => $constraint
-                            ]
-                        ]
-                    ]
-                ]
+                                'typo3/cms-core' => $constraint,
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $response->method('getStatusCode')->willReturn(200);
@@ -440,8 +440,11 @@ class PackagistClientTest extends TestCase
             $result = $client->hasVersionFor($packageName, $targetVersion);
 
             // Assert
-            self::assertEquals($expected, $result, 
-                sprintf('Failed for constraint "%s" with target %s', $constraint, $targetVersionString));
+            self::assertEquals(
+                $expected,
+                $result,
+                \sprintf('Failed for constraint "%s" with target %s', $constraint, $targetVersionString),
+            );
         }
     }
 
@@ -450,7 +453,7 @@ class PackagistClientTest extends TestCase
         // Arrange
         $packageName = 'georgringer/news';
         $typo3Version = new Version('12.4.0');
-        
+
         $this->httpClient->method('request')
             ->willThrowException(new \RuntimeException('Network error'));
 
@@ -469,24 +472,24 @@ class PackagistClientTest extends TestCase
         $requirementKeys = [
             'typo3/cms-core',
             'typo3/cms',
-            'typo3/minimal'
+            'typo3/minimal',
         ];
 
         foreach ($requirementKeys as $requirementKey) {
             // Arrange
             $packageName = 'vendor/test-package';
             $typo3Version = new Version('12.4.0');
-            
+
             $responseData = [
                 'package' => [
                     'versions' => [
                         '1.0.0' => [
                             'require' => [
-                                $requirementKey => '^12.0'
-                            ]
-                        ]
-                    ]
-                ]
+                                $requirementKey => '^12.0',
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $this->response->method('getStatusCode')->willReturn(200);
@@ -497,8 +500,10 @@ class PackagistClientTest extends TestCase
             $result = $this->client->hasVersionFor($packageName, $typo3Version);
 
             // Assert
-            self::assertTrue($result, 
-                sprintf('Failed to recognize TYPO3 requirement key "%s"', $requirementKey));
+            self::assertTrue(
+                $result,
+                \sprintf('Failed to recognize TYPO3 requirement key "%s"', $requirementKey),
+            );
         }
     }
 }

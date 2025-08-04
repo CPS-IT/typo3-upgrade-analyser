@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception;
 
 /**
- * Exception for PHP configuration parsing errors
- * 
+ * Exception for PHP configuration parsing errors.
+ *
  * Specialized exception for PHP configuration files like LocalConfiguration.php
  * and AdditionalConfiguration.php that provides PHP-specific error information.
  */
@@ -24,15 +24,15 @@ final class PhpParseException extends ParseException
     private ?string $phpVersion;
 
     /**
-     * @param string $message Error message
-     * @param string $sourcePath Source file path
-     * @param array<string> $astErrors AST parser errors
-     * @param string|null $phpVersion PHP version used for parsing
-     * @param int|null $line Line number
-     * @param int|null $column Column number
-     * @param array<string, mixed> $context Additional context
-     * @param int $code Error code
-     * @param \Throwable|null $previous Previous exception
+     * @param string               $message    Error message
+     * @param string               $sourcePath Source file path
+     * @param array<string>        $astErrors  AST parser errors
+     * @param string|null          $phpVersion PHP version used for parsing
+     * @param int|null             $line       Line number
+     * @param int|null             $column     Column number
+     * @param array<string, mixed> $context    Additional context
+     * @param int                  $code       Error code
+     * @param \Throwable|null      $previous   Previous exception
      */
     public function __construct(
         string $message,
@@ -43,7 +43,7 @@ final class PhpParseException extends ParseException
         ?int $column = null,
         array $context = [],
         int $code = 0,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         $this->astErrors = $astErrors;
         $this->phpVersion = $phpVersion ?? PHP_VERSION;
@@ -52,8 +52,8 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Get AST parser errors
-     * 
+     * Get AST parser errors.
+     *
      * @return array<string> AST error messages
      */
     public function getAstErrors(): array
@@ -62,8 +62,8 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Get PHP version used for parsing
-     * 
+     * Get PHP version used for parsing.
+     *
      * @return string|null PHP version or null if not available
      */
     public function getPhpVersion(): ?string
@@ -72,8 +72,8 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Check if error has AST-specific errors
-     * 
+     * Check if error has AST-specific errors.
+     *
      * @return bool True if AST errors are present
      */
     public function hasAstErrors(): bool
@@ -82,8 +82,8 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Get first AST error
-     * 
+     * Get first AST error.
+     *
      * @return string|null First AST error or null if none
      */
     public function getFirstAstError(): ?string
@@ -92,19 +92,18 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Create exception for syntax errors from AST parser
-     * 
-     * @param array<string> $astErrors AST parser errors
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @param int|null $column Column number
-     * @return self
+     * Create exception for syntax errors from AST parser.
+     *
+     * @param array<string> $astErrors  AST parser errors
+     * @param string        $sourcePath Source file path
+     * @param int|null      $line       Line number
+     * @param int|null      $column     Column number
      */
     public static function fromAstErrors(
         array $astErrors,
         string $sourcePath,
         ?int $line = null,
-        ?int $column = null
+        ?int $column = null,
     ): self {
         $message = 'PHP syntax error';
         if (!empty($astErrors)) {
@@ -115,12 +114,11 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Create exception for unsupported PHP constructs
-     * 
-     * @param string $construct Unsupported construct
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @return self
+     * Create exception for unsupported PHP constructs.
+     *
+     * @param string   $construct  Unsupported construct
+     * @param string   $sourcePath Source file path
+     * @param int|null $line       Line number
      */
     public static function unsupportedConstruct(string $construct, string $sourcePath, ?int $line = null): self
     {
@@ -131,29 +129,27 @@ final class PhpParseException extends ParseException
     }
 
     /**
-     * Create exception for invalid configuration structure
-     * 
-     * @param string $expectedStructure Expected structure description
-     * @param string $sourcePath Source file path
-     * @param array<string, mixed> $context Additional context
-     * @return self
+     * Create exception for invalid configuration structure.
+     *
+     * @param string               $expectedStructure Expected structure description
+     * @param string               $sourcePath        Source file path
+     * @param array<string, mixed> $context           Additional context
      */
     public static function invalidConfigurationStructure(
         string $expectedStructure,
         string $sourcePath,
-        array $context = []
+        array $context = [],
     ): self {
         $message = "Invalid configuration structure, expected: {$expectedStructure}";
-        
+
         return new self($message, $sourcePath, [], null, null, null, $context);
     }
 
     /**
-     * Create exception for missing required configuration keys
-     * 
+     * Create exception for missing required configuration keys.
+     *
      * @param array<string> $missingKeys Missing configuration keys
-     * @param string $sourcePath Source file path
-     * @return self
+     * @param string        $sourcePath  Source file path
      */
     public static function missingRequiredKeys(array $missingKeys, string $sourcePath): self
     {

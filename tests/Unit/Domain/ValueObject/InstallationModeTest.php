@@ -23,7 +23,7 @@ final class InstallationModeTest extends TestCase
     public function testEnumCases(): void
     {
         $cases = InstallationMode::cases();
-        
+
         self::assertCount(1, $cases);
         self::assertSame(InstallationMode::COMPOSER, $cases[0]);
     }
@@ -98,7 +98,7 @@ final class InstallationModeTest extends TestCase
         $mode = InstallationMode::COMPOSER;
         $serialized = serialize($mode);
         $unserialized = unserialize($serialized);
-        
+
         self::assertSame($mode, $unserialized);
         self::assertSame($mode->value, $unserialized->value);
     }
@@ -107,7 +107,7 @@ final class InstallationModeTest extends TestCase
     {
         $mode1 = InstallationMode::COMPOSER;
         $mode2 = InstallationMode::COMPOSER;
-        
+
         self::assertSame($mode1, $mode2);
         self::assertTrue($mode1 === $mode2);
     }
@@ -120,9 +120,9 @@ final class InstallationModeTest extends TestCase
     public function testEnumInArray(): void
     {
         $modes = [InstallationMode::COMPOSER];
-        
+
         self::assertContains(InstallationMode::COMPOSER, $modes);
-        self::assertTrue(in_array(InstallationMode::COMPOSER, $modes, true));
+        self::assertTrue(\in_array(InstallationMode::COMPOSER, $modes, true));
     }
 
     public function testMatchExpression(): void
@@ -131,7 +131,7 @@ final class InstallationModeTest extends TestCase
             InstallationMode::COMPOSER => 'matched',
             default => 'not matched'
         };
-        
+
         self::assertSame('matched', $result);
     }
 }

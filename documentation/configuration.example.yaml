@@ -1,9 +1,11 @@
 analysis:
-  target_version: '12.4'
-  php_versions:
-    - '8.1'
-    - '8.2'
+  installationPath: path/to/instance/
+  targetVersion: '13.4'
+  resultCache:
+    enabled: true
+  phpVersions:
     - '8.3'
+    - '8.4'
   analyzers:
     version_availability:
       enabled: true
@@ -23,9 +25,9 @@ analysis:
 reporting:
   formats:
     - markdown
-  output_directory: foo/bar
-  include_charts: true
-external_tools:
+  output_directory: var/reports/
+  includeCharts: false
+externalTools:
   rector:
     binary: vendor/bin/rector
     config: null

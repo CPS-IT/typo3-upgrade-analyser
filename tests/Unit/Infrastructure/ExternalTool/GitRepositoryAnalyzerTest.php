@@ -14,20 +14,20 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
-use PHPUnit\Framework\TestCase;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Test case for GitRepositoryAnalyzer
+ * Test case for GitRepositoryAnalyzer.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer
  */
@@ -43,11 +43,11 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->providerFactory = $this->createMock(GitProviderFactory::class);
         $this->versionParser = $this->createMock(GitVersionParser::class);
         $this->logger = $this->createMock(LoggerInterface::class);
-        
+
         $this->analyzer = new GitRepositoryAnalyzer(
             $this->providerFactory,
             $this->versionParser,
-            $this->logger
+            $this->logger,
         );
     }
 
@@ -74,7 +74,7 @@ class GitRepositoryAnalyzerTest extends TestCase
             starCount: 10,
             forkCount: 2,
             lastUpdated: new \DateTimeImmutable('2024-01-15'),
-            defaultBranch: 'main'
+            defaultBranch: 'main',
         );
 
         $health = new GitRepositoryHealth(
@@ -86,16 +86,16 @@ class GitRepositoryAnalyzerTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 5
+            contributorCount: 5,
         );
 
         $tags = [
             new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15')),
-            new GitTag('v11.5.0', new \DateTimeImmutable('2023-12-01'))
+            new GitTag('v11.5.0', new \DateTimeImmutable('2023-12-01')),
         ];
 
         $compatibleTags = [
-            new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15'))
+            new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15')),
         ];
 
         $provider->expects($this->once())
@@ -198,8 +198,8 @@ class GitRepositoryAnalyzerTest extends TestCase
             'CGLcompliance_note' => '',
             'constraints' => [
                 'depends' => [
-                    'typo3' => '11.5.0-12.4.99'
-                ]
+                    'typo3' => '11.5.0-12.4.99',
+                ],
             ],
             'state' => 'stable',
             'uploadfolder' => 0,
@@ -222,7 +222,7 @@ class GitRepositoryAnalyzerTest extends TestCase
             'docPath' => '',
             'sourceforge_username' => '',
             'github_username' => '',
-            'git_repository_url' => 'https://github.com/user/test-ext.git'
+            'git_repository_url' => 'https://github.com/user/test-ext.git',
         ]);
 
         $targetVersion = Version::fromString('12.4.0');
@@ -235,10 +235,10 @@ class GitRepositoryAnalyzerTest extends TestCase
 
         // Mock successful analysis
         $provider->method('getRepositoryInfo')->willReturn(
-            new GitRepositoryMetadata('test-ext', '', false, false, 0, 0, new \DateTimeImmutable(), 'main')
+            new GitRepositoryMetadata('test-ext', '', false, false, 0, 0, new \DateTimeImmutable(), 'main'),
         );
         $provider->method('getRepositoryHealth')->willReturn(
-            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0)
+            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0),
         );
         $provider->method('getTags')->willReturn([]);
         $this->versionParser->method('findCompatibleVersions')->willReturn([]);

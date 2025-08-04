@@ -17,7 +17,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * Abstract base class for Git providers
+ * Abstract base class for Git providers.
  */
 abstract class AbstractGitProvider implements GitProviderInterface
 {
@@ -26,7 +26,7 @@ abstract class AbstractGitProvider implements GitProviderInterface
     public function __construct(
         protected readonly HttpClientInterface $httpClient,
         protected readonly LoggerInterface $logger,
-        protected readonly ?string $accessToken = null
+        protected readonly ?string $accessToken = null,
     ) {
     }
 
@@ -42,27 +42,27 @@ abstract class AbstractGitProvider implements GitProviderInterface
     }
 
     /**
-     * Extract repository owner and name from URL
+     * Extract repository owner and name from URL.
      */
     protected function extractRepositoryPath(string $repositoryUrl): array
     {
         // Remove .git suffix and normalize URL
         $url = preg_replace('/\.git$/', '', $repositoryUrl);
-        
+
         // Handle different URL formats
         if (preg_match('#(?:https?://|git@)([^/:]+)[/:]([^/]+)/([^/]+?)(?:\.git)?/?$#', $url, $matches)) {
             return [
                 'host' => $matches[1],
                 'owner' => $matches[2],
-                'name' => $matches[3]
+                'name' => $matches[3],
             ];
         }
-        
+
         throw new GitProviderException("Unable to parse repository URL: {$repositoryUrl}", $this->getName());
     }
 
     /**
-     * Make HTTP request with error handling
+     * Make HTTP request with error handling.
      */
     protected function makeRequest(string $method, string $url, array $options = []): ResponseInterface
     {
@@ -70,81 +70,64 @@ abstract class AbstractGitProvider implements GitProviderInterface
             $this->logger->debug('Making Git provider request', [
                 'method' => $method,
                 'url' => $url,
-                'provider' => $this->getName()
+                'provider' => $this->getName(),
             ]);
 
             $response = $this->httpClient->request($method, $url, $options);
-            
+
             if ($response->getStatusCode() >= 400) {
                 $errorContent = $response->getContent(false);
-                
+
                 // Detect rate limiting
-                if ($response->getStatusCode() === 403 && str_contains($errorContent, 'rate limit')) {
-                    throw new GitProviderException(
-                        sprintf('API rate limit exceeded: %s', $errorContent),
-                        $this->getName()
-                    );
+                if (403 === $response->getStatusCode() && str_contains($errorContent, 'rate limit')) {
+                    throw new GitProviderException(\sprintf('API rate limit exceeded: %s', $errorContent), $this->getName());
                 }
-                
-                throw new GitProviderException(
-                    sprintf(
-                        'Git provider request failed with status %d: %s',
-                        $response->getStatusCode(),
-                        $errorContent
-                    ),
-                    $this->getName()
-                );
+
+                throw new GitProviderException(\sprintf('Git provider request failed with status %d: %s', $response->getStatusCode(), $errorContent), $this->getName());
             }
-            
+
             return $response;
-            
         } catch (GitProviderException $e) {
             // Re-throw Git provider exceptions without wrapping
             throw $e;
-            
         } catch (\Throwable $e) {
             $this->logger->error('Git provider request failed', [
                 'method' => $method,
                 'url' => $url,
                 'provider' => $this->getName(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
-            throw new GitProviderException(
-                sprintf('Git provider request failed: %s', $e->getMessage()),
-                $this->getName(),
-                $e
-            );
+
+            throw new GitProviderException(\sprintf('Git provider request failed: %s', $e->getMessage()), $this->getName(), $e);
         }
     }
 
     /**
-     * Parse composer.json content safely
+     * Parse composer.json content safely.
      */
     protected function parseComposerJson(string $content): ?array
     {
         try {
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-            
+
             // Basic validation - must be an array with a name
-            if (!is_array($data) || !isset($data['name'])) {
+            if (!\is_array($data) || !isset($data['name'])) {
                 return null;
             }
-            
+
             return $data;
-            
         } catch (\JsonException $e) {
             $this->logger->debug('Failed to parse composer.json', [
                 'error' => $e->getMessage(),
-                'provider' => $this->getName()
+                'provider' => $this->getName(),
             ]);
-            
+
             return null;
         }
     }
 
     /**
-     * Convert date string to DateTimeImmutable
+     * Convert date string to DateTimeImmutable.
      */
     protected function parseDate(string $dateString): ?\DateTimeImmutable
     {
@@ -153,9 +136,9 @@ abstract class AbstractGitProvider implements GitProviderInterface
         } catch (\Exception $e) {
             $this->logger->debug('Failed to parse date', [
                 'date_string' => $dateString,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }

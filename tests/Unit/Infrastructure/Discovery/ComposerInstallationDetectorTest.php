@@ -12,14 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
-use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -36,7 +34,7 @@ final class ComposerInstallationDetectorTest extends TestCase
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        
+
         // Create a real VersionExtractor with a minimal strategy
         $mockStrategy = $this->createMock(VersionStrategyInterface::class);
         $mockStrategy->method('getPriority')->willReturn(100);
@@ -44,10 +42,10 @@ final class ComposerInstallationDetectorTest extends TestCase
         $mockStrategy->method('getReliabilityScore')->willReturn(0.5);
         $mockStrategy->method('getRequiredFiles')->willReturn(['composer.json']);
         $this->versionExtractor = new VersionExtractor([$mockStrategy], $this->logger);
-        
+
         $this->detector = new ComposerInstallationDetector($this->versionExtractor, $this->logger);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($this->testDir, 0755, true);
+        mkdir($this->testDir, 0o755, true);
     }
 
     protected function tearDown(): void
@@ -66,7 +64,7 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         self::assertSame(
             'Detects TYPO3 installations set up using Composer package manager',
-            $this->detector->getDescription()
+            $this->detector->getDescription(),
         );
     }
 
@@ -78,13 +76,11 @@ final class ComposerInstallationDetectorTest extends TestCase
     public function testGetRequiredIndicators(): void
     {
         $indicators = $this->detector->getRequiredIndicators();
-        
+
         self::assertIsArray($indicators);
         self::assertContains('composer.json', $indicators);
-        self::assertContains('public/typo3conf', $indicators);
-        self::assertContains('public/typo3', $indicators);
-        self::assertContains('config/system', $indicators);
-        self::assertContains('var/log', $indicators);
+        // Only composer.json is required - TYPO3 paths can be customized
+        self::assertCount(1, $indicators);
     }
 
     public function testSupportsReturnsFalseForNonExistentDirectory(): void
@@ -96,16 +92,16 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $filePath = $this->testDir . '/test.txt';
         file_put_contents($filePath, 'test content');
-        
+
         self::assertFalse($this->detector->supports($filePath));
     }
 
     public function testSupportsReturnsFalseWithoutComposerJson(): void
     {
         // Create TYPO3 indicators but no composer.json
-        mkdir($this->testDir . '/public/typo3conf', 0755, true);
-        mkdir($this->testDir . '/config/system', 0755, true);
-        
+        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
+        mkdir($this->testDir . '/config/system', 0o755, true);
+
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
@@ -113,8 +109,8 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         // Create composer.json but only one TYPO3 indicator
         file_put_contents($this->testDir . '/composer.json', '{}');
-        mkdir($this->testDir . '/public/typo3conf', 0755, true);
-        
+        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
+
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
@@ -124,18 +120,18 @@ final class ComposerInstallationDetectorTest extends TestCase
         $this->createFullTypo3Directory();
         $composerData = [
             'require' => [
-                'some/other-package' => '^1.0'
-            ]
+                'some/other-package' => '^1.0',
+            ],
         ];
         file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
-        
+
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
     public function testSupportsReturnsTrueWithValidComposerTypo3Installation(): void
     {
         $this->createValidComposerTypo3Installation();
-        
+
         self::assertTrue($this->detector->supports($this->testDir));
     }
 
@@ -143,18 +139,18 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $this->createFullTypo3Directory();
         file_put_contents($this->testDir . '/composer.json', 'invalid json');
-        
+
         $this->logger->expects(self::once())
             ->method('warning')
             ->with(
                 'Failed to parse composer.json for TYPO3 package check',
-                self::callback(fn($context) => 
-                    isset($context['path']) && 
-                    str_contains($context['path'], 'composer.json') &&
-                    isset($context['error'])
-                )
+                self::callback(
+                    fn ($context) => isset($context['path'])
+                    && str_contains($context['path'], 'composer.json')
+                    && isset($context['error']),
+                ),
             );
-        
+
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
@@ -166,11 +162,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         $this->createFullTypo3Directory();
         $composerData = [
             'require' => [
-                $packageName => '^12.4'
-            ]
+                $packageName => '^12.4',
+            ],
         ];
         file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
-        
+
         self::assertTrue($this->detector->supports($this->testDir));
     }
 
@@ -188,11 +184,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         $this->createFullTypo3Directory();
         $composerData = [
             'require-dev' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
         file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
-        
+
         self::assertTrue($this->detector->supports($this->testDir));
     }
 
@@ -200,17 +196,17 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         // Empty directory - not supported
         $result = $this->detector->detect($this->testDir);
-        
+
         self::assertNull($result);
     }
 
     public function testDetectReturnsNullWhenVersionExtractionFails(): void
     {
         $this->createValidComposerTypo3Installation();
-        
+
         // The version extractor will fail because no actual version extraction strategy works
         $result = $this->detector->detect($this->testDir);
-        
+
         self::assertNull($result);
     }
 
@@ -218,15 +214,15 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $this->createValidComposerTypo3Installation();
         $this->createComposerLockWithVersionInfo();
-        
+
         // Create a working version extractor with a strategy that returns a version
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
         $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
-        
+
         $result = $workingDetector->detect($this->testDir);
-        
-        if ($result !== null) {
+
+        if (null !== $result) {
             self::assertInstanceOf(Installation::class, $result);
             self::assertSame($this->testDir, $result->getPath());
             self::assertSame(InstallationMode::COMPOSER, $result->getMode());
@@ -241,23 +237,24 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $this->createValidComposerTypo3Installation();
         $this->createComposerLockWithExtensions();
-        
+
         // Create a working version extractor
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
         $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
-        
+
         $result = $workingDetector->detect($this->testDir);
-        
-        if ($result !== null) {
+
+        if (null !== $result) {
             self::assertInstanceOf(Installation::class, $result);
+
+            // Extensions are now handled separately by ExtensionDiscoveryService
+            // getExtensions() returns null to enforce separation of concerns
             $extensions = $result->getExtensions();
-            self::assertIsArray($extensions);
-            
-            // Check that extensions were discovered (may be empty if parsing fails)
-            if (count($extensions) > 0) {
-                self::assertContainsOnlyInstancesOf(Extension::class, $extensions);
-            }
+            self::assertNull($extensions);
+
+            // The detection itself should succeed even if extensions are handled separately
+            self::assertInstanceOf(Installation::class, $result);
         } else {
             // If result is null, version extraction failed
             self::assertNull($result);
@@ -267,7 +264,7 @@ final class ComposerInstallationDetectorTest extends TestCase
     public function testDetectHandlesExceptionGracefully(): void
     {
         $this->createValidComposerTypo3Installation();
-        
+
         // Create a strategy that throws an exception
         $failingStrategy = $this->createMock(VersionStrategyInterface::class);
         $failingStrategy->method('getPriority')->willReturn(100);
@@ -276,54 +273,46 @@ final class ComposerInstallationDetectorTest extends TestCase
         $failingStrategy->method('getRequiredFiles')->willReturn(['composer.json']);
         $failingStrategy->method('getName')->willReturn('Test Strategy');
         $failingStrategy->method('getReliabilityScore')->willReturn(0.8);
-        
+
         $failingVersionExtractor = new VersionExtractor([$failingStrategy], $this->logger);
         $failingDetector = new ComposerInstallationDetector($failingVersionExtractor, $this->logger);
-        
+
         $this->logger->expects(self::atLeastOnce())
             ->method('warning');
-        
+
         $result = $failingDetector->detect($this->testDir);
-        
+
         self::assertNull($result);
     }
 
-    public function testExtensionDiscoveryWithInvalidComposerLock(): void
+    public function testDetectDoesNotDiscoverExtensions(): void
     {
         $this->createValidComposerTypo3Installation();
-        file_put_contents($this->testDir . '/composer.lock', 'invalid json');
-        
+        $this->createComposerLockWithExtensions();
+
         // Use working version extractor
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
         $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
-        
-        $this->logger->expects(self::once())
-            ->method('warning')
-            ->with(
-                'Failed to parse composer.lock for extension discovery',
-                self::callback(fn($context) => 
-                    str_contains($context['path'], 'composer.lock') &&
-                    isset($context['error'])
-                )
-            );
-        
+
         $result = $workingDetector->detect($this->testDir);
-        
-        if ($result !== null) {
+
+        if (null !== $result) {
+            // Extensions are now handled separately by ExtensionDiscoveryService
+            // getExtensions() returns null to enforce separation of concerns
             $extensions = $result->getExtensions();
-            self::assertEmpty($extensions);
+            self::assertNull($extensions);
         }
     }
 
     private function createValidComposerTypo3Installation(): void
     {
         $this->createFullTypo3Directory();
-        
+
         $composerData = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
         file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
     }
@@ -331,11 +320,11 @@ final class ComposerInstallationDetectorTest extends TestCase
     private function createFullTypo3Directory(): void
     {
         // Create all required TYPO3 indicators
-        mkdir($this->testDir . '/public/typo3conf', 0755, true);
-        mkdir($this->testDir . '/public/typo3', 0755, true);
-        mkdir($this->testDir . '/config/system', 0755, true);
-        mkdir($this->testDir . '/var/log', 0755, true);
-        mkdir($this->testDir . '/public/typo3conf/ext', 0755, true);
+        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
+        mkdir($this->testDir . '/public/typo3', 0o755, true);
+        mkdir($this->testDir . '/config/system', 0o755, true);
+        mkdir($this->testDir . '/var/log', 0o755, true);
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
     }
 
     private function createComposerLockWithVersionInfo(): void
@@ -344,9 +333,9 @@ final class ComposerInstallationDetectorTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => '12.4.8'
-                ]
-            ]
+                    'version' => '12.4.8',
+                ],
+            ],
         ];
         file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
     }
@@ -357,21 +346,21 @@ final class ComposerInstallationDetectorTest extends TestCase
             'packages' => [
                 [
                     'name' => 'typo3/cms-core',
-                    'version' => '12.4.8'
+                    'version' => '12.4.8',
                 ],
                 [
                     'name' => 'typo3/cms-backend',
-                    'version' => '12.4.8'
+                    'version' => '12.4.8',
                 ],
                 [
                     'name' => 'typo3/cms-frontend',
-                    'version' => '12.4.8'
+                    'version' => '12.4.8',
                 ],
                 [
                     'name' => 'some/other-package',
-                    'version' => '1.0.0'
-                ]
-            ]
+                    'version' => '1.0.0',
+                ],
+            ],
         ];
         file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
     }
@@ -396,7 +385,7 @@ final class ComposerInstallationDetectorTest extends TestCase
 }
 
 /**
- * Test strategy that always returns a valid version
+ * Test strategy that always returns a valid version.
  */
 class TestableVersionStrategy implements VersionStrategyInterface
 {

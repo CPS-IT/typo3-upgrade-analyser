@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
 
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
 
 /**
- * Integration tests for TER API with real API calls
+ * Integration tests for TER API with real API calls.
  *
  * @group integration
  * @group ter-api
@@ -35,31 +35,32 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $this->requiresRealApiCalls();
         $this->requiresTerToken();
-        
+
         // Load test extension data
         $this->testExtensions = $this->loadTestData('known_extensions.json');
 
         // Create TER API client
         $this->terApiClient = new TerApiClient(
             $this->httpClient,
-            $this->createLogger()
+            $this->createLogger(),
         );
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForExistingExtensionWithTypo3Twelve(): void
     {
         $startTime = microtime(true);
-        
+
         $extensionKey = $this->testExtensions['extensions']['georgringer/news']['extension_key'];
         $typo3Version = new Version('12.4.0');
-        
+
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_12.4.0",
-            fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $responseTime = microtime(true) - $startTime;
@@ -70,16 +71,17 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForExistingExtensionWithTypo3Eleven(): void
     {
         $extensionKey = $this->testExtensions['extensions']['georgringer/news']['extension_key'];
         $typo3Version = new Version('11.5.0');
-        
+
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_11.5.0",
-            fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertTrue($hasVersion, 'News extension should have TYPO3 11.5 compatible version in TER');
@@ -87,16 +89,17 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForArchivedExtensionWithTypo3Twelve(): void
     {
         $extensionKey = $this->testExtensions['extensions']['dmitryd/typo3-realurl']['extension_key'];
         $typo3Version = new Version('12.4.0');
-        
+
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_12.4.0",
-            fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertFalse($hasVersion, 'RealURL extension should not have TYPO3 12.4 compatible version in TER');
@@ -104,16 +107,17 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForArchivedExtensionWithOlderTypo3(): void
     {
         $extensionKey = $this->testExtensions['extensions']['dmitryd/typo3-realurl']['extension_key'];
         $typo3Version = new Version('8.7.0');
-        
+
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_8.7.0",
-            fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertTrue($hasVersion, 'RealURL extension should have TYPO3 8.7 compatible version in TER');
@@ -121,6 +125,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForNonExistentExtension(): void
@@ -131,24 +136,25 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         // TER API with authentication should return false for non-existent extensions
         // instead of throwing exception (graceful handling of 400 responses)
         $hasVersion = $this->terApiClient->hasVersionFor($nonExistentKey, $typo3Version);
-        
+
         $this->assertFalse($hasVersion, 'Non-existent extension should return false, not throw exception');
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForExistingExtension(): void
     {
         $startTime = microtime(true);
-        
+
         $extensionKey = $this->testExtensions['extensions']['georgringer/news']['extension_key'];
         $typo3Version = new Version('12.4.0');
-        
+
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_12.4.0",
-            fn() => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $responseTime = microtime(true) - $startTime;
@@ -158,23 +164,24 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         $this->assertMatchesRegularExpression(
             '/^\d+\.\d+\.\d+/',
             $latestVersion,
-            'Version should follow semantic versioning pattern'
+            'Version should follow semantic versioning pattern',
         );
         $this->assertResponseTimeAcceptable($responseTime, 10.0);
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForArchivedExtensionWithNewTypo3(): void
     {
         $extensionKey = $this->testExtensions['extensions']['dmitryd/typo3-realurl']['extension_key'];
         $typo3Version = new Version('12.4.0');
-        
+
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_12.4.0",
-            fn() => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $this->assertNull($latestVersion, 'Archived extension should not have TYPO3 12.4 compatible version');
@@ -182,16 +189,17 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForArchivedExtensionWithOldTypo3(): void
     {
         $extensionKey = $this->testExtensions['extensions']['dmitryd/typo3-realurl']['extension_key'];
         $typo3Version = new Version('8.7.0');
-        
+
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_8.7.0",
-            fn() => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version)
+            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $this->assertNotNull($latestVersion, 'Archived extension should have older TYPO3 compatible version');
@@ -200,6 +208,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForNonExistentExtension(): void
@@ -210,19 +219,20 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         // TER API with authentication should return null for non-existent extensions
         // instead of throwing exception (graceful handling of 400 responses)
         $latestVersion = $this->terApiClient->getLatestVersion($nonExistentKey, $typo3Version);
-        
+
         $this->assertNull($latestVersion, 'Non-existent extension should return null, not throw exception');
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testMultipleExtensionsCompatibilityCheck(): void
     {
         $typo3Version = new Version('12.4.0');
         $results = [];
-        
+
         $extensionsToTest = [
             'news' => $this->testExtensions['extensions']['georgringer/news']['extension_key'],
             'extension_builder' => $this->testExtensions['extensions']['friendsoftypo3/extension-builder']['extension_key'],
@@ -231,26 +241,25 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         foreach ($extensionsToTest as $name => $extensionKey) {
             $startTime = microtime(true);
-            
+
             try {
                 $hasVersion = $this->cacheApiResponse(
                     "ter_multi_test_{$extensionKey}_12.4.0",
-                    fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+                    fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
                 );
-                
+
                 $responseTime = microtime(true) - $startTime;
                 $results[$name] = [
                     'has_version' => $hasVersion,
                     'response_time' => $responseTime,
-                    'success' => true
+                    'success' => true,
                 ];
-                
             } catch (\Exception $e) {
                 $results[$name] = [
                     'has_version' => false,
                     'response_time' => microtime(true) - $startTime,
                     'success' => false,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ];
             }
         }
@@ -268,12 +277,13 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testVersionCompatibilityLogic(): void
     {
         $extensionKey = 'news';
-        
+
         // Test different TYPO3 versions based on actual TER API data
         $versionTests = [
             '8.7.0' => true,   // Legacy version that news supports
@@ -282,22 +292,22 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         ];
 
         foreach ($versionTests as $versionString => $expectedResult) {
-            if ($expectedResult === null) {
+            if (null === $expectedResult) {
                 continue; // Skip uncertain cases
             }
-            
+
             $typo3Version = new Version($versionString);
-            
+
             $hasVersion = $this->cacheApiResponse(
                 "ter_version_logic_{$extensionKey}_{$versionString}",
-                fn() => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version)
+                fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
             );
 
-            if ($expectedResult !== null) {
+            if (null !== $expectedResult) {
                 $this->assertEquals(
                     $expectedResult,
                     $hasVersion,
-                    "Extension {$extensionKey} compatibility with TYPO3 {$versionString} doesn't match expectation"
+                    "Extension {$extensionKey} compatibility with TYPO3 {$versionString} doesn't match expectation",
                 );
             }
         }
@@ -305,6 +315,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testTerApiErrorHandling(): void
@@ -320,7 +331,9 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @group performance
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testTerApiPerformance(): void
@@ -328,20 +341,19 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         $extensions = ['news', 'extension_builder', 'bootstrap_package'];
         $typo3Version = new Version('12.4.0');
         $totalStartTime = microtime(true);
-        
+
         foreach ($extensions as $extensionKey) {
             $startTime = microtime(true);
-            
+
             try {
                 $this->terApiClient->hasVersionFor($extensionKey, $typo3Version);
                 $requestTime = microtime(true) - $startTime;
-                
+
                 $this->assertLessThan(
                     10.0,
                     $requestTime,
-                    "TER API request for {$extensionKey} took too long: {$requestTime}s"
+                    "TER API request for {$extensionKey} took too long: {$requestTime}s",
                 );
-                
             } catch (ExternalToolException $e) {
                 // Some extensions might not exist, that's okay for performance testing
                 if (!str_contains($e->getMessage(), 'not found')) {
@@ -349,42 +361,43 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
                 }
             }
         }
-        
+
         $totalTime = microtime(true) - $totalStartTime;
         $this->assertLessThan(30.0, $totalTime, "Total TER API testing time exceeded limit: {$totalTime}s");
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
      */
     public function testTerApiResponseStructure(): void
     {
         // This test validates that the TER API returns expected data structure
         $extensionKey = 'news';
-        
+
         // Use the TER token from the base class
         $headers = [];
         if ($this->getTerToken()) {
             $headers['Authorization'] = 'Bearer ' . $this->getTerToken();
         }
-        
+
         // Make a direct API call to inspect response structure
         $response = $this->httpClient->request('GET', 'https://extensions.typo3.org/api/v1/extension/' . $extensionKey, ['headers' => $headers]);
-        
+
         // Handle TER API server instability
-        if ($response->getStatusCode() === 500) {
+        if (500 === $response->getStatusCode()) {
             $this->markTestSkipped('TER API server error (500) - skipping structure test');
         }
-        
+
         $this->assertEquals(200, $response->getStatusCode());
-        
+
         $data = $response->toArray();
-        
+
         // TER API returns an array with extension data as first element
         $this->assertIsArray($data);
         $this->assertArrayHasKey(0, $data);
-        
+
         $extensionData = $data[0];
         $this->assertArrayHasKey('key', $extensionData);
         $this->assertArrayHasKey('downloads', $extensionData);
@@ -392,7 +405,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         $this->assertArrayHasKey('version_count', $extensionData);
         $this->assertArrayHasKey('meta', $extensionData);
         $this->assertArrayHasKey('current_version', $extensionData);
-        
+
         // Validate current version structure
         $currentVersion = $extensionData['current_version'];
         $this->assertArrayHasKey('number', $currentVersion); // TER uses 'number' not 'version'
@@ -402,6 +415,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testSystemExtensionHandling(): void

@@ -13,14 +13,14 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Exception thrown when external tool operations fail
+ * Exception thrown when external tool operations fail.
  */
 class ExternalToolException extends \Exception
 {
     public function __construct(
         string $message,
         private readonly string $toolName,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 0, $previous);
     }

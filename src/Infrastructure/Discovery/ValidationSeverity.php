@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 /**
- * Represents the severity level of validation issues
+ * Represents the severity level of validation issues.
  */
 enum ValidationSeverity: string
 {

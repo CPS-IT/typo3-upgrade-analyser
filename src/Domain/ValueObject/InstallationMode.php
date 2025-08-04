@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Represents different TYPO3 installation modes
- * 
+ * Represents different TYPO3 installation modes.
+ *
  * Currently focuses on Composer-based installations as specified
  * in the InstallationDiscoverySystem feature plan.
  */
@@ -24,7 +24,7 @@ enum InstallationMode: string
 
     public function isComposerMode(): bool
     {
-        return $this === self::COMPOSER;
+        return self::COMPOSER === $this;
     }
 
     public function getDisplayName(): string

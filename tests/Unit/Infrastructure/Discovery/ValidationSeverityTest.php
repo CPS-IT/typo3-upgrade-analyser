@@ -23,7 +23,7 @@ final class ValidationSeverityTest extends TestCase
     public function testEnumCases(): void
     {
         $cases = ValidationSeverity::cases();
-        
+
         self::assertCount(4, $cases);
         self::assertContains(ValidationSeverity::INFO, $cases);
         self::assertContains(ValidationSeverity::WARNING, $cases);
@@ -151,7 +151,7 @@ final class ValidationSeverityTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Invalid severity value: {$value}");
-        
+
         ValidationSeverity::fromNumericValue($value);
     }
 
@@ -197,7 +197,7 @@ final class ValidationSeverityTest extends TestCase
         foreach (ValidationSeverity::cases() as $severity) {
             $serialized = serialize($severity);
             $unserialized = unserialize($serialized);
-            
+
             self::assertSame($severity, $unserialized);
             self::assertSame($severity->value, $unserialized->value);
             self::assertSame($severity->getNumericValue(), $unserialized->getNumericValue());
@@ -212,15 +212,15 @@ final class ValidationSeverityTest extends TestCase
             ValidationSeverity::ERROR,
             ValidationSeverity::CRITICAL,
         ];
-        
-        for ($i = 0; $i < count($severities) - 1; $i++) {
+
+        for ($i = 0; $i < \count($severities) - 1; ++$i) {
             $current = $severities[$i];
             $next = $severities[$i + 1];
-            
+
             self::assertLessThan(
                 $next->getNumericValue(),
                 $current->getNumericValue(),
-                "Severity {$current->value} should have lower numeric value than {$next->value}"
+                "Severity {$current->value} should have lower numeric value than {$next->value}",
             );
         }
     }
@@ -234,7 +234,7 @@ final class ValidationSeverityTest extends TestCase
                 ValidationSeverity::ERROR => 'error_matched',
                 ValidationSeverity::CRITICAL => 'critical_matched',
             };
-            
+
             self::assertSame($severity->value . '_matched', $result);
         }
     }

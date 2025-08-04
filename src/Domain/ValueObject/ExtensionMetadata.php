@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Contains metadata about a TYPO3 extension discovered during installation analysis
- * 
+ * Contains metadata about a TYPO3 extension discovered during installation analysis.
+ *
  * This value object aggregates information from multiple sources:
  * - ext_emconf.php files (traditional TYPO3 extension configuration)
  * - composer.json files (Composer package metadata)
@@ -23,15 +23,15 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 final class ExtensionMetadata
 {
     /**
-     * @param string $description Extension description
-     * @param string $author Extension author name
-     * @param string $authorEmail Author email address
-     * @param array<string> $keywords Extension keywords/tags
-     * @param string $license License identifier (e.g., GPL-2.0-or-later)
-     * @param array<string> $supportedPhpVersions Supported PHP versions
-     * @param array<string> $supportedTypo3Versions Supported TYPO3 versions
-     * @param \DateTimeImmutable $lastModified Last modification timestamp
-     * @param array<string, mixed> $additionalData Additional metadata from various sources
+     * @param string               $description            Extension description
+     * @param string               $author                 Extension author name
+     * @param string               $authorEmail            Author email address
+     * @param array<string>        $keywords               Extension keywords/tags
+     * @param string               $license                License identifier (e.g., GPL-2.0-or-later)
+     * @param array<string>        $supportedPhpVersions   Supported PHP versions
+     * @param array<string>        $supportedTypo3Versions Supported TYPO3 versions
+     * @param \DateTimeImmutable   $lastModified           Last modification timestamp
+     * @param array<string, mixed> $additionalData         Additional metadata from various sources
      */
     public function __construct(
         private readonly string $description,
@@ -42,7 +42,7 @@ final class ExtensionMetadata
         private readonly array $supportedPhpVersions,
         private readonly array $supportedTypo3Versions,
         private readonly \DateTimeImmutable $lastModified,
-        private readonly array $additionalData = []
+        private readonly array $additionalData = [],
     ) {
     }
 
@@ -68,7 +68,7 @@ final class ExtensionMetadata
 
     public function hasKeyword(string $keyword): bool
     {
-        return in_array(strtolower($keyword), array_map('strtolower', $this->keywords), true);
+        return \in_array(strtolower($keyword), array_map('strtolower', $this->keywords), true);
     }
 
     public function getLicense(): string
@@ -84,7 +84,7 @@ final class ExtensionMetadata
     public function supportsPhpVersion(string $version): bool
     {
         // Simple check - in a full implementation would use version_compare with constraints
-        return in_array($version, $this->supportedPhpVersions, true);
+        return \in_array($version, $this->supportedPhpVersions, true);
     }
 
     public function getSupportedTypo3Versions(): array
@@ -95,7 +95,7 @@ final class ExtensionMetadata
     public function supportsTypo3Version(string $version): bool
     {
         // Simple check - in a full implementation would use semantic version matching
-        return in_array($version, $this->supportedTypo3Versions, true);
+        return \in_array($version, $this->supportedTypo3Versions, true);
     }
 
     public function getLastModified(): \DateTimeImmutable
@@ -144,7 +144,7 @@ final class ExtensionMetadata
             $this->supportedPhpVersions,
             $this->supportedTypo3Versions,
             $this->lastModified,
-            array_merge($this->additionalData, $data)
+            array_merge($this->additionalData, $data),
         );
     }
 
@@ -173,7 +173,7 @@ final class ExtensionMetadata
             '',
             [],
             [],
-            new \DateTimeImmutable()
+            new \DateTimeImmutable(),
         );
     }
 }

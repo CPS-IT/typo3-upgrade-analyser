@@ -16,13 +16,12 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationRuleInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -41,7 +40,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->configurationDiscoveryService = $this->createMock(ConfigurationDiscoveryService::class);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($this->testDir, 0755, true);
+        mkdir($this->testDir, 0o755, true);
     }
 
     protected function tearDown(): void
@@ -58,11 +57,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
         $mediumPriorityStrategy = $this->createMockStrategy('Medium Priority', 50);
 
         $service = $this->createService(
-            [$lowPriorityStrategy, $highPriorityStrategy, $mediumPriorityStrategy]
+            [$lowPriorityStrategy, $highPriorityStrategy, $mediumPriorityStrategy],
         );
 
         $strategies = $service->getDetectionStrategies();
-        
+
         self::assertSame('High Priority', $strategies[0]->getName());
         self::assertSame('Medium Priority', $strategies[1]->getName());
         self::assertSame('Low Priority', $strategies[2]->getName());
@@ -105,10 +104,10 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         // Create indicator file so required indicators check passes
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(false);
-        
+
         $this->service = $this->createService([$strategy]);
 
         $this->logger->expects(self::atLeastOnce())
@@ -126,18 +125,18 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationSuccessfullyDetectsInstallation(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $installation = $this->createMockInstallation();
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Mock configuration discovery to return the same installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with($installation)
             ->willReturn($installation);
-        
+
         $this->service = $this->createService([$strategy]);
 
         $this->logger->expects(self::atLeastOnce())
@@ -154,18 +153,18 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationWithValidation(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $installation = $this->createMockInstallation();
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Mock configuration discovery to return the same installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with($installation)
             ->willReturn($installation);
-        
+
         $validationIssue = new ValidationIssue(
             'Test Rule',
             ValidationSeverity::WARNING,
@@ -173,11 +172,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
             'test',
             [],
             [],
-            []
+            [],
         );
-        
+
         $validationRule = $this->createMockValidationRule('Test Rule', [$validationIssue]);
-        
+
         $this->service = $this->createService([$strategy], [$validationRule]);
 
         $result = $this->service->discoverInstallation($this->testDir, true);
@@ -190,20 +189,20 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationWithoutValidation(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $installation = $this->createMockInstallation();
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Mock configuration discovery to return the same installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with($installation)
             ->willReturn($installation);
-        
+
         $validationRule = $this->createMockValidationRule('Test Rule', []);
-        
+
         $this->service = $this->createService([$strategy], [$validationRule]);
 
         $result = $this->service->discoverInstallation($this->testDir, false);
@@ -215,11 +214,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationHandlesStrategyException(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willThrowException(new \RuntimeException('Test exception'));
-        
+
         $this->service = $this->createService([$strategy]);
 
         $this->logger->expects(self::atLeastOnce())
@@ -238,11 +237,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationReturnsNullFromStrategy(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn(null);
-        
+
         $this->service = $this->createService([$strategy]);
 
         $this->logger->expects(self::atLeastOnce())
@@ -261,11 +260,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         $strategy1 = $this->createMockStrategy('Strategy 1', 100);
         $strategy2 = $this->createMockStrategy('Strategy 2', 50);
-        
+
         $this->service = $this->createService([$strategy1, $strategy2]);
 
         $strategies = $this->service->getDetectionStrategies();
-        
+
         self::assertCount(2, $strategies);
         self::assertSame($strategy1, $strategies[0]);
         self::assertSame($strategy2, $strategies[1]);
@@ -276,15 +275,15 @@ final class InstallationDiscoveryServiceTest extends TestCase
         // Create indicator files
         file_put_contents($this->testDir . '/file1.txt', 'test');
         file_put_contents($this->testDir . '/file2.txt', 'test');
-        
+
         $strategy1 = $this->createMockStrategy('Strategy 1', 100, ['file1.txt']);
         $strategy2 = $this->createMockStrategy('Strategy 2', 50, ['file2.txt']);
         $strategy3 = $this->createMockStrategy('Strategy 3', 25, ['missing.txt']);
-        
+
         $this->service = $this->createService([$strategy1, $strategy2, $strategy3]);
 
         $applicable = $this->service->getApplicableStrategies($this->testDir);
-        
+
         self::assertCount(2, $applicable);
         self::assertContains($strategy1, $applicable);
         self::assertContains($strategy2, $applicable);
@@ -295,17 +294,17 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         file_put_contents($this->testDir . '/file1.txt', 'test');
         file_put_contents($this->testDir . '/file2.txt', 'test');
-        
+
         $strategy1 = $this->createMockStrategy('Strategy 1', 100, ['file1.txt']);
         $strategy1->expects(self::once())->method('supports')->willReturn(true);
-        
+
         $strategy2 = $this->createMockStrategy('Strategy 2', 50, ['file2.txt']);
         $strategy2->expects(self::once())->method('supports')->willReturn(false);
-        
+
         $this->service = $this->createService([$strategy1, $strategy2]);
 
         $supported = $this->service->getSupportedStrategies($this->testDir);
-        
+
         self::assertCount(1, $supported);
         self::assertContains($strategy1, $supported);
         self::assertNotContains($strategy2, $supported);
@@ -314,7 +313,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testCanDiscoverInstallation(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $this->service = $this->createService([$strategy]);
 
@@ -326,11 +325,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         $rule1 = $this->createMockValidationRule('Rule 1', []);
         $rule2 = $this->createMockValidationRule('Rule 2', []);
-        
+
         $this->service = $this->createService([], [$rule1, $rule2]);
 
         $rules = $this->service->getValidationRules();
-        
+
         self::assertCount(2, $rules);
         self::assertContains($rule1, $rules);
         self::assertContains($rule2, $rules);
@@ -339,17 +338,17 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testValidateInstallationWithApplicableRules(): void
     {
         $installation = $this->createMockInstallation();
-        
+
         $issue1 = new ValidationIssue('Rule 1', ValidationSeverity::ERROR, 'Error message', 'test');
         $issue2 = new ValidationIssue('Rule 2', ValidationSeverity::WARNING, 'Warning message', 'test');
-        
+
         $rule1 = $this->createMockValidationRule('Rule 1', [$issue1]);
         $rule2 = $this->createMockValidationRule('Rule 2', [$issue2]);
-        
+
         $this->service = $this->createService([], [$rule1, $rule2]);
 
         $issues = $this->service->validateInstallation($installation);
-        
+
         self::assertCount(2, $issues);
         self::assertContains($issue1, $issues);
         self::assertContains($issue2, $issues);
@@ -358,34 +357,34 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testValidateInstallationSkipsNonApplicableRules(): void
     {
         $installation = $this->createMockInstallation();
-        
+
         $rule1 = $this->createMockValidationRule('Rule 1', [], true);
         $rule2 = $this->createMockValidationRule('Rule 2', [], false);
-        
+
         $this->service = $this->createService([], [$rule1, $rule2]);
 
         $this->logger->expects(self::atLeastOnce())
             ->method('debug');
 
         $issues = $this->service->validateInstallation($installation);
-        
+
         self::assertEmpty($issues);
     }
 
     public function testValidateInstallationHandlesRuleException(): void
     {
         $installation = $this->createMockInstallation();
-        
+
         $rule = $this->createMockValidationRule('Failing Rule', []);
         $rule->method('validate')->willThrowException(new \RuntimeException('Validation failed'));
-        
+
         $this->service = $this->createService([], [$rule]);
 
         $this->logger->expects(self::atLeastOnce())
             ->method('warning');
 
         $issues = $this->service->validateInstallation($installation);
-        
+
         self::assertCount(1, $issues);
         self::assertSame('Failing Rule', $issues[0]->getRuleName());
         self::assertSame(ValidationSeverity::ERROR, $issues[0]->getSeverity());
@@ -395,23 +394,23 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationWithConfigurationDiscovery(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $installation = $this->createMockInstallation();
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Configure ConfigurationDiscoveryService to return enhanced installation
         $enhancedInstallation = $this->createMockInstallation();
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with($installation)
             ->willReturn($enhancedInstallation);
-        
+
         $this->service = $this->createService([$strategy]);
-        
+
         $result = $this->service->discoverInstallation($this->testDir);
-        
+
         self::assertTrue($result->isSuccessful());
         self::assertSame($enhancedInstallation, $result->getInstallation());
     }
@@ -419,31 +418,31 @@ final class InstallationDiscoveryServiceTest extends TestCase
     public function testDiscoverInstallationWithConfigurationDiscoveryException(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         $installation = $this->createMockInstallation();
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Configure ConfigurationDiscoveryService to throw exception
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with($installation)
             ->willThrowException(new \RuntimeException('Configuration discovery failed'));
-        
+
         $this->logger->expects(self::once())
             ->method('warning')
             ->with(
                 'Configuration discovery failed during installation discovery',
                 self::callback(function (array $context) {
-                    return $context['exception_message'] === 'Configuration discovery failed';
-                })
+                    return 'Configuration discovery failed' === $context['exception_message'];
+                }),
             );
-        
+
         $this->service = $this->createService([$strategy]);
-        
+
         $result = $this->service->discoverInstallation($this->testDir);
-        
+
         // Installation discovery should still succeed even if configuration discovery fails
         self::assertTrue($result->isSuccessful());
         self::assertSame($installation, $result->getInstallation());
@@ -453,39 +452,39 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         $customConfigService = $this->createMock(ConfigurationDiscoveryService::class);
         $service = $this->createService([], [], $customConfigService);
-        
+
         self::assertInstanceOf(InstallationDiscoveryService::class, $service);
     }
 
     public function testConfigurationDiscoveryServiceIntegrationInWorkflow(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');
-        
+
         // Create installation with basic data
         $installation = $this->createMockInstallation();
-        
+
         // Create strategy that returns the installation
         $strategy = $this->createMockStrategy('Test Strategy', 100, ['indicator.txt']);
         $strategy->method('supports')->willReturn(true);
         $strategy->method('detect')->willReturn($installation);
-        
+
         // Mock configuration discovery service to verify it's called with correct installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
             ->with(self::callback(function ($arg) use ($installation) {
-                return $arg === $installation && 
-                       $arg->getPath() === $installation->getPath() &&
-                       $arg->getVersion()->toString() === $installation->getVersion()->toString();
+                return $arg === $installation
+                       && $arg->getPath() === $installation->getPath()
+                       && $arg->getVersion()->toString() === $installation->getVersion()->toString();
             }))
             ->willReturnCallback(function ($installation) {
                 // Simulate configuration discovery enhancing the installation
                 return $installation;
             });
-        
+
         $this->service = $this->createService([$strategy]);
-        
+
         $result = $this->service->discoverInstallation($this->testDir);
-        
+
         self::assertTrue($result->isSuccessful());
         self::assertSame($installation, $result->getInstallation());
     }
@@ -497,10 +496,10 @@ final class InstallationDiscoveryServiceTest extends TestCase
         $strategy->method('getPriority')->willReturn($priority);
         $strategy->method('getRequiredIndicators')->willReturn($requiredIndicators);
         $strategy->method('getDescription')->willReturn("Description for {$name}");
-        
+
         // Don't set default return values for supports() and detect() here
         // Let the individual tests configure these as needed
-        
+
         return $strategy;
     }
 
@@ -508,11 +507,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         $installation = new Installation($this->testDir, new Version('12.4.8'));
         $installation->setMode(InstallationMode::COMPOSER);
-        
+
         // Add a test extension
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
         $installation->addExtension($extension);
-        
+
         return $installation;
     }
 
@@ -525,20 +524,20 @@ final class InstallationDiscoveryServiceTest extends TestCase
         $rule->method('getCategory')->willReturn('test');
         $rule->method('appliesTo')->willReturn($appliesTo);
         $rule->method('validate')->willReturn($issues);
-        
+
         return $rule;
     }
 
     private function createService(
         array $strategies = [],
         array $validationRules = [],
-        ?ConfigurationDiscoveryService $configService = null
+        ?ConfigurationDiscoveryService $configService = null,
     ): InstallationDiscoveryService {
         return new InstallationDiscoveryService(
             $strategies,
             $validationRules,
             $configService ?? $this->configurationDiscoveryService,
-            $this->logger
+            $this->logger,
         );
     }
 

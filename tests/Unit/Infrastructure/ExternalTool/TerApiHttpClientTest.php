@@ -37,7 +37,7 @@ class TerApiHttpClientTest extends TestCase
     public function testGetExtensionDataWithSuccessfulResponse(): void
     {
         $expectedData = [['key' => 'news', 'name' => 'News']];
-        
+
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn($expectedData);
@@ -95,7 +95,7 @@ class TerApiHttpClientTest extends TestCase
     public function testGetVersionsDataWithSuccessfulResponse(): void
     {
         $expectedData = [['number' => '1.0.0', 'typo3_versions' => [12]]];
-        
+
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn($expectedData);
@@ -115,11 +115,11 @@ class TerApiHttpClientTest extends TestCase
     {
         $extensionData = [['key' => 'news', 'name' => 'News']];
         $versionsData = [['number' => '1.0.0', 'typo3_versions' => [12]]];
-        
+
         $extensionResponse = $this->createMock(ResponseInterface::class);
         $extensionResponse->method('getStatusCode')->willReturn(200);
         $extensionResponse->method('toArray')->willReturn($extensionData);
-        
+
         $versionsResponse = $this->createMock(ResponseInterface::class);
         $versionsResponse->method('getStatusCode')->willReturn(200);
         $versionsResponse->method('toArray')->willReturn($versionsData);
@@ -129,7 +129,7 @@ class TerApiHttpClientTest extends TestCase
             ->method('request')
             ->willReturnMap([
                 ['GET', 'https://extensions.typo3.org/api/v1/extension/news', ['headers' => []], $extensionResponse],
-                ['GET', 'https://extensions.typo3.org/api/v1/extension/news/versions', ['headers' => []], $versionsResponse]
+                ['GET', 'https://extensions.typo3.org/api/v1/extension/news/versions', ['headers' => []], $versionsResponse],
             ]);
 
         $result = $this->httpClient->getExtensionWithVersions('news');
@@ -158,11 +158,11 @@ class TerApiHttpClientTest extends TestCase
     public function testGetExtensionWithVersionsWithVersionsFailure(): void
     {
         $extensionData = [['key' => 'news', 'name' => 'News']];
-        
+
         $extensionResponse = $this->createMock(ResponseInterface::class);
         $extensionResponse->method('getStatusCode')->willReturn(200);
         $extensionResponse->method('toArray')->willReturn($extensionData);
-        
+
         $versionsResponse = $this->createMock(ResponseInterface::class);
         $versionsResponse->method('getStatusCode')->willReturn(500);
 
@@ -171,7 +171,7 @@ class TerApiHttpClientTest extends TestCase
             ->method('request')
             ->willReturnMap([
                 ['GET', 'https://extensions.typo3.org/api/v1/extension/news', ['headers' => []], $extensionResponse],
-                ['GET', 'https://extensions.typo3.org/api/v1/extension/news/versions', ['headers' => []], $versionsResponse]
+                ['GET', 'https://extensions.typo3.org/api/v1/extension/news/versions', ['headers' => []], $versionsResponse],
             ]);
 
         $this->mockLogger
@@ -188,7 +188,7 @@ class TerApiHttpClientTest extends TestCase
     public function testConstructorWithTerToken(): void
     {
         $httpClientWithToken = new TerApiHttpClient($this->mockHttpClient, $this->mockLogger, 'test-token');
-        
+
         $mockResponse = $this->createMock(ResponseInterface::class);
         $mockResponse->method('getStatusCode')->willReturn(200);
         $mockResponse->method('toArray')->willReturn([]);
@@ -197,7 +197,7 @@ class TerApiHttpClientTest extends TestCase
             ->expects(self::once())
             ->method('request')
             ->with('GET', 'https://extensions.typo3.org/api/v1/extension/news', [
-                'headers' => ['Authorization' => 'Bearer test-token']
+                'headers' => ['Authorization' => 'Bearer test-token'],
             ])
             ->willReturn($mockResponse);
 

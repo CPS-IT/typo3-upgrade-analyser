@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /**
- * Simple TER Client Test - Helper Script
- * 
+ * Simple TER Client Test - Helper Script.
+ *
  * Quick test of TER API client functionality for environment validation.
  * Tests common extensions with different TYPO3 versions.
  */
 
-require_once dirname(__DIR__, 1) . '/vendor/autoload.php';
+require_once \dirname(__DIR__, 1) . '/vendor/autoload.php';
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
@@ -32,21 +32,21 @@ $testCases = [
 foreach ($testCases as $extensionKey => $versions) {
     echo "Testing extension: $extensionKey\n";
     echo str_repeat('-', 30) . "\n";
-    
+
     foreach ($versions as $versionString) {
         $typo3Version = new Version($versionString);
-        
+
         echo "  TYPO3 $versionString:\n";
-        
+
         $hasVersion = $terClient->hasVersionFor($extensionKey, $typo3Version);
-        echo "    hasVersionFor: " . ($hasVersion ? '✅ true' : '❌ false') . "\n";
-        
+        echo '    hasVersionFor: ' . ($hasVersion ? '✅ true' : '❌ false') . "\n";
+
         $latestVersion = $terClient->getLatestVersion($extensionKey, $typo3Version);
-        echo "    getLatestVersion: " . ($latestVersion ?? 'null') . "\n";
-        
+        echo '    getLatestVersion: ' . ($latestVersion ?? 'null') . "\n";
+
         echo "\n";
     }
     echo "\n";
 }
 
-echo "Test completed at " . date('Y-m-d H:i:s') . "\n";
+echo 'Test completed at ' . date('Y-m-d H:i:s') . "\n";

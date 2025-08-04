@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Context information for analysis operations
+ * Context information for analysis operations.
  */
 class AnalysisContext
 {
@@ -21,7 +21,7 @@ class AnalysisContext
         private readonly Version $currentVersion,
         private readonly Version $targetVersion,
         private readonly array $phpVersions = [],
-        private readonly array $configuration = []
+        private readonly array $configuration = [],
     ) {
     }
 
@@ -52,7 +52,7 @@ class AnalysisContext
 
     public function hasConfiguration(string $key): bool
     {
-        return array_key_exists($key, $this->configuration);
+        return \array_key_exists($key, $this->configuration);
     }
 
     public function withConfiguration(array $configuration): self
@@ -61,7 +61,7 @@ class AnalysisContext
             $this->currentVersion,
             $this->targetVersion,
             $this->phpVersions,
-            array_merge($this->configuration, $configuration)
+            array_merge($this->configuration, $configuration),
         );
     }
 
@@ -71,7 +71,7 @@ class AnalysisContext
             $this->currentVersion,
             $this->targetVersion,
             $phpVersions,
-            $this->configuration
+            $this->configuration,
         );
     }
 }

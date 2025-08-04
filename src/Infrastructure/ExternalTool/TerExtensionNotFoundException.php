@@ -13,15 +13,15 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Exception thrown when an extension is not found in TER
+ * Exception thrown when an extension is not found in TER.
  */
 class TerExtensionNotFoundException extends TerApiException
 {
     public function __construct(string $extensionKey, ?\Throwable $previous = null)
     {
         parent::__construct(
-            sprintf('Extension "%s" not found in TER', $extensionKey),
-            $previous
+            \sprintf('Extension "%s" not found in TER', $extensionKey),
+            $previous,
         );
     }
 }

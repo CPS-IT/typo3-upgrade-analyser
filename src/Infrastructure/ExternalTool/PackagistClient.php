@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Client for interacting with the Packagist API
+ * Client for interacting with the Packagist API.
  */
 class PackagistClient
 {
@@ -25,73 +25,63 @@ class PackagistClient
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Check if a version compatible with the target TYPO3 version exists
+     * Check if a version compatible with the target TYPO3 version exists.
      */
     public function hasVersionFor(string $packageName, Version $typo3Version): bool
     {
         try {
             $response = $this->httpClient->request('GET', self::API_BASE_URL . '/' . $packageName . '.json');
-            
-            if ($response->getStatusCode() !== 200) {
+
+            if (200 !== $response->getStatusCode()) {
                 return false;
             }
 
             $data = $response->toArray();
-            
+
             return $this->checkVersionCompatibility($data, $typo3Version);
-            
         } catch (\Throwable $e) {
             $this->logger->error('Packagist API request failed', [
                 'package_name' => $packageName,
                 'error' => $e->getMessage(),
             ]);
-            
-            throw new ExternalToolException(
-                sprintf('Failed to check Packagist for package "%s": %s', $packageName, $e->getMessage()),
-                'packagist_api',
-                $e
-            );
+
+            throw new ExternalToolException(\sprintf('Failed to check Packagist for package "%s": %s', $packageName, $e->getMessage()), 'packagist_api', $e);
         }
     }
 
     /**
-     * Get the latest version for a specific TYPO3 version
+     * Get the latest version for a specific TYPO3 version.
      */
     public function getLatestVersion(string $packageName, Version $typo3Version): ?string
     {
         try {
             $response = $this->httpClient->request('GET', self::API_BASE_URL . '/' . $packageName . '.json');
-            
-            if ($response->getStatusCode() !== 200) {
+
+            if (200 !== $response->getStatusCode()) {
                 return null;
             }
 
             $data = $response->toArray();
-            
+
             return $this->findLatestCompatibleVersion($data, $typo3Version);
-            
         } catch (\Throwable $e) {
             $this->logger->error('Packagist API request failed', [
                 'package_name' => $packageName,
                 'error' => $e->getMessage(),
             ]);
-            
-            throw new ExternalToolException(
-                sprintf('Failed to get latest version from Packagist for package "%s": %s', $packageName, $e->getMessage()),
-                'packagist_api',
-                $e
-            );
+
+            throw new ExternalToolException(\sprintf('Failed to get latest version from Packagist for package "%s": %s', $packageName, $e->getMessage()), 'packagist_api', $e);
         }
     }
 
     private function checkVersionCompatibility(array $packageData, Version $typo3Version): bool
     {
-        if (!isset($packageData['package']['versions']) || !is_array($packageData['package']['versions'])) {
+        if (!isset($packageData['package']['versions']) || !\is_array($packageData['package']['versions'])) {
             return false;
         }
 
@@ -106,12 +96,12 @@ class PackagistClient
 
     private function findLatestCompatibleVersion(array $packageData, Version $typo3Version): ?string
     {
-        if (!isset($packageData['package']['versions']) || !is_array($packageData['package']['versions'])) {
+        if (!isset($packageData['package']['versions']) || !\is_array($packageData['package']['versions'])) {
             return null;
         }
 
         $compatibleVersions = [];
-        
+
         foreach ($packageData['package']['versions'] as $version => $versionData) {
             if ($this->isVersionCompatible($versionData, $typo3Version)) {
                 $compatibleVersions[] = $version;
@@ -123,15 +113,17 @@ class PackagistClient
         }
 
         // Filter out dev versions and sort
-        $stableVersions = array_filter($compatibleVersions, fn($v) => !str_contains($v, 'dev'));
-        
+        $stableVersions = array_filter($compatibleVersions, fn ($v) => !str_contains($v, 'dev'));
+
         if (!empty($stableVersions)) {
             usort($stableVersions, 'version_compare');
+
             return end($stableVersions);
         }
 
         // Fall back to dev versions if no stable versions available
         usort($compatibleVersions, 'version_compare');
+
         return end($compatibleVersions);
     }
 
@@ -142,7 +134,7 @@ class PackagistClient
         }
 
         $requirements = $versionData['require'];
-        
+
         // Check for TYPO3 core requirements
         $typo3Requirements = [
             'typo3/cms-core',
@@ -164,7 +156,7 @@ class PackagistClient
     {
         // Simplified constraint checking - in real implementation, use Composer's constraint parser
         $majorVersion = $typo3Version->getMajor();
-        
+
         // Check for wildcard
         if (str_contains($constraint, '*')) {
             return true;
@@ -172,13 +164,15 @@ class PackagistClient
 
         // Parse constraint for caret version ranges (e.g., ^12.0)
         if (preg_match('/\^(\d+)\./', $constraint, $matches)) {
-            $constraintMajor = (int)$matches[1];
+            $constraintMajor = (int) $matches[1];
+
             return $constraintMajor === $majorVersion;
         }
-        
+
         // Check for exact major version match (e.g., 12.0)
         if (preg_match('/^(\d+)\./', $constraint, $matches)) {
-            $constraintMajor = (int)$matches[1];
+            $constraintMajor = (int) $matches[1];
+
             return $constraintMajor === $majorVersion;
         }
 

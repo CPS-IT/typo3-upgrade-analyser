@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Simple GitHub API Access Test Script
- * Tests both REST and GraphQL endpoints without project dependencies
+ * Tests both REST and GraphQL endpoints without project dependencies.
  */
-
 echo "🔍 GitHub API Access Test\n";
 echo "========================\n\n";
 
@@ -12,9 +13,9 @@ echo "========================\n\n";
 $githubToken = getenv('GITHUB_TOKEN') ?: '';
 $hasToken = !empty($githubToken);
 
-echo "🔑 GitHub Token: " . ($hasToken ? '✅ Provided' : '❌ Not set') . "\n";
+echo '🔑 GitHub Token: ' . ($hasToken ? '✅ Provided' : '❌ Not set') . "\n";
 if ($hasToken) {
-    echo "   Token prefix: " . substr($githubToken, 0, 8) . "...\n";
+    echo '   Token prefix: ' . substr($githubToken, 0, 8) . "...\n";
 }
 echo "\n";
 
@@ -22,11 +23,12 @@ echo "\n";
 $testRepo = 'georgringer/news';
 
 /**
- * Make HTTP request with cURL
+ * Make HTTP request with cURL.
  */
-function makeRequest(string $url, array $headers = [], ?string $data = null): array {
+function makeRequest(string $url, array $headers = [], ?string $data = null): array
+{
     $ch = curl_init();
-    
+
     curl_setopt_array($ch, [
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -36,73 +38,74 @@ function makeRequest(string $url, array $headers = [], ?string $data = null): ar
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
-    
-    if ($data !== null) {
+
+    if (null !== $data) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     }
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
-    
+
     curl_close($ch);
-    
+
     if ($error) {
         throw new Exception("cURL error: {$error}");
     }
-    
+
     $data = json_decode($response, true);
-    
+
     return [
         'status' => $httpCode,
         'data' => $data,
-        'raw' => $response
+        'raw' => $response,
     ];
 }
 
 /**
- * Test GitHub REST API
+ * Test GitHub REST API.
  */
-function testRestApi(string $token = ''): void {
+function testRestApi(string $token = ''): void
+{
     echo "🌐 Testing GitHub REST API...\n";
-    
+
     $headers = [
         'Accept: application/vnd.github.v3+json',
-        'User-Agent: TYPO3-Upgrade-Analyzer-Test/1.0'
+        'User-Agent: TYPO3-Upgrade-Analyzer-Test/1.0',
     ];
-    
+
     if (!empty($token)) {
         $headers[] = "Authorization: Bearer {$token}";
     }
-    
+
     try {
         // Test 1: Get repository info
-        echo "  📋 Repository Info: ";
-        $response = makeRequest("https://api.github.com/repos/georgringer/news", $headers);
-        
-        if ($response['status'] === 200) {
+        echo '  📋 Repository Info: ';
+        $response = makeRequest('https://api.github.com/repos/georgringer/news', $headers);
+
+        if (200 === $response['status']) {
             $repo = $response['data'];
             echo "✅ Success\n";
             echo "    - Name: {$repo['name']}\n";
             echo "    - Stars: {$repo['stargazers_count']}\n";
             echo "    - Forks: {$repo['forks_count']}\n";
-            echo "    - Archived: " . ($repo['archived'] ? 'Yes' : 'No') . "\n";
+            echo '    - Archived: ' . ($repo['archived'] ? 'Yes' : 'No') . "\n";
         } else {
             echo "❌ Failed (HTTP {$response['status']})\n";
             if (isset($response['data']['message'])) {
                 echo "    Error: {$response['data']['message']}\n";
             }
         }
-        
+
         // Test 2: Get repository tags
-        echo "  🏷️  Repository Tags: ";
-        $response = makeRequest("https://api.github.com/repos/georgringer/news/tags?per_page=5", $headers);
-        
-        if ($response['status'] === 200) {
+        echo '  🏷️  Repository Tags: ';
+        $response = makeRequest('https://api.github.com/repos/georgringer/news/tags?per_page=5', $headers);
+
+        if (200 === $response['status']) {
             $tags = $response['data'];
-            echo "✅ Success (" . count($tags) . " tags)\n";
-            foreach (array_slice($tags, 0, 3) as $tag) {
+            echo '✅ Success (' . \count($tags) . " tags)\n";
+            foreach (\array_slice($tags, 0, 3) as $tag) {
                 echo "    - {$tag['name']}\n";
             }
         } else {
@@ -111,14 +114,14 @@ function testRestApi(string $token = ''): void {
                 echo "    Error: {$response['data']['message']}\n";
             }
         }
-        
+
         // Test 3: Get contributors (requires more permissions)
-        echo "  👥 Contributors: ";
-        $response = makeRequest("https://api.github.com/repos/georgringer/news/contributors?per_page=3", $headers);
-        
-        if ($response['status'] === 200) {
+        echo '  👥 Contributors: ';
+        $response = makeRequest('https://api.github.com/repos/georgringer/news/contributors?per_page=3', $headers);
+
+        if (200 === $response['status']) {
             $contributors = $response['data'];
-            echo "✅ Success (" . count($contributors) . " contributors)\n";
+            echo '✅ Success (' . \count($contributors) . " contributors)\n";
             foreach ($contributors as $contributor) {
                 echo "    - {$contributor['login']} ({$contributor['contributions']} contributions)\n";
             }
@@ -128,47 +131,47 @@ function testRestApi(string $token = ''): void {
                 echo "    Error: {$response['data']['message']}\n";
             }
         }
-        
+
         // Test 4: Rate limit info
-        echo "  📊 Rate Limit Status: ";
-        $response = makeRequest("https://api.github.com/rate_limit", $headers);
-        
-        if ($response['status'] === 200) {
+        echo '  📊 Rate Limit Status: ';
+        $response = makeRequest('https://api.github.com/rate_limit', $headers);
+
+        if (200 === $response['status']) {
             $rateLimit = $response['data']['rate'];
             echo "✅ Success\n";
             echo "    - Limit: {$rateLimit['limit']}\n";
             echo "    - Used: {$rateLimit['used']}\n";
             echo "    - Remaining: {$rateLimit['remaining']}\n";
-            echo "    - Reset: " . date('Y-m-d H:i:s', $rateLimit['reset']) . "\n";
+            echo '    - Reset: ' . date('Y-m-d H:i:s', $rateLimit['reset']) . "\n";
         } else {
             echo "❌ Failed (HTTP {$response['status']})\n";
         }
-        
     } catch (Exception $e) {
         echo "❌ Exception: {$e->getMessage()}\n";
     }
-    
+
     echo "\n";
 }
 
 /**
- * Test GitHub GraphQL API
+ * Test GitHub GraphQL API.
  */
-function testGraphQLApi(string $token = ''): void {
+function testGraphQLApi(string $token = ''): void
+{
     echo "🔮 Testing GitHub GraphQL API...\n";
-    
+
     $headers = [
         'Content-Type: application/json',
-        'User-Agent: TYPO3-Upgrade-Analyzer-Test/1.0'
+        'User-Agent: TYPO3-Upgrade-Analyzer-Test/1.0',
     ];
-    
+
     if (!empty($token)) {
         $headers[] = "Authorization: Bearer {$token}";
     }
-    
+
     try {
         // Test 1: Basic repository query (without sensitive fields)
-        echo "  📋 Repository Query (Basic): ";
+        echo '  📋 Repository Query (Basic): ';
         $query = '
             query($owner: String!, $name: String!) {
                 repository(owner: $owner, name: $name) {
@@ -185,24 +188,24 @@ function testGraphQLApi(string $token = ''): void {
                 }
             }
         ';
-        
+
         $payload = json_encode([
             'query' => $query,
             'variables' => [
                 'owner' => 'georgringer',
-                'name' => 'news'
-            ]
+                'name' => 'news',
+            ],
         ]);
-        
-        $response = makeRequest("https://api.github.com/graphql", $headers, $payload);
-        
-        if ($response['status'] === 200 && !isset($response['data']['errors'])) {
+
+        $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
+
+        if (200 === $response['status'] && !isset($response['data']['errors'])) {
             $repo = $response['data']['data']['repository'];
             echo "✅ Success\n";
             echo "    - Name: {$repo['name']}\n";
             echo "    - Stars: {$repo['stargazerCount']}\n";
             echo "    - Forks: {$repo['forkCount']}\n";
-            echo "    - Archived: " . ($repo['isArchived'] ? 'Yes' : 'No') . "\n";
+            echo '    - Archived: ' . ($repo['isArchived'] ? 'Yes' : 'No') . "\n";
             echo "    - Default Branch: {$repo['defaultBranchRef']['name']}\n";
         } else {
             echo "❌ Failed (HTTP {$response['status']})\n";
@@ -212,9 +215,9 @@ function testGraphQLApi(string $token = ''): void {
                 }
             }
         }
-        
+
         // Test 2: Repository tags query
-        echo "  🏷️  Tags Query: ";
+        echo '  🏷️  Tags Query: ';
         $tagsQuery = '
             query($owner: String!, $name: String!, $first: Int!) {
                 repository(owner: $owner, name: $name) {
@@ -237,22 +240,22 @@ function testGraphQLApi(string $token = ''): void {
                 }
             }
         ';
-        
+
         $payload = json_encode([
             'query' => $tagsQuery,
             'variables' => [
                 'owner' => 'georgringer',
                 'name' => 'news',
-                'first' => 5
-            ]
+                'first' => 5,
+            ],
         ]);
-        
-        $response = makeRequest("https://api.github.com/graphql", $headers, $payload);
-        
-        if ($response['status'] === 200 && !isset($response['data']['errors'])) {
+
+        $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
+
+        if (200 === $response['status'] && !isset($response['data']['errors'])) {
             $tags = $response['data']['data']['repository']['refs']['nodes'];
-            echo "✅ Success (" . count($tags) . " tags)\n";
-            foreach (array_slice($tags, 0, 3) as $tag) {
+            echo '✅ Success (' . \count($tags) . " tags)\n";
+            foreach (\array_slice($tags, 0, 3) as $tag) {
                 echo "    - {$tag['name']}\n";
             }
         } else {
@@ -263,9 +266,9 @@ function testGraphQLApi(string $token = ''): void {
                 }
             }
         }
-        
+
         // Test 3: Repository health query (with potentially restricted fields)
-        echo "  🏥 Health Query (Advanced): ";
+        echo '  🏥 Health Query (Advanced): ';
         $healthQuery = '
             query($owner: String!, $name: String!) {
                 repository(owner: $owner, name: $name) {
@@ -292,63 +295,62 @@ function testGraphQLApi(string $token = ''): void {
                 }
             }
         ';
-        
+
         $payload = json_encode([
             'query' => $healthQuery,
             'variables' => [
                 'owner' => 'georgringer',
-                'name' => 'news'
-            ]
+                'name' => 'news',
+            ],
         ]);
-        
-        $response = makeRequest("https://api.github.com/graphql", $headers, $payload);
-        
-        if ($response['status'] === 200 && !isset($response['data']['errors'])) {
+
+        $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
+
+        if (200 === $response['status'] && !isset($response['data']['errors'])) {
             $repo = $response['data']['data']['repository'];
             echo "✅ Success\n";
             echo "    - Open Issues: {$repo['issues']['totalCount']}\n";
             echo "    - Closed Issues: {$repo['closedIssues']['totalCount']}\n";
-            echo "    - Has README: " . (isset($repo['readme']['id']) ? 'Yes' : 'No') . "\n";
-            echo "    - License: " . ($repo['license']['name'] ?? 'None') . "\n";
+            echo '    - Has README: ' . (isset($repo['readme']['id']) ? 'Yes' : 'No') . "\n";
+            echo '    - License: ' . ($repo['license']['name'] ?? 'None') . "\n";
         } else {
             echo "❌ Failed (HTTP {$response['status']})\n";
             if (isset($response['data']['errors'])) {
                 foreach ($response['data']['errors'] as $error) {
                     echo "    GraphQL Error: {$error['message']}\n";
                     if (isset($error['path'])) {
-                        echo "    Path: " . implode(' → ', $error['path']) . "\n";
+                        echo '    Path: ' . implode(' → ', $error['path']) . "\n";
                     }
                 }
             }
         }
-        
     } catch (Exception $e) {
         echo "❌ Exception: {$e->getMessage()}\n";
     }
-    
+
     echo "\n";
 }
 
 /**
- * Test API without authentication
+ * Test API without authentication.
  */
-function testUnauthenticatedAccess(): void {
+function testUnauthenticatedAccess(): void
+{
     echo "🔓 Testing Unauthenticated Access...\n";
-    
+
     try {
-        $response = makeRequest("https://api.github.com/repos/georgringer/news");
-        
-        if ($response['status'] === 200) {
+        $response = makeRequest('https://api.github.com/repos/georgringer/news');
+
+        if (200 === $response['status']) {
             echo "  ✅ Unauthenticated REST API works\n";
             echo "  📊 Rate Limit: Basic (60 requests/hour)\n";
         } else {
             echo "  ❌ Unauthenticated access failed (HTTP {$response['status']})\n";
         }
-        
     } catch (Exception $e) {
         echo "  ❌ Exception: {$e->getMessage()}\n";
     }
-    
+
     echo "\n";
 }
 
@@ -361,7 +363,7 @@ testUnauthenticatedAccess();
 // Test REST API
 testRestApi($githubToken);
 
-// Test GraphQL API  
+// Test GraphQL API
 testGraphQLApi($githubToken);
 
 // Summary

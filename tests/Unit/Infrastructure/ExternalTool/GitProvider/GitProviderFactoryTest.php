@@ -12,15 +12,15 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvider;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Test case for GitProviderFactory
+ * Test case for GitProviderFactory.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory
  */
@@ -114,7 +114,7 @@ class GitProviderFactoryTest extends TestCase
         $factory = new GitProviderFactory([
             $lowPriorityProvider,
             $highPriorityProvider,
-            $mediumPriorityProvider
+            $mediumPriorityProvider,
         ], $this->logger);
 
         $result = $factory->createProvider('https://github.com/user/repo');
@@ -155,5 +155,4 @@ class GitProviderFactoryTest extends TestCase
         $this->assertCount(1, $available);
         $this->assertSame($availableProvider, $available[0]);
     }
-
 }

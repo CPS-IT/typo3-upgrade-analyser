@@ -13,55 +13,55 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Parser for TER API responses
+ * Parser for TER API responses.
  */
 class TerApiResponseParser
 {
     /**
-     * Parse extension data from TER API response
+     * Parse extension data from TER API response.
      */
     public function parseExtensionData(array $responseData): ?array
     {
-        if (!is_array($responseData) || !isset($responseData[0])) {
+        if (!\is_array($responseData) || !isset($responseData[0])) {
             return null;
         }
-        
+
         return $responseData[0];
     }
-    
+
     /**
-     * Parse versions data from TER API response
+     * Parse versions data from TER API response.
      */
     public function parseVersionsData(array $responseData): ?array
     {
-        if (!is_array($responseData) || !isset($responseData[0])) {
+        if (!\is_array($responseData) || !isset($responseData[0])) {
             return null;
         }
-        
+
         return $responseData[0];
     }
-    
+
     /**
-     * Extract extension key from extension data
+     * Extract extension key from extension data.
      */
     public function extractExtensionKey(array $extensionData): ?string
     {
         return $extensionData['key'] ?? null;
     }
-    
+
     /**
-     * Extract version numbers from versions data
+     * Extract version numbers from versions data.
      */
     public function extractVersionNumbers(array $versions): array
     {
         $versionNumbers = [];
-        
+
         foreach ($versions as $versionData) {
             if (isset($versionData['number'])) {
                 $versionNumbers[] = $versionData['number'];
             }
         }
-        
+
         return $versionNumbers;
     }
 }

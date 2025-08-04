@@ -15,14 +15,14 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 
 /**
- * Exception thrown when Git provider operations fail
+ * Exception thrown when Git provider operations fail.
  */
 class GitProviderException extends ExternalToolException
 {
     public function __construct(
         string $message,
         private readonly string $providerName,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 'git-provider-' . $providerName, $previous);
     }

@@ -35,17 +35,17 @@ final class InstallationDiscoveryResultTest extends TestCase
     {
         $this->installation = new Installation('/test/path', new Version('12.4.8'));
         $this->installation->setMode(InstallationMode::COMPOSER);
-        
+
         $this->strategy = $this->createMock(DetectionStrategyInterface::class);
         $this->strategy->method('getName')->willReturn('Test Strategy');
-        
+
         $this->attemptedStrategies = [
             [
                 'strategy' => 'Test Strategy',
                 'supported' => true,
                 'result' => 'success',
-                'priority' => 100
-            ]
+                'priority' => 100,
+            ],
         ];
     }
 
@@ -55,7 +55,7 @@ final class InstallationDiscoveryResultTest extends TestCase
             $this->installation,
             $this->strategy,
             [],
-            $this->attemptedStrategies
+            $this->attemptedStrategies,
         );
 
         self::assertTrue($result->isSuccessful());
@@ -90,7 +90,7 @@ final class InstallationDiscoveryResultTest extends TestCase
             $this->installation,
             $this->strategy,
             $issues,
-            $this->attemptedStrategies
+            $this->attemptedStrategies,
         );
 
         self::assertTrue($result->isSuccessful());
@@ -108,7 +108,7 @@ final class InstallationDiscoveryResultTest extends TestCase
         $result = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            [$warningIssue, $errorIssue, $criticalIssue]
+            [$warningIssue, $errorIssue, $criticalIssue],
         );
 
         $warnings = $result->getValidationIssuesBySeverity(ValidationSeverity::WARNING);
@@ -118,36 +118,36 @@ final class InstallationDiscoveryResultTest extends TestCase
 
         self::assertCount(1, $warnings);
         self::assertContains($warningIssue, $warnings);
-        
+
         self::assertCount(1, $errors);
         self::assertContains($errorIssue, $errors);
-        
+
         self::assertCount(1, $criticals);
         self::assertContains($criticalIssue, $criticals);
-        
+
         self::assertEmpty($infos);
     }
 
     public function testHasBlockingIssues(): void
     {
         $warningIssue = new ValidationIssue('Rule 1', ValidationSeverity::WARNING, 'Warning', 'test');
-        
+
         $resultWithoutBlocking = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            [$warningIssue]
+            [$warningIssue],
         );
-        
+
         self::assertFalse($resultWithoutBlocking->hasBlockingIssues());
 
         $errorIssue = new ValidationIssue('Rule 2', ValidationSeverity::ERROR, 'Error', 'test');
-        
+
         $resultWithBlocking = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            [$warningIssue, $errorIssue]
+            [$warningIssue, $errorIssue],
         );
-        
+
         self::assertTrue($resultWithBlocking->hasBlockingIssues());
     }
 
@@ -160,17 +160,17 @@ final class InstallationDiscoveryResultTest extends TestCase
         $result = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            [$structureIssue, $permissionIssue, $anotherStructureIssue]
+            [$structureIssue, $permissionIssue, $anotherStructureIssue],
         );
 
         $grouped = $result->getValidationIssuesByCategory();
 
         self::assertArrayHasKey('structure', $grouped);
         self::assertArrayHasKey('permissions', $grouped);
-        
+
         self::assertCount(2, $grouped['structure']);
         self::assertCount(1, $grouped['permissions']);
-        
+
         self::assertContains($structureIssue, $grouped['structure']);
         self::assertContains($anotherStructureIssue, $grouped['structure']);
         self::assertContains($permissionIssue, $grouped['permissions']);
@@ -186,11 +186,11 @@ final class InstallationDiscoveryResultTest extends TestCase
 
         $result = InstallationDiscoveryResult::failed(
             'No installation found',
-            $attemptedStrategies
+            $attemptedStrategies,
         );
 
         $summary = $result->getSummary();
-        
+
         self::assertStringContainsString('Installation discovery failed: No installation found', $summary);
         self::assertStringContainsString('attempted 3 strategies', $summary);
         self::assertStringContainsString('2 supported', $summary);
@@ -200,11 +200,11 @@ final class InstallationDiscoveryResultTest extends TestCase
     {
         $result = InstallationDiscoveryResult::success(
             $this->installation,
-            $this->strategy
+            $this->strategy,
         );
 
         $summary = $result->getSummary();
-        
+
         self::assertStringContainsString('TYPO3 12.4.8 installation discovered', $summary);
         self::assertStringContainsString('using Test Strategy', $summary);
         self::assertStringContainsString('composer mode', $summary);
@@ -221,11 +221,11 @@ final class InstallationDiscoveryResultTest extends TestCase
         $result = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            $issues
+            $issues,
         );
 
         $summary = $result->getSummary();
-        
+
         self::assertStringContainsString('3 validation issues found', $summary);
         self::assertStringContainsString('(1 blocking)', $summary);
     }
@@ -245,7 +245,7 @@ final class InstallationDiscoveryResultTest extends TestCase
         self::assertSame(1, $stats['supported_strategies']);
         self::assertSame(0, $stats['validation_issues']);
         self::assertSame(0, $stats['blocking_issues']);
-        
+
         self::assertArrayNotHasKey('installation_path', $stats);
         self::assertArrayNotHasKey('typo3_version', $stats);
     }
@@ -265,7 +265,7 @@ final class InstallationDiscoveryResultTest extends TestCase
             $this->installation,
             $this->strategy,
             $issues,
-            $this->attemptedStrategies
+            $this->attemptedStrategies,
         );
 
         $stats = $result->getStatistics();
@@ -275,12 +275,13 @@ final class InstallationDiscoveryResultTest extends TestCase
         self::assertSame(1, $stats['supported_strategies']);
         self::assertSame(2, $stats['validation_issues']);
         self::assertSame(1, $stats['blocking_issues']);
-        
+
         self::assertSame('/test/path', $stats['installation_path']);
         self::assertSame('12.4.8', $stats['typo3_version']);
         self::assertSame('composer', $stats['installation_mode']);
         self::assertSame('Test Strategy', $stats['successful_strategy']);
-        self::assertSame(1, $stats['extensions_count']);
+        // Extensions are managed separately by ExtensionDiscoveryService
+        self::assertArrayNotHasKey('extensions_count', $stats);
     }
 
     public function testToArrayForFailedResult(): void
@@ -298,7 +299,7 @@ final class InstallationDiscoveryResultTest extends TestCase
         self::assertNull($array['successful_strategy']);
         self::assertEmpty($array['validation_issues']);
         self::assertSame($attemptedStrategies, $array['attempted_strategies']);
-        
+
         self::assertArrayHasKey('validation_summary', $array);
         self::assertArrayHasKey('statistics', $array);
         self::assertArrayHasKey('summary', $array);
@@ -315,7 +316,7 @@ final class InstallationDiscoveryResultTest extends TestCase
             $this->installation,
             $this->strategy,
             $issues,
-            $this->attemptedStrategies
+            $this->attemptedStrategies,
         );
 
         $array = $result->toArray();
@@ -325,7 +326,7 @@ final class InstallationDiscoveryResultTest extends TestCase
         self::assertIsArray($array['installation']);
         self::assertSame('Test Strategy', $array['successful_strategy']);
         self::assertCount(2, $array['validation_issues']);
-        
+
         $validationSummary = $array['validation_summary'];
         self::assertSame(2, $validationSummary['total_issues']);
         self::assertTrue($validationSummary['has_blocking_issues']);
@@ -348,7 +349,7 @@ final class InstallationDiscoveryResultTest extends TestCase
         $result = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            $issues
+            $issues,
         );
 
         $array = $result->toArray();
@@ -364,13 +365,13 @@ final class InstallationDiscoveryResultTest extends TestCase
     {
         $resultWithoutIssues = InstallationDiscoveryResult::success(
             $this->installation,
-            $this->strategy
+            $this->strategy,
         );
 
         $resultWithIssues = InstallationDiscoveryResult::success(
             $this->installation,
             $this->strategy,
-            [new ValidationIssue('Rule 1', ValidationSeverity::INFO, 'Info', 'test')]
+            [new ValidationIssue('Rule 1', ValidationSeverity::INFO, 'Info', 'test')],
         );
 
         self::assertFalse($resultWithoutIssues->hasValidationIssues());
@@ -383,7 +384,7 @@ final class InstallationDiscoveryResultTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertEmpty($result->getAttemptedStrategies());
-        
+
         $summary = $result->getSummary();
         self::assertStringContainsString('attempted 0 strategies', $summary);
         self::assertStringContainsString('0 supported', $summary);

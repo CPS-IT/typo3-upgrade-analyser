@@ -12,17 +12,17 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 
-use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use Psr\Log\LoggerInterface;
 
 /**
- * Analyzer that checks version availability across different repositories
+ * Analyzer that checks version availability across different repositories.
  */
 class VersionAvailabilityAnalyzer implements AnalyzerInterface
 {
@@ -30,7 +30,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         private readonly TerApiClient $terClient,
         private readonly PackagistClient $packagistClient,
         private readonly ?GitRepositoryAnalyzer $gitAnalyzer,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -53,7 +53,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
     public function analyze(Extension $extension, AnalysisContext $context): AnalysisResult
     {
         $result = new AnalysisResult($this->getName(), $extension);
-        
+
         try {
             $this->logger->info('Analyzing version availability for extension', [
                 'extension' => $extension->getKey(),
@@ -92,14 +92,14 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 'extension' => $extension->getKey(),
                 'risk_score' => $riskScore,
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('Version availability analysis failed', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
-            
+
             $result->setError('Analysis failed: ' . $e->getMessage());
+
             // Return early to ensure failed result
             return $result;
         }
@@ -115,7 +115,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
     public function hasRequiredTools(): bool
     {
         // Check if curl is available
-        return function_exists('curl_init');
+        return \function_exists('curl_init');
     }
 
     private function checkTerAvailability(Extension $extension, AnalysisContext $context): bool
@@ -123,19 +123,19 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         try {
             return $this->terClient->hasVersionFor(
                 $extension->getKey(),
-                $context->getTargetVersion()
+                $context->getTargetVersion(),
             );
         } catch (\Throwable $e) {
             // Let fatal errors bubble up to cause complete analysis failure
             if (str_contains($e->getMessage(), 'Fatal error')) {
                 throw $e;
             }
-            
+
             $this->logger->warning('TER availability check failed, checking fallback sources', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
-            
+
             // TER specifically failed, return false for TER availability
             // Packagist will be checked separately
             return false;
@@ -151,7 +151,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         try {
             return $this->packagistClient->hasVersionFor(
                 $extension->getComposerName(),
-                $context->getTargetVersion()
+                $context->getTargetVersion(),
             );
         } catch (\Throwable $e) {
             $this->logger->warning('Packagist availability check failed', [
@@ -159,6 +159,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
                 'composer_name' => $extension->getComposerName(),
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -170,7 +171,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
             'available' => false,
             'health' => null,
             'url' => null,
-            'latest_version' => null
+            'latest_version' => null,
         ];
 
         if (!$this->gitAnalyzer) {
@@ -179,28 +180,26 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
 
         try {
             $gitInfo = $this->gitAnalyzer->analyzeExtension($extension, $context->getTargetVersion());
-            
+
             return [
                 'available' => $gitInfo->hasCompatibleVersion(),
                 'health' => $gitInfo->getHealthScore(),
                 'url' => $gitInfo->getRepositoryUrl(),
-                'latest_version' => $gitInfo->getLatestCompatibleVersion()?->getName()
+                'latest_version' => $gitInfo->getLatestCompatibleVersion()?->getName(),
             ];
-            
         } catch (GitAnalysisException $e) {
             $this->logger->info('Git analysis skipped for extension', [
                 'extension' => $extension->getKey(),
-                'reason' => $e->getMessage()
+                'reason' => $e->getMessage(),
             ]);
-            
+
             return $defaultResponse;
-            
         } catch (\Throwable $e) {
             $this->logger->warning('Git availability check failed', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
-            
+
             return $defaultResponse;
         }
     }
@@ -219,8 +218,12 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
 
         // Calculate base availability score
         $availabilityScore = 0;
-        if ($terAvailable) $availabilityScore += 4; // TER is most trusted
-        if ($packagistAvailable) $availabilityScore += 3; // Packagist is second
+        if ($terAvailable) {
+            $availabilityScore += 4;
+        } // TER is most trusted
+        if ($packagistAvailable) {
+            $availabilityScore += 3;
+        } // Packagist is second
         if ($gitAvailable) {
             // Git availability weighted by repository health
             $gitWeight = $gitHealth ? (2 * $gitHealth) : 1;
@@ -228,10 +231,19 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         }
 
         // Convert to risk score (higher availability = lower risk)
-        if ($availabilityScore >= 6) return 1.5; // Multiple high-quality sources
-        if ($availabilityScore >= 4) return 2.5; // At least one high-quality source  
-        if ($availabilityScore >= 2) return 5.0; // Some availability
-        if ($availabilityScore >= 1) return 7.0; // Limited availability
+        if ($availabilityScore >= 6) {
+            return 1.5;
+        } // Multiple high-quality sources
+        if ($availabilityScore >= 4) {
+            return 2.5;
+        } // At least one high-quality source
+        if ($availabilityScore >= 2) {
+            return 5.0;
+        } // Some availability
+        if ($availabilityScore >= 1) {
+            return 7.0;
+        } // Limited availability
+
         return 9.0; // No availability
     }
 
@@ -246,6 +258,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         // No availability anywhere
         if (!$terAvailable && !$packagistAvailable && !$gitAvailable) {
             $result->addRecommendation('Extension not available in any known repository. Consider finding alternative or contacting author.');
+
             return;
         }
 
@@ -256,7 +269,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
             } else {
                 $result->addRecommendation('Extension only available via Git repository. Consider repository maintenance status before upgrade.');
             }
-            
+
             if ($gitUrl) {
                 $result->addRecommendation("Git repository: {$gitUrl}");
             }

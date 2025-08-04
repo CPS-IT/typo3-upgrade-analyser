@@ -12,17 +12,17 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
-use PHPUnit\Framework\TestCase;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Test case for the refactored TerApiClient
+ * Test case for the refactored TerApiClient.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
  */
@@ -36,7 +36,7 @@ class TerApiClientTest extends TestCase
     {
         $this->httpClient = $this->createMock(HttpClientInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
-        
+
         $this->client = new TerApiClient($this->httpClient, $this->logger);
     }
 
@@ -44,17 +44,17 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
-        
+
         $extensionData = [['key' => 'news', 'name' => 'News']];
         $versionsData = [
             [
                 [
                     'number' => '8.7.0',
-                    'typo3_versions' => [11, 12]
-                ]
-            ]
+                    'typo3_versions' => [11, 12],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
@@ -66,17 +66,17 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('13.0.0');
-        
+
         $extensionData = [['key' => 'news', 'name' => 'News']];
         $versionsData = [
             [
                 [
                     'number' => '8.7.0',
-                    'typo3_versions' => [11, 12]
-                ]
-            ]
+                    'typo3_versions' => [11, 12],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
@@ -88,7 +88,7 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'non_existent';
         $typo3Version = new Version('12.4.0');
-        
+
         $this->mockExtensionNotFound($extensionKey);
 
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
@@ -100,7 +100,7 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -121,25 +121,25 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
-        
+
         $extensionData = [['key' => 'news', 'name' => 'News']];
         $versionsData = [
             [
                 [
                     'number' => '8.5.0',
-                    'typo3_versions' => [12]
+                    'typo3_versions' => [12],
                 ],
                 [
                     'number' => '8.7.0',
-                    'typo3_versions' => [12]
+                    'typo3_versions' => [12],
                 ],
                 [
                     'number' => '8.6.0',
-                    'typo3_versions' => [12]
-                ]
-            ]
+                    'typo3_versions' => [12],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
@@ -151,17 +151,17 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('14.0.0');
-        
+
         $extensionData = [['key' => 'news', 'name' => 'News']];
         $versionsData = [
             [
                 [
                     'number' => '8.7.0',
-                    'typo3_versions' => [11, 12]
-                ]
-            ]
+                    'typo3_versions' => [11, 12],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
@@ -173,7 +173,7 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'non_existent';
         $typo3Version = new Version('12.4.0');
-        
+
         $this->mockExtensionNotFound($extensionKey);
 
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
@@ -185,9 +185,9 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'news';
         $typo3Version = new Version('12.4.0');
-        
+
         $extensionData = [['key' => 'news', 'name' => 'News']];
-        
+
         $this->mockApiCallsWithVersionsFailure($extensionKey, $extensionData);
 
         $result = $this->client->getLatestVersion($extensionKey, $typo3Version);
@@ -199,17 +199,17 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'universal_ext';
         $typo3Version = new Version('12.4.0');
-        
+
         $extensionData = [['key' => 'universal_ext', 'name' => 'Universal Extension']];
         $versionsData = [
             [
                 [
                     'number' => '1.0.0',
-                    'typo3_versions' => ['*']
-                ]
-            ]
+                    'typo3_versions' => ['*'],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
@@ -221,17 +221,17 @@ class TerApiClientTest extends TestCase
     {
         $extensionKey = 'mixed_ext';
         $typo3Version = new Version('12.4.0');
-        
+
         $extensionData = [['key' => 'mixed_ext', 'name' => 'Mixed Extension']];
         $versionsData = [
             [
                 [
                     'number' => '1.0.0',
-                    'typo3_versions' => [11, '12.*', '13.0']
-                ]
-            ]
+                    'typo3_versions' => [11, '12.*', '13.0'],
+                ],
+            ],
         ];
-        
+
         $this->mockSuccessfulApiCalls($extensionKey, $extensionData, $versionsData);
 
         $result = $this->client->hasVersionFor($extensionKey, $typo3Version);
@@ -243,10 +243,10 @@ class TerApiClientTest extends TestCase
     {
         $extensionResponse = $this->createMock(ResponseInterface::class);
         $versionsResponse = $this->createMock(ResponseInterface::class);
-        
+
         $extensionResponse->method('getStatusCode')->willReturn(200);
         $extensionResponse->method('toArray')->willReturn($extensionData);
-        
+
         $versionsResponse->method('getStatusCode')->willReturn(200);
         $versionsResponse->method('toArray')->willReturn($versionsData);
 
@@ -254,11 +254,11 @@ class TerApiClientTest extends TestCase
             ->expects(self::exactly(2))
             ->method('request')
             ->willReturnCallback(
-                fn(string $method, string $url) => match($url) {
+                fn (string $method, string $url) => match ($url) {
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
                     default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
-                }
+                },
             );
     }
 
@@ -278,21 +278,21 @@ class TerApiClientTest extends TestCase
     {
         $extensionResponse = $this->createMock(ResponseInterface::class);
         $versionsResponse = $this->createMock(ResponseInterface::class);
-        
+
         $extensionResponse->method('getStatusCode')->willReturn(200);
         $extensionResponse->method('toArray')->willReturn($extensionData);
-        
+
         $versionsResponse->method('getStatusCode')->willReturn(500);
 
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
             ->willReturnCallback(
-                fn(string $method, string $url) => match($url) {
+                fn (string $method, string $url) => match ($url) {
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
                     default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
-                }
+                },
             );
     }
 }

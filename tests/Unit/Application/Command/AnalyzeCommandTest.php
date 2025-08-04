@@ -12,15 +12,15 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 
 /**
- * Test case for the AnalyzeCommand
+ * Test case for the AnalyzeCommand.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand
  */
@@ -34,10 +34,10 @@ class AnalyzeCommandTest extends TestCase
     {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->command = new AnalyzeCommand($this->logger);
-        
+
         $application = new Application();
         $application->add($this->command);
-        
+
         $this->commandTester = new CommandTester($this->command);
     }
 
@@ -45,13 +45,13 @@ class AnalyzeCommandTest extends TestCase
     {
         self::assertEquals('analyze', $this->command->getName());
         self::assertEquals('Analyze a TYPO3 installation for upgrade readiness', $this->command->getDescription());
-        
+
         $definition = $this->command->getDefinition();
-        
+
         // Check required argument
         self::assertTrue($definition->hasArgument('path'));
         self::assertTrue($definition->getArgument('path')->isRequired());
-        
+
         // Check options
         self::assertTrue($definition->hasOption('target-version'));
         self::assertTrue($definition->hasOption('config'));
@@ -119,7 +119,7 @@ class AnalyzeCommandTest extends TestCase
     public function testDefaultOptions(): void
     {
         $definition = $this->command->getDefinition();
-        
+
         self::assertEquals('12.4', $definition->getOption('target-version')->getDefault());
         self::assertEquals(['html', 'json'], $definition->getOption('format')->getDefault());
         self::assertEquals('tests/upgradeAnalysis', $definition->getOption('output-dir')->getDefault());

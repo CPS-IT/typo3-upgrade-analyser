@@ -41,7 +41,7 @@ final class InstallationMetadataTest extends TestCase
             $enabledFeatures,
             $this->testDate,
             $customPaths,
-            $discoveryData
+            $discoveryData,
         );
 
         self::assertSame($phpVersions, $metadata->getPhpVersions());
@@ -59,7 +59,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertSame([], $metadata->getDiscoveryData());
@@ -72,7 +72,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertSame('8.1', $metadata->getRequiredPhpVersion());
@@ -85,7 +85,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertNull($metadata->getRequiredPhpVersion());
@@ -98,7 +98,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertSame('8.2', $metadata->getCurrentPhpVersion());
@@ -111,7 +111,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertNull($metadata->getCurrentPhpVersion());
@@ -124,7 +124,7 @@ final class InstallationMetadataTest extends TestCase
             ['driver' => 'mysqli', 'host' => 'localhost'],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertSame('mysqli', $metadata->getDatabaseDriver());
@@ -137,7 +137,7 @@ final class InstallationMetadataTest extends TestCase
             ['host' => 'localhost'],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertNull($metadata->getDatabaseDriver());
@@ -150,7 +150,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             ['frontend', 'backend', 'install'],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertTrue($metadata->hasFeature('frontend'));
@@ -167,7 +167,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            []
+            [],
         );
 
         self::assertFalse($metadata->hasFeature('frontend'));
@@ -180,7 +180,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['web' => '/var/www/html', 'config' => '/config']
+            ['web' => '/var/www/html', 'config' => '/config'],
         );
 
         self::assertSame('/var/www/html', $metadata->getCustomPath('web'));
@@ -196,7 +196,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             $this->testDate,
             [],
-            ['source' => 'composer', 'version' => '12.4', 'nested' => ['key' => 'value']]
+            ['source' => 'composer', 'version' => '12.4', 'nested' => ['key' => 'value']],
         );
 
         self::assertSame('composer', $metadata->getDiscoveryValue('source'));
@@ -214,7 +214,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             $this->testDate,
             [],
-            $originalData
+            $originalData,
         );
 
         $additionalData = ['version' => '12.4', 'mode' => 'production'];
@@ -222,11 +222,11 @@ final class InstallationMetadataTest extends TestCase
 
         // Original should be unchanged
         self::assertSame($originalData, $metadata->getDiscoveryData());
-        
+
         // New should have merged data
         $expectedMerged = ['source' => 'composer', 'version' => '12.4', 'mode' => 'production'];
         self::assertSame($expectedMerged, $newMetadata->getDiscoveryData());
-        
+
         // Should be different instances
         self::assertNotSame($metadata, $newMetadata);
     }
@@ -239,7 +239,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             $this->testDate,
             [],
-            ['source' => 'composer', 'version' => '12.4']
+            ['source' => 'composer', 'version' => '12.4'],
         );
 
         $newMetadata = $metadata->withDiscoveryData(['version' => '13.0', 'new_key' => 'new_value']);
@@ -257,7 +257,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             $this->testDate,
             [],
-            $originalData
+            $originalData,
         );
 
         $newMetadata = $metadata->withDiscoveryData([]);
@@ -280,7 +280,7 @@ final class InstallationMetadataTest extends TestCase
             $enabledFeatures,
             $this->testDate,
             $customPaths,
-            $discoveryData
+            $discoveryData,
         );
 
         $array = $metadata->toArray();
@@ -312,7 +312,7 @@ final class InstallationMetadataTest extends TestCase
             [],
             $this->testDate,
             [],
-            $complexDiscoveryData
+            $complexDiscoveryData,
         );
 
         $array = $metadata->toArray();
@@ -334,7 +334,7 @@ final class InstallationMetadataTest extends TestCase
             $enabledFeatures,
             $this->testDate,
             $customPaths,
-            $discoveryData
+            $discoveryData,
         );
 
         // Modify original arrays
@@ -358,7 +358,7 @@ final class InstallationMetadataTest extends TestCase
         $metadata = new InstallationMetadata([], [], [], $date, []);
 
         $retrievedDate = $metadata->getLastModified();
-        
+
         self::assertInstanceOf(\DateTimeImmutable::class, $retrievedDate);
         self::assertEquals($date, $retrievedDate);
         self::assertSame($date, $retrievedDate); // Should be the same instance

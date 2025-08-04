@@ -12,14 +12,14 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 
 /**
- * Test case for the ListAnalyzersCommand
+ * Test case for the ListAnalyzersCommand.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand
  */
@@ -31,10 +31,10 @@ class ListAnalyzersCommandTest extends TestCase
     protected function setUp(): void
     {
         $this->command = new ListAnalyzersCommand();
-        
+
         $application = new Application();
         $application->add($this->command);
-        
+
         $this->commandTester = new CommandTester($this->command);
     }
 
@@ -42,9 +42,9 @@ class ListAnalyzersCommandTest extends TestCase
     {
         self::assertEquals('list-analyzers', $this->command->getName());
         self::assertEquals('List all available analyzers', $this->command->getDescription());
-        
+
         $definition = $this->command->getDefinition();
-        
+
         // Command should have no arguments or options
         self::assertCount(0, $definition->getArguments());
         self::assertCount(0, $definition->getOptions());
@@ -55,17 +55,17 @@ class ListAnalyzersCommandTest extends TestCase
         $this->commandTester->execute([]);
 
         self::assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
-        
+
         $display = $this->commandTester->getDisplay();
-        
+
         // Check title
         self::assertStringContainsString('Available Analyzers', $display);
-        
+
         // Check table headers
         self::assertStringContainsString('Name', $display);
         self::assertStringContainsString('Description', $display);
         self::assertStringContainsString('Status', $display);
-        
+
         // Check note about usage
         self::assertStringContainsString('Use the --analyzers option with the analyze command', $display);
     }
@@ -74,11 +74,11 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // Test for expected analyzers that should be listed
         $expectedAnalyzers = [
             'Version Availability',
-            'Static Analysis', 
+            'Static Analysis',
             'Lines of Code',
             'PHP Compatibility',
             'Deprecation Scanner',
@@ -88,7 +88,7 @@ class ListAnalyzersCommandTest extends TestCase
             'TypoScript Lint',
             'Test Coverage',
         ];
-        
+
         foreach ($expectedAnalyzers as $analyzer) {
             self::assertStringContainsString($analyzer, $display);
         }
@@ -98,7 +98,7 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // Test for expected descriptions
         $expectedDescriptions = [
             'Checks if compatible versions exist in TER, Packagist, or Git',
@@ -112,7 +112,7 @@ class ListAnalyzersCommandTest extends TestCase
             'Validates TypoScript configuration',
             'Analyzes existing test coverage',
         ];
-        
+
         foreach ($expectedDescriptions as $description) {
             self::assertStringContainsString($description, $display);
         }
@@ -122,7 +122,7 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // Check that status information is displayed
         self::assertStringContainsString('Available', $display);
         self::assertStringContainsString('Planned', $display);
@@ -132,22 +132,22 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // These analyzers should be marked as "Available"
         $availableAnalyzers = [
             'Version Availability',
             'Static Analysis',
-            'Lines of Code', 
+            'Lines of Code',
             'PHP Compatibility',
             'Deprecation Scanner',
             'TCA Migration',
         ];
-        
+
         foreach ($availableAnalyzers as $analyzer) {
             // Find the analyzer name in the output
             $analyzerPos = strpos($display, $analyzer);
             self::assertNotFalse($analyzerPos, "Analyzer '$analyzer' not found in output");
-            
+
             // Look for "Available" status after the analyzer name
             $statusPos = strpos($display, 'Available', $analyzerPos);
             self::assertNotFalse($statusPos, "Available status not found for analyzer '$analyzer'");
@@ -158,7 +158,7 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // These analyzers should be marked as "Planned"
         $plannedAnalyzers = [
             'Rector Analysis',
@@ -166,12 +166,12 @@ class ListAnalyzersCommandTest extends TestCase
             'TypoScript Lint',
             'Test Coverage',
         ];
-        
+
         foreach ($plannedAnalyzers as $analyzer) {
             // Find the analyzer name in the output
             $analyzerPos = strpos($display, $analyzer);
             self::assertNotFalse($analyzerPos, "Analyzer '$analyzer' not found in output");
-            
+
             // Look for "Planned" status after the analyzer name
             $statusPos = strpos($display, 'Planned', $analyzerPos);
             self::assertNotFalse($statusPos, "Planned status not found for analyzer '$analyzer'");
@@ -182,23 +182,23 @@ class ListAnalyzersCommandTest extends TestCase
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // Check that output contains table formatting characters
         self::assertStringContainsString('-', $display); // Table borders
-        
+
         // Check that the output is properly formatted as a table
         $lines = explode("\n", $display);
-        $contentLines = array_filter($lines, fn($line) => !empty(trim($line)));
-        
+        $contentLines = array_filter($lines, fn ($line) => !empty(trim($line)));
+
         // Should have multiple lines of content (title, headers, analyzers, etc.)
-        self::assertGreaterThanOrEqual(15, count($contentLines));
+        self::assertGreaterThanOrEqual(15, \count($contentLines));
     }
 
     public function testCommandHelpText(): void
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
-        
+
         // Check help text is displayed (note: output may have formatting characters)
         self::assertStringContainsString('--analyzers option', $display);
         self::assertStringContainsString('analyze command', $display);
@@ -208,7 +208,7 @@ class ListAnalyzersCommandTest extends TestCase
     {
         // Test that command runs successfully without any arguments
         $this->commandTester->execute([]);
-        
+
         self::assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         self::assertNotEmpty($this->commandTester->getDisplay());
     }

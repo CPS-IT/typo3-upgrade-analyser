@@ -13,12 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for GitVersionParser
+ * Test case for GitVersionParser.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser
  */
@@ -40,24 +40,24 @@ class GitVersionParserTest extends TestCase
             new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
             new GitTag('v11.5.10', new \DateTimeImmutable('2023-12-01T10:00:00Z')),
             new GitTag('v11.5.0', new \DateTimeImmutable('2023-10-01T10:00:00Z')),
-            new GitTag('v10.4.0', new \DateTimeImmutable('2023-01-01T10:00:00Z'))
+            new GitTag('v10.4.0', new \DateTimeImmutable('2023-01-01T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         // Without composer.json, should return empty array (conservative approach)
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion);
         $this->assertEmpty($compatibleVersions);
-        
+
         // With compatible composer.json, should return all stable tags
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
         $this->assertCount(4, $compatibleVersions); // All tags are stable versions
-        
+
         // Verify all returned tags are stable (no pre-releases)
         foreach ($compatibleVersions as $tag) {
             $this->assertFalse($tag->isPreRelease());
@@ -71,7 +71,7 @@ class GitVersionParserTest extends TestCase
     {
         $tags = [
             new GitTag('release-20240115', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
-            new GitTag('main', new \DateTimeImmutable('2024-01-10T10:00:00Z'))
+            new GitTag('main', new \DateTimeImmutable('2024-01-10T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -88,8 +88,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -105,8 +105,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '~12.4.0'
-            ]
+                'typo3/cms-core' => '~12.4.0',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -122,8 +122,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^11.5'
-            ]
+                'typo3/cms-core' => '^11.5',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -139,8 +139,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'symfony/console' => '^5.0'
-            ]
+                'symfony/console' => '^5.0',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -167,20 +167,20 @@ class GitVersionParserTest extends TestCase
     {
         $tags = [
             new GitTag('v1.0.0', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
-            new GitTag('v1.1.0', new \DateTimeImmutable('2024-02-15T10:00:00Z'))
+            new GitTag('v1.1.0', new \DateTimeImmutable('2024-02-15T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         // Composer.json that requires TYPO3 11.x should be incompatible with 12.x
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^11.5'
-            ]
+                'typo3/cms-core' => '^11.5',
+            ],
         ];
-        
+
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
-        
+
         // Should return empty array due to incompatible composer.json
         $this->assertEmpty($compatibleVersions);
     }
@@ -192,22 +192,22 @@ class GitVersionParserTest extends TestCase
     {
         $tags = [
             new GitTag('v2.0.0', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
-            new GitTag('v2.1.0', new \DateTimeImmutable('2024-02-15T10:00:00Z'))
+            new GitTag('v2.1.0', new \DateTimeImmutable('2024-02-15T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         // Composer.json with multiple TYPO3 packages, at least one compatible
         $composerJson = [
             'require' => [
                 'typo3/cms-core' => '^12.4',
                 'typo3/cms-frontend' => '^12.4',
-                'typo3/cms-backend' => '^11.5' // This one is incompatible, but core is compatible
-            ]
+                'typo3/cms-backend' => '^11.5', // This one is incompatible, but core is compatible
+            ],
         ];
-        
+
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
-        
+
         // Should return tags because at least one TYPO3 requirement is compatible
         $this->assertCount(2, $compatibleVersions);
     }
@@ -219,8 +219,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '>=12.0,<13.0'
-            ]
+                'typo3/cms-core' => '>=12.0,<13.0',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -236,8 +236,8 @@ class GitVersionParserTest extends TestCase
     {
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '12.4'
-            ]
+                'typo3/cms-core' => '12.4',
+            ],
         ];
 
         $targetVersion = Version::fromString('12.4.0');
@@ -254,22 +254,22 @@ class GitVersionParserTest extends TestCase
         $tags = [
             new GitTag('v12.4.1', new \DateTimeImmutable('2024-02-15T10:00:00Z')),
             new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
-            new GitTag('v12.4.2', new \DateTimeImmutable('2024-03-15T10:00:00Z'))
+            new GitTag('v12.4.2', new \DateTimeImmutable('2024-03-15T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         // With compatible composer.json, should return all stable tags
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
 
         $this->assertCount(3, $compatibleVersions);
         // Verify the returned tags (order depends on array_filter implementation)
-        $tagNames = array_map(fn($tag) => $tag->getName(), $compatibleVersions);
+        $tagNames = array_map(fn ($tag) => $tag->getName(), $compatibleVersions);
         $this->assertContains('v12.4.0', $tagNames);
         $this->assertContains('v12.4.1', $tagNames);
         $this->assertContains('v12.4.2', $tagNames);
@@ -282,16 +282,16 @@ class GitVersionParserTest extends TestCase
     {
         $tags = [
             new GitTag('v12.4.0', new \DateTimeImmutable('2024-01-15T10:00:00Z')),
-            new GitTag('v12.4.1-beta.1', new \DateTimeImmutable('2024-02-01T10:00:00Z'))
+            new GitTag('v12.4.1-beta.1', new \DateTimeImmutable('2024-02-01T10:00:00Z')),
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         // With compatible composer.json, should return only stable tags (exclude pre-releases)
         $composerJson = [
             'require' => [
-                'typo3/cms-core' => '^12.4'
-            ]
+                'typo3/cms-core' => '^12.4',
+            ],
         ];
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
 

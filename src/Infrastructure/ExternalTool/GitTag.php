@@ -13,14 +13,14 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Represents a Git tag with associated metadata
+ * Represents a Git tag with associated metadata.
  */
 class GitTag
 {
     public function __construct(
         private readonly string $name,
         private readonly ?\DateTimeImmutable $date = null,
-        private readonly ?string $commit = null
+        private readonly ?string $commit = null,
     ) {
     }
 
@@ -40,75 +40,78 @@ class GitTag
     }
 
     /**
-     * Extract semantic version from tag name if possible
+     * Extract semantic version from tag name if possible.
      */
     public function getSemanticVersion(): ?string
     {
         // Remove common prefixes
         $version = preg_replace('/^(v|version|release)[-_]?/i', '', $this->name);
-        
+
         // Check if it matches semantic versioning pattern
         if (preg_match('/^\d+\.\d+(\.\d+)?(-[\w\.-]+)?(\+[\w\.-]+)?$/', $version)) {
             return $version;
         }
-        
+
         return null;
     }
 
     /**
-     * Check if this tag represents a semantic version
+     * Check if this tag represents a semantic version.
      */
     public function isSemanticVersion(): bool
     {
-        return $this->getSemanticVersion() !== null;
+        return null !== $this->getSemanticVersion();
     }
 
     /**
-     * Get the major version number if this is a semantic version
+     * Get the major version number if this is a semantic version.
      */
     public function getMajorVersion(): ?int
     {
         $version = $this->getSemanticVersion();
         if ($version) {
             $parts = explode('.', explode('-', $version)[0]);
+
             return (int) $parts[0];
         }
-        
+
         return null;
     }
 
     /**
-     * Get the minor version number if this is a semantic version
+     * Get the minor version number if this is a semantic version.
      */
     public function getMinorVersion(): ?int
     {
         $version = $this->getSemanticVersion();
         if ($version) {
             $parts = explode('.', explode('-', $version)[0]);
+
             return isset($parts[1]) ? (int) $parts[1] : null;
         }
-        
+
         return null;
     }
 
     /**
-     * Check if this is a pre-release version
+     * Check if this is a pre-release version.
      */
     public function isPreRelease(): bool
     {
         $version = $this->getSemanticVersion();
+
         return $version && str_contains($version, '-');
     }
 
     /**
-     * Compare this tag with another tag by date
+     * Compare this tag with another tag by date.
      */
     public function isNewerThan(GitTag $other): bool
     {
         if ($this->date && $other->getDate()) {
             return $this->date > $other->getDate();
         }
-        
+
         // Fall back to name comparison if no dates available
         return version_compare($this->name, $other->getName(), '>');
     }

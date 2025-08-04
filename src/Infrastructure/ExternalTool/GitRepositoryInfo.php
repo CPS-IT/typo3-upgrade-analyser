@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Contains information about a Git repository analysis
+ * Contains information about a Git repository analysis.
  */
 class GitRepositoryInfo
 {
@@ -28,7 +28,7 @@ class GitRepositoryInfo
         private readonly array $compatibleVersions,
         private readonly float $healthScore,
         private readonly ?array $composerJson = null,
-        private readonly ?GitRepositoryHealth $health = null
+        private readonly ?GitRepositoryHealth $health = null,
     ) {
     }
 
@@ -51,7 +51,8 @@ class GitRepositoryInfo
     }
 
     /**
-     * Alias for getAllTags() for backward compatibility
+     * Alias for getAllTags() for backward compatibility.
+     *
      * @return array<GitTag>
      */
     public function getAvailableVersions(): array
@@ -89,7 +90,7 @@ class GitRepositoryInfo
 
     public function hasComposerJson(): bool
     {
-        return $this->composerJson !== null;
+        return null !== $this->composerJson;
     }
 
     public function getLatestTag(): ?GitTag

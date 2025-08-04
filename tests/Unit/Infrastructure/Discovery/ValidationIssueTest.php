@@ -38,7 +38,7 @@ final class ValidationIssueTest extends TestCase
             $category,
             $context,
             $affectedPaths,
-            $recommendations
+            $recommendations,
         );
 
         self::assertSame($ruleName, $issue->getRuleName());
@@ -56,7 +56,7 @@ final class ValidationIssueTest extends TestCase
             'test_rule',
             ValidationSeverity::INFO,
             'Test message',
-            'test_category'
+            'test_category',
         );
 
         self::assertSame('test_rule', $issue->getRuleName());
@@ -73,7 +73,7 @@ final class ValidationIssueTest extends TestCase
         $context = [
             'expected_path' => '/var/www/composer.json',
             'found_files' => ['composer.lock'],
-            'nested' => ['key' => 'value']
+            'nested' => ['key' => 'value'],
         ];
 
         $issue = new ValidationIssue(
@@ -81,7 +81,7 @@ final class ValidationIssueTest extends TestCase
             ValidationSeverity::WARNING,
             'Test message',
             'test_category',
-            $context
+            $context,
         );
 
         self::assertSame('/var/www/composer.json', $issue->getContextValue('expected_path'));
@@ -99,7 +99,7 @@ final class ValidationIssueTest extends TestCase
             'test_rule',
             $severity,
             'Test message',
-            'test_category'
+            'test_category',
         );
 
         self::assertSame($expected, $issue->isBlockingAnalysis());
@@ -135,7 +135,7 @@ final class ValidationIssueTest extends TestCase
             $category,
             $context,
             $affectedPaths,
-            $recommendations
+            $recommendations,
         );
 
         $array = $issue->toArray();
@@ -161,7 +161,7 @@ final class ValidationIssueTest extends TestCase
             'minimal_rule',
             ValidationSeverity::INFO,
             'Minimal message',
-            'info'
+            'info',
         );
 
         $array = $issue->toArray();
@@ -189,7 +189,7 @@ final class ValidationIssueTest extends TestCase
             ValidationSeverity::WARNING,
             'Test message',
             'test_category',
-            $originalContext
+            $originalContext,
         );
 
         $additionalContext = ['additional' => 'data', 'more' => 'info'];
@@ -221,7 +221,7 @@ final class ValidationIssueTest extends TestCase
             ValidationSeverity::WARNING,
             'Test message',
             'test_category',
-            ['key1' => 'original', 'key2' => 'unchanged']
+            ['key1' => 'original', 'key2' => 'unchanged'],
         );
 
         $newIssue = $issue->withAdditionalContext(['key1' => 'overwritten', 'key3' => 'new']);
@@ -238,7 +238,7 @@ final class ValidationIssueTest extends TestCase
             ValidationSeverity::WARNING,
             'Test message',
             'test_category',
-            $originalContext
+            $originalContext,
         );
 
         $newIssue = $issue->withAdditionalContext([]);
@@ -257,7 +257,7 @@ final class ValidationIssueTest extends TestCase
             'test_category',
             [],
             [],
-            $originalRecommendations
+            $originalRecommendations,
         );
 
         $additionalRecommendations = ['Additional fix', 'Another solution'];
@@ -292,7 +292,7 @@ final class ValidationIssueTest extends TestCase
             'test_category',
             [],
             [],
-            $originalRecommendations
+            $originalRecommendations,
         );
 
         $newIssue = $issue->withAdditionalRecommendations([]);
@@ -314,7 +314,7 @@ final class ValidationIssueTest extends TestCase
             'test_category',
             $context,
             $affectedPaths,
-            $recommendations
+            $recommendations,
         );
 
         // Modify original arrays
@@ -337,7 +337,7 @@ final class ValidationIssueTest extends TestCase
             'test_category',
             ['original' => 'context'],
             [],
-            ['original' => 'recommendation']
+            ['original' => 'recommendation'],
         );
 
         $newIssue = $issue
@@ -346,11 +346,11 @@ final class ValidationIssueTest extends TestCase
 
         self::assertSame(
             ['original' => 'context', 'new' => 'context'],
-            $newIssue->getContext()
+            $newIssue->getContext(),
         );
         self::assertSame(
             ['original' => 'recommendation', 'new' => 'recommendation'],
-            $newIssue->getRecommendations()
+            $newIssue->getRecommendations(),
         );
 
         // Original should be unchanged

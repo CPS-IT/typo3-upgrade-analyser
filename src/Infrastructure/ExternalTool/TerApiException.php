@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Base exception for TER API related errors
+ * Base exception for TER API related errors.
  */
 class TerApiException extends ExternalToolException
 {

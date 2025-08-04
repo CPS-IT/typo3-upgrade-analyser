@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
-use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for ParseResult value object
+ * Test case for ParseResult value object.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult
  */
@@ -67,7 +67,7 @@ class ParseResultTest extends TestCase
             'php',
             '/path/to/config.php',
             $this->sampleWarnings,
-            $this->sampleMetadata
+            $this->sampleMetadata,
         );
 
         self::assertTrue($result->isSuccessful());
@@ -104,7 +104,7 @@ class ParseResultTest extends TestCase
             'php',
             '/path/to/invalid.php',
             $this->sampleWarnings,
-            $this->sampleMetadata
+            $this->sampleMetadata,
         );
 
         self::assertFalse($result->isSuccessful());
@@ -304,7 +304,7 @@ class ParseResultTest extends TestCase
             'php',
             '/path/to/config.php',
             $this->sampleWarnings,
-            $this->sampleMetadata
+            $this->sampleMetadata,
         );
 
         $array = $result->toArray();
@@ -412,7 +412,7 @@ class ParseResultTest extends TestCase
 
         $parsedAt = $array['parsed_at'];
         self::assertIsString($parsedAt);
-        
+
         // Verify it's a valid ISO 8601 timestamp
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $parsedAt);
         self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);

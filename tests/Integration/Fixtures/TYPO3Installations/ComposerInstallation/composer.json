@@ -1,0 +1,42 @@
+{
+    "name": "test/typo3-composer-installation",
+    "description": "Test TYPO3 installation for integration tests",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.1",
+        "typo3/cms-backend": "^12.4",
+        "typo3/cms-core": "^12.4",
+        "typo3/cms-extbase": "^12.4",
+        "typo3/cms-extensionmanager": "^12.4",
+        "typo3/cms-frontend": "^12.4",
+        "typo3/cms-install": "^12.4",
+        "typo3/cms-recordlist": "^12.4",
+        "example/news": "^11.0",
+        "example/powermail": "^10.0",
+        "georgringer/news": "^11.0"
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "bin-dir": "bin",
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true,
+        "allow-plugins": {
+            "typo3/cms-composer-installers": true,
+            "typo3/class-alias-loader": true
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "web-dir": "public",
+            "extension-key": "test_installation"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Test\\TestInstallation\\": "src/"
+        }
+    }
+}

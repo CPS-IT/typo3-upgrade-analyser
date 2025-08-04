@@ -1,0 +1,6 @@
+analysis:
+  installationPath: %FIXTURE_PATH%/TYPO3Installations/BrokenInstallation
+  targetVersion: "13.4"
+  resultCache:
+    enabled: true
+    ttl: 3600

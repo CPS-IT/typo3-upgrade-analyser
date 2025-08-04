@@ -34,13 +34,13 @@ final class VersionExtractionResultTest extends TestCase
     public function testSuccessfulResultCreation(): void
     {
         $attemptedStrategies = [
-            ['strategy' => 'test', 'supported' => true, 'result' => 'success']
+            ['strategy' => 'test', 'supported' => true, 'result' => 'success'],
         ];
 
         $result = VersionExtractionResult::success(
             $this->testVersion,
             $this->testStrategy,
-            $attemptedStrategies
+            $attemptedStrategies,
         );
 
         self::assertTrue($result->isSuccessful());
@@ -67,7 +67,7 @@ final class VersionExtractionResultTest extends TestCase
         $errorMessage = 'No TYPO3 version found';
         $attemptedStrategies = [
             ['strategy' => 'composer', 'supported' => false, 'error' => 'No composer.lock'],
-            ['strategy' => 'source', 'supported' => true, 'error' => 'Version file not found']
+            ['strategy' => 'source', 'supported' => true, 'error' => 'Version file not found'],
         ];
 
         $result = VersionExtractionResult::failed($errorMessage, $attemptedStrategies);
@@ -108,7 +108,7 @@ final class VersionExtractionResultTest extends TestCase
         $attemptedStrategies = [
             ['strategy' => 'composer', 'supported' => false],
             ['strategy' => 'source', 'supported' => true],
-            ['strategy' => 'legacy', 'supported' => true]
+            ['strategy' => 'legacy', 'supported' => true],
         ];
 
         $result = VersionExtractionResult::failed('No version found', $attemptedStrategies);
@@ -214,21 +214,21 @@ final class VersionExtractionResultTest extends TestCase
                 'supported' => true,
                 'success' => false,
                 'error' => 'File not found',
-                'reliability' => 0.9
+                'reliability' => 0.9,
             ],
             [
                 'strategy' => 'version_file',
                 'name' => 'Version File Strategy',
                 'supported' => true,
                 'success' => true,
-                'reliability' => 0.7
-            ]
+                'reliability' => 0.7,
+            ],
         ];
 
         $result = VersionExtractionResult::success($this->testVersion, $this->testStrategy, $attemptedStrategies);
 
         self::assertSame($attemptedStrategies, $result->getAttemptedStrategies());
-        
+
         // Verify structure is preserved in toArray
         $array = $result->toArray();
         self::assertSame($attemptedStrategies, $array['attempted_strategies']);
@@ -255,7 +255,7 @@ final class VersionExtractionResultTest extends TestCase
         $strategy = $this->createMock(VersionStrategyInterface::class);
         $strategy->method('getName')->willReturn($name);
         $strategy->method('getReliabilityScore')->willReturn($reliability);
-        
+
         return $strategy;
     }
 }
