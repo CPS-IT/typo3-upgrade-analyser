@@ -26,7 +26,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'list-extensions',
-    description: 'List extensions in a TYPO3 installation with target version compatibility',
+    description: 'List extensions in a TYPO3 installation',
 )]
 class ListExtensionsCommand extends Command
 {
@@ -72,7 +72,6 @@ class ListExtensionsCommand extends Command
 
             // Use ConfigurationService to get settings
             $installationPath = $configService->getInstallationPath();
-            $targetVersion = $configService->getTargetVersion();
 
             if (!$installationPath) {
                 $io->error('No installation path specified in configuration file');
@@ -80,9 +79,8 @@ class ListExtensionsCommand extends Command
                 return Command::FAILURE;
             }
 
-            $io->title('TYPO3 Extension List');
+            $io->title('TYPO3 Extensions');
             $io->section(\sprintf('Installation: %s', $installationPath));
-            $io->note(\sprintf('Target TYPO3 version: %s', $targetVersion));
 
             // Validate installation path exists
             if (!is_dir($installationPath)) {
@@ -98,7 +96,7 @@ class ListExtensionsCommand extends Command
             if (!$installationResult->isSuccessful()) {
                 $io->warning(\sprintf('Installation discovery failed: %s', $installationResult->getErrorMessage()));
                 $io->text('Proceeding with extension discovery using default paths...');
-                
+
                 // Check if this is a legacy installation and provide appropriate custom paths
                 $customPaths = $this->detectLegacyInstallationPaths($installationPath);
             } else {
@@ -130,30 +128,29 @@ class ListExtensionsCommand extends Command
 
             // Display table
             $io->table(
-                ['Extension', 'Current Version', 'Target Available'],
+                ['Extension', 'Version', 'Type', 'Active'],
                 array_map(fn ($ext) => [
                     $ext->getKey(),
                     $ext->getVersion()->toString(),
-                    'UNKNOWN', // TODO: Real compatibility check in next iteration
+                    $ext->getType(),
+                    $ext->isActive() ? 'YES' : 'NO',
                 ], $extensions),
             );
 
             // Summary
-            $compatible = 0; // TODO: Count real compatibility once implemented
-            $incompatible = 0;
-            $unknown = \count($extensions);
+            $activeCount = array_reduce($extensions, fn ($count, $ext) => $count + ($ext->isActive() ? 1 : 0), 0);
+            $inactiveCount = \count($extensions) - $activeCount;
 
             $io->writeln('');
             $io->writeln(\sprintf(
-                'Summary: %d compatible, %d incompatible, %d unknown',
-                $compatible,
-                $incompatible,
-                $unknown,
+                'Found %d extensions (%d active, %d inactive)',
+                \count($extensions),
+                $activeCount,
+                $inactiveCount,
             ));
 
             $this->logger->info('Extension list generated', [
                 'installation_path' => $installationPath,
-                'target_version' => $targetVersion,
                 'discovery_result' => $discoveryResult->getStatistics(),
             ]);
 
@@ -174,14 +171,14 @@ class ListExtensionsCommand extends Command
         // Check for legacy TYPO3 installation structure (typo3conf directly in root)
         $legacyPackageStatesPath = $installationPath . '/typo3conf/PackageStates.php';
         $legacyTypo3ConfPath = $installationPath . '/typo3conf';
-        
+
         if (file_exists($legacyPackageStatesPath) && is_dir($legacyTypo3ConfPath)) {
             return [
                 'web-dir' => '.',
                 'typo3conf-dir' => 'typo3conf',
             ];
         }
-        
+
         return null;
     }
 }

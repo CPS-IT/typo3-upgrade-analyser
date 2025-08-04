@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
-use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
@@ -248,12 +247,12 @@ final class ComposerInstallationDetectorTest extends TestCase
 
         if (null !== $result) {
             self::assertInstanceOf(Installation::class, $result);
-            
+
             // Extensions are now handled separately by ExtensionDiscoveryService
             // getExtensions() returns null to enforce separation of concerns
             $extensions = $result->getExtensions();
             self::assertNull($extensions);
-            
+
             // The detection itself should succeed even if extensions are handled separately
             self::assertInstanceOf(Installation::class, $result);
         } else {

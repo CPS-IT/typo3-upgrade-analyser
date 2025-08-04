@@ -85,7 +85,7 @@ final class ListExtensionsCommandTest extends TestCase
     public function testCommandConfiguration(): void
     {
         $this->assertSame('list-extensions', $this->command->getName());
-        $this->assertSame('List extensions in a TYPO3 installation with target version compatibility', $this->command->getDescription());
+        $this->assertSame('List extensions in a TYPO3 installation', $this->command->getDescription());
 
         $definition = $this->command->getDefinition();
         $this->assertTrue($definition->hasOption('config'));
@@ -116,26 +116,22 @@ final class ListExtensionsCommandTest extends TestCase
      */
     public function testExecuteWithDefaultConfigPath(): void
     {
-        // Create a config file at the default path for this test
-        $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
-        file_put_contents($defaultConfigPath, '');
+        // Create a test config file at a different path to avoid affecting the real config
+        $testConfigPath = $this->tempConfigFile;
+        file_put_contents($testConfigPath, '');
 
         // Create a real directory for the installation path
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
         mkdir($tempDir, 0o755, true);
 
         try {
-            // Since we're using the default config path, withConfigPath should not be called
+            // Since we're testing the default behavior, we'll use the same config service
             $this->configService->expects($this->never())
                 ->method('withConfigPath');
 
             $this->configService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
-
-            $this->configService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -156,7 +152,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('info')
                 ->with('Extension list generated', $this->callback(function ($context) {
                     return isset($context['installation_path'])
-                        && isset($context['target_version'])
                         && isset($context['discovery_result']);
                 }));
 
@@ -164,15 +159,11 @@ final class ListExtensionsCommandTest extends TestCase
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
-            $this->assertStringContainsString('TYPO3 Extension List', $output);
+            $this->assertStringContainsString('TYPO3 Extensions', $output);
             $this->assertStringContainsString('Installation: ' . $tempDir, $output);
-            $this->assertStringContainsString('Target TYPO3 version: 13.4', $output);
             $this->assertStringContainsString('news', $output);
             $this->assertStringContainsString('10.0.0', $output);
         } finally {
-            if (file_exists($defaultConfigPath)) {
-                unlink($defaultConfigPath);
-            }
             if (is_dir($tempDir)) {
                 rmdir($tempDir);
             }
@@ -203,10 +194,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('12.4');
-
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects($this->once())
@@ -228,7 +215,6 @@ final class ListExtensionsCommandTest extends TestCase
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('Installation: ' . $tempDir, $output);
-            $this->assertStringContainsString('Target TYPO3 version: 12.4', $output);
         } finally {
             unlink($customConfigFile);
             if (is_dir($tempDir)) {
@@ -280,10 +266,6 @@ final class ListExtensionsCommandTest extends TestCase
             ->method('getInstallationPath')
             ->willReturn('/non/existent/path');
 
-        $customConfigService->expects($this->once())
-            ->method('getTargetVersion')
-            ->willReturn('13.4');
-
         $result = $this->commandTester->execute([
             '--config' => $this->tempConfigFile,
         ]);
@@ -314,9 +296,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock successful installation discovery
             $customPaths = ['vendor-dir' => 'custom-vendor', 'web-dir' => 'web'];
@@ -378,9 +357,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock failed installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation files not found');
@@ -431,9 +407,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -480,9 +453,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -529,9 +499,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -559,8 +526,9 @@ final class ListExtensionsCommandTest extends TestCase
 
             // Check table headers
             $this->assertStringContainsString('Extension', $output);
-            $this->assertStringContainsString('Current Version', $output);
-            $this->assertStringContainsString('Target Available', $output);
+            $this->assertStringContainsString('Version', $output);
+            $this->assertStringContainsString('Type', $output);
+            $this->assertStringContainsString('Active', $output);
 
             // Check extension data
             $this->assertStringContainsString('news', $output);
@@ -571,7 +539,7 @@ final class ListExtensionsCommandTest extends TestCase
             $this->assertStringContainsString('1.0.0', $output);
 
             // Check summary
-            $this->assertStringContainsString('Summary: 0 compatible, 0 incompatible, 3 unknown', $output);
+            $this->assertStringContainsString('Found 3 extensions (2 active, 1 inactive)', $output);
         } finally {
             rmdir($tempDir);
         }
@@ -630,9 +598,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -683,9 +648,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -704,7 +666,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('info')
                 ->with('Extension list generated', [
                     'installation_path' => $tempDir,
-                    'target_version' => '13.4',
                     'discovery_result' => $extensionResult->getStatistics(),
                 ]);
 
@@ -739,9 +700,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery with installation but no metadata
             $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
@@ -793,9 +751,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery with unknown version - create minimal installation
             $installation = new Installation($tempDir, Version::fromString('0.0.0'), 'unknown');
@@ -847,9 +802,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('13.4');
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -879,7 +831,8 @@ final class ListExtensionsCommandTest extends TestCase
             $this->assertStringContainsString('10.5.2', $output);
             $this->assertStringContainsString('ext', $output);
             $this->assertStringContainsString('1.0.0-dev', $output);
-            $this->assertStringContainsString('UNKNOWN', $output); // Target compatibility status
+            $this->assertStringContainsString('YES', $output); // Active status
+            $this->assertStringContainsString('NO', $output); // Inactive status
         } finally {
             rmdir($tempDir);
         }

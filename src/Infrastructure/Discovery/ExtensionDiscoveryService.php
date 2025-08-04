@@ -51,10 +51,10 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
                 $this->logger->error('Extension discovery failed: Installation path does not exist', [
                     'path' => $installationPath,
                 ]);
-                
+
                 return ExtensionDiscoveryResult::failed(
                     \sprintf('Installation path does not exist: %s', $installationPath),
-                    []
+                    [],
                 );
             }
 
@@ -176,19 +176,19 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
             if (false === $fileContent) {
                 throw new \Exception('Could not read PackageStates.php file');
             }
-            
+
             // Basic syntax validation - check for obvious PHP syntax issues
             if (!str_starts_with(trim($fileContent), '<?php')) {
                 throw new \Exception('PackageStates.php does not start with PHP opening tag');
             }
-            
+
             // Check for balanced brackets and basic structure
             $openBrackets = substr_count($fileContent, '[');
             $closeBrackets = substr_count($fileContent, ']');
             if ($openBrackets !== $closeBrackets) {
                 throw new \Exception('PackageStates.php has unbalanced brackets');
             }
-            
+
             // Try to include the file
             $packageStatesContent = include $packageStatesPath;
 
@@ -310,11 +310,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
                 } catch (\Exception $e) {
                     // If ext_emconf.php is corrupted, we can't trust the extension
                     // This indicates a serious issue with the extension
-                    throw new \RuntimeException(\sprintf(
-                        'Failed to parse ext_emconf.php for extension "%s": %s',
-                        $packageKey,
-                        $e->getMessage()
-                    ), 0, $e);
+                    throw new \RuntimeException(\sprintf('Failed to parse ext_emconf.php for extension "%s": %s', $packageKey, $e->getMessage()), 0, $e);
                 }
             }
 

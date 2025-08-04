@@ -121,7 +121,7 @@ class InstallationTest extends TestCase
         // getExtensions() returns null to enforce separation of concerns
         $extensions = $this->installation->getExtensions();
         self::assertNull($extensions);
-        
+
         // But individual extensions can still be retrieved
         self::assertSame($extension1, $this->installation->getExtension('ext1'));
         self::assertSame($extension2, $this->installation->getExtension('ext2'));
@@ -225,7 +225,7 @@ class InstallationTest extends TestCase
         // Extensions are now handled separately by ExtensionDiscoveryService
         // getExtensions() returns null to enforce separation of concerns
         self::assertNull($this->installation->getExtensions());
-        
+
         // But the second extension should overwrite the first
         self::assertSame($extension2, $this->installation->getExtension('test_ext'));
     }

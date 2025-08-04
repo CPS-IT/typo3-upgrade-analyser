@@ -92,9 +92,8 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
         $outputContent = $output->fetch();
 
         $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('TYPO3 Extension List', $outputContent);
+        $this->assertStringContainsString('TYPO3 Extensions', $outputContent);
         $this->assertStringContainsString('Installation:', $outputContent);
-        $this->assertStringContainsString('Target TYPO3 version: 13.4', $outputContent);
         $this->assertStringContainsString('Discovering TYPO3 installation...', $outputContent);
         $this->assertStringContainsString('Discovering extensions...', $outputContent);
 
@@ -105,12 +104,12 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
 
         // Check table structure
         $this->assertStringContainsString('Extension', $outputContent);
-        $this->assertStringContainsString('Current Version', $outputContent);
-        $this->assertStringContainsString('Target Available', $outputContent);
+        $this->assertStringContainsString('Version', $outputContent);
+        $this->assertStringContainsString('Type', $outputContent);
+        $this->assertStringContainsString('Active', $outputContent);
 
         // Check summary section
-        $this->assertStringContainsString('Summary:', $outputContent);
-        $this->assertMatchesRegularExpression('/\d+ compatible, \d+ incompatible, \d+ unknown/', $outputContent);
+        $this->assertMatchesRegularExpression('/Found \\d+ extensions/', $outputContent);
     }
 
     /**
@@ -129,8 +128,7 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
         $outputContent = $output->fetch();
 
         $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('TYPO3 Extension List', $outputContent);
-        $this->assertStringContainsString('Target TYPO3 version: 12.4', $outputContent);
+        $this->assertStringContainsString('TYPO3 Extensions', $outputContent);
 
         // Check that legacy extensions are found
         $this->assertStringContainsString('legacy_news', $outputContent);
@@ -162,7 +160,7 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
             ),
         );
 
-        $this->assertStringContainsString('TYPO3 Extension List', $outputContent);
+        $this->assertStringContainsString('TYPO3 Extensions', $outputContent);
 
         // Should contain error/warning messages for broken installation
         if (Command::SUCCESS === $exitCode) {
@@ -359,7 +357,7 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
         // Since we're using NullLogger in tests, we can't directly check logs
         // but we can verify the command completed successfully with expected data
         $outputContent = $output->fetch();
-        $this->assertStringContainsString('Summary:', $outputContent);
+        $this->assertMatchesRegularExpression('/Found \\d+ extensions/', $outputContent);
     }
 
     public static function verbosityLevelProvider(): array
@@ -367,17 +365,17 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
         return [
             'normal' => [
                 OutputInterface::VERBOSITY_NORMAL,
-                ['TYPO3 Extension List', 'Extension', 'Current Version', 'Summary:'],
+                ['TYPO3 Extensions', 'Extension', 'Version', 'Found 8 extensions'],
                 [],
             ],
             'verbose' => [
                 OutputInterface::VERBOSITY_VERBOSE,
-                ['TYPO3 Extension List', 'Discovering TYPO3 installation...', 'Discovering extensions...'],
+                ['TYPO3 Extensions', 'Discovering TYPO3 installation...', 'Discovering extensions...'],
                 [],
             ],
             'very_verbose' => [
                 OutputInterface::VERBOSITY_VERY_VERBOSE,
-                ['TYPO3 Extension List', 'Discovering TYPO3 installation...', 'Discovering extensions...'],
+                ['TYPO3 Extensions', 'Discovering TYPO3 installation...', 'Discovering extensions...'],
                 [],
             ],
         ];

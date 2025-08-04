@@ -49,12 +49,12 @@ class ContainerFactory
         // Logger - register single instance for both interfaces
         $rootDir = \dirname(__DIR__, 3);
         $logDir = $rootDir . '/var/log';
-        
+
         // Ensure log directory exists
         if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
+            mkdir($logDir, 0o755, true);
         }
-        
+
         $container->register(Logger::class)
             ->setArguments(['typo3-upgrade-analyzer'])
             ->addMethodCall('pushHandler', [new StreamHandler($logDir . '/typo3-upgrade-analyzer.log', Logger::INFO)])

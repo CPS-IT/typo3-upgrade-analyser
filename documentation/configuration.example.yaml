@@ -1,5 +1,5 @@
 analysis:
-  installationPath: ../dena/ventures/dena-de/v12/dena-bundle
+  installationPath: path/to/instance/
   targetVersion: '13.4'
   resultCache:
     enabled: true

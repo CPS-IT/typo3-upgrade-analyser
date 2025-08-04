@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,6 +27,12 @@ use Symfony\Component\Yaml\Yaml;
 )]
 class InitConfigCommand extends Command
 {
+    public function __construct(
+        private readonly ConfigurationService $configurationService,
+    ) {
+        parent::__construct();
+    }
+
     protected function configure(): void
     {
         $this
@@ -50,13 +57,22 @@ class InitConfigCommand extends Command
 
         $io->title('TYPO3 Upgrade Analyzer - Configuration Generator');
 
-        $config = $this->getDefaultConfiguration();
+        $config = $this->configurationService->getDefaultConfiguration();
 
         if ($input->getOption('interactive')) {
             $config = $this->runInteractiveConfiguration($io, $config);
         }
 
         $outputFile = $input->getOption('output');
+
+        // Check if file exists and ask for confirmation before overwriting
+        if (file_exists($outputFile)) {
+            if (!$io->confirm(\sprintf('Configuration file "%s" already exists. Overwrite?', $outputFile), false)) {
+                $io->note('Configuration generation cancelled.');
+
+                return Command::SUCCESS;
+            }
+        }
 
         $yamlContent = Yaml::dump($config, 4, 2);
 
@@ -69,62 +85,6 @@ class InitConfigCommand extends Command
         $io->success(\sprintf('Configuration file generated: %s', $outputFile));
 
         return Command::SUCCESS;
-    }
-
-    private function getDefaultConfiguration(): array
-    {
-        return [
-            'analysis' => [
-                'target_version' => '13.4',
-                'php_versions' => ['8.2', '8.3', '8.4'],
-                'analyzers' => [
-                    'version_availability' => [
-                        'enabled' => true,
-                        'sources' => ['ter', 'packagist', 'github'],
-                        'timeout' => 30,
-                    ],
-                    'static_analysis' => [
-                        'enabled' => true,
-                        'tools' => [
-                            'phpstan' => [
-                                'level' => 6,
-                                'config' => null,
-                            ],
-                        ],
-                    ],
-                    'deprecation_scanner' => [
-                        'enabled' => true,
-                    ],
-                    'tca_migration' => [
-                        'enabled' => true,
-                    ],
-                    'code_quality' => [
-                        'enabled' => true,
-                        'complexity_threshold' => 10,
-                        'loc_threshold' => 1000,
-                    ],
-                ],
-            ],
-            'reporting' => [
-                'formats' => ['html', 'json'],
-                'output_directory' => 'tests/upgradeAnalysis',
-                'include_charts' => true,
-            ],
-            'external_tools' => [
-                'rector' => [
-                    'binary' => 'vendor/bin/rector',
-                    'config' => null,
-                ],
-                'fractor' => [
-                    'binary' => 'vendor/bin/fractor',
-                    'config' => null,
-                ],
-                'typoscript_lint' => [
-                    'binary' => 'vendor/bin/typoscript-lint',
-                    'config' => 'typoscript-lint.yml',
-                ],
-            ],
-        ];
     }
 
     private function runInteractiveConfiguration(SymfonyStyle $io, array $config): array

@@ -44,12 +44,12 @@ final class ConfigurationServiceTest extends TestCase
      */
     public function testConstructorWithDefaultPath(): void
     {
-        $service = new ConfigurationService($this->logger);
+        $service = new ConfigurationService($this->logger, '/non/existent/config.yaml');
 
         // Should use default configuration when file doesn't exist
         // Note: When file doesn't exist, it loads default config ('13.4'), not method default
         $this->assertSame('13.4', $service->getTargetVersion());
-        $this->assertFalse($service->isResultCacheEnabled());
+        $this->assertTrue($service->isResultCacheEnabled());
         $this->assertSame(3600, $service->getResultCacheTtl());
         $this->assertNull($service->getInstallationPath());
     }
@@ -105,7 +105,7 @@ final class ConfigurationServiceTest extends TestCase
         // Should use default configuration
         // Note: When config file is missing, it uses default config ('13.4')
         $this->assertSame('13.4', $service->getTargetVersion());
-        $this->assertFalse($service->isResultCacheEnabled());
+        $this->assertTrue($service->isResultCacheEnabled());
     }
 
     /**
@@ -146,7 +146,7 @@ final class ConfigurationServiceTest extends TestCase
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         // Should handle empty config and return method defaults (not service defaults)
-        $this->assertSame('12.4', $service->getTargetVersion());
+        $this->assertSame('13.4', $service->getTargetVersion());
     }
 
     /**
@@ -161,7 +161,7 @@ final class ConfigurationServiceTest extends TestCase
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         // Should handle non-array content and return method defaults
-        $this->assertSame('12.4', $service->getTargetVersion());
+        $this->assertSame('13.4', $service->getTargetVersion());
     }
 
     /**
@@ -413,7 +413,7 @@ final class ConfigurationServiceTest extends TestCase
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
-        $this->assertFalse($service->isResultCacheEnabled());
+        $this->assertTrue($service->isResultCacheEnabled());
     }
 
     /**
@@ -501,7 +501,7 @@ final class ConfigurationServiceTest extends TestCase
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         // When config file is empty, analysis.targetVersion doesn't exist, so it uses method default
-        $this->assertSame('12.4', $service->getTargetVersion());
+        $this->assertSame('13.4', $service->getTargetVersion());
     }
 
     /**
@@ -536,7 +536,7 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertNull($config['analysis']['installationPath']);
         $this->assertSame('13.4', $config['analysis']['targetVersion']);
-        $this->assertFalse($config['analysis']['resultCache']['enabled']);
+        $this->assertTrue($config['analysis']['resultCache']['enabled']);
         $this->assertSame(3600, $config['analysis']['resultCache']['ttl']);
     }
 

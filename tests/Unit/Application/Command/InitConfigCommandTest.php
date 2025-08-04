@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -32,7 +34,9 @@ class InitConfigCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->command = new InitConfigCommand();
+        $logger = $this->createMock(LoggerInterface::class);
+        $configService = new ConfigurationService($logger, 'non-existent-config.yaml');
+        $this->command = new InitConfigCommand($configService);
 
         $application = new Application();
         $application->add($this->command);
@@ -89,16 +93,16 @@ class InitConfigCommandTest extends TestCase
         // Verify content structure
         $content = file_get_contents($outputFile);
         self::assertStringContainsString('analysis:', $content);
-        self::assertStringContainsString('target_version:', $content);
+        self::assertStringContainsString('targetVersion:', $content);
         self::assertStringContainsString('reporting:', $content);
-        self::assertStringContainsString('external_tools:', $content);
+        self::assertStringContainsString('externalTools:', $content);
 
         // Verify YAML is valid
         $config = Yaml::parse($content);
         self::assertIsArray($config);
         self::assertArrayHasKey('analysis', $config);
         self::assertArrayHasKey('reporting', $config);
-        self::assertArrayHasKey('external_tools', $config);
+        self::assertArrayHasKey('externalTools', $config);
     }
 
     public function testExecuteWithFileWriteFailure(): void
@@ -127,8 +131,8 @@ class InitConfigCommandTest extends TestCase
 
         // Verify analysis section
         self::assertArrayHasKey('analysis', $config);
-        self::assertEquals('13.4', $config['analysis']['target_version']);
-        self::assertEquals(['8.2', '8.3', '8.4'], $config['analysis']['php_versions']);
+        self::assertEquals('13.4', $config['analysis']['targetVersion']);
+        self::assertEquals(['8.3', '8.4'], $config['analysis']['phpVersions']);
 
         // Verify analyzers configuration
         self::assertArrayHasKey('analyzers', $config['analysis']);
@@ -146,15 +150,15 @@ class InitConfigCommandTest extends TestCase
 
         // Verify reporting section
         self::assertArrayHasKey('reporting', $config);
-        self::assertEquals(['html', 'json'], $config['reporting']['formats']);
-        self::assertEquals('tests/upgradeAnalysis', $config['reporting']['output_directory']);
-        self::assertTrue($config['reporting']['include_charts']);
+        self::assertEquals(['markdown'], $config['reporting']['formats']);
+        self::assertEquals('var/reports/', $config['reporting']['output_directory']);
+        self::assertFalse($config['reporting']['includeCharts']);
 
         // Verify external tools section
-        self::assertArrayHasKey('external_tools', $config);
-        self::assertArrayHasKey('rector', $config['external_tools']);
-        self::assertArrayHasKey('fractor', $config['external_tools']);
-        self::assertArrayHasKey('typoscript_lint', $config['external_tools']);
+        self::assertArrayHasKey('externalTools', $config);
+        self::assertArrayHasKey('rector', $config['externalTools']);
+        self::assertArrayHasKey('fractor', $config['externalTools']);
+        self::assertArrayHasKey('typoscript_lint', $config['externalTools']);
     }
 
     public function testExecuteWithCustomOutputPath(): void
@@ -199,7 +203,9 @@ class InitConfigCommandTest extends TestCase
 
         // Verify that the command can be instantiated and configured without errors
         // (This implicitly tests that the choice() bug fix works - no TypeError during execution)
-        $command = new InitConfigCommand();
+        $logger = $this->createMock(LoggerInterface::class);
+        $configService = new ConfigurationService($logger, 'non-existent-config.yaml');
+        $command = new InitConfigCommand($configService);
         self::assertEquals('init-config', $command->getName());
         self::assertEquals('Generate a configuration file for analysis', $command->getDescription());
     }

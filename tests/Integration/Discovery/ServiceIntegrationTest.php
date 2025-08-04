@@ -420,9 +420,11 @@ class ServiceIntegrationTest extends AbstractIntegrationTest
                 'Installation version should be consistent across concurrent operations',
             );
 
-            $this->assertEquals($firstExtensionCount,
+            $this->assertEquals(
+                $firstExtensionCount,
                 \count($result['extension']->getExtensions()),
-                'Extension count should be consistent across concurrent operations');
+                'Extension count should be consistent across concurrent operations',
+            );
         }
     }
 }
