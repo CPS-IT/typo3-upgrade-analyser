@@ -15,10 +15,13 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -29,17 +32,26 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class PackagistClientTest extends TestCase
 {
     private PackagistClient $client;
-    private MockObject&HttpClientInterface $httpClient;
+    private MockObject&HttpClientServiceInterface $httpClient;
     private MockObject&LoggerInterface $logger;
+    private MockObject&ComposerConstraintCheckerInterface $constraintChecker;
+    private MockObject&RepositoryUrlHandlerInterface $urlHandler;
     private MockObject&ResponseInterface $response;
 
     protected function setUp(): void
     {
-        $this->httpClient = $this->createMock(HttpClientInterface::class);
+        $this->httpClient = $this->createMock(HttpClientServiceInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->constraintChecker = $this->createMock(ComposerConstraintCheckerInterface::class);
+        $this->urlHandler = $this->createMock(RepositoryUrlHandlerInterface::class);
         $this->response = $this->createMock(ResponseInterface::class);
 
-        $this->client = new PackagistClient($this->httpClient, $this->logger);
+        $this->client = new PackagistClient(
+            $this->httpClient,
+            $this->logger,
+            $this->constraintChecker,
+            $this->urlHandler
+        );
     }
 
     public function testHasVersionForWithCompatibleVersion(): void
@@ -74,9 +86,20 @@ class PackagistClientTest extends TestCase
             ->willReturn($responseData);
 
         $this->httpClient->expects(self::once())
-            ->method('request')
-            ->with('GET', 'https://packagist.org/packages/georgringer/news.json')
+            ->method('get')
+            ->with('https://packagist.org/packages/georgringer/news.json')
             ->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturnCallback(function(array $requirements) {
+                return $requirements; // Return the requirements as-is for this test
+            });
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->willReturnCallback(function(string $constraint, Version $targetVersion) {
+                // Mock logic: ^12.0 is compatible with 12.4.0, ^11.0 is not  
+                return $constraint === '^12.0';
+            });
 
         // Act
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -110,7 +133,16 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturnOnConsecutiveCalls(
+                ['typo3/cms-core' => '^12.0'],
+                ['typo3/cms-core' => '^11.0']
+            );
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->willReturn(false); // All constraints incompatible
 
         // Act
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -139,7 +171,14 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '*']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('*', $typo3Version)
+            ->willReturn(true);
 
         // Act
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -168,7 +207,10 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn([]); // No TYPO3 requirements
 
         // Act
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -184,7 +226,7 @@ class PackagistClientTest extends TestCase
         $typo3Version = new Version('12.4.0');
 
         $this->response->method('getStatusCode')->willReturn(404);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
 
         // Act
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -200,8 +242,8 @@ class PackagistClientTest extends TestCase
         $typo3Version = new Version('12.4.0');
 
         $this->httpClient->expects(self::once())
-            ->method('request')
-            ->willThrowException(new \RuntimeException('Network error'));
+            ->method('get')
+            ->willThrowException(new HttpClientException('Network error'));
 
         $this->logger->expects(self::once())
             ->method('error')
@@ -245,7 +287,14 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '^12.0']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('^12.0', $typo3Version)
+            ->willReturn(true);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
@@ -274,7 +323,14 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '^12.0']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('^12.0', $typo3Version)
+            ->willReturn(false);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
@@ -313,7 +369,14 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '^12.0']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('^12.0', $typo3Version)
+            ->willReturn(true);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
@@ -347,7 +410,14 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '^12.0']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('^12.0', $typo3Version)
+            ->willReturn(true);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
@@ -370,7 +440,7 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
@@ -391,80 +461,13 @@ class PackagistClientTest extends TestCase
 
         $this->response->method('getStatusCode')->willReturn(200);
         $this->response->method('toArray')->willReturn($responseData);
-        $this->httpClient->method('request')->willReturn($this->response);
+        $this->httpClient->method('get')->willReturn($this->response);
 
         // Act
         $result = $this->client->getLatestVersion($packageName, $typo3Version);
 
         // Assert
         self::assertNull($result);
-    }
-
-    public function testConstraintCompatibilityWithDifferentPatterns(): void
-    {
-        $testCases = [
-            // [constraint, target_version, expected_result]
-            ['^12.0', '12.4.0', true],
-            ['^11.0', '12.4.0', false],
-            ['*', '12.4.0', true],
-            ['^12.4', '12.4.0', true],
-            ['^13.0', '12.4.0', false],
-        ];
-
-        foreach ($testCases as [$constraint, $targetVersionString, $expected]) {
-            // Arrange - create fresh mocks for each iteration
-            $response = $this->createMock(ResponseInterface::class);
-            $httpClient = $this->createMock(HttpClientInterface::class);
-            $client = new PackagistClient($httpClient, $this->logger);
-
-            $packageName = 'vendor/test-package';
-            $targetVersion = new Version($targetVersionString);
-
-            $responseData = [
-                'package' => [
-                    'versions' => [
-                        '1.0.0' => [
-                            'require' => [
-                                'typo3/cms-core' => $constraint,
-                            ],
-                        ],
-                    ],
-                ],
-            ];
-
-            $response->method('getStatusCode')->willReturn(200);
-            $response->method('toArray')->willReturn($responseData);
-            $httpClient->method('request')->willReturn($response);
-
-            // Act
-            $result = $client->hasVersionFor($packageName, $targetVersion);
-
-            // Assert
-            self::assertEquals(
-                $expected,
-                $result,
-                \sprintf('Failed for constraint "%s" with target %s', $constraint, $targetVersionString),
-            );
-        }
-    }
-
-    public function testExceptionContainsCorrectToolName(): void
-    {
-        // Arrange
-        $packageName = 'georgringer/news';
-        $typo3Version = new Version('12.4.0');
-
-        $this->httpClient->method('request')
-            ->willThrowException(new \RuntimeException('Network error'));
-
-        try {
-            // Act
-            $this->client->hasVersionFor($packageName, $typo3Version);
-            self::fail('Expected ExternalToolException was not thrown');
-        } catch (ExternalToolException $e) {
-            // Assert
-            self::assertEquals('packagist_api', $e->getToolName());
-        }
     }
 
     public function testHandlesDifferentTypo3RequirementKeys(): void
@@ -494,7 +497,14 @@ class PackagistClientTest extends TestCase
 
             $this->response->method('getStatusCode')->willReturn(200);
             $this->response->method('toArray')->willReturn($responseData);
-            $this->httpClient->method('request')->willReturn($this->response);
+            $this->httpClient->method('get')->willReturn($this->response);
+
+            $this->constraintChecker->method('findTypo3Requirements')
+                ->willReturn([$requirementKey => '^12.0']);
+
+            $this->constraintChecker->method('isConstraintCompatible')
+                ->with('^12.0', $typo3Version)
+                ->willReturn(true);
 
             // Act
             $result = $this->client->hasVersionFor($packageName, $typo3Version);
@@ -505,5 +515,132 @@ class PackagistClientTest extends TestCase
                 \sprintf('Failed to recognize TYPO3 requirement key "%s"', $requirementKey),
             );
         }
+    }
+
+    public function testConstraintCompatibilityWithDifferentPatterns(): void
+    {
+        $testCases = [
+            // [constraint, target_version, expected_result]
+            ['^12.0', '12.4.0', true],
+            ['^11.0', '12.4.0', false],
+            ['*', '12.4.0', true],
+            ['^12.4', '12.4.0', true],
+            ['^13.0', '12.4.0', false],
+        ];
+
+        foreach ($testCases as [$constraint, $targetVersionString, $expected]) {
+            // Arrange - create fresh mocks for each iteration
+            $response = $this->createMock(ResponseInterface::class);
+            $httpClient = $this->createMock(HttpClientServiceInterface::class);
+            $constraintChecker = $this->createMock(ComposerConstraintCheckerInterface::class);
+            $urlHandler = $this->createMock(RepositoryUrlHandlerInterface::class);
+            $client = new PackagistClient($httpClient, $this->logger, $constraintChecker, $urlHandler);
+
+            $packageName = 'vendor/test-package';
+            $targetVersion = new Version($targetVersionString);
+
+            $responseData = [
+                'package' => [
+                    'versions' => [
+                        '1.0.0' => [
+                            'require' => [
+                                'typo3/cms-core' => $constraint,
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+
+            $response->method('getStatusCode')->willReturn(200);
+            $response->method('toArray')->willReturn($responseData);
+            $httpClient->method('get')->willReturn($response);
+
+            $constraintChecker->method('findTypo3Requirements')
+                ->willReturn(['typo3/cms-core' => $constraint]);
+            
+            $constraintChecker->method('isConstraintCompatible')
+                ->with($constraint, $targetVersion)
+                ->willReturn($expected);
+
+            // Act
+            $result = $client->hasVersionFor($packageName, $targetVersion);
+
+            // Assert
+            self::assertEquals(
+                $expected,
+                $result,
+                \sprintf('Failed for constraint "%s" with target %s', $constraint, $targetVersionString),
+            );
+        }
+    }
+
+    public function testExceptionContainsCorrectToolName(): void
+    {
+        // Arrange
+        $packageName = 'georgringer/news';
+        $typo3Version = new Version('12.4.0');
+
+        $this->httpClient->method('get')
+            ->willThrowException(new HttpClientException('Network error'));
+
+        try {
+            // Act
+            $this->client->hasVersionFor($packageName, $typo3Version);
+            self::fail('Expected ExternalToolException was not thrown');
+        } catch (ExternalToolException $e) {
+            // Assert
+            self::assertEquals('packagist_api', $e->getToolName());
+        }
+    }
+
+    public function testGetRepositoryUrlReturnsNormalizedUrl(): void
+    {
+        // Arrange
+        $packageName = 'georgringer/news';
+        $repositoryUrl = 'git@github.com:georgringer/news.git';
+        $normalizedUrl = 'https://github.com/georgringer/news';
+
+        $responseData = [
+            'package' => [
+                'repository' => $repositoryUrl,
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->urlHandler->expects(self::once())
+            ->method('normalizeUrl')
+            ->with($repositoryUrl)
+            ->willReturn($normalizedUrl);
+
+        // Act
+        $result = $this->client->getRepositoryUrl($packageName);
+
+        // Assert
+        self::assertEquals($normalizedUrl, $result);
+    }
+
+    public function testGetRepositoryUrlReturnsNullForMissingRepository(): void
+    {
+        // Arrange
+        $packageName = 'vendor/no-repo';
+
+        $responseData = [
+            'package' => [
+                'name' => $packageName,
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->getRepositoryUrl($packageName);
+
+        // Assert
+        self::assertNull($result);
     }
 }

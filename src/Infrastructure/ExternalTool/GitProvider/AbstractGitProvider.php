@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -24,7 +24,7 @@ abstract class AbstractGitProvider implements GitProviderInterface
     protected int $priority = 50;
 
     public function __construct(
-        protected readonly HttpClientInterface $httpClient,
+        protected readonly HttpClientServiceInterface $httpClient,
         protected readonly LoggerInterface $logger,
         protected readonly ?string $accessToken = null,
     ) {

@@ -15,6 +15,10 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use CPSIT\UpgradeAnalyzer\Shared\Configuration\EnvironmentLoader;
+use Psr\Log\LoggerInterface;
 
 /**
  * GitHub API client for repository analysis.
@@ -25,6 +29,29 @@ class GitHubClient extends AbstractGitProvider
 
     private const GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
     private const REST_ENDPOINT = 'https://api.github.com';
+
+    public function __construct(
+        HttpClientServiceInterface $httpClient,
+        LoggerInterface $logger,
+        RepositoryUrlHandlerInterface $urlHandler,
+        ?string $accessToken = null,
+    ) {
+        // Get GitHub token from environment if not provided
+        if (!$accessToken) {
+            $accessToken = EnvironmentLoader::get('GITHUB_API_TOKEN');
+        }
+        
+        parent::__construct($httpClient, $logger, $accessToken);
+        $this->urlHandler = $urlHandler;
+        
+        if (!$accessToken) {
+            $this->logger->warning('GITHUB_API_TOKEN not found in environment variables. GitHub API requests may be rate-limited. Set GITHUB_API_TOKEN in .env.local for better performance.');
+        } else {
+            $this->logger->debug('GITHUB_API_TOKEN found, using authenticated GitHub API requests');
+        }
+    }
+
+    private readonly RepositoryUrlHandlerInterface $urlHandler;
 
     public function getName(): string
     {
@@ -45,7 +72,7 @@ class GitHubClient extends AbstractGitProvider
 
     public function getRepositoryInfo(string $repositoryUrl): GitRepositoryMetadata
     {
-        $repoPath = $this->extractRepositoryPath($repositoryUrl);
+        $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
         $query = '
             query($owner: String!, $name: String!) {
@@ -85,7 +112,7 @@ class GitHubClient extends AbstractGitProvider
 
     public function getTags(string $repositoryUrl): array
     {
-        $repoPath = $this->extractRepositoryPath($repositoryUrl);
+        $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
         $query = '
             query($owner: String!, $name: String!, $first: Int!) {
@@ -139,7 +166,7 @@ class GitHubClient extends AbstractGitProvider
 
     public function getBranches(string $repositoryUrl): array
     {
-        $repoPath = $this->extractRepositoryPath($repositoryUrl);
+        $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
         $query = '
             query($owner: String!, $name: String!, $first: Int!) {
@@ -169,47 +196,55 @@ class GitHubClient extends AbstractGitProvider
 
     public function getComposerJson(string $repositoryUrl, string $ref = 'main'): ?array
     {
-        $repoPath = $this->extractRepositoryPath($repositoryUrl);
+        $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
-        try {
-            // Use GitHub's REST API to get file content
-            $url = \sprintf(
-                '%s/repos/%s/%s/contents/composer.json?ref=%s',
-                self::REST_ENDPOINT,
-                $repoPath['owner'],
-                $repoPath['name'],
-                $ref,
-            );
+        // Try multiple default branch names
+        $branches = ['main', 'master'];
+        
+        foreach ($branches as $branch) {
+            try {
+                // Use GitHub's REST API to get file content
+                $url = \sprintf(
+                    '%s/repos/%s/%s/contents/composer.json?ref=%s',
+                    self::REST_ENDPOINT,
+                    $repoPath['owner'],
+                    $repoPath['name'],
+                    $branch,
+                );
 
-            $headers = [];
-            if ($this->accessToken) {
-                $headers['Authorization'] = 'Bearer ' . $this->accessToken;
+                $headers = [];
+                if ($this->accessToken) {
+                    $headers['Authorization'] = 'Bearer ' . $this->accessToken;
+                }
+
+                $response = $this->makeRequest('GET', $url, ['headers' => $headers]);
+                $data = $response->toArray();
+
+                if (!isset($data['content'])) {
+                    continue; // Try next branch
+                }
+
+                // Content is base64 encoded
+                $content = base64_decode($data['content'], true);
+
+                return $this->parseComposerJson($content);
+            } catch (GitProviderException $e) {
+                if (str_contains($e->getMessage(), '404')) {
+                    // Try next branch or return null if this was the last one
+                    continue;
+                }
+
+                throw $e;
             }
-
-            $response = $this->makeRequest('GET', $url, ['headers' => $headers]);
-            $data = $response->toArray();
-
-            if (!isset($data['content'])) {
-                return null;
-            }
-
-            // Content is base64 encoded
-            $content = base64_decode($data['content'], true);
-
-            return $this->parseComposerJson($content);
-        } catch (GitProviderException $e) {
-            if (str_contains($e->getMessage(), '404')) {
-                // composer.json not found - this is normal for many repositories
-                return null;
-            }
-
-            throw $e;
         }
+        
+        // composer.json not found in any default branch - this is normal for many repositories
+        return null;
     }
 
     public function getRepositoryHealth(string $repositoryUrl): GitRepositoryHealth
     {
-        $repoPath = $this->extractRepositoryPath($repositoryUrl);
+        $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
         $query = '
             query($owner: String!, $name: String!) {
@@ -272,7 +307,7 @@ class GitHubClient extends AbstractGitProvider
     private function getContributorCount(string $repositoryUrl): int
     {
         try {
-            $repoPath = $this->extractRepositoryPath($repositoryUrl);
+            $repoPath = $this->urlHandler->extractRepositoryPath($repositoryUrl);
 
             $url = \sprintf(
                 '%s/repos/%s/%s/contributors?per_page=1',

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Shared\Configuration\EnvironmentLoader;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -30,7 +31,13 @@ class TerApiClient
         private readonly LoggerInterface $logger,
     ) {
         // Load TER token from environment
-        $terToken = $_ENV['TER_TOKEN'] ?? getenv('TER_TOKEN') ?: null;
+        $terToken = EnvironmentLoader::get('TER_ACCESS_TOKEN');
+        
+        if (!$terToken) {
+            $this->logger->warning('TER_ACCESS_TOKEN not found in environment variables. TER API requests may be rate-limited. Set TER_ACCESS_TOKEN in .env.local for better performance.');
+        } else {
+            $this->logger->debug('TER_ACCESS_TOKEN found, using authenticated TER API requests');
+        }
 
         $this->httpClient = new TerApiHttpClient($httpClient, $logger, $terToken);
         $this->responseParser = new TerApiResponseParser();

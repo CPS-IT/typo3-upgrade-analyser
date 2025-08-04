@@ -72,4 +72,14 @@ interface ConfigurationServiceInterface
      * @return int Cache TTL in seconds
      */
     public function getResultCacheTtl(): int;
+
+    /**
+     * Gets a configuration value by key with optional default value.
+     *
+     * @param string $key Configuration key (supports dot notation)
+     * @param mixed $default Default value if key is not found
+     *
+     * @return mixed Configuration value or default
+     */
+    public function get(string $key, mixed $default = null): mixed;
 }

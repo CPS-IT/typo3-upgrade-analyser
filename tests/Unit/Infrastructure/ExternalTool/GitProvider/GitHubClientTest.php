@@ -14,10 +14,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvid
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -28,17 +29,20 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class GitHubClientTest extends TestCase
 {
     private GitHubClient $client;
-    private HttpClientInterface&MockObject $httpClient;
+    private HttpClientServiceInterface&MockObject $httpClient;
     private LoggerInterface&MockObject $logger;
+    private RepositoryUrlHandlerInterface&MockObject $urlHandler;
 
     protected function setUp(): void
     {
-        $this->httpClient = $this->createMock(HttpClientInterface::class);
+        $this->httpClient = $this->createMock(HttpClientServiceInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->urlHandler = $this->createMock(RepositoryUrlHandlerInterface::class);
 
         $this->client = new GitHubClient(
             $this->httpClient,
             $this->logger,
+            $this->urlHandler,
             'test-token',
         );
     }
@@ -75,6 +79,12 @@ class GitHubClientTest extends TestCase
      */
     public function testGetRepositoryInfo(): void
     {
+        // Mock URL handler to return proper repository path
+        $this->urlHandler->expects($this->once())
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/repo.git')
+            ->willReturn(['owner' => 'user', 'name' => 'repo']);
+
         $response = $this->createMock(ResponseInterface::class);
         $response->method('toArray')->willReturn([
             'data' => [
@@ -127,6 +137,12 @@ class GitHubClientTest extends TestCase
      */
     public function testGetTags(): void
     {
+        // Mock URL handler to return proper repository path
+        $this->urlHandler->expects($this->once())
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/repo')
+            ->willReturn(['owner' => 'user', 'name' => 'repo']);
+
         $response = $this->createMock(ResponseInterface::class);
         $response->method('toArray')->willReturn([
             'data' => [
@@ -175,6 +191,12 @@ class GitHubClientTest extends TestCase
      */
     public function testGetComposerJson(): void
     {
+        // Mock URL handler to return proper repository path
+        $this->urlHandler->expects($this->once())
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/repo')
+            ->willReturn(['owner' => 'user', 'name' => 'repo']);
+
         $response = $this->createMock(ResponseInterface::class);
         $response->method('toArray')->willReturn([
             'content' => base64_encode(json_encode([
@@ -205,12 +227,19 @@ class GitHubClientTest extends TestCase
      */
     public function testGetComposerJsonNotFound(): void
     {
+        // Mock URL handler to return proper repository path
+        $this->urlHandler->expects($this->once())
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/repo')
+            ->willReturn(['owner' => 'user', 'name' => 'repo']);
+
         $response = $this->createMock(ResponseInterface::class);
         $response->method('toArray')->willThrowException(
             new GitProviderException('404 Not Found', 'github'),
         );
 
-        $this->httpClient->expects($this->once())
+        // The method tries multiple branches (main, master), so expect multiple calls
+        $this->httpClient->expects($this->atLeastOnce())
             ->method('request')
             ->willReturn($response);
 
@@ -224,6 +253,12 @@ class GitHubClientTest extends TestCase
      */
     public function testGetRepositoryHealth(): void
     {
+        // Mock URL handler to return proper repository path - called twice (for GraphQL and REST API)
+        $this->urlHandler->expects($this->exactly(2))
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/repo')
+            ->willReturn(['owner' => 'user', 'name' => 'repo']);
+
         // Mock GraphQL response (without collaborators field)
         $graphqlResponse = $this->createMock(ResponseInterface::class);
         $graphqlResponse->method('toArray')->willReturn([
@@ -285,6 +320,12 @@ class GitHubClientTest extends TestCase
      */
     public function testGraphqlErrorHandling(): void
     {
+        // Mock URL handler to return proper repository path
+        $this->urlHandler->expects($this->once())
+            ->method('extractRepositoryPath')
+            ->with('https://github.com/user/nonexistent')
+            ->willReturn(['owner' => 'user', 'name' => 'nonexistent']);
+
         $response = $this->createMock(ResponseInterface::class);
         $response->method('toArray')->willReturn([
             'errors' => [

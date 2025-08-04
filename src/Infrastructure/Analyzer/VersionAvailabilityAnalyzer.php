@@ -29,7 +29,7 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
     public function __construct(
         private readonly TerApiClient $terClient,
         private readonly PackagistClient $packagistClient,
-        private readonly ?GitRepositoryAnalyzer $gitAnalyzer,
+        private readonly GitRepositoryAnalyzer $gitAnalyzer,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -173,10 +173,6 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
             'url' => null,
             'latest_version' => null,
         ];
-
-        if (!$this->gitAnalyzer) {
-            return $defaultResponse;
-        }
 
         try {
             $gitInfo = $this->gitAnalyzer->analyzeExtension($extension, $context->getTargetVersion());

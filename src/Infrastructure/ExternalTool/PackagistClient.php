@@ -13,8 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Client for interacting with the Packagist API.
@@ -24,8 +27,10 @@ class PackagistClient
     private const API_BASE_URL = 'https://packagist.org/packages';
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        private readonly HttpClientServiceInterface $httpClient,
         private readonly LoggerInterface $logger,
+        private readonly ComposerConstraintCheckerInterface $constraintChecker,
+        private readonly RepositoryUrlHandlerInterface $urlHandler,
     ) {
     }
 
@@ -35,7 +40,7 @@ class PackagistClient
     public function hasVersionFor(string $packageName, Version $typo3Version): bool
     {
         try {
-            $response = $this->httpClient->request('GET', self::API_BASE_URL . '/' . $packageName . '.json');
+            $response = $this->httpClient->get(self::API_BASE_URL . '/' . $packageName . '.json');
 
             if (200 !== $response->getStatusCode()) {
                 return false;
@@ -44,7 +49,7 @@ class PackagistClient
             $data = $response->toArray();
 
             return $this->checkVersionCompatibility($data, $typo3Version);
-        } catch (\Throwable $e) {
+        } catch (HttpClientException $e) {
             $this->logger->error('Packagist API request failed', [
                 'package_name' => $packageName,
                 'error' => $e->getMessage(),
@@ -60,7 +65,7 @@ class PackagistClient
     public function getLatestVersion(string $packageName, Version $typo3Version): ?string
     {
         try {
-            $response = $this->httpClient->request('GET', self::API_BASE_URL . '/' . $packageName . '.json');
+            $response = $this->httpClient->get(self::API_BASE_URL . '/' . $packageName . '.json');
 
             if (200 !== $response->getStatusCode()) {
                 return null;
@@ -69,13 +74,43 @@ class PackagistClient
             $data = $response->toArray();
 
             return $this->findLatestCompatibleVersion($data, $typo3Version);
-        } catch (\Throwable $e) {
+        } catch (HttpClientException $e) {
             $this->logger->error('Packagist API request failed', [
                 'package_name' => $packageName,
                 'error' => $e->getMessage(),
             ]);
 
             throw new ExternalToolException(\sprintf('Failed to get latest version from Packagist for package "%s": %s', $packageName, $e->getMessage()), 'packagist_api', $e);
+        }
+    }
+
+    /**
+     * Get the repository URL for a package from Packagist.
+     */
+    public function getRepositoryUrl(string $packageName): ?string
+    {
+        try {
+            $response = $this->httpClient->get(self::API_BASE_URL . '/' . $packageName . '.json');
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            $data = $response->toArray();
+
+            // Extract repository URL from package data
+            if (isset($data['package']['repository']) && is_string($data['package']['repository'])) {
+                return $this->urlHandler->normalizeUrl($data['package']['repository']);
+            }
+
+            return null;
+        } catch (HttpClientException $e) {
+            $this->logger->debug('Failed to get repository URL from Packagist', [
+                'package_name' => $packageName,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 
@@ -134,46 +169,18 @@ class PackagistClient
         }
 
         $requirements = $versionData['require'];
+        $typo3Requirements = $this->constraintChecker->findTypo3Requirements($requirements);
 
-        // Check for TYPO3 core requirements
-        $typo3Requirements = [
-            'typo3/cms-core',
-            'typo3/cms',
-            'typo3/minimal',
-        ];
-
-        foreach ($typo3Requirements as $requirement) {
-            if (isset($requirements[$requirement])) {
-                return $this->isConstraintCompatible($requirements[$requirement], $typo3Version);
-            }
-        }
-
-        // If no explicit TYPO3 requirement found, assume compatible
-        return true;
-    }
-
-    private function isConstraintCompatible(string $constraint, Version $typo3Version): bool
-    {
-        // Simplified constraint checking - in real implementation, use Composer's constraint parser
-        $majorVersion = $typo3Version->getMajor();
-
-        // Check for wildcard
-        if (str_contains($constraint, '*')) {
+        if (empty($typo3Requirements)) {
+            // If no explicit TYPO3 requirement found, assume compatible
             return true;
         }
 
-        // Parse constraint for caret version ranges (e.g., ^12.0)
-        if (preg_match('/\^(\d+)\./', $constraint, $matches)) {
-            $constraintMajor = (int) $matches[1];
-
-            return $constraintMajor === $majorVersion;
-        }
-
-        // Check for exact major version match (e.g., 12.0)
-        if (preg_match('/^(\d+)\./', $constraint, $matches)) {
-            $constraintMajor = (int) $matches[1];
-
-            return $constraintMajor === $majorVersion;
+        // Check if any TYPO3 requirement is compatible with target version
+        foreach ($typo3Requirements as $package => $constraint) {
+            if ($this->constraintChecker->isConstraintCompatible($constraint, $typo3Version)) {
+                return true;
+            }
         }
 
         return false;

@@ -34,6 +34,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     private VersionAvailabilityAnalyzer $analyzer;
     private MockObject&TerApiClient $terClient;
     private MockObject&PackagistClient $packagistClient;
+    private MockObject&GitRepositoryAnalyzer $gitAnalyzer;
     private MockObject&LoggerInterface $logger;
     private Extension $extension;
     private AnalysisContext $context;
@@ -42,12 +43,17 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     {
         $this->terClient = $this->createMock(TerApiClient::class);
         $this->packagistClient = $this->createMock(PackagistClient::class);
+        $this->gitAnalyzer = $this->createMock(GitRepositoryAnalyzer::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+
+        // Setup default git analyzer behavior to avoid GitAnalysisException
+        $this->gitAnalyzer->method('analyzeExtension')
+            ->willThrowException(new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException('Git analysis not available'));
 
         $this->analyzer = new VersionAvailabilityAnalyzer(
             $this->terClient,
             $this->packagistClient,
-            null, // GitRepositoryAnalyzer is optional
+            $this->gitAnalyzer,
             $this->logger,
         );
 

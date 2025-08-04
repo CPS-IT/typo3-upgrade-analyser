@@ -13,6 +13,10 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -27,13 +31,28 @@ use Symfony\Component\Console\Tester\CommandTester;
 class AnalyzeCommandTest extends TestCase
 {
     private LoggerInterface $logger;
+    private ExtensionDiscoveryServiceInterface $extensionDiscovery;
+    private InstallationDiscoveryServiceInterface $installationDiscovery;
+    private ConfigurationServiceInterface $configService;
+    private ReportService $reportService;
     private AnalyzeCommand $command;
     private CommandTester $commandTester;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->command = new AnalyzeCommand($this->logger);
+        $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryServiceInterface::class);
+        $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
+        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->reportService = $this->createMock(ReportService::class);
+        
+        $this->command = new AnalyzeCommand(
+            $this->logger,
+            $this->extensionDiscovery,
+            $this->installationDiscovery,
+            $this->configService,
+            $this->reportService
+        );
 
         $application = new Application();
         $application->add($this->command);
@@ -47,81 +66,108 @@ class AnalyzeCommandTest extends TestCase
         self::assertEquals('Analyze a TYPO3 installation for upgrade readiness', $this->command->getDescription());
 
         $definition = $this->command->getDefinition();
-
-        // Check required argument
-        self::assertTrue($definition->hasArgument('path'));
-        self::assertTrue($definition->getArgument('path')->isRequired());
-
-        // Check options
-        self::assertTrue($definition->hasOption('target-version'));
+        
         self::assertTrue($definition->hasOption('config'));
-        self::assertTrue($definition->hasOption('format'));
-        self::assertTrue($definition->hasOption('output-dir'));
         self::assertTrue($definition->hasOption('analyzers'));
-        self::assertTrue($definition->hasOption('dry-run'));
     }
 
-    public function testExecuteWithNonExistentPath(): void
+    public function testExecuteWithNonExistentConfigFile(): void
     {
         $this->commandTester->execute([
-            'path' => '/non/existent/path',
+            '--config' => '/non/existent/config.yaml',
         ]);
 
         self::assertEquals(Command::FAILURE, $this->commandTester->getStatusCode());
-        self::assertStringContainsString('Directory does not exist', $this->commandTester->getDisplay());
+        self::assertStringContainsString('Configuration file does not exist', $this->commandTester->getDisplay());
     }
 
-    public function testExecuteWithInvalidTYPO3Installation(): void
+    public function testExecuteWithNoInstallationPath(): void
     {
-        // Create a temporary directory that's not a TYPO3 installation
-        $tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($tempDir);
+        // Create a temporary config file without installation path
+        $tempConfig = sys_get_temp_dir() . '/test-config-' . uniqid() . '.yaml';
+        file_put_contents($tempConfig, "target_version: '12.4'\n");
 
         try {
             $this->commandTester->execute([
-                'path' => $tempDir,
+                '--config' => $tempConfig,
             ]);
 
             self::assertEquals(Command::FAILURE, $this->commandTester->getStatusCode());
-            self::assertStringContainsString('does not appear to be a valid TYPO3 installation', $this->commandTester->getDisplay());
+            self::assertStringContainsString('No installation path specified in configuration file', $this->commandTester->getDisplay());
         } finally {
-            rmdir($tempDir);
+            unlink($tempConfig);
         }
     }
 
-    public function testExecuteWithValidTYPO3Installation(): void
+    public function testExecuteWithValidConfiguration(): void
     {
-        // Create a temporary directory with TYPO3 indicators
+        // Create a temporary directory with TYPO3 indicators  
         $tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($tempDir);
         mkdir($tempDir . '/typo3conf');
         touch($tempDir . '/typo3conf/LocalConfiguration.php');
 
+        // Create a temporary config file
+        $tempConfig = sys_get_temp_dir() . '/test-config-' . uniqid() . '.yaml';
+        file_put_contents($tempConfig, "installation_path: '$tempDir'\ntarget_version: '12.4'\n");
+
         try {
-            $this->logger->expects(self::once())
-                ->method('info')
-                ->with('Starting TYPO3 upgrade analysis', self::isType('array'));
+            // Mock the configuration service methods
+            $this->configService->expects(self::any())
+                ->method('withConfigPath')
+                ->willReturn($this->configService);
+                
+            $this->configService->expects(self::any())
+                ->method('getInstallationPath')
+                ->willReturn($tempDir);
+            
+            $this->configService->expects(self::any())
+                ->method('getTargetVersion')
+                ->willReturn('12.4');
+                
+            $this->configService->expects(self::any())
+                ->method('get')
+                ->willReturnMap([
+                    ['reporting.output_directory', 'var/reports/', 'var/reports/'],
+                    ['reporting.formats', ['markdown'], ['markdown']],
+                ]);
+
+            // Mock discovery services to return successful results
+            $installationResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult::failed('Installation not found');
+            $this->installationDiscovery->expects(self::once())
+                ->method('discoverInstallation')
+                ->willReturn($installationResult);
+
+            $extensionResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success([], ['PackageStates.php']);
+            $this->extensionDiscovery->expects(self::once())
+                ->method('discoverExtensions')
+                ->willReturn($extensionResult);
+
+            $this->logger->expects(self::atLeastOnce())
+                ->method('info');
 
             $this->commandTester->execute([
-                'path' => $tempDir,
-                '--target-version' => '12.4',
+                '--config' => $tempConfig,
             ]);
 
             self::assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
             self::assertStringContainsString('Analysis completed successfully', $this->commandTester->getDisplay());
         } finally {
+            unlink($tempConfig);
             unlink($tempDir . '/typo3conf/LocalConfiguration.php');
             rmdir($tempDir . '/typo3conf');
             rmdir($tempDir);
         }
     }
 
-    public function testDefaultOptions(): void
+    public function testDefaultConfigOption(): void
     {
         $definition = $this->command->getDefinition();
 
-        self::assertEquals('12.4', $definition->getOption('target-version')->getDefault());
-        self::assertEquals(['html', 'json'], $definition->getOption('format')->getDefault());
-        self::assertEquals('tests/upgradeAnalysis', $definition->getOption('output-dir')->getDefault());
+        // Check default config path
+        self::assertEquals('typo3-analyzer.yaml', $definition->getOption('config')->getDefault());
+        
+        // Check that analyzers option has no default (empty array)
+        self::assertEquals([], $definition->getOption('analyzers')->getDefault());
     }
 }

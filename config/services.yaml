@@ -9,13 +9,56 @@ services:
     resource: '../src/Application/Command/*'
     public: true
 
+  # Override AnalyzeCommand to inject analyzers and report service
+  CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand:
+    public: true
+    arguments:
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService'
+      - !tagged_iterator 'analyzer'
+
   # Infrastructure services
 
-  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\:
-    resource: '../src/Infrastructure/Analyzer/*'
-    tags: ['analyzer']
+  # Shared HTTP client service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService:
+    arguments:
+      - '@http_client'
+      - '@logger'
 
-  # Override VersionAvailabilityAnalyzer to include GitRepositoryAnalyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService
+
+  # Shared version constraint checker
+  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker: ~
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker
+
+  # Shared repository URL handler
+  CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler: ~
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler
+
+  # TER and Packagist API clients with shared services
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient:
+    public: true
+    arguments:
+      - '@http_client'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
+
+  # Working VersionAvailabilityAnalyzer with all API clients including Git
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
     public: true
     arguments:
@@ -24,9 +67,6 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
       - '@logger'
     tags: ['analyzer']
-
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\:
-    resource: '../src/Infrastructure/ExternalTool/*'
 
   # Shared services
   CPSIT\UpgradeAnalyzer\Shared\Configuration\:
@@ -57,12 +97,12 @@ services:
         ]
       - '@logger'
 
-  # Git Provider Implementations
+  # Git Provider Implementations with shared services
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient:
     arguments:
-      - '@http_client'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
       - '@logger'
-      - '%env(GITHUB_ACCESS_TOKEN)%'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
 
   # Git Repository Analyzer
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer:
@@ -70,9 +110,12 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser'
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
 
   # Git Version Parser
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser: ~
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
 
   # Configuration Parsers
   CPSIT\UpgradeAnalyzer\Infrastructure\Parser\:
@@ -155,3 +198,10 @@ services:
     arguments:
       - '@logger'
       - '%app.root_dir%'
+
+  # Report Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService:
+    public: true
+    arguments:
+      - '@Twig\Environment'
+      - '@logger'

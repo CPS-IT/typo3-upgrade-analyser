@@ -28,6 +28,9 @@ class ContainerFactory
 {
     public static function create(): ContainerInterface
     {
+        // Load environment variables from .env files
+        EnvironmentLoader::load();
+
         $container = new ContainerBuilder();
 
         // Register core services
@@ -36,8 +39,8 @@ class ContainerFactory
         // Load service definitions from configuration
         self::loadServiceDefinitions($container);
 
-        // Auto-register analyzers
-        self::autoRegisterAnalyzers($container);
+        // Auto-register analyzers (disabled - using manual service configuration)
+        // self::autoRegisterAnalyzers($container);
 
         $container->compile();
 

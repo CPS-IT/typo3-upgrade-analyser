@@ -12,10 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
+use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
+
 /**
  * Represents the result of an analysis performed on an extension.
  */
-class AnalysisResult
+class AnalysisResult implements ResultInterface
 {
     private array $metrics = [];
     private float $riskScore = 0.0;
@@ -118,7 +120,22 @@ class AnalysisResult
         return null === $this->error;
     }
 
-    public function toArray(): array
+    public function getType(): string
+    {
+        return 'analysis';
+    }
+
+    public function getId(): string
+    {
+        return $this->analyzerName . '_' . $this->extension->getKey();
+    }
+
+    public function getName(): string
+    {
+        return $this->analyzerName . ' analysis for ' . $this->extension->getKey();
+    }
+
+    public function getData(): array
     {
         return [
             'analyzer_name' => $this->analyzerName,
@@ -127,9 +144,64 @@ class AnalysisResult
             'risk_score' => $this->riskScore,
             'risk_level' => $this->getRiskLevel(),
             'recommendations' => $this->recommendations,
+        ];
+    }
+
+    public function getValue(string $key): mixed
+    {
+        return match ($key) {
+            'analyzer_name' => $this->analyzerName,
+            'extension_key' => $this->extension->getKey(),
+            'metrics' => $this->metrics,
+            'risk_score' => $this->riskScore,
+            'risk_level' => $this->getRiskLevel(),
+            'recommendations' => $this->recommendations,
+            default => $this->getMetric($key),
+        };
+    }
+
+    public function hasValue(string $key): bool
+    {
+        return match ($key) {
+            'analyzer_name', 'extension_key', 'metrics', 'risk_score', 'risk_level', 'recommendations' => true,
+            default => $this->hasMetric($key),
+        };
+    }
+
+    public function getTimestamp(): \DateTimeImmutable
+    {
+        return $this->executedAt ?? new \DateTimeImmutable();
+    }
+
+    public function getSummary(): string
+    {
+        if (!$this->isSuccessful()) {
+            return "Analysis failed: {$this->error}";
+        }
+
+        $riskLevel = $this->getRiskLevel();
+        $extensionKey = $this->extension->getKey();
+
+        return "Extension {$extensionKey}: {$riskLevel} risk (score: {$this->riskScore})";
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'type' => $this->getType(),
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'analyzer_name' => $this->analyzerName,
+            'extension_key' => $this->extension->getKey(),
+            'metrics' => $this->metrics,
+            'risk_score' => $this->riskScore,
+            'risk_level' => $this->getRiskLevel(),
+            'recommendations' => $this->recommendations,
             'executed_at' => $this->executedAt?->format(\DateTime::ATOM),
+            'timestamp' => $this->getTimestamp()->format(\DateTimeInterface::ATOM),
             'error' => $this->error,
             'successful' => $this->isSuccessful(),
+            'summary' => $this->getSummary(),
         ];
     }
 }

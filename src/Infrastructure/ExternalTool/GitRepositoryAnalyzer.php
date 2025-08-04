@@ -26,6 +26,7 @@ class GitRepositoryAnalyzer
         private readonly GitProviderFactory $providerFactory,
         private readonly GitVersionParser $versionParser,
         private readonly LoggerInterface $logger,
+        private readonly ?PackagistClient $packagistClient = null,
     ) {
     }
 
@@ -114,14 +115,27 @@ class GitRepositoryAnalyzer
             }
         }
 
-        // Try to extract from composer name/metadata
-        if ($extension->hasComposerName()) {
-            // Check if the extension was installed from a VCS source
-            // This would be available in composer.lock or other metadata
+        // Try to extract from composer package via Packagist
+        if ($extension->hasComposerName() && $this->packagistClient) {
             $composerName = $extension->getComposerName();
-
-            // For now, we'll need additional metadata to determine Git sources
-            // This will be enhanced when Extension entity is extended with more metadata
+            
+            try {
+                $repositoryUrl = $this->packagistClient->getRepositoryUrl($composerName);
+                if ($repositoryUrl && $this->isGitRepository($repositoryUrl)) {
+                    $this->logger->debug('Found repository URL via Packagist', [
+                        'extension' => $extension->getKey(),
+                        'composer_name' => $composerName,
+                        'repository_url' => $repositoryUrl,
+                    ]);
+                    return $repositoryUrl;
+                }
+            } catch (\Throwable $e) {
+                $this->logger->debug('Failed to get repository URL from Packagist', [
+                    'extension' => $extension->getKey(),
+                    'composer_name' => $composerName,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         return null;
