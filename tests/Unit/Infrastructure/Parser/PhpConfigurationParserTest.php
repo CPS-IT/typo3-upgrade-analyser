@@ -12,17 +12,16 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
-use Psr\Log\LoggerInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
- * Test case for PhpConfigurationParser
+ * Test case for PhpConfigurationParser.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationExtractor
@@ -158,23 +157,23 @@ class PhpConfigurationParserTest extends TestCase
     public function testParseContentWithValidReturnArray(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'DB' => [
-        'Connections' => [
-            'Default' => [
-                'driver' => 'mysqli',
-                'host' => 'localhost',
-                'dbname' => 'test',
-            ],
-        ],
-    ],
-    'SYS' => [
-        'sitename' => 'Test Site',
-        'encryptionKey' => 'test-key',
-    ],
-];
-PHP;
+            <?php
+            return [
+                'DB' => [
+                    'Connections' => [
+                        'Default' => [
+                            'driver' => 'mysqli',
+                            'host' => 'localhost',
+                            'dbname' => 'test',
+                        ],
+                    ],
+                ],
+                'SYS' => [
+                    'sitename' => 'Test Site',
+                    'encryptionKey' => 'test-key',
+                ],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/config.php');
 
@@ -190,12 +189,12 @@ PHP;
     public function testParseContentWithVariableAssignment(): void
     {
         $content = <<<'PHP'
-<?php
-$TYPO3_CONF_VARS = [
-    'BE' => ['debug' => true],
-    'FE' => ['debug' => false],
-];
-PHP;
+            <?php
+            $TYPO3_CONF_VARS = [
+                'BE' => ['debug' => true],
+                'FE' => ['debug' => false],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/config.php');
 
@@ -211,21 +210,21 @@ PHP;
     public function testParseContentWithComplexDataTypes(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'string_value' => 'test string',
-    'integer_value' => 42,
-    'float_value' => 3.14,
-    'boolean_true' => true,
-    'boolean_false' => false,
-    'null_value' => null,
-    'nested_array' => [
-        'level_2' => [
-            'level_3' => 'deep value',
-        ],
-    ],
-];
-PHP;
+            <?php
+            return [
+                'string_value' => 'test string',
+                'integer_value' => 42,
+                'float_value' => 3.14,
+                'boolean_true' => true,
+                'boolean_false' => false,
+                'null_value' => null,
+                'nested_array' => [
+                    'level_2' => [
+                        'level_3' => 'deep value',
+                    ],
+                ],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/types.php');
 
@@ -254,12 +253,12 @@ PHP;
     public function testParseContentWithSyntaxError(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'key' => 'value'
-    'missing_comma' => 'error'
-];
-PHP;
+            <?php
+            return [
+                'key' => 'value'
+                'missing_comma' => 'error'
+            ];
+            PHP;
 
         $this->expectException(PhpParseException::class);
         $this->expectExceptionMessage('Syntax error');
@@ -280,22 +279,22 @@ PHP;
     public function testValidateLocalConfigurationWithMissingRequiredSections(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'BE' => ['debug' => false],
-    // Missing DB, SYS, MAIL sections
-];
-PHP;
+            <?php
+            return [
+                'BE' => ['debug' => false],
+                // Missing DB, SYS, MAIL sections
+            ];
+            PHP;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'LocalConfiguration_') . '.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->parseFile($tempFile);
 
             self::assertFalse($result->isSuccessful());
             self::assertTrue($result->hasErrors());
-            
+
             $errors = $result->getErrors();
             self::assertContains('Missing required configuration section: DB', $errors);
             self::assertContains('Missing required configuration section: SYS', $errors);
@@ -308,32 +307,32 @@ PHP;
     public function testValidateLocalConfigurationWithMissingDatabaseConfig(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'DB' => [
-        'Connections' => [
-            'Default' => [
-                'driver' => 'mysqli',
-                // Missing host, dbname
-            ],
-        ],
-    ],
-    'SYS' => ['sitename' => 'Test'],
-    'MAIL' => ['transport' => 'sendmail'],
-];
-PHP;
+            <?php
+            return [
+                'DB' => [
+                    'Connections' => [
+                        'Default' => [
+                            'driver' => 'mysqli',
+                            // Missing host, dbname
+                        ],
+                    ],
+                ],
+                'SYS' => ['sitename' => 'Test'],
+                'MAIL' => ['transport' => 'sendmail'],
+            ];
+            PHP;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'LocalConfiguration_') . '.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->parseFile($tempFile);
 
             self::assertFalse($result->isSuccessful());
             self::assertTrue($result->hasErrors());
-            
+
             $errors = $result->getErrors();
-            $dbErrors = array_filter($errors, fn($error) => str_contains($error, 'database configuration'));
+            $dbErrors = array_filter($errors, fn ($error) => str_contains($error, 'database configuration'));
             self::assertNotEmpty($dbErrors);
         } finally {
             unlink($tempFile);
@@ -353,16 +352,16 @@ PHP;
     public function testValidatePackageStatesWithMissingPackagesSection(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'version' => 5,
-    // Missing packages section
-];
-PHP;
+            <?php
+            return [
+                'version' => 5,
+                // Missing packages section
+            ];
+            PHP;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'PackageStates_') . '.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->parseFile($tempFile);
 
@@ -377,30 +376,30 @@ PHP;
     public function testValidatePackageStatesWithMissingRequiredExtensions(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'packages' => [
-        'core' => [
-            'state' => 'active',
-            'packagePath' => 'typo3/sysext/core/',
-        ],
-        // Missing other required extensions
-    ],
-    'version' => 5,
-];
-PHP;
+            <?php
+            return [
+                'packages' => [
+                    'core' => [
+                        'state' => 'active',
+                        'packagePath' => 'typo3/sysext/core/',
+                    ],
+                    // Missing other required extensions
+                ],
+                'version' => 5,
+            ];
+            PHP;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'PackageStates_') . '.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->parseFile($tempFile);
 
             self::assertFalse($result->isSuccessful());
             self::assertTrue($result->hasErrors());
-            
+
             $errors = $result->getErrors();
-            $missingExtensionErrors = array_filter($errors, fn($error) => str_contains($error, 'Missing required system extension'));
+            $missingExtensionErrors = array_filter($errors, fn ($error) => str_contains($error, 'Missing required system extension'));
             self::assertCount(4, $missingExtensionErrors); // backend, frontend, extbase, fluid
         } finally {
             unlink($tempFile);
@@ -410,14 +409,14 @@ PHP;
     public function testValidateExtensionConfigurationWithEmptyData(): void
     {
         $content = <<<'PHP'
-<?php
-// Extension configuration file with no return statement
-// This is common for ext_localconf.php files
-PHP;
+            <?php
+            // Extension configuration file with no return statement
+            // This is common for ext_localconf.php files
+            PHP;
 
         $tempFile = sys_get_temp_dir() . '/ext_localconf.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->parseFile($tempFile);
 
@@ -443,14 +442,14 @@ PHP;
     public function testConfigurationExtractorWithReturnStatement(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'key1' => 'value1',
-    'key2' => [
-        'nested' => 'nested_value',
-    ],
-];
-PHP;
+            <?php
+            return [
+                'key1' => 'value1',
+                'key2' => [
+                    'nested' => 'nested_value',
+                ],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/return.php');
 
@@ -458,7 +457,7 @@ PHP;
         // The extraction method metadata is not passed through the current implementation
         // This would require adding custom metadata support to the PhpConfigurationParser
         // For now, just verify the parsing works correctly
-        
+
         $data = $result->getData();
         self::assertSame('value1', $data['key1']);
         self::assertSame('nested_value', $data['key2']['nested']);
@@ -467,16 +466,16 @@ PHP;
     public function testConfigurationExtractorWithVariableAssignment(): void
     {
         $content = <<<'PHP'
-<?php
-$TYPO3_CONF_VARS = [
-    'assigned' => 'value',
-];
-PHP;
+            <?php
+            $TYPO3_CONF_VARS = [
+                'assigned' => 'value',
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/assignment.php');
 
         self::assertTrue($result->isSuccessful());
-        
+
         $data = $result->getData();
         self::assertSame('value', $data['assigned']);
     }
@@ -484,20 +483,20 @@ PHP;
     public function testParseContentMetadataGeneration(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'section1' => ['key1' => 'value1'],
-    'section2' => ['key2' => 'value2'],
-];
-PHP;
+            <?php
+            return [
+                'section1' => ['key1' => 'value1'],
+                'section2' => ['key2' => 'value2'],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/metadata.php');
 
         self::assertTrue($result->isSuccessful());
-        
+
         $metadata = $result->getMetadata();
         self::assertSame('PHP Configuration Parser', $metadata['parser']);
-        self::assertSame(strlen($content), $metadata['content_length']);
+        self::assertSame(\strlen($content), $metadata['content_length']);
         self::assertSame(2, $metadata['data_keys']);
         self::assertTrue($metadata['has_nested_data']);
     }
@@ -505,9 +504,9 @@ PHP;
     public function testLoggerIntegration(): void
     {
         $content = <<<'PHP'
-<?php
-return ['test' => 'value'];
-PHP;
+            <?php
+            return ['test' => 'value'];
+            PHP;
 
         $debugCalls = [];
         $this->logger->expects(self::atLeast(2))
@@ -518,16 +517,16 @@ PHP;
 
         $result = $this->parser->parseContent($content, '/test/log.php');
         self::assertTrue($result->isSuccessful());
-        
+
         // Additional assertions to ensure test is not risky
         self::assertSame(['test' => 'value'], $result->getData());
         self::assertSame('php', $result->getFormat());
-        
+
         // Verify that the expected debug call was made
         $phpDebugFound = false;
         foreach ($debugCalls as $call) {
-            if (str_contains($call['message'], 'PHP configuration parsed successfully') &&
-                isset($call['context']['keys_found'], $call['context']['extraction_method'])) {
+            if (str_contains($call['message'], 'PHP configuration parsed successfully')
+                && isset($call['context']['keys_found'], $call['context']['extraction_method'])) {
                 $phpDebugFound = true;
                 break;
             }
@@ -538,62 +537,62 @@ PHP;
     public function testComplexConfigurationParsing(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'BE' => [
-        'debug' => false,
-        'installToolPassword' => '$argon2i$v=19$m=65536,t=16,p=1$...',
-        'passwordHashing' => [
-            'className' => 'TYPO3\\CMS\\Core\\Crypto\\PasswordHashing\\Argon2iPasswordHash',
-            'options' => [],
-        ],
-    ],
-    'DB' => [
-        'Connections' => [
-            'Default' => [
-                'charset' => 'utf8mb4',
-                'driver' => 'mysqli',
-                'dbname' => 'typo3_db',
-                'host' => 'db.example.com',
-                'password' => 'secret',
-                'port' => 3306,
-                'user' => 'typo3',
-            ],
-        ],
-    ],
-    'EXTENSIONS' => [
-        'backend' => [
-            'backendFavicon' => '',
-            'backendLogo' => 'EXT:backend/Resources/Public/Images/typo3-logo.svg',
-        ],
-        'scheduler' => [
-            'maxLifetime' => 1440,
-            'showSampleTasks' => true,
-        ],
-    ],
-    'FE' => [
-        'cacheHash' => [
-            'excludedParameters' => ['L', 'pk_campaign', 'utm_source'],
-        ],
-        'debug' => false,
-    ],
-    'SYS' => [
-        'devIPmask' => '127.0.0.1,::1',
-        'displayErrors' => 0,
-        'encryptionKey' => 'some-very-long-encryption-key-for-security',
-        'sitename' => 'TYPO3 Production Site',
-        'systemMaintainers' => [1, 2],
-    ],
-];
-PHP;
+            <?php
+            return [
+                'BE' => [
+                    'debug' => false,
+                    'installToolPassword' => '$argon2i$v=19$m=65536,t=16,p=1$...',
+                    'passwordHashing' => [
+                        'className' => 'TYPO3\\CMS\\Core\\Crypto\\PasswordHashing\\Argon2iPasswordHash',
+                        'options' => [],
+                    ],
+                ],
+                'DB' => [
+                    'Connections' => [
+                        'Default' => [
+                            'charset' => 'utf8mb4',
+                            'driver' => 'mysqli',
+                            'dbname' => 'typo3_db',
+                            'host' => 'db.example.com',
+                            'password' => 'secret',
+                            'port' => 3306,
+                            'user' => 'typo3',
+                        ],
+                    ],
+                ],
+                'EXTENSIONS' => [
+                    'backend' => [
+                        'backendFavicon' => '',
+                        'backendLogo' => 'EXT:backend/Resources/Public/Images/typo3-logo.svg',
+                    ],
+                    'scheduler' => [
+                        'maxLifetime' => 1440,
+                        'showSampleTasks' => true,
+                    ],
+                ],
+                'FE' => [
+                    'cacheHash' => [
+                        'excludedParameters' => ['L', 'pk_campaign', 'utm_source'],
+                    ],
+                    'debug' => false,
+                ],
+                'SYS' => [
+                    'devIPmask' => '127.0.0.1,::1',
+                    'displayErrors' => 0,
+                    'encryptionKey' => 'some-very-long-encryption-key-for-security',
+                    'sitename' => 'TYPO3 Production Site',
+                    'systemMaintainers' => [1, 2],
+                ],
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/complex.php');
 
         self::assertTrue($result->isSuccessful());
         self::assertFalse($result->hasErrors());
-        
+
         $data = $result->getData();
-        
+
         // Test complex nested structure
         self::assertSame('mysqli', $data['DB']['Connections']['Default']['driver']);
         self::assertSame(3306, $data['DB']['Connections']['Default']['port']);
@@ -602,13 +601,13 @@ PHP;
         if (!isset($data['SYS']['systemMaintainers'])) {
             self::fail('systemMaintainers key is missing from SYS section');
         }
-        
+
         $actualMaintainers = $data['SYS']['systemMaintainers'];
-        if (empty($actualMaintainers) && is_array($actualMaintainers)) {
+        if (empty($actualMaintainers) && \is_array($actualMaintainers)) {
             // Empty array - check if this is expected based on parser behavior
             self::markTestSkipped('Array parsing returns empty array - need to investigate AST extraction');
         }
-        
+
         self::assertSame([1, 2], $actualMaintainers);
         self::assertTrue($data['EXTENSIONS']['scheduler']['showSampleTasks']);
         self::assertSame(['L', 'pk_campaign', 'utm_source'], $data['FE']['cacheHash']['excludedParameters']);
@@ -617,20 +616,20 @@ PHP;
     public function testParseContentWithUnsupportedASTNodes(): void
     {
         $content = <<<'PHP'
-<?php
-return [
-    'dynamic_value' => getenv('ENV_VAR'),
-    'class_constant' => MyClass::CONSTANT,
-    'function_call' => time(),
-];
-PHP;
+            <?php
+            return [
+                'dynamic_value' => getenv('ENV_VAR'),
+                'class_constant' => MyClass::CONSTANT,
+                'function_call' => time(),
+            ];
+            PHP;
 
         $result = $this->parser->parseContent($content, '/test/unsupported.php');
 
         self::assertTrue($result->isSuccessful());
-        
+
         $data = $result->getData();
-        
+
         // Unsupported nodes should be represented as placeholders
         self::assertStringContainsString('FuncCall', $data['dynamic_value']);
         self::assertStringContainsString('ClassConstFetch', $data['class_constant']);
@@ -644,7 +643,7 @@ PHP;
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pattern_test_') . '.php';
         file_put_contents($tempFile, $content);
-        
+
         try {
             $result = $this->parser->supports($tempFile);
             self::assertSame($expectedResult, $result);
@@ -661,31 +660,31 @@ PHP;
         return [
             'TYPO3_CONF_VARS access' => [
                 '<?php $GLOBALS[\'TYPO3_CONF_VARS\'][\'SYS\'][\'sitename\'] = \'Test\';',
-                true
+                true,
             ],
             'TYPO3_CONF_VARS variable' => [
                 '<?php $TYPO3_CONF_VARS = [];',
-                true
+                true,
             ],
             'Package states variable' => [
                 '<?php $packageStates = [];',
-                true
+                true,
             ],
             'Return array pattern' => [
                 '<?php return [\'config\' => \'value\'];',
-                true
+                true,
             ],
             'T3_VAR global' => [
                 '<?php $GLOBALS[\'T3_VAR\'] = [];',
-                true
+                true,
             ],
             'Regular PHP file' => [
                 '<?php class MyClass {}',
-                false
+                false,
             ],
             'Empty file' => [
                 '',
-                false
+                false,
             ],
         ];
     }

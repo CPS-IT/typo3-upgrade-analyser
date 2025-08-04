@@ -15,16 +15,17 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Cache;
 interface SerializableInterface
 {
     /**
-     * Convert object to array for serialization
-     * 
+     * Convert object to array for serialization.
+     *
      * @return array<string, mixed> Array representation of the object
      */
     public function toArray(): array;
 
     /**
-     * Create object from array data
-     * 
+     * Create object from array data.
+     *
      * @param array<string, mixed> $data Array representation to deserialize from
+     *
      * @return static Deserialized object instance
      */
     public static function fromArray(array $data): static;

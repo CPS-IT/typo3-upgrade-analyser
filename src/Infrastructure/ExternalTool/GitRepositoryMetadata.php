@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Metadata about a Git repository
+ * Metadata about a Git repository.
  */
 class GitRepositoryMetadata
 {
@@ -25,7 +25,7 @@ class GitRepositoryMetadata
         private readonly int $starCount,
         private readonly int $forkCount,
         private readonly \DateTimeImmutable $lastUpdated,
-        private readonly string $defaultBranch = 'main'
+        private readonly string $defaultBranch = 'main',
     ) {
     }
 

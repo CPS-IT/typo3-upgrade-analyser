@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Value object representing a version number
+ * Value object representing a version number.
  */
 class Version
 {
@@ -57,14 +57,15 @@ class Version
     public function toString(): string
     {
         // For branch versions, return the original branch name
-        if ($this->isBranchVersion && $this->originalVersion !== null) {
+        if ($this->isBranchVersion && null !== $this->originalVersion) {
             return $this->originalVersion;
         }
-        
+
         $version = "{$this->major}.{$this->minor}.{$this->patch}";
-        if ($this->suffix !== null) {
+        if (null !== $this->suffix) {
             $version .= "-{$this->suffix}";
         }
+
         return $version;
     }
 
@@ -85,7 +86,7 @@ class Version
 
     public function isEqual(Version $other): bool
     {
-        return $this->compare($other) === 0;
+        return 0 === $this->compare($other);
     }
 
     public function isCompatibleWith(Version $other): bool
@@ -108,13 +109,13 @@ class Version
         }
 
         // Compare suffixes (null is considered "greater" than any suffix)
-        if ($this->suffix === null && $other->suffix === null) {
+        if (null === $this->suffix && null === $other->suffix) {
             return 0;
         }
-        if ($this->suffix === null) {
+        if (null === $this->suffix) {
             return 1;
         }
-        if ($other->suffix === null) {
+        if (null === $other->suffix) {
             return -1;
         }
 
@@ -124,7 +125,7 @@ class Version
     private function parseVersion(string $version): void
     {
         $originalInput = $version;
-        
+
         // Handle development branch versions (dev-*)
         if (str_starts_with($version, 'dev-')) {
             $this->isBranchVersion = true;
@@ -133,12 +134,13 @@ class Version
             $this->minor = 999;
             $this->patch = 999;
             $this->suffix = 'dev';
+
             return;
         }
-        
+
         // Remove common prefixes
         $version = ltrim($version, 'v^~>=<');
-        
+
         // Handle constraint formats like "^12.4" or "~12.4.0"
         if (preg_match('/^[\^~>=<]*(\d+)\.(\d+)(?:\.(\d+))?(?:-([a-zA-Z0-9\-\.]+))?/', $version, $matches)) {
             $this->major = (int) $matches[1];

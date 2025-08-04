@@ -41,7 +41,7 @@ final class VersionStrategyInterfaceTest extends TestCase
         // Test behavior with supported path
         $supportedPath = '/composer/installation';
         self::assertTrue($strategy->supports($supportedPath));
-        
+
         $version = $strategy->extractVersion($supportedPath);
         self::assertInstanceOf(Version::class, $version);
 
@@ -60,7 +60,7 @@ final class VersionStrategyInterfaceTest extends TestCase
         self::assertIsInt($strategy->getPriority());
         self::assertIsArray($strategy->getRequiredFiles());
         self::assertIsFloat($strategy->getReliabilityScore());
-        
+
         foreach ($strategy->getRequiredFiles() as $file) {
             self::assertIsString($file);
         }
@@ -72,7 +72,7 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // Test extractVersion method returns Version or null
         $result = $strategy->extractVersion('/composer/installation');
-        self::assertTrue($result instanceof Version || $result === null);
+        self::assertTrue($result instanceof Version || null === $result);
     }
 
     public function testMultipleStrategiesWithDifferentPriorities(): void
@@ -82,12 +82,12 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         self::assertGreaterThan(
             $lowPriorityStrategy->getPriority(),
-            $highPriorityStrategy->getPriority()
+            $highPriorityStrategy->getPriority(),
         );
 
         // Strategies should be sortable by priority
         $strategies = [$lowPriorityStrategy, $highPriorityStrategy];
-        usort($strategies, fn($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategies, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
 
         self::assertSame($highPriorityStrategy, $strategies[0]);
         self::assertSame($lowPriorityStrategy, $strategies[1]);
@@ -104,10 +104,16 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         foreach ($strategies as $strategy) {
             $reliability = $strategy->getReliabilityScore();
-            self::assertGreaterThanOrEqual(0.0, $reliability, 
-                "Reliability score must be >= 0.0 for {$strategy->getName()}");
-            self::assertLessThanOrEqual(1.0, $reliability,
-                "Reliability score must be <= 1.0 for {$strategy->getName()}");
+            self::assertGreaterThanOrEqual(
+                0.0,
+                $reliability,
+                "Reliability score must be >= 0.0 for {$strategy->getName()}",
+            );
+            self::assertLessThanOrEqual(
+                1.0,
+                $reliability,
+                "Reliability score must be <= 1.0 for {$strategy->getName()}",
+            );
         }
     }
 
@@ -117,7 +123,7 @@ final class VersionStrategyInterfaceTest extends TestCase
         $requiredFiles = $strategy->getRequiredFiles();
 
         self::assertNotEmpty($requiredFiles);
-        
+
         // All required files should be valid relative paths
         foreach ($requiredFiles as $file) {
             self::assertIsString($file);
@@ -137,16 +143,16 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // Sort by priority (descending)
         $byPriority = [...$strategies];
-        usort($byPriority, fn($a, $b) => $b->getPriority() <=> $a->getPriority());
-        
+        usort($byPriority, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
+
         self::assertSame('High Priority Low Reliability', $byPriority[0]->getName());
         self::assertSame('Medium Priority Medium Reliability', $byPriority[1]->getName());
         self::assertSame('Low Priority High Reliability', $byPriority[2]->getName());
 
         // Sort by reliability (descending)
         $byReliability = [...$strategies];
-        usort($byReliability, fn($a, $b) => $b->getReliabilityScore() <=> $a->getReliabilityScore());
-        
+        usort($byReliability, fn ($a, $b) => $b->getReliabilityScore() <=> $a->getReliabilityScore());
+
         self::assertSame('Low Priority High Reliability', $byReliability[0]->getName());
         self::assertSame('Medium Priority Medium Reliability', $byReliability[1]->getName());
         self::assertSame('High Priority Low Reliability', $byReliability[2]->getName());
@@ -154,14 +160,14 @@ final class VersionStrategyInterfaceTest extends TestCase
 }
 
 /**
- * Test implementation of VersionStrategyInterface for testing the interface contract
+ * Test implementation of VersionStrategyInterface for testing the interface contract.
  */
 class TestVersionStrategy implements VersionStrategyInterface
 {
     public function __construct(
         private readonly string $name = 'Test Version Strategy',
         private readonly int $priority = 50,
-        private readonly float $reliability = 0.8
+        private readonly float $reliability = 0.8,
     ) {
     }
 

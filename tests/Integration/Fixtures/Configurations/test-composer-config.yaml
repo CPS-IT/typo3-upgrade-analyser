@@ -1,0 +1,6 @@
+analysis:
+  installationPath: %FIXTURE_PATH%/TYPO3Installations/ComposerInstallation
+  targetVersion: "13.4"
+  resultCache:
+    enabled: true
+    ttl: 3600

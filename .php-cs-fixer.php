@@ -26,5 +26,5 @@ return $config
             ->in(__DIR__ . '/src')
             ->in(__DIR__ . '/tests')
             ->name('typo3-analyzer')
-            ->append([__FILE__])
+            ->append([__FILE__]),
     );

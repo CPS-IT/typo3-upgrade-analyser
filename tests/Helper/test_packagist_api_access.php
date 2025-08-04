@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 /**
  * Simple Packagist API test script without project dependencies
- * Tests the Packagist API as alternative to TER API for TYPO3 extension compatibility
+ * Tests the Packagist API as alternative to TER API for TYPO3 extension compatibility.
  */
-
 echo "=== Packagist API Connection Test (Alternative to TER API) ===\n\n";
 
 function testPackagistEndpoint(string $url, string $description): array
@@ -25,7 +24,7 @@ function testPackagistEndpoint(string $url, string $description): array
                 'Accept: application/json',
             ],
             'timeout' => 10,
-        ]
+        ],
     ]);
 
     $result = [
@@ -36,7 +35,7 @@ function testPackagistEndpoint(string $url, string $description): array
         'response_time' => 0,
         'error' => null,
         'data' => null,
-        'headers' => []
+        'headers' => [],
     ];
 
     try {
@@ -49,7 +48,7 @@ function testPackagistEndpoint(string $url, string $description): array
         if (isset($http_response_header)) {
             foreach ($http_response_header as $header) {
                 if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $header, $matches)) {
-                    $result['status_code'] = (int)$matches[1];
+                    $result['status_code'] = (int) $matches[1];
                 } else {
                     $headers[] = $header;
                 }
@@ -57,13 +56,13 @@ function testPackagistEndpoint(string $url, string $description): array
             $result['headers'] = $headers;
         }
 
-        if ($response !== false) {
+        if (false !== $response) {
             $result['success'] = true;
             $result['response_time'] = $responseTime;
 
             // Try to decode JSON
             $decoded = json_decode($response, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
+            if (JSON_ERROR_NONE === json_last_error()) {
                 $result['data'] = $decoded;
             } else {
                 $result['data'] = $response;
@@ -72,22 +71,22 @@ function testPackagistEndpoint(string $url, string $description): array
             echo "✓ SUCCESS - Status: {$result['status_code']}, Time: " . number_format($responseTime, 3) . "s\n";
 
             // Show some key data
-            if (is_array($result['data'])) {
+            if (\is_array($result['data'])) {
                 if (isset($result['data']['package'])) {
                     $package = $result['data']['package'];
                     echo "  Package: {$package['name']}\n";
                     if (isset($package['description'])) {
-                        echo "  Description: " . substr($package['description'], 0, 60) . "...\n";
+                        echo '  Description: ' . substr($package['description'], 0, 60) . "...\n";
                     }
-                    if (isset($package['versions']) && is_array($package['versions'])) {
-                        echo "  Versions found: " . count($package['versions']) . "\n";
+                    if (isset($package['versions']) && \is_array($package['versions'])) {
+                        echo '  Versions found: ' . \count($package['versions']) . "\n";
 
                         // Check TYPO3 compatibility in latest versions
                         $typo3CompatibleVersions = [];
-                        foreach (array_slice($package['versions'], 0, 5) as $version => $data) {
-                            if (isset($data['require']) && is_array($data['require'])) {
+                        foreach (\array_slice($package['versions'], 0, 5) as $version => $data) {
+                            if (isset($data['require']) && \is_array($data['require'])) {
                                 foreach ($data['require'] as $req => $constraint) {
-                                    if (strpos($req, 'typo3/cms') !== false || $req === 'typo3/cms-core') {
+                                    if (false !== strpos($req, 'typo3/cms') || 'typo3/cms-core' === $req) {
                                         $typo3CompatibleVersions[] = $version . ' (requires ' . $req . ': ' . $constraint . ')';
                                         break;
                                     }
@@ -97,25 +96,24 @@ function testPackagistEndpoint(string $url, string $description): array
 
                         if (!empty($typo3CompatibleVersions)) {
                             echo "  TYPO3 compatible versions:\n";
-                            foreach (array_slice($typo3CompatibleVersions, 0, 3) as $version) {
+                            foreach (\array_slice($typo3CompatibleVersions, 0, 3) as $version) {
                                 echo "    - {$version}\n";
                             }
                         }
                     }
                 }
             }
-
         } else {
             $result['error'] = 'Request failed - no response received';
             echo "✗ FAILED - No response received\n";
         }
-
     } catch (Exception $e) {
         $result['error'] = $e->getMessage();
         echo "✗ EXCEPTION - {$e->getMessage()}\n";
     }
 
     echo "\n";
+
     return $result;
 }
 
@@ -124,37 +122,37 @@ $tests = [
     // Test news extension on Packagist
     [
         'url' => 'https://packagist.org/packages/georgringer/news.json',
-        'description' => 'News extension on Packagist'
+        'description' => 'News extension on Packagist',
     ],
 
     // Test extension builder
     [
         'url' => 'https://packagist.org/packages/friendsoftypo3/extension-builder.json',
-        'description' => 'Extension Builder on Packagist'
+        'description' => 'Extension Builder on Packagist',
     ],
 
     // Test bootstrap package
     [
         'url' => 'https://packagist.org/packages/bk2k/bootstrap-package.json',
-        'description' => 'Bootstrap Package on Packagist'
+        'description' => 'Bootstrap Package on Packagist',
     ],
 
     // Test TYPO3 core package
     [
         'url' => 'https://packagist.org/packages/typo3/cms-core.json',
-        'description' => 'TYPO3 Core on Packagist'
+        'description' => 'TYPO3 Core on Packagist',
     ],
 
     // Test archived extension (realurl) - should fail
     [
         'url' => 'https://packagist.org/packages/dmitryd/typo3-realurl.json',
-        'description' => 'RealURL extension on Packagist (should not exist)'
+        'description' => 'RealURL extension on Packagist (should not exist)',
     ],
 
     // Test non-existent package
     [
         'url' => 'https://packagist.org/packages/non-existent/test-package.json',
-        'description' => 'Non-existent package (should return 404)'
+        'description' => 'Non-existent package (should return 404)',
     ],
 ];
 
@@ -170,10 +168,10 @@ $errorCount = 0;
 
 foreach ($results as $result) {
     if ($result['success']) {
-        $successCount++;
+        ++$successCount;
         echo "✓ {$result['description']}: SUCCESS (Status: {$result['status_code']})\n";
     } else {
-        $errorCount++;
+        ++$errorCount;
         echo "✗ {$result['description']}: FAILED";
         if ($result['status_code']) {
             echo " (Status: {$result['status_code']})";
@@ -185,7 +183,7 @@ foreach ($results as $result) {
     }
 }
 
-echo "\nTotal: " . count($results) . " tests\n";
+echo "\nTotal: " . \count($results) . " tests\n";
 echo "Success: {$successCount}\n";
 echo "Failed: {$errorCount}\n";
 
@@ -197,18 +195,18 @@ foreach ($results as $result) {
         $package = $result['data']['package'];
         echo "Package: {$package['name']}\n";
 
-        if (isset($package['versions']) && is_array($package['versions'])) {
+        if (isset($package['versions']) && \is_array($package['versions'])) {
             $typo3Versions = [];
-            $latestVersions = array_slice($package['versions'], 0, 10, true);
+            $latestVersions = \array_slice($package['versions'], 0, 10, true);
 
             foreach ($latestVersions as $version => $data) {
-                if (isset($data['require']) && is_array($data['require'])) {
+                if (isset($data['require']) && \is_array($data['require'])) {
                     foreach ($data['require'] as $req => $constraint) {
                         if (preg_match('/typo3\/cms(-core)?/', $req)) {
                             // Extract TYPO3 version from constraint
                             if (preg_match('/(\d+)\.(\d+)/', $constraint, $matches)) {
                                 $majorVersion = $matches[1];
-                                if (!in_array($majorVersion, $typo3Versions)) {
+                                if (!\in_array($majorVersion, $typo3Versions, true)) {
                                     $typo3Versions[] = $majorVersion;
                                 }
                             }
@@ -219,16 +217,16 @@ foreach ($results as $result) {
             }
 
             if (!empty($typo3Versions)) {
-                echo "  TYPO3 compatibility: " . implode(', ', $typo3Versions) . "\n";
+                echo '  TYPO3 compatibility: ' . implode(', ', $typo3Versions) . "\n";
 
                 // Check specific version compatibility
-                if (in_array('12', $typo3Versions)) {
+                if (\in_array('12', $typo3Versions, true)) {
                     echo "  ✓ TYPO3 12.x compatible\n";
                 } else {
                     echo "  ✗ No TYPO3 12.x compatibility found\n";
                 }
 
-                if (in_array('11', $typo3Versions)) {
+                if (\in_array('11', $typo3Versions, true)) {
                     echo "  ✓ TYPO3 11.x compatible\n";
                 } else {
                     echo "  ✗ No TYPO3 11.x compatibility found\n";

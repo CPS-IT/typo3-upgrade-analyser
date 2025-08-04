@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 /**
- * Health metrics for a Git repository
+ * Health metrics for a Git repository.
  */
 class GitRepositoryHealth
 {
@@ -26,7 +26,7 @@ class GitRepositoryHealth
         private readonly bool $isArchived = false,
         private readonly bool $hasReadme = false,
         private readonly bool $hasLicense = false,
-        private readonly int $contributorCount = 0
+        private readonly int $contributorCount = 0,
     ) {
     }
 
@@ -80,23 +80,24 @@ class GitRepositoryHealth
         if (!$this->lastCommitDate) {
             return null;
         }
-        
+
         return (new \DateTimeImmutable())->diff($this->lastCommitDate)->days;
     }
 
     public function isActivelyMaintained(): bool
     {
         $daysSinceLastCommit = $this->getDaysSinceLastCommit();
-        return $daysSinceLastCommit !== null && $daysSinceLastCommit <= 90;
+
+        return null !== $daysSinceLastCommit && $daysSinceLastCommit <= 90;
     }
 
     public function hasGoodIssueManagement(): bool
     {
         $totalIssues = $this->openIssuesCount + $this->closedIssuesCount;
-        if ($totalIssues === 0) {
+        if (0 === $totalIssues) {
             return true; // No issues is good
         }
-        
+
         return ($this->closedIssuesCount / $totalIssues) >= 0.7;
     }
 
@@ -114,7 +115,7 @@ class GitRepositoryHealth
     {
         $score = 0.0;
         $maxScore = 0.0;
-        
+
         // Activity score (30% weight)
         $maxScore += 0.3;
         if ($this->lastCommitDate) {
@@ -127,7 +128,7 @@ class GitRepositoryHealth
                 $score += 0.1;
             }
         }
-        
+
         // Popularity score (20% weight)
         $maxScore += 0.2;
         if ($this->starCount >= 100) {
@@ -139,7 +140,7 @@ class GitRepositoryHealth
         } elseif ($this->starCount >= 1) {
             $score += 0.05;
         }
-        
+
         // Issue management score (20% weight)
         $maxScore += 0.2;
         if ($this->hasGoodIssueManagement()) {
@@ -147,7 +148,7 @@ class GitRepositoryHealth
         } elseif ($this->getIssueResolutionRate() >= 0.5) {
             $score += 0.1;
         }
-        
+
         // Documentation score (15% weight)
         $maxScore += 0.15;
         if ($this->hasGoodDocumentation()) {
@@ -155,7 +156,7 @@ class GitRepositoryHealth
         } elseif ($this->hasReadme || $this->hasLicense) {
             $score += 0.075;
         }
-        
+
         // Community score (10% weight)
         $maxScore += 0.1;
         if ($this->contributorCount >= 10) {
@@ -167,13 +168,13 @@ class GitRepositoryHealth
         } elseif ($this->contributorCount >= 1) {
             $score += 0.025;
         }
-        
+
         // Archive penalty (5% weight)
         $maxScore += 0.05;
         if (!$this->isArchived) {
             $score += 0.05;
         }
-        
+
         return $score;
     }
 
@@ -185,10 +186,10 @@ class GitRepositoryHealth
     public function getIssueResolutionRate(): float
     {
         $totalIssues = $this->getTotalIssuesCount();
-        if ($totalIssues === 0) {
+        if (0 === $totalIssues) {
             return 1.0; // Perfect score when no issues
         }
-        
+
         return $this->closedIssuesCount / $totalIssues;
     }
 }

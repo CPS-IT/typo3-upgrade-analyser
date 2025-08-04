@@ -16,12 +16,12 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
 
 /**
- * TYPO3 version extraction strategy for Composer installations
- * 
+ * TYPO3 version extraction strategy for Composer installations.
+ *
  * This strategy extracts TYPO3 version information from Composer files:
  * 1. composer.lock (highest reliability) - exact installed version
  * 2. composer.json (lower reliability) - version constraints only
- * 
+ *
  * The strategy prioritizes composer.lock as it contains the exact installed
  * versions, while composer.json only contains version constraints.
  */
@@ -30,11 +30,11 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
     private const TYPO3_CORE_PACKAGES = [
         'typo3/cms-core',
         'typo3/cms',
-        'typo3/minimal'
+        'typo3/minimal',
     ];
 
     public function __construct(
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -44,19 +44,22 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
 
         // Try composer.lock first (most reliable)
         $version = $this->extractFromComposerLock($installationPath);
-        if ($version !== null) {
+        if (null !== $version) {
             $this->logger->debug('Version extracted from composer.lock', ['version' => $version->toString()]);
+
             return $version;
         }
 
         // Fall back to composer.json (less reliable, constraint-based)
         $version = $this->extractFromComposerJson($installationPath);
-        if ($version !== null) {
+        if (null !== $version) {
             $this->logger->debug('Version extracted from composer.json', ['version' => $version->toString()]);
+
             return $version;
         }
 
         $this->logger->debug('No TYPO3 version found in Composer files');
+
         return null;
     }
 
@@ -89,94 +92,100 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
     }
 
     /**
-     * Extract TYPO3 version from composer.lock file
-     * 
+     * Extract TYPO3 version from composer.lock file.
+     *
      * @param string $installationPath Installation path
+     *
      * @return Version|null Extracted version or null
      */
     private function extractFromComposerLock(string $installationPath): ?Version
     {
         $lockFilePath = $installationPath . '/composer.lock';
-        
+
         if (!file_exists($lockFilePath)) {
             return null;
         }
 
         try {
             $lockData = json_decode(file_get_contents($lockFilePath), true, 512, JSON_THROW_ON_ERROR);
-            
-            if (!is_array($lockData) || !isset($lockData['packages'])) {
+
+            if (!\is_array($lockData) || !isset($lockData['packages'])) {
                 $this->logger->warning('Invalid composer.lock structure', ['path' => $lockFilePath]);
+
                 return null;
             }
 
             // Search for TYPO3 core packages in installed packages
             foreach ($lockData['packages'] as $package) {
-                if (!is_array($package) || !isset($package['name'], $package['version'])) {
+                if (!\is_array($package) || !isset($package['name'], $package['version'])) {
                     continue;
                 }
 
-                if (in_array($package['name'], self::TYPO3_CORE_PACKAGES, true)) {
+                if (\in_array($package['name'], self::TYPO3_CORE_PACKAGES, true)) {
                     $versionString = $this->normalizeVersionString($package['version']);
-                    
-                    if ($versionString !== null) {
+
+                    if (null !== $versionString) {
                         $this->logger->debug('Found TYPO3 package in composer.lock', [
                             'package' => $package['name'],
-                            'version' => $versionString
+                            'version' => $versionString,
                         ]);
-                        
+
                         return Version::fromString($versionString);
                     }
                 }
             }
 
             $this->logger->debug('No TYPO3 core packages found in composer.lock');
-            return null;
 
+            return null;
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse composer.lock', [
                 'path' => $lockFilePath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         } catch (\Throwable $e) {
             $this->logger->warning('Error reading composer.lock', [
                 'path' => $lockFilePath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
     /**
-     * Extract TYPO3 version from composer.json file
-     * 
+     * Extract TYPO3 version from composer.json file.
+     *
      * Note: This provides less reliable results as it only contains version constraints,
      * not the exact installed version.
-     * 
+     *
      * @param string $installationPath Installation path
+     *
      * @return Version|null Extracted version or null
      */
     private function extractFromComposerJson(string $installationPath): ?Version
     {
         $jsonFilePath = $installationPath . '/composer.json';
-        
+
         if (!file_exists($jsonFilePath)) {
             return null;
         }
 
         try {
             $jsonData = json_decode(file_get_contents($jsonFilePath), true, 512, JSON_THROW_ON_ERROR);
-            
-            if (!is_array($jsonData)) {
+
+            if (!\is_array($jsonData)) {
                 $this->logger->warning('Invalid composer.json structure', ['path' => $jsonFilePath]);
+
                 return null;
             }
 
             // Check require and require-dev sections
             $requirements = array_merge(
                 $jsonData['require'] ?? [],
-                $jsonData['require-dev'] ?? []
+                $jsonData['require-dev'] ?? [],
             );
 
             foreach (self::TYPO3_CORE_PACKAGES as $packageName) {
@@ -186,58 +195,61 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
 
                 $constraint = $requirements[$packageName];
                 $version = $this->extractVersionFromConstraint($constraint);
-                
-                if ($version !== null) {
+
+                if (null !== $version) {
                     $this->logger->debug('Found TYPO3 constraint in composer.json', [
                         'package' => $packageName,
                         'constraint' => $constraint,
-                        'extracted_version' => $version->toString()
+                        'extracted_version' => $version->toString(),
                     ]);
-                    
+
                     return $version;
                 }
             }
 
             $this->logger->debug('No TYPO3 core packages found in composer.json requirements');
-            return null;
 
+            return null;
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse composer.json', [
                 'path' => $jsonFilePath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         } catch (\Throwable $e) {
             $this->logger->warning('Error reading composer.json', [
                 'path' => $jsonFilePath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
     /**
-     * Normalize version string from composer.lock
-     * 
+     * Normalize version string from composer.lock.
+     *
      * Removes 'v' prefix and handles dev versions.
-     * 
+     *
      * @param string $version Raw version string
+     *
      * @return string|null Normalized version string
      */
     private function normalizeVersionString(string $version): ?string
     {
         // Remove 'v' prefix if present
         $version = ltrim($version, 'v');
-        
+
         // Handle dev versions (e.g., "dev-main", "dev-12.4")
         if (str_starts_with($version, 'dev-')) {
             $devVersion = substr($version, 4);
-            
+
             // If dev version looks like a version number, use it
             if (preg_match('/^\d+\.\d+(?:\.\d+)?/', $devVersion)) {
                 return $devVersion;
             }
-            
+
             // Skip non-version dev branches
             return null;
         }
@@ -251,12 +263,13 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
     }
 
     /**
-     * Extract version from Composer constraint
-     * 
+     * Extract version from Composer constraint.
+     *
      * Attempts to extract a meaningful version from version constraints.
      * This is less reliable than composer.lock versions.
-     * 
+     *
      * @param string $constraint Version constraint (e.g., "^12.4", "~11.5.0")
+     *
      * @return Version|null Extracted version
      */
     private function extractVersionFromConstraint(string $constraint): ?Version
@@ -284,7 +297,7 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
             $major = $matches[1];
             $minor = $matches[2];
             $patch = $matches[3] ?? '0';
-            
+
             return Version::fromString("{$major}.{$minor}.{$patch}");
         }
 

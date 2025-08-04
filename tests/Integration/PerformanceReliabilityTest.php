@@ -13,15 +13,15 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 
 /**
- * Performance and reliability tests for integration scenarios
+ * Performance and reliability tests for integration scenarios.
  *
  * @group integration
  * @group performance
@@ -38,7 +38,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
         $this->requiresRealApiCalls();
         $this->requiresTerToken();
-        
+
         // Load test extension data
         $this->testExtensions = $this->loadTestData('known_extensions.json');
 
@@ -48,77 +48,81 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @group performance
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getGitHubToken
      */
     public function testApiResponseTimes(): void
     {
         $expectedTimes = $this->testExtensions['test_configurations']['expected_response_times'];
-        
+
         // Test GitHub API response time
         if ($this->getGitHubToken()) {
             $startTime = microtime(true);
-            
+
             $response = $this->createAuthenticatedGitHubClient()->request(
                 'GET',
-                'https://api.github.com/repos/georgringer/news'
+                'https://api.github.com/repos/georgringer/news',
             );
-            
+
             $githubTime = microtime(true) - $startTime;
-            
+
             $this->assertEquals(200, $response->getStatusCode());
             $this->assertLessThan(
                 $expectedTimes['github_api_max'],
                 $githubTime,
-                "GitHub API response time too slow: {$githubTime}s"
+                "GitHub API response time too slow: {$githubTime}s",
             );
         }
 
         // Test TER API response time
         $startTime = microtime(true);
-        
+
         $headers = [];
         if ($this->getTerToken()) {
             $headers['Authorization'] = 'Bearer ' . $this->getTerToken();
         }
-        
+
         $response = $this->httpClient->request(
             'GET',
             'https://extensions.typo3.org/api/v1/extension/news',
-            ['headers' => $headers]
+            ['headers' => $headers],
         );
-        
+
         $terTime = microtime(true) - $startTime;
-        
+
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertLessThan(
             $expectedTimes['ter_api_max'],
             $terTime,
-            "TER API response time too slow: {$terTime}s"
+            "TER API response time too slow: {$terTime}s",
         );
 
         // Test Packagist API response time
         $startTime = microtime(true);
-        
+
         $response = $this->httpClient->request(
             'GET',
-            'https://packagist.org/packages/georgringer/news.json'
+            'https://packagist.org/packages/georgringer/news.json',
         );
-        
+
         $packagistTime = microtime(true) - $startTime;
-        
+
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertLessThan(
             $expectedTimes['packagist_api_max'],
             $packagistTime,
-            "Packagist API response time too slow: {$packagistTime}s"
+            "Packagist API response time too slow: {$packagistTime}s",
         );
     }
 
     /**
      * @test
+     *
      * @group performance
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -131,7 +135,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         ];
 
         $context = $this->createTestAnalysisContext('12.4.0');
-        
+
         $startTime = microtime(true);
         $results = [];
 
@@ -140,7 +144,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         }
 
         $totalTime = microtime(true) - $startTime;
-        $averageTime = $totalTime / count($extensions);
+        $averageTime = $totalTime / \count($extensions);
 
         // Performance benchmarks
         $this->assertLessThan(60.0, $totalTime, "Bulk analysis took too long: {$totalTime}s");
@@ -151,7 +155,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $this->assertLessThan(128, $memoryUsage, "Memory usage too high: {$memoryUsage}MB");
 
         // All analyses should succeed
-        $this->assertCount(count($extensions), $results);
+        $this->assertCount(\count($extensions), $results);
         foreach ($results as $result) {
             $this->assertAnalysisResultValid($result);
         }
@@ -159,6 +163,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getGitHubToken
      */
@@ -176,25 +181,24 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         while ($requestCount < $maxRequests) {
             try {
                 $response = $client->request('GET', 'https://api.github.com/repos/georgringer/news');
-                
+
                 $headers = $response->getHeaders();
                 if (isset($headers['x-ratelimit-remaining'][0])) {
-                    $remaining = (int)$headers['x-ratelimit-remaining'][0];
-                    
+                    $remaining = (int) $headers['x-ratelimit-remaining'][0];
+
                     if ($remaining < 10) {
                         $this->markTestSkipped('Rate limit too low to continue testing');
                     }
                 }
 
-                $requestCount++;
-                
+                ++$requestCount;
             } catch (\Exception $e) {
-                $failures++;
-                
+                ++$failures;
+
                 if (str_contains($e->getMessage(), 'rate limit')) {
                     break; // Expected rate limiting
                 }
-                
+
                 if ($failures > 2) {
                     $this->fail('Too many unexpected failures: ' . $e->getMessage());
                 }
@@ -210,6 +214,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createLogger
      */
@@ -221,7 +226,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         ]);
 
         $terClient = new TerApiClient($shortTimeoutClient, $this->createLogger());
-        
+
         $extension = $this->createTestExtension('news');
         $context = $this->createTestAnalysisContext('12.4.0');
 
@@ -238,6 +243,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -252,14 +258,14 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $iterations = 3;
         $results = [];
 
-        for ($i = 0; $i < $iterations; $i++) {
+        for ($i = 0; $i < $iterations; ++$i) {
             foreach ($extensions as $extension) {
                 $startTime = microtime(true);
-                
+
                 $result = $this->analyzer->analyze($extension, $context);
-                
+
                 $analysisTime = microtime(true) - $startTime;
-                
+
                 $results[] = [
                     'extension' => $extension->getKey(),
                     'iteration' => $i,
@@ -282,15 +288,15 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         }
 
         foreach ($extensionResults as $extension => $iterationResults) {
-            $riskScores = array_map(fn($r) => $r['result']->getRiskScore(), $iterationResults);
-            $avgRisk = array_sum($riskScores) / count($riskScores);
-            
+            $riskScores = array_map(fn ($r) => $r['result']->getRiskScore(), $iterationResults);
+            $avgRisk = array_sum($riskScores) / \count($riskScores);
+
             // Risk scores should be consistent across iterations
             foreach ($riskScores as $risk) {
                 $this->assertLessThan(
                     2.0,
                     abs($risk - $avgRisk),
-                    "Risk score inconsistency for {$extension}: got {$risk}, average {$avgRisk}"
+                    "Risk score inconsistency for {$extension}: got {$risk}, average {$avgRisk}",
                 );
             }
         }
@@ -298,6 +304,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -310,10 +317,10 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $context = $this->createTestAnalysisContext('12.4.0');
 
         // Run multiple analyses to detect memory leaks
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $result = $this->analyzer->analyze($extension, $context);
             $this->assertAnalysisResultValid($result);
-            
+
             // Force garbage collection
             gc_collect_cycles();
         }
@@ -324,12 +331,13 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $this->assertLessThan(
             $maxMemoryIncrease,
             $memoryIncrease,
-            "Memory leak detected: increased by " . ($memoryIncrease / 1024 / 1024) . "MB"
+            'Memory leak detected: increased by ' . ($memoryIncrease / 1024 / 1024) . 'MB',
         );
     }
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -351,13 +359,15 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $this->assertEquals(
             $result1->getRiskScore(),
             $result2->getRiskScore(),
-            'Risk scores should be consistent across repeated analyses'
+            'Risk scores should be consistent across repeated analyses',
         );
     }
 
     /**
      * @test
+     *
      * @group performance
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -368,7 +378,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $extensions = [];
 
         // Create test extensions
-        for ($i = 0; $i < $extensionCount; $i++) {
+        for ($i = 0; $i < $extensionCount; ++$i) {
             $extensions[] = $this->createTestExtension("test_ext_{$i}", "vendor/test-ext-{$i}");
         }
 
@@ -380,11 +390,11 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
             try {
                 $result = $this->analyzer->analyze($extension, $context);
                 $this->assertAnalysisResultValid($result);
-                $successCount++;
+                ++$successCount;
             } catch (\Exception $e) {
                 // Some extensions might not exist, which is expected
-                if (!str_contains($e->getMessage(), 'not found') && 
-                    !str_contains($e->getMessage(), 'Failed to check')) {
+                if (!str_contains($e->getMessage(), 'not found')
+                    && !str_contains($e->getMessage(), 'Failed to check')) {
                     throw $e;
                 }
             }
@@ -403,6 +413,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @test
+     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient
@@ -421,28 +432,27 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         $results = [];
         foreach ($clients as $condition => $client) {
             $terClient = new TerApiClient($client, $this->createLogger());
-            
+
             $analyzer = new VersionAvailabilityAnalyzer(
                 $terClient,
                 new PackagistClient($client, $this->createLogger()),
                 null, // Skip Git analysis for this test
-                $this->createLogger()
+                $this->createLogger(),
             );
 
             $startTime = microtime(true);
-            
+
             try {
                 $result = $analyzer->analyze($extension, $context);
                 $analysisTime = microtime(true) - $startTime;
-                
+
                 $results[$condition] = [
                     'success' => true,
                     'result' => $result,
                     'time' => $analysisTime,
                 ];
-                
+
                 $this->assertAnalysisResultValid($result);
-                
             } catch (\Exception $e) {
                 $results[$condition] = [
                     'success' => false,
@@ -453,7 +463,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         }
 
         // At least one condition should succeed
-        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $successCount = \count(array_filter($results, fn ($r) => $r['success']));
         $this->assertGreaterThan(0, $successCount, 'Should succeed under at least one network condition');
     }
 
@@ -461,25 +471,25 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     {
         $terClient = new TerApiClient($this->httpClient, $this->createLogger());
         $packagistClient = new PackagistClient($this->httpClient, $this->createLogger());
-        
+
         $gitHubClient = new GitHubClient(
             $this->createAuthenticatedGitHubClient(),
             $this->createLogger(),
-            $this->getGitHubToken()
+            $this->getGitHubToken(),
         );
-        
+
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
             new GitVersionParser(),
-            $this->createLogger()
+            $this->createLogger(),
         );
 
         return new VersionAvailabilityAnalyzer(
             $terClient,
             $packagistClient,
             $gitAnalyzer,
-            $this->createLogger()
+            $this->createLogger(),
         );
     }
 }

@@ -16,7 +16,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for GitRepositoryMetadata
+ * Test case for GitRepositoryMetadata.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata
  */
@@ -36,7 +36,7 @@ class GitRepositoryMetadataTest extends TestCase
     public function testConstructorAndGetters(): void
     {
         $lastUpdated = new \DateTimeImmutable('2024-01-15T10:00:00Z');
-        
+
         $metadata = new GitRepositoryMetadata(
             name: 'test-repo',
             description: 'A test repository',
@@ -45,7 +45,7 @@ class GitRepositoryMetadataTest extends TestCase
             starCount: 15,
             forkCount: 3,
             lastUpdated: $lastUpdated,
-            defaultBranch: 'main'
+            defaultBranch: 'main',
         );
 
         $this->assertEquals('test-repo', $metadata->getName());
@@ -73,7 +73,7 @@ class GitRepositoryMetadataTest extends TestCase
             starCount: 0,
             forkCount: 0,
             lastUpdated: new \DateTimeImmutable(),
-            defaultBranch: 'master'
+            defaultBranch: 'master',
         );
 
         $this->assertEquals('', $metadata->getDescription());
@@ -93,18 +93,18 @@ class GitRepositoryMetadataTest extends TestCase
             starCount: 10,
             forkCount: 2,
             lastUpdated: new \DateTimeImmutable(),
-            defaultBranch: 'main'
+            defaultBranch: 'main',
         );
 
         // Properties should be readonly - this test verifies the class structure
         $reflection = new \ReflectionClass($metadata);
-        
+
         $nameProperty = $reflection->getProperty('name');
         $this->assertTrue($nameProperty->isReadOnly());
-        
+
         $descriptionProperty = $reflection->getProperty('description');
         $this->assertTrue($descriptionProperty->isReadOnly());
-        
+
         $isArchivedProperty = $reflection->getProperty('isArchived');
         $this->assertTrue($isArchivedProperty->isReadOnly());
     }

@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -31,7 +30,7 @@ final class VersionExtractorTest extends TestCase
     {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($this->testDir, 0755, true);
+        mkdir($this->testDir, 0o755, true);
     }
 
     protected function tearDown(): void
@@ -49,7 +48,7 @@ final class VersionExtractorTest extends TestCase
 
         $extractor = new VersionExtractor([$strategy1, $strategy2, $strategy3], $this->logger);
         $strategies = $extractor->getStrategies();
-        
+
         self::assertCount(3, $strategies);
         self::assertSame('Strategy2', $strategies[0]->getName()); // Priority 100
         self::assertSame('Strategy3', $strategies[1]->getName()); // Priority 50
@@ -73,7 +72,7 @@ final class VersionExtractorTest extends TestCase
     {
         $version = new Version('12.4.0');
         $strategy = $this->createMockStrategy('Successful Strategy', 80);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -91,7 +90,7 @@ final class VersionExtractorTest extends TestCase
         self::assertSame($version, $result->getVersion());
         self::assertSame($strategy, $result->getSuccessfulStrategy());
         self::assertCount(1, $result->getAttemptedStrategies());
-        
+
         $attemptedStrategy = $result->getAttemptedStrategies()[0];
         self::assertSame('Successful Strategy', $attemptedStrategy['strategy']);
         self::assertTrue($attemptedStrategy['supported']);
@@ -106,7 +105,7 @@ final class VersionExtractorTest extends TestCase
         $strategy->method('getPriority')->willReturn(50);
         $strategy->method('getReliabilityScore')->willReturn(0.5);
         $strategy->method('getRequiredFiles')->willReturn(['composer.json', 'vendor']);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -121,7 +120,7 @@ final class VersionExtractorTest extends TestCase
         self::assertFalse($result->isSuccessful());
         self::assertNull($result->getVersion());
         self::assertStringContainsString('No version extraction strategies supported this installation', $result->getErrorMessage());
-        
+
         $attemptedStrategies = $result->getAttemptedStrategies();
         self::assertCount(1, $attemptedStrategies);
         self::assertSame('Unsupported Strategy', $attemptedStrategies[0]['strategy']);
@@ -132,7 +131,7 @@ final class VersionExtractorTest extends TestCase
     public function testExtractVersionWithStrategyException(): void
     {
         $strategy = $this->createMockStrategy('Failing Strategy', 60);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -149,7 +148,7 @@ final class VersionExtractorTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertStringContainsString('All supported strategies failed to extract version: Failing Strategy', $result->getErrorMessage());
-        
+
         $attemptedStrategies = $result->getAttemptedStrategies();
         self::assertCount(1, $attemptedStrategies);
         self::assertSame('error', $attemptedStrategies[0]['result']);
@@ -159,7 +158,7 @@ final class VersionExtractorTest extends TestCase
     public function testExtractVersionWithStrategyReturningNull(): void
     {
         $strategy = $this->createMockStrategy('Null Strategy', 40);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -175,7 +174,7 @@ final class VersionExtractorTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertStringContainsString('All supported strategies failed to extract version: Null Strategy', $result->getErrorMessage());
-        
+
         $attemptedStrategies = $result->getAttemptedStrategies();
         self::assertCount(1, $attemptedStrategies);
         self::assertSame('no_version_found', $attemptedStrategies[0]['result']);
@@ -190,7 +189,7 @@ final class VersionExtractorTest extends TestCase
         $strategy1->expects(self::once())
             ->method('supports')
             ->willReturn(true);
-        
+
         $strategy1->expects(self::once())
             ->method('extractVersion')
             ->willReturn($version);
@@ -217,7 +216,7 @@ final class VersionExtractorTest extends TestCase
         $strategy1->expects(self::once())
             ->method('supports')
             ->willReturn(true);
-        
+
         $strategy1->expects(self::once())
             ->method('extractVersion')
             ->willReturn(null);
@@ -225,7 +224,7 @@ final class VersionExtractorTest extends TestCase
         $strategy2->expects(self::once())
             ->method('supports')
             ->willReturn(true);
-        
+
         $strategy2->expects(self::once())
             ->method('extractVersion')
             ->willReturn($version);
@@ -272,7 +271,7 @@ final class VersionExtractorTest extends TestCase
     public function testCanExtractVersionReturnsTrueWhenStrategiesSupport(): void
     {
         $strategy = $this->createMockStrategy('Strategy', 50);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -285,7 +284,7 @@ final class VersionExtractorTest extends TestCase
     public function testCanExtractVersionReturnsFalseWhenNoStrategiesSupport(): void
     {
         $strategy = $this->createMockStrategy('Strategy', 50);
-        
+
         $strategy->expects(self::once())
             ->method('supports')
             ->with($this->testDir)
@@ -351,7 +350,7 @@ final class VersionExtractorTest extends TestCase
     private function createMockStrategy(string $name, int $priority): VersionStrategyInterface
     {
         $strategy = $this->createMock(VersionStrategyInterface::class);
-        
+
         $strategy->method('getName')->willReturn($name);
         $strategy->method('getPriority')->willReturn($priority);
         $strategy->method('getReliabilityScore')->willReturn($priority / 100.0);

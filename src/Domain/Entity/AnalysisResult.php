@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
 /**
- * Represents the result of an analysis performed on an extension
+ * Represents the result of an analysis performed on an extension.
  */
 class AnalysisResult
 {
@@ -25,7 +25,7 @@ class AnalysisResult
 
     public function __construct(
         private readonly string $analyzerName,
-        private readonly Extension $extension
+        private readonly Extension $extension,
     ) {
         $this->executedAt = new \DateTimeImmutable();
     }
@@ -57,7 +57,7 @@ class AnalysisResult
 
     public function hasMetric(string $name): bool
     {
-        return array_key_exists($name, $this->metrics);
+        return \array_key_exists($name, $this->metrics);
     }
 
     public function setRiskScore(float $score): void
@@ -110,12 +110,12 @@ class AnalysisResult
 
     public function hasError(): bool
     {
-        return $this->error !== null;
+        return null !== $this->error;
     }
 
     public function isSuccessful(): bool
     {
-        return $this->error === null;
+        return null === $this->error;
     }
 
     public function toArray(): array

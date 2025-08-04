@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 
-use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for the AnalysisResult entity
+ * Test case for the AnalysisResult entity.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult
  */
@@ -55,9 +55,9 @@ class AnalysisResultTest extends TestCase
         $beforeCreation = new \DateTimeImmutable();
         $result = new AnalysisResult('test_analyzer', $this->extension);
         $afterCreation = new \DateTimeImmutable();
-        
+
         $executedAt = $result->getExecutedAt();
-        
+
         self::assertGreaterThanOrEqual($beforeCreation->getTimestamp(), $executedAt->getTimestamp());
         self::assertLessThanOrEqual($afterCreation->getTimestamp(), $executedAt->getTimestamp());
     }
@@ -73,17 +73,17 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->addMetric('ter_available', true);
         $this->analysisResult->addMetric('packagist_available', false);
         $this->analysisResult->addMetric('version_count', 5);
-        
+
         self::assertTrue($this->analysisResult->hasMetric('ter_available'));
         self::assertTrue($this->analysisResult->hasMetric('packagist_available'));
         self::assertTrue($this->analysisResult->hasMetric('version_count'));
         self::assertFalse($this->analysisResult->hasMetric('non_existent'));
-        
+
         self::assertTrue($this->analysisResult->getMetric('ter_available'));
         self::assertFalse($this->analysisResult->getMetric('packagist_available'));
         self::assertEquals(5, $this->analysisResult->getMetric('version_count'));
         self::assertNull($this->analysisResult->getMetric('non_existent'));
-        
+
         $allMetrics = $this->analysisResult->getMetrics();
         self::assertCount(3, $allMetrics);
         self::assertEquals([
@@ -101,15 +101,15 @@ class AnalysisResultTest extends TestCase
     {
         // Test default risk score
         self::assertEquals(0.0, $this->analysisResult->getRiskScore());
-        
+
         // Test setting valid risk score
         $this->analysisResult->setRiskScore(7.5);
         self::assertEquals(7.5, $this->analysisResult->getRiskScore());
-        
+
         // Test boundary values
         $this->analysisResult->setRiskScore(0.0);
         self::assertEquals(0.0, $this->analysisResult->getRiskScore());
-        
+
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals(10.0, $this->analysisResult->getRiskScore());
     }
@@ -121,7 +121,7 @@ class AnalysisResultTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Risk score must be between 0.0 and 10.0');
-        
+
         $this->analysisResult->setRiskScore(11.0);
     }
 
@@ -132,7 +132,7 @@ class AnalysisResultTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Risk score must be between 0.0 and 10.0');
-        
+
         $this->analysisResult->setRiskScore(-1.0);
     }
 
@@ -145,28 +145,28 @@ class AnalysisResultTest extends TestCase
         // Test low risk
         $this->analysisResult->setRiskScore(1.5);
         self::assertEquals('low', $this->analysisResult->getRiskLevel());
-        
+
         $this->analysisResult->setRiskScore(2.0);
         self::assertEquals('low', $this->analysisResult->getRiskLevel());
-        
+
         // Test medium risk
         $this->analysisResult->setRiskScore(3.0);
         self::assertEquals('medium', $this->analysisResult->getRiskLevel());
-        
+
         $this->analysisResult->setRiskScore(5.0);
         self::assertEquals('medium', $this->analysisResult->getRiskLevel());
-        
+
         // Test high risk
         $this->analysisResult->setRiskScore(6.0);
         self::assertEquals('high', $this->analysisResult->getRiskLevel());
-        
+
         $this->analysisResult->setRiskScore(8.0);
         self::assertEquals('high', $this->analysisResult->getRiskLevel());
-        
+
         // Test critical risk
         $this->analysisResult->setRiskScore(9.0);
         self::assertEquals('critical', $this->analysisResult->getRiskLevel());
-        
+
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals('critical', $this->analysisResult->getRiskLevel());
     }
@@ -179,12 +179,12 @@ class AnalysisResultTest extends TestCase
     {
         $recommendation1 = 'Update to latest version';
         $recommendation2 = 'Check for breaking changes';
-        
+
         $this->analysisResult->addRecommendation($recommendation1);
         $this->analysisResult->addRecommendation($recommendation2);
-        
+
         $recommendations = $this->analysisResult->getRecommendations();
-        
+
         self::assertCount(2, $recommendations);
         self::assertEquals($recommendation1, $recommendations[0]);
         self::assertEquals($recommendation2, $recommendations[1]);
@@ -202,11 +202,11 @@ class AnalysisResultTest extends TestCase
         self::assertNull($this->analysisResult->getError());
         self::assertFalse($this->analysisResult->hasError());
         self::assertTrue($this->analysisResult->isSuccessful());
-        
+
         // Test setting error
         $errorMessage = 'Analysis failed due to network timeout';
         $this->analysisResult->setError($errorMessage);
-        
+
         self::assertEquals($errorMessage, $this->analysisResult->getError());
         self::assertTrue($this->analysisResult->hasError());
         self::assertFalse($this->analysisResult->isSuccessful());
@@ -226,11 +226,11 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->setRiskScore(6.5);
         $this->analysisResult->addRecommendation('First recommendation');
         $this->analysisResult->addRecommendation('Second recommendation');
-        
+
         $array = $this->analysisResult->toArray();
-        
+
         self::assertIsArray($array);
-        
+
         // Check required keys
         $expectedKeys = [
             'analyzer_name',
@@ -241,13 +241,13 @@ class AnalysisResultTest extends TestCase
             'recommendations',
             'executed_at',
             'error',
-            'successful'
+            'successful',
         ];
-        
+
         foreach ($expectedKeys as $key) {
             self::assertArrayHasKey($key, $array);
         }
-        
+
         // Check values
         self::assertEquals('version_availability', $array['analyzer_name']);
         self::assertEquals('test_ext', $array['extension_key']);
@@ -270,9 +270,9 @@ class AnalysisResultTest extends TestCase
     public function testToArrayWithError(): void
     {
         $this->analysisResult->setError('Test error message');
-        
+
         $array = $this->analysisResult->toArray();
-        
+
         self::assertEquals('Test error message', $array['error']);
         self::assertFalse($array['successful']);
     }
@@ -283,11 +283,11 @@ class AnalysisResultTest extends TestCase
     public function testExecutedAtFormat(): void
     {
         $array = $this->analysisResult->toArray();
-        
+
         // Verify the executed_at is in ATOM format
         $executedAt = $array['executed_at'];
         self::assertIsString($executedAt);
-        
+
         // Try to parse it back to verify format
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTime::ATOM, $executedAt);
         self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);
@@ -306,9 +306,9 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->addMetric('string_metric', 'test string');
         $this->analysisResult->addMetric('array_metric', ['item1', 'item2']);
         $this->analysisResult->addMetric('null_metric', null);
-        
+
         $metrics = $this->analysisResult->getMetrics();
-        
+
         self::assertTrue($metrics['boolean_metric']);
         self::assertEquals(123, $metrics['integer_metric']);
         self::assertEquals(45.67, $metrics['float_metric']);

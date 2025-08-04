@@ -1,7 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Example TYPO3 LocalConfiguration.php file for testing
+ * Example TYPO3 LocalConfiguration.php file for testing.
  */
 return [
     'BE' => [
@@ -78,8 +80,8 @@ return [
             'CMS' => [
                 'deprecations' => [
                     'writerConfiguration' => [
-                        \Psr\Log\LogLevel::NOTICE => [
-                            \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                        Psr\Log\LogLevel::NOTICE => [
+                            TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
                                 'logFile' => 'typo3_deprecations.log',
                             ],
                         ],

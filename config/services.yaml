@@ -107,6 +107,7 @@ services:
 
   # Extension Discovery Service
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService:
+    public: true
     arguments:
       - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
@@ -115,6 +116,7 @@ services:
 
   # Installation Discovery Service with Configuration Discovery
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService:
+    public: true
     arguments:
       - !tagged_iterator 'detection_strategy'
       - !tagged_iterator 'validation_rule'
@@ -139,11 +141,17 @@ services:
 
   # Configuration Service
   CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService:
+    public: true
     arguments:
       - '@logger'
 
+  # Configuration Service Interface Alias
+  CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService
+
   # Cache Service
   CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService:
+    public: true
     arguments:
       - '@logger'
       - '%app.root_dir%'

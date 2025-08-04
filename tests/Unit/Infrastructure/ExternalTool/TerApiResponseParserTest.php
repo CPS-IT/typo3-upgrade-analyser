@@ -33,8 +33,8 @@ class TerApiResponseParserTest extends TestCase
             [
                 'key' => 'news',
                 'name' => 'News',
-                'description' => 'News extension'
-            ]
+                'description' => 'News extension',
+            ],
         ];
 
         $result = $this->parser->parseExtensionData($responseData);
@@ -55,7 +55,7 @@ class TerApiResponseParserTest extends TestCase
     public function testParseExtensionDataWithMissingFirstElement(): void
     {
         $responseData = [
-            1 => ['key' => 'news'] // Missing index 0
+            1 => ['key' => 'news'], // Missing index 0
         ];
 
         $result = $this->parser->parseExtensionData($responseData);
@@ -69,13 +69,13 @@ class TerApiResponseParserTest extends TestCase
             [
                 [
                     'number' => '1.0.0',
-                    'typo3_versions' => [11, 12]
+                    'typo3_versions' => [11, 12],
                 ],
                 [
                     'number' => '2.0.0',
-                    'typo3_versions' => [12, 13]
-                ]
-            ]
+                    'typo3_versions' => [12, 13],
+                ],
+            ],
         ];
 
         $result = $this->parser->parseVersionsData($responseData);
@@ -116,7 +116,7 @@ class TerApiResponseParserTest extends TestCase
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [11]],
             ['number' => '2.0.0', 'typo3_versions' => [12]],
-            ['typo3_versions' => [13]] // Missing number field
+            ['typo3_versions' => [13]], // Missing number field
         ];
 
         $result = $this->parser->extractVersionNumbers($versions);
@@ -135,7 +135,7 @@ class TerApiResponseParserTest extends TestCase
     {
         $versions = [
             ['typo3_versions' => [11]],
-            ['description' => 'Some version']
+            ['description' => 'Some version'],
         ];
 
         $result = $this->parser->extractVersionNumbers($versions);

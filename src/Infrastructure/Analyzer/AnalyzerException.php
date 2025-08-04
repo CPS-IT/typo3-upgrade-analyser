@@ -13,14 +13,14 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 
 /**
- * Exception thrown when analyzer operations fail
+ * Exception thrown when analyzer operations fail.
  */
 class AnalyzerException extends \Exception
 {
     public function __construct(
         string $message,
         private readonly string $analyzerName,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 0, $previous);
     }

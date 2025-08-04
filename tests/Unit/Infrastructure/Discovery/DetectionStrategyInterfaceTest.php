@@ -37,7 +37,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
         // Test behavior with valid path
         $validPath = '/valid/path';
         self::assertTrue($strategy->supports($validPath));
-        
+
         $installation = $strategy->detect($validPath);
         self::assertInstanceOf(Installation::class, $installation);
         self::assertSame($validPath, $installation->getPath());
@@ -57,7 +57,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
         self::assertIsString($strategy->getDescription());
         self::assertIsInt($strategy->getPriority());
         self::assertIsArray($strategy->getRequiredIndicators());
-        
+
         foreach ($strategy->getRequiredIndicators() as $indicator) {
             self::assertIsString($indicator);
         }
@@ -69,7 +69,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
 
         // Test detect method returns Installation or null
         $result = $strategy->detect('/valid/path');
-        self::assertTrue($result instanceof Installation || $result === null);
+        self::assertTrue($result instanceof Installation || null === $result);
     }
 
     public function testMultipleStrategiesWithDifferentPriorities(): void
@@ -79,12 +79,12 @@ final class DetectionStrategyInterfaceTest extends TestCase
 
         self::assertGreaterThan(
             $lowPriorityStrategy->getPriority(),
-            $highPriorityStrategy->getPriority()
+            $highPriorityStrategy->getPriority(),
         );
 
         // Strategies should be sortable by priority
         $strategies = [$lowPriorityStrategy, $highPriorityStrategy];
-        usort($strategies, fn($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategies, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
 
         self::assertSame($highPriorityStrategy, $strategies[0]);
         self::assertSame($lowPriorityStrategy, $strategies[1]);
@@ -96,7 +96,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
         $indicators = $strategy->getRequiredIndicators();
 
         self::assertNotEmpty($indicators);
-        
+
         // All indicators should be valid file/directory names
         foreach ($indicators as $indicator) {
             self::assertIsString($indicator);
@@ -109,13 +109,13 @@ final class DetectionStrategyInterfaceTest extends TestCase
 }
 
 /**
- * Test implementation of DetectionStrategyInterface for testing the interface contract
+ * Test implementation of DetectionStrategyInterface for testing the interface contract.
  */
 class TestDetectionStrategy implements DetectionStrategyInterface
 {
     public function __construct(
         private readonly string $name = 'Test Strategy',
-        private readonly int $priority = 50
+        private readonly int $priority = 50,
     ) {
     }
 

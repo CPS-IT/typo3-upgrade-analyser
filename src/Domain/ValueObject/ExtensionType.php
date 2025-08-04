@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Represents different types of TYPO3 extensions based on their source and installation method
+ * Represents different types of TYPO3 extensions based on their source and installation method.
  */
 enum ExtensionType: string
 {
@@ -23,17 +23,17 @@ enum ExtensionType: string
 
     public function isSystemExtension(): bool
     {
-        return $this === self::SYSTEM;
+        return self::SYSTEM === $this;
     }
 
     public function isLocalExtension(): bool
     {
-        return $this === self::LOCAL;
+        return self::LOCAL === $this;
     }
 
     public function isComposerExtension(): bool
     {
-        return $this === self::COMPOSER;
+        return self::COMPOSER === $this;
     }
 
     public function getDisplayName(): string

@@ -23,7 +23,7 @@ final class ExtensionTypeTest extends TestCase
     public function testEnumCases(): void
     {
         $cases = ExtensionType::cases();
-        
+
         self::assertCount(3, $cases);
         self::assertContains(ExtensionType::SYSTEM, $cases);
         self::assertContains(ExtensionType::LOCAL, $cases);
@@ -220,7 +220,7 @@ final class ExtensionTypeTest extends TestCase
         foreach (ExtensionType::cases() as $type) {
             $serialized = serialize($type);
             $unserialized = unserialize($serialized);
-            
+
             self::assertSame($type, $unserialized);
             self::assertSame($type->value, $unserialized->value);
         }
@@ -231,7 +231,7 @@ final class ExtensionTypeTest extends TestCase
         $type1 = ExtensionType::SYSTEM;
         $type2 = ExtensionType::SYSTEM;
         $type3 = ExtensionType::LOCAL;
-        
+
         self::assertSame($type1, $type2);
         self::assertTrue($type1 === $type2);
         self::assertNotSame($type1, $type3);
@@ -241,7 +241,7 @@ final class ExtensionTypeTest extends TestCase
     public function testEnumInArray(): void
     {
         $types = [ExtensionType::SYSTEM, ExtensionType::LOCAL];
-        
+
         self::assertContains(ExtensionType::SYSTEM, $types);
         self::assertContains(ExtensionType::LOCAL, $types);
         self::assertNotContains(ExtensionType::COMPOSER, $types);
@@ -255,7 +255,7 @@ final class ExtensionTypeTest extends TestCase
                 ExtensionType::LOCAL => 'local',
                 ExtensionType::COMPOSER => 'composer',
             };
-            
+
             self::assertSame($type->value, $result);
         }
     }

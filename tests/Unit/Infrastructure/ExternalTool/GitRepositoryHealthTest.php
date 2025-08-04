@@ -16,7 +16,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for GitRepositoryHealth
+ * Test case for GitRepositoryHealth.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth
  */
@@ -37,7 +37,7 @@ class GitRepositoryHealthTest extends TestCase
     public function testConstructorAndGetters(): void
     {
         $lastCommitDate = new \DateTimeImmutable('2024-01-15T10:00:00Z');
-        
+
         $health = new GitRepositoryHealth(
             lastCommitDate: $lastCommitDate,
             starCount: 25,
@@ -47,7 +47,7 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 8
+            contributorCount: 8,
         );
 
         $this->assertSame($lastCommitDate, $health->getLastCommitDate());
@@ -75,11 +75,11 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 10
+            contributorCount: 10,
         );
 
         $score = $health->calculateHealthScore();
-        
+
         // Should be a high score for a healthy repository
         $this->assertGreaterThan(0.8, $score);
         $this->assertLessThanOrEqual(1.0, $score);
@@ -99,11 +99,11 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: true,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         $score = $health->calculateHealthScore();
-        
+
         // Archived repositories should have very low scores
         $this->assertLessThan(0.4, $score);
         $this->assertGreaterThanOrEqual(0.0, $score);
@@ -123,11 +123,11 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: false,
             hasLicense: false,
-            contributorCount: 1
+            contributorCount: 1,
         );
 
         $score = $health->calculateHealthScore();
-        
+
         // Should be a low score for inactive repository
         $this->assertLessThan(0.4, $score);
         $this->assertGreaterThanOrEqual(0.0, $score);
@@ -147,11 +147,11 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: false,
-            contributorCount: 2
+            contributorCount: 2,
         );
 
         $score = $health->calculateHealthScore();
-        
+
         // Should be a moderate score
         $this->assertGreaterThan(0.3, $score);
         $this->assertLessThan(0.8, $score);
@@ -171,11 +171,11 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         $score = $health->calculateHealthScore();
-        
+
         // Should still calculate a score, but penalized for no commit info
         $this->assertGreaterThanOrEqual(0.0, $score);
         $this->assertLessThanOrEqual(1.0, $score);
@@ -196,7 +196,7 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         $this->assertEquals(20, $health->getTotalIssuesCount());
@@ -216,7 +216,7 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         $this->assertEquals(0.75, $health->getIssueResolutionRate()); // 15/20 = 0.75
@@ -236,7 +236,7 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         $this->assertEquals(1.0, $health->getIssueResolutionRate()); // Perfect score when no issues
@@ -256,15 +256,15 @@ class GitRepositoryHealthTest extends TestCase
             isArchived: false,
             hasReadme: true,
             hasLicense: true,
-            contributorCount: 3
+            contributorCount: 3,
         );
 
         // Properties should be readonly - this test verifies the class structure
         $reflection = new \ReflectionClass($health);
-        
+
         $starCountProperty = $reflection->getProperty('starCount');
         $this->assertTrue($starCountProperty->isReadOnly());
-        
+
         $isArchivedProperty = $reflection->getProperty('isArchived');
         $this->assertTrue($isArchivedProperty->isReadOnly());
     }

@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
-use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for ParseException
+ * Test case for ParseException.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException
  */
@@ -79,7 +79,7 @@ class ParseExceptionTest extends TestCase
             'php',
             null,
             null,
-            $context
+            $context,
         );
 
         self::assertSame($context, $exception->getContext());
@@ -102,7 +102,7 @@ class ParseExceptionTest extends TestCase
             null,
             [],
             $code,
-            $previous
+            $previous,
         );
 
         self::assertSame($code, $exception->getCode());
@@ -275,7 +275,7 @@ class ParseExceptionTest extends TestCase
             $column,
             $context,
             $code,
-            $previous
+            $previous,
         );
 
         // Verify all properties

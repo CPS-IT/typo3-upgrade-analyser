@@ -13,11 +13,10 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
 /**
- * Result of installation discovery operation
+ * Result of installation discovery operation.
  *
  * Contains the discovered installation (if successful), validation results,
  * and detailed information about the discovery process including which
@@ -26,46 +25,48 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 final readonly class InstallationDiscoveryResult implements SerializableInterface
 {
     /**
-     * @param Installation|null $installation Discovered installation (null if not found)
-     * @param bool $isSuccessful Whether discovery was successful
-     * @param string $errorMessage Error message if discovery failed
-     * @param DetectionStrategyInterface|null $successfulStrategy Strategy that succeeded
-     * @param array<ValidationIssue> $validationIssues Validation issues found
-     * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     * @param Installation|null               $installation        Discovered installation (null if not found)
+     * @param bool                            $isSuccessful        Whether discovery was successful
+     * @param string                          $errorMessage        Error message if discovery failed
+     * @param DetectionStrategyInterface|null $successfulStrategy  Strategy that succeeded
+     * @param array<ValidationIssue>          $validationIssues    Validation issues found
+     * @param array<array<string, mixed>>     $attemptedStrategies Information about attempted strategies
      */
     private function __construct(
-        private ?Installation               $installation,
-        private bool                        $isSuccessful,
-        private string                      $errorMessage,
+        private ?Installation $installation,
+        private bool $isSuccessful,
+        private string $errorMessage,
         private ?DetectionStrategyInterface $successfulStrategy,
-        private array                       $validationIssues,
-        private array                       $attemptedStrategies
+        private array $validationIssues,
+        private array $attemptedStrategies,
     ) {
     }
 
     /**
-     * Create a successful installation discovery result
+     * Create a successful installation discovery result.
      *
-     * @param Installation $installation Discovered installation
-     * @param DetectionStrategyInterface $strategy Strategy that succeeded
-     * @param array<ValidationIssue> $validationIssues Validation issues found
+     * @param Installation                $installation        Discovered installation
+     * @param DetectionStrategyInterface  $strategy            Strategy that succeeded
+     * @param array<ValidationIssue>      $validationIssues    Validation issues found
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Successful result
      */
     public static function success(
         Installation $installation,
         DetectionStrategyInterface $strategy,
         array $validationIssues = [],
-        array $attemptedStrategies = []
+        array $attemptedStrategies = [],
     ): self {
         return new self($installation, true, '', $strategy, $validationIssues, $attemptedStrategies);
     }
 
     /**
-     * Create a failed installation discovery result
+     * Create a failed installation discovery result.
      *
-     * @param string $errorMessage Error message describing the failure
+     * @param string                      $errorMessage        Error message describing the failure
      * @param array<array<string, mixed>> $attemptedStrategies Information about attempted strategies
+     *
      * @return self Failed result
      */
     public static function failed(string $errorMessage, array $attemptedStrategies = []): self
@@ -74,7 +75,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get the discovered installation
+     * Get the discovered installation.
      *
      * @return Installation|null Installation if discovery was successful, null otherwise
      */
@@ -84,7 +85,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Check if installation discovery was successful
+     * Check if installation discovery was successful.
      *
      * @return bool True if installation was discovered successfully
      */
@@ -94,7 +95,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get error message if discovery failed
+     * Get error message if discovery failed.
      *
      * @return string Error message (empty string if successful)
      */
@@ -104,7 +105,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get the strategy that successfully discovered the installation
+     * Get the strategy that successfully discovered the installation.
      *
      * @return DetectionStrategyInterface|null Successful strategy, null if discovery failed
      */
@@ -114,7 +115,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get validation issues found during discovery
+     * Get validation issues found during discovery.
      *
      * @return array<ValidationIssue> Array of validation issues
      */
@@ -124,7 +125,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get information about all attempted detection strategies
+     * Get information about all attempted detection strategies.
      *
      * @return array<array<string, mixed>> Array of strategy attempt information
      */
@@ -134,7 +135,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Check if the discovered installation has validation issues
+     * Check if the discovered installation has validation issues.
      *
      * @return bool True if validation issues were found
      */
@@ -144,21 +145,22 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get validation issues of specific severity level
+     * Get validation issues of specific severity level.
      *
      * @param ValidationSeverity $severity Severity level to filter by
+     *
      * @return array<ValidationIssue> Issues of specified severity
      */
     public function getValidationIssuesBySeverity(ValidationSeverity $severity): array
     {
         return array_filter(
             $this->validationIssues,
-            fn(ValidationIssue $issue) => $issue->getSeverity() === $severity
+            fn (ValidationIssue $issue) => $issue->getSeverity() === $severity,
         );
     }
 
     /**
-     * Check if installation has blocking validation issues
+     * Check if installation has blocking validation issues.
      *
      * @return bool True if blocking issues are present
      */
@@ -166,12 +168,12 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         return !empty(array_filter(
             $this->validationIssues,
-            fn(ValidationIssue $issue) => $issue->isBlockingAnalysis()
+            fn (ValidationIssue $issue) => $issue->isBlockingAnalysis(),
         ));
     }
 
     /**
-     * Get validation issues grouped by category
+     * Get validation issues grouped by category.
      *
      * @return array<string, array<ValidationIssue>> Issues grouped by category
      */
@@ -191,21 +193,21 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get a human-readable summary of the discovery result
+     * Get a human-readable summary of the discovery result.
      *
      * @return string Summary string
      */
     public function getSummary(): string
     {
         if (!$this->isSuccessful) {
-            $attemptedCount = count($this->attemptedStrategies);
-            $supportedCount = count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false));
+            $attemptedCount = \count($this->attemptedStrategies);
+            $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false));
 
-            return sprintf(
+            return \sprintf(
                 'Installation discovery failed: %s (attempted %d strategies, %d supported)',
                 $this->errorMessage,
                 $attemptedCount,
-                $supportedCount
+                $supportedCount,
             );
         }
 
@@ -213,22 +215,22 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         $mode = $this->installation?->getMode()?->value ?? 'unknown';
         $strategyName = $this->successfulStrategy?->getName() ?? 'unknown';
 
-        $summary = sprintf(
+        $summary = \sprintf(
             'TYPO3 %s installation discovered using %s (%s mode)',
             $version,
             $strategyName,
-            $mode
+            $mode,
         );
 
         if ($this->hasValidationIssues()) {
-            $issueCount = count($this->validationIssues);
-            $blockingCount = count(array_filter($this->validationIssues, fn($issue) => $issue->isBlockingAnalysis()));
+            $issueCount = \count($this->validationIssues);
+            $blockingCount = \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis()));
 
-            $summary .= sprintf(
+            $summary .= \sprintf(
                 ' - %d validation issue%s found%s',
                 $issueCount,
-                $issueCount === 1 ? '' : 's',
-                $blockingCount > 0 ? " ({$blockingCount} blocking)" : ''
+                1 === $issueCount ? '' : 's',
+                $blockingCount > 0 ? " ({$blockingCount} blocking)" : '',
             );
         }
 
@@ -236,7 +238,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get detailed discovery statistics
+     * Get detailed discovery statistics.
      *
      * @return array<string, mixed> Discovery statistics
      */
@@ -244,10 +246,10 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         $stats = [
             'successful' => $this->isSuccessful,
-            'attempted_strategies' => count($this->attemptedStrategies),
-            'supported_strategies' => count(array_filter($this->attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false)),
-            'validation_issues' => count($this->validationIssues),
-            'blocking_issues' => count(array_filter($this->validationIssues, fn($issue) => $issue->isBlockingAnalysis())),
+            'attempted_strategies' => \count($this->attemptedStrategies),
+            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false)),
+            'validation_issues' => \count($this->validationIssues),
+            'blocking_issues' => \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis())),
         ];
 
         if ($this->isSuccessful) {
@@ -261,7 +263,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Convert result to array for serialization
+     * Convert result to array for serialization.
      *
      * @return array<string, mixed> Array representation
      */
@@ -272,9 +274,9 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
             'error_message' => $this->errorMessage,
             'installation' => $this->installation?->toArray(false), // Exclude extensions in discovery context
             'successful_strategy' => $this->successfulStrategy?->getName(),
-            'validation_issues' => array_map(fn(ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
+            'validation_issues' => array_map(fn (ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
             'validation_summary' => [
-                'total_issues' => count($this->validationIssues),
+                'total_issues' => \count($this->validationIssues),
                 'by_severity' => $this->getValidationIssueCountsBySeverity(),
                 'by_category' => array_map('count', $this->getValidationIssuesByCategory()),
                 'has_blocking_issues' => $this->hasBlockingIssues(),
@@ -286,7 +288,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Get validation issue counts by severity level
+     * Get validation issue counts by severity level.
      *
      * @return array<string, int> Issue counts by severity
      */
@@ -302,7 +304,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         foreach ($this->validationIssues as $issue) {
             $severity = $issue->getSeverity()->value;
             if (isset($counts[$severity])) {
-                $counts[$severity]++;
+                ++$counts[$severity];
             }
         }
 
@@ -310,9 +312,10 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     }
 
     /**
-     * Create result from array data
-     * 
+     * Create result from array data.
+     *
      * @param array<string, mixed> $data Array representation to deserialize from
+     *
      * @return static Deserialized result instance
      */
     public static function fromArray(array $data): static
@@ -320,14 +323,14 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         if ($data['successful']) {
             // Use Installation's own fromArray method for proper deserialization
             $installation = Installation::fromArray($data['installation']);
-            
+
             return new self(
                 $installation,
                 true,
                 '',
                 null, // Strategy cannot be reconstructed from cache
                 [], // Skip validation issues for cached results
-                $data['attempted_strategies'] ?? []
+                $data['attempted_strategies'] ?? [],
             );
         } else {
             return new self(
@@ -336,7 +339,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
                 $data['error_message'] ?? 'Unknown cached error',
                 null,
                 [],
-                $data['attempted_strategies'] ?? []
+                $data['attempted_strategies'] ?? [],
             );
         }
     }

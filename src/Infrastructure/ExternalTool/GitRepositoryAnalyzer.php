@@ -18,24 +18,24 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFac
 use Psr\Log\LoggerInterface;
 
 /**
- * Analyzes Git repositories for TYPO3 extension compatibility
+ * Analyzes Git repositories for TYPO3 extension compatibility.
  */
 class GitRepositoryAnalyzer
 {
     public function __construct(
         private readonly GitProviderFactory $providerFactory,
         private readonly GitVersionParser $versionParser,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Analyze an extension's Git repository for version compatibility
+     * Analyze an extension's Git repository for version compatibility.
      */
     public function analyzeExtension(Extension $extension, Version $targetVersion): GitRepositoryInfo
     {
         $repositoryUrl = $this->extractRepositoryUrl($extension);
-        
+
         if (!$repositoryUrl) {
             throw new GitAnalysisException('No Git repository URL found for extension: ' . $extension->getKey());
         }
@@ -43,18 +43,18 @@ class GitRepositoryAnalyzer
         $this->logger->info('Starting Git repository analysis', [
             'extension' => $extension->getKey(),
             'repository_url' => $repositoryUrl,
-            'target_version' => $targetVersion->toString()
+            'target_version' => $targetVersion->toString(),
         ]);
 
         try {
             $provider = $this->providerFactory->createProvider($repositoryUrl);
-            
+
             // Get repository information
             $repoInfo = $provider->getRepositoryInfo($repositoryUrl);
-            
+
             // Get tags and analyze compatibility
             $tags = $provider->getTags($repositoryUrl);
-            
+
             // Try to get composer.json for compatibility analysis
             $composerJson = null;
             try {
@@ -62,12 +62,12 @@ class GitRepositoryAnalyzer
             } catch (\Throwable $e) {
                 $this->logger->debug('Could not retrieve composer.json from repository', [
                     'repository_url' => $repositoryUrl,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
-            
+
             $compatibleVersions = $this->versionParser->findCompatibleVersions($tags, $targetVersion, $composerJson);
-            
+
             // Get repository health metrics
             $health = $provider->getRepositoryHealth($repositoryUrl);
             $healthScore = $health->calculateHealthScore();
@@ -79,25 +79,21 @@ class GitRepositoryAnalyzer
                 $compatibleVersions,
                 $healthScore,
                 $composerJson,
-                $health
+                $health,
             );
-
         } catch (\Throwable $e) {
             $this->logger->error('Git repository analysis failed', [
                 'extension' => $extension->getKey(),
                 'repository_url' => $repositoryUrl,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
-            throw new GitAnalysisException(
-                'Failed to analyze Git repository: ' . $e->getMessage(),
-                $e
-            );
+
+            throw new GitAnalysisException('Failed to analyze Git repository: ' . $e->getMessage(), $e);
         }
     }
 
     /**
-     * Extract Git repository URL from extension metadata
+     * Extract Git repository URL from extension metadata.
      */
     private function extractRepositoryUrl(Extension $extension): ?string
     {
@@ -123,7 +119,7 @@ class GitRepositoryAnalyzer
             // Check if the extension was installed from a VCS source
             // This would be available in composer.lock or other metadata
             $composerName = $extension->getComposerName();
-            
+
             // For now, we'll need additional metadata to determine Git sources
             // This will be enhanced when Extension entity is extended with more metadata
         }
@@ -132,25 +128,25 @@ class GitRepositoryAnalyzer
     }
 
     /**
-     * Check if URL points to a Git repository
+     * Check if URL points to a Git repository.
      */
     private function isGitRepository(string $url): bool
     {
         // Check common Git URL patterns
-        return preg_match('/\.(git)$/', $url) ||
-               str_contains($url, 'github.com') ||
-               str_contains($url, 'gitlab.com') ||
-               str_contains($url, 'bitbucket.org');
+        return preg_match('/\.(git)$/', $url)
+               || str_contains($url, 'github.com')
+               || str_contains($url, 'gitlab.com')
+               || str_contains($url, 'bitbucket.org');
     }
 
     /**
-     * Calculate repository health score based on various metrics
+     * Calculate repository health score based on various metrics.
      */
     private function calculateRepositoryHealth(object $provider, string $repositoryUrl): float
     {
         try {
             $health = $provider->getRepositoryHealth($repositoryUrl);
-            
+
             $score = 0.0;
             $maxScore = 0.0;
 
@@ -212,13 +208,12 @@ class GitRepositoryAnalyzer
             $maxScore += 0.2;
 
             return $maxScore > 0 ? $score / $maxScore : 0.0;
-
         } catch (\Throwable $e) {
             $this->logger->warning('Could not calculate repository health', [
                 'repository_url' => $repositoryUrl,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             return 0.5; // Default neutral score
         }
     }

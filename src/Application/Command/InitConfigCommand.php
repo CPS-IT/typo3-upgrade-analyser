@@ -22,7 +22,7 @@ use Symfony\Component\Yaml\Yaml;
 
 #[AsCommand(
     name: 'init-config',
-    description: 'Generate a configuration file for analysis'
+    description: 'Generate a configuration file for analysis',
 )]
 class InitConfigCommand extends Command
 {
@@ -33,14 +33,14 @@ class InitConfigCommand extends Command
                 'interactive',
                 'i',
                 InputOption::VALUE_NONE,
-                'Run in interactive mode'
+                'Run in interactive mode',
             )
             ->addOption(
                 'output',
                 'o',
                 InputOption::VALUE_REQUIRED,
                 'Output file path',
-                'typo3-analyzer.yaml'
+                'typo3-analyzer.yaml',
             );
     }
 
@@ -60,12 +60,13 @@ class InitConfigCommand extends Command
 
         $yamlContent = Yaml::dump($config, 4, 2);
 
-        if (file_put_contents($outputFile, $yamlContent) === false) {
-            $io->error(sprintf('Failed to write configuration to: %s', $outputFile));
+        if (false === file_put_contents($outputFile, $yamlContent)) {
+            $io->error(\sprintf('Failed to write configuration to: %s', $outputFile));
+
             return Command::FAILURE;
         }
 
-        $io->success(sprintf('Configuration file generated: %s', $outputFile));
+        $io->success(\sprintf('Configuration file generated: %s', $outputFile));
 
         return Command::SUCCESS;
     }
@@ -131,21 +132,21 @@ class InitConfigCommand extends Command
         // Target version
         $targetVersion = $io->ask(
             'Target TYPO3 version',
-            $config['analysis']['target_version']
+            $config['analysis']['target_version'],
         );
         $config['analysis']['target_version'] = $targetVersion;
 
         // PHP versions
         $phpVersions = $io->ask(
             'Supported PHP versions (comma-separated)',
-            implode(', ', $config['analysis']['php_versions'])
+            implode(', ', $config['analysis']['php_versions']),
         );
         $config['analysis']['php_versions'] = array_map('trim', explode(',', $phpVersions));
 
         // Output directory
         $outputDir = $io->ask(
             'Output directory for reports',
-            $config['reporting']['output_directory']
+            $config['reporting']['output_directory'],
         );
         $config['reporting']['output_directory'] = $outputDir;
 
@@ -153,9 +154,9 @@ class InitConfigCommand extends Command
         $formats = $io->choice(
             'Report formats (multiple selection allowed)',
             ['html', 'json', 'csv', 'markdown'],
-            $config['reporting']['formats'][0] ?? 'html'
+            $config['reporting']['formats'][0] ?? 'html',
         );
-        $config['reporting']['formats'] = is_array($formats) ? $formats : [$formats];
+        $config['reporting']['formats'] = \is_array($formats) ? $formats : [$formats];
 
         return $config;
     }

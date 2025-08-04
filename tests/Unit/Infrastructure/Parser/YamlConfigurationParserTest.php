@@ -12,14 +12,14 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
-use Psr\Log\LoggerInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
- * Test case for YamlConfigurationParser
+ * Test case for YamlConfigurationParser.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser
  */
@@ -162,23 +162,23 @@ class YamlConfigurationParserTest extends TestCase
     public function testParseContentWithValidYaml(): void
     {
         $content = <<<'YAML'
-services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: false
+            services:
+              _defaults:
+                autowire: true
+                autoconfigure: true
+                public: false
 
-  App\Service\TestService:
-    arguments:
-      $param1: '@service.dependency'
-      $param2: '%parameter.value%'
-    tags:
-      - { name: 'app.service', priority: 100 }
+              App\Service\TestService:
+                arguments:
+                  $param1: '@service.dependency'
+                  $param2: '%parameter.value%'
+                tags:
+                  - { name: 'app.service', priority: 100 }
 
-parameters:
-  app.environment: 'test'
-  app.debug: true
-YAML;
+            parameters:
+              app.environment: 'test'
+              app.debug: true
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/services.yaml');
 
@@ -204,36 +204,36 @@ YAML;
     public function testParseContentWithSiteConfiguration(): void
     {
         $content = <<<'YAML'
-rootPageId: 1
-base: 'https://example.com/'
-languages:
-  -
-    title: English
-    enabled: true
-    languageId: 0
-    base: /
-    locale: en_US.UTF-8
-    iso-639-1: en
-  -
-    title: German
-    enabled: true
-    languageId: 1
-    base: /de/
-    locale: de_DE.UTF-8
-    iso-639-1: de
+            rootPageId: 1
+            base: 'https://example.com/'
+            languages:
+              -
+                title: English
+                enabled: true
+                languageId: 0
+                base: /
+                locale: en_US.UTF-8
+                iso-639-1: en
+              -
+                title: German
+                enabled: true
+                languageId: 1
+                base: /de/
+                locale: de_DE.UTF-8
+                iso-639-1: de
 
-errorHandling:
-  - errorCode: 404
-    errorHandler: Page
-    errorContentSource: 't3://page?uid=404'
+            errorHandling:
+              - errorCode: 404
+                errorHandler: Page
+                errorContentSource: 't3://page?uid=404'
 
-routes:
-  - route: robots.txt
-    type: staticText
-    content: |
-      User-agent: *
-      Disallow: /typo3/
-YAML;
+            routes:
+              - route: robots.txt
+                type: staticText
+                content: |
+                  User-agent: *
+                  Disallow: /typo3/
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/site.yaml');
 
@@ -262,10 +262,10 @@ YAML;
     public function testParseContentWithOnlyComments(): void
     {
         $content = <<<'YAML'
-# This is a comment file
-# Another comment
-# Yet another comment
-YAML;
+            # This is a comment file
+            # Another comment
+            # Yet another comment
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/comments.yaml');
 
@@ -276,11 +276,11 @@ YAML;
     public function testParseContentWithInvalidYamlSyntax(): void
     {
         $content = <<<'YAML'
-services:
-  _defaults:
-    autowire: true
-   autoconfigure: true  # Wrong indentation
-YAML;
+            services:
+              _defaults:
+                autowire: true
+               autoconfigure: true  # Wrong indentation
+            YAML;
 
         $this->expectException(YamlParseException::class);
         $this->expectExceptionMessage('parsing');
@@ -311,10 +311,10 @@ YAML;
     public function testValidateServicesYamlWithMissingServicesSection(): void
     {
         $content = <<<'YAML'
-parameters:
-  app.debug: true
-# Missing services section
-YAML;
+            parameters:
+              app.debug: true
+            # Missing services section
+            YAML;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'Services_') . '.yaml';
         file_put_contents($tempFile, $content);
@@ -333,14 +333,14 @@ YAML;
     public function testValidateServicesYamlWithInvalidServiceStructure(): void
     {
         $content = <<<'YAML'
-services:
-  _defaults:
-    autowire: true
+            services:
+              _defaults:
+                autowire: true
 
-  App\Service\TestService:
-    arguments: "not an array"  # Should be array
-    tags: "not an array"       # Should be array
-YAML;
+              App\Service\TestService:
+                arguments: "not an array"  # Should be array
+                tags: "not an array"       # Should be array
+            YAML;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'Services_') . '.yaml';
         file_put_contents($tempFile, $content);
@@ -352,8 +352,8 @@ YAML;
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $argumentErrors = array_filter($errors, fn($error) => str_contains($error, 'arguments must be an array'));
-            $tagErrors = array_filter($errors, fn($error) => str_contains($error, 'tags must be an array'));
+            $argumentErrors = array_filter($errors, fn ($error) => str_contains($error, 'arguments must be an array'));
+            $tagErrors = array_filter($errors, fn ($error) => str_contains($error, 'tags must be an array'));
 
             self::assertNotEmpty($argumentErrors);
             self::assertNotEmpty($tagErrors);
@@ -375,11 +375,11 @@ YAML;
     public function testValidateSiteConfigurationWithMissingRequiredKeys(): void
     {
         $content = <<<'YAML'
-languages:
-  - title: English
-    enabled: true
-# Missing rootPageId and base
-YAML;
+            languages:
+              - title: English
+                enabled: true
+            # Missing rootPageId and base
+            YAML;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'site_') . '.yaml';
         file_put_contents($tempFile, $content);
@@ -391,8 +391,8 @@ YAML;
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $missingRootPageIdErrors = array_filter($errors, fn($error) => str_contains($error, 'rootPageId'));
-            $missingBaseErrors = array_filter($errors, fn($error) => str_contains($error, 'base'));
+            $missingRootPageIdErrors = array_filter($errors, fn ($error) => str_contains($error, 'rootPageId'));
+            $missingBaseErrors = array_filter($errors, fn ($error) => str_contains($error, 'base'));
 
             self::assertNotEmpty($missingRootPageIdErrors);
             self::assertNotEmpty($missingBaseErrors);
@@ -404,10 +404,10 @@ YAML;
     public function testValidateSiteConfigurationWithInvalidValues(): void
     {
         $content = <<<'YAML'
-rootPageId: "not_a_number"
-base: "not_a_url"
-languages: "not_an_array"
-YAML;
+            rootPageId: "not_a_number"
+            base: "not_a_url"
+            languages: "not_an_array"
+            YAML;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'site_') . '.yaml';
         file_put_contents($tempFile, $content);
@@ -421,9 +421,9 @@ YAML;
             $errors = $result->getErrors();
             self::assertCount(3, $errors);
 
-            $rootPageIdErrors = array_filter($errors, fn($error) => str_contains($error, 'rootPageId must be a positive integer'));
-            $baseErrors = array_filter($errors, fn($error) => str_contains($error, 'base must be a valid URL'));
-            $languagesErrors = array_filter($errors, fn($error) => str_contains($error, 'languages must be an array'));
+            $rootPageIdErrors = array_filter($errors, fn ($error) => str_contains($error, 'rootPageId must be a positive integer'));
+            $baseErrors = array_filter($errors, fn ($error) => str_contains($error, 'base must be a valid URL'));
+            $languagesErrors = array_filter($errors, fn ($error) => str_contains($error, 'languages must be an array'));
 
             self::assertNotEmpty($rootPageIdErrors);
             self::assertNotEmpty($baseErrors);
@@ -436,11 +436,11 @@ YAML;
     public function testValidateLanguageFileStructure(): void
     {
         $content = <<<'YAML'
-label.key.1: "First label"
-label.key.2: "Second label"
-module.title: "Module Title"
-LLL:EXT:extension/Resources/Private/Language/locallang.xlf:key: "External reference"
-YAML;
+            label.key.1: "First label"
+            label.key.2: "Second label"
+            module.title: "Module Title"
+            LLL:EXT:extension/Resources/Private/Language/locallang.xlf:key: "External reference"
+            YAML;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'language_') . '.yaml';
         $languageFile = str_replace(sys_get_temp_dir(), sys_get_temp_dir() . '/Resources/Private/Language', $tempFile);
@@ -459,15 +459,15 @@ YAML;
     public function testPostProcessingWithBooleanNormalization(): void
     {
         $content = <<<'YAML'
-services:
-  App\Service\TestService:
-    public: "true"
-    shared: "false"
-    lazy: "1"
-    autoconfigure: "0"
-    autowire: "yes"
-    synthetic: "no"
-YAML;
+            services:
+              App\Service\TestService:
+                public: "true"
+                shared: "false"
+                lazy: "1"
+                autoconfigure: "0"
+                autowire: "yes"
+                synthetic: "no"
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/boolean.yaml');
 
@@ -486,20 +486,20 @@ YAML;
     public function testYamlStructureValidationWithDeepNesting(): void
     {
         $content = <<<'YAML'
-level1:
-  level2:
-    level3:
-      level4:
-        level5:
-          level6:
-            level7:
-              level8:
-                level9:
-                  level10:
-                    level11:
-                      level12:
-                        deep_value: "very deep"
-YAML;
+            level1:
+              level2:
+                level3:
+                  level4:
+                    level5:
+                      level6:
+                        level7:
+                          level8:
+                            level9:
+                              level10:
+                                level11:
+                                  level12:
+                                    deep_value: "very deep"
+            YAML;
 
         $this->parser->setParserOptions(['max_nesting_depth' => 5]);
 
@@ -513,15 +513,15 @@ YAML;
     public function testYamlStructureValidationWithEmptySections(): void
     {
         $content = <<<'YAML'
-services:
-  _defaults:
-    autowire: true
+            services:
+              _defaults:
+                autowire: true
 
-empty_section: {}
-another_empty: []
-valid_section:
-  key: value
-YAML;
+            empty_section: {}
+            another_empty: []
+            valid_section:
+              key: value
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/empty_sections.yaml');
 
@@ -529,17 +529,17 @@ YAML;
         self::assertTrue($result->hasWarnings());
 
         $warnings = $result->getWarnings();
-        $emptySectionWarnings = array_filter($warnings, fn($warning) => str_contains($warning, 'Empty configuration section'));
+        $emptySectionWarnings = array_filter($warnings, fn ($warning) => str_contains($warning, 'Empty configuration section'));
         self::assertCount(2, $emptySectionWarnings);
     }
 
     public function testYamlStructureValidationWithCircularReferences(): void
     {
         $content = <<<'YAML'
-self_reference: "This contains self_reference in the value"
-normal_key: "normal value"
-another_ref: "This mentions another_ref"
-YAML;
+            self_reference: "This contains self_reference in the value"
+            normal_key: "normal value"
+            another_ref: "This mentions another_ref"
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/circular.yaml');
 
@@ -547,7 +547,7 @@ YAML;
         self::assertTrue($result->hasWarnings());
 
         $warnings = $result->getWarnings();
-        $circularWarnings = array_filter($warnings, fn($warning) => str_contains($warning, 'circular reference'));
+        $circularWarnings = array_filter($warnings, fn ($warning) => str_contains($warning, 'circular reference'));
         self::assertCount(2, $circularWarnings);
     }
 
@@ -565,8 +565,8 @@ YAML;
     public function testLoggerIntegration(): void
     {
         $content = <<<'YAML'
-test: value
-YAML;
+            test: value
+            YAML;
 
         $debugCalls = [];
         $this->logger->expects(self::atLeast(2))
@@ -585,8 +585,8 @@ YAML;
         // Verify that the expected debug call was made
         $yamlDebugFound = false;
         foreach ($debugCalls as $call) {
-            if (str_contains($call['message'], 'YAML configuration parsed successfully') &&
-                isset($call['context']['keys_found'], $call['context']['has_nested_data'])) {
+            if (str_contains($call['message'], 'YAML configuration parsed successfully')
+                && isset($call['context']['keys_found'], $call['context']['has_nested_data'])) {
                 $yamlDebugFound = true;
                 break;
             }
@@ -597,64 +597,64 @@ YAML;
     public function testComplexYamlStructureParsing(): void
     {
         $content = <<<'YAML'
-services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: false
-    bind:
-      $projectDir: '%kernel.project_dir%'
-      $environment: '%kernel.environment%'
+            services:
+              _defaults:
+                autowire: true
+                autoconfigure: true
+                public: false
+                bind:
+                  $projectDir: '%kernel.project_dir%'
+                  $environment: '%kernel.environment%'
 
-  App\:
-    resource: '../src/*'
-    exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+              App\:
+                resource: '../src/*'
+                exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
-  App\Controller\:
-    resource: '../src/Controller'
-    tags: ['controller.service_arguments']
+              App\Controller\:
+                resource: '../src/Controller'
+                tags: ['controller.service_arguments']
 
-  App\Service\DatabaseService:
-    arguments:
-      $connectionPool: '@TYPO3\CMS\Core\Database\ConnectionPool'
-      $settings:
-        timeout: 30
-        retry_attempts: 3
-        cache_enabled: true
+              App\Service\DatabaseService:
+                arguments:
+                  $connectionPool: '@TYPO3\CMS\Core\Database\ConnectionPool'
+                  $settings:
+                    timeout: 30
+                    retry_attempts: 3
+                    cache_enabled: true
 
-  App\EventListener\UserLoginListener:
-    tags:
-      - name: event.listener
-        event: 'TYPO3\CMS\Core\Authentication\Event\BeforeUserLoginEvent'
-        method: onBeforeUserLogin
-        priority: 100
+              App\EventListener\UserLoginListener:
+                tags:
+                  - name: event.listener
+                    event: 'TYPO3\CMS\Core\Authentication\Event\BeforeUserLoginEvent'
+                    method: onBeforeUserLogin
+                    priority: 100
 
-parameters:
-  locale: 'en'
-  app.version: '2.1.0'
-  database.options:
-    charset: 'utf8mb4'
-    collate: 'utf8mb4_unicode_ci'
-  cache.settings:
-    default_ttl: 3600
-    enabled: true
-    adapters:
-      - 'cache.adapter.redis'
-      - 'cache.adapter.filesystem'
+            parameters:
+              locale: 'en'
+              app.version: '2.1.0'
+              database.options:
+                charset: 'utf8mb4'
+                collate: 'utf8mb4_unicode_ci'
+              cache.settings:
+                default_ttl: 3600
+                enabled: true
+                adapters:
+                  - 'cache.adapter.redis'
+                  - 'cache.adapter.filesystem'
 
-when@dev:
-  services:
-    App\Service\DebugService:
-      public: true
-      arguments:
-        $debugMode: true
+            when@dev:
+              services:
+                App\Service\DebugService:
+                  public: true
+                  arguments:
+                    $debugMode: true
 
-when@prod:
-  parameters:
-    cache.settings:
-      default_ttl: 7200
-      enabled: true
-YAML;
+            when@prod:
+              parameters:
+                cache.settings:
+                  default_ttl: 7200
+                  enabled: true
+            YAML;
 
         $result = $this->parser->parseContent($content, '/test/complex.yaml');
 
@@ -712,43 +712,43 @@ YAML;
         return [
             'services section' => [
                 'services: {}',
-                true
+                true,
             ],
             'base URL pattern' => [
                 'base: https://example.com/',
-                true
+                true,
             ],
             'rootPageId pattern' => [
                 'rootPageId: 1',
-                true
+                true,
             ],
             'languages section' => [
                 'languages: []',
-                true
+                true,
             ],
             'routes section' => [
                 'routes: []',
-                true
+                true,
             ],
             'errorHandling section' => [
                 'errorHandling: []',
-                true
+                true,
             ],
             'class with namespace' => [
                 'class: App\\Service\\MyService',
-                true
+                true,
             ],
             '_defaults section' => [
                 '_defaults: {}',
-                true
+                true,
             ],
             'regular YAML' => [
                 'simple: value',
-                false
+                false,
             ],
             'empty file' => [
                 '',
-                false
+                false,
             ],
         ];
     }

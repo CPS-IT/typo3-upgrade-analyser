@@ -33,7 +33,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         $this->testInstallation = new Installation(
             '/test/installation',
             new Version('12.4.0'),
-            'composer'
+            'composer',
         );
     }
 
@@ -53,7 +53,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         // Test validate method returns array of ValidationIssue objects
         $issues = $rule->validate($this->testInstallation);
         self::assertIsArray($issues);
-        
+
         foreach ($issues as $issue) {
             self::assertInstanceOf(ValidationIssue::class, $issue);
         }
@@ -64,11 +64,11 @@ final class ValidationRuleInterfaceTest extends TestCase
         $rule = new TestValidationRule(true, true); // applies to installation, has issues
 
         self::assertTrue($rule->appliesTo($this->testInstallation));
-        
+
         $issues = $rule->validate($this->testInstallation);
         self::assertNotEmpty($issues);
         self::assertCount(1, $issues);
-        
+
         $issue = $issues[0];
         self::assertSame($rule->getName(), $issue->getRuleName());
         self::assertSame($rule->getSeverity(), $issue->getSeverity());
@@ -80,7 +80,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         $rule = new TestValidationRule(false, true); // doesn't apply to installation
 
         self::assertFalse($rule->appliesTo($this->testInstallation));
-        
+
         // Rule should still be able to validate, but may return empty array
         $issues = $rule->validate($this->testInstallation);
         self::assertIsArray($issues);
@@ -91,7 +91,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         $rule = new TestValidationRule(true, false); // applies but no issues
 
         self::assertTrue($rule->appliesTo($this->testInstallation));
-        
+
         $issues = $rule->validate($this->testInstallation);
         self::assertEmpty($issues);
     }
@@ -104,7 +104,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         self::assertNotEmpty($rule->getName());
         self::assertNotEmpty($rule->getDescription());
         self::assertNotEmpty($rule->getCategory());
-        
+
         // Category should be a reasonable validation category
         $category = $rule->getCategory();
         $validCategories = ['structure', 'permissions', 'integrity', 'performance', 'configuration', 'test'];
@@ -123,14 +123,14 @@ final class ValidationRuleInterfaceTest extends TestCase
         foreach ($rules as $rule) {
             $issues = $rule->validate($this->testInstallation);
             self::assertNotEmpty($issues);
-            
+
             $issue = $issues[0];
             self::assertSame($rule->getSeverity(), $issue->getSeverity());
         }
 
         // Rules can be sorted by severity
-        usort($rules, fn($a, $b) => $b->getSeverity()->getNumericValue() <=> $a->getSeverity()->getNumericValue());
-        
+        usort($rules, fn ($a, $b) => $b->getSeverity()->getNumericValue() <=> $a->getSeverity()->getNumericValue());
+
         self::assertSame(ValidationSeverity::CRITICAL, $rules[0]->getSeverity());
         self::assertSame(ValidationSeverity::ERROR, $rules[1]->getSeverity());
         self::assertSame(ValidationSeverity::WARNING, $rules[2]->getSeverity());
@@ -144,7 +144,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         $integrityRule = new TestValidationRule(true, false, ValidationSeverity::CRITICAL, 'integrity');
 
         $rules = [$structureRule, $permissionRule, $integrityRule];
-        
+
         // Group rules by category
         $groupedRules = [];
         foreach ($rules as $rule) {
@@ -154,7 +154,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         self::assertArrayHasKey('structure', $groupedRules);
         self::assertArrayHasKey('permissions', $groupedRules);
         self::assertArrayHasKey('integrity', $groupedRules);
-        
+
         self::assertCount(1, $groupedRules['structure']);
         self::assertCount(1, $groupedRules['permissions']);
         self::assertCount(1, $groupedRules['integrity']);
@@ -166,14 +166,14 @@ final class ValidationRuleInterfaceTest extends TestCase
         $issues = $rule->validate($this->testInstallation);
 
         self::assertNotEmpty($issues);
-        
+
         foreach ($issues as $issue) {
             // Issue should have proper structure
             self::assertNotEmpty($issue->getRuleName());
             self::assertNotEmpty($issue->getMessage());
             self::assertNotEmpty($issue->getCategory());
             self::assertInstanceOf(ValidationSeverity::class, $issue->getSeverity());
-            
+
             // Arrays should be arrays
             self::assertIsArray($issue->getContext());
             self::assertIsArray($issue->getAffectedPaths());
@@ -183,7 +183,7 @@ final class ValidationRuleInterfaceTest extends TestCase
 }
 
 /**
- * Test implementation of ValidationRuleInterface for testing the interface contract
+ * Test implementation of ValidationRuleInterface for testing the interface contract.
  */
 class TestValidationRule implements ValidationRuleInterface
 {
@@ -191,7 +191,7 @@ class TestValidationRule implements ValidationRuleInterface
         private readonly bool $applies = true,
         private readonly bool $hasIssues = false,
         private readonly ValidationSeverity $severity = ValidationSeverity::WARNING,
-        private readonly string $category = 'test'
+        private readonly string $category = 'test',
     ) {
     }
 
@@ -209,8 +209,8 @@ class TestValidationRule implements ValidationRuleInterface
                 $this->category,
                 ['installation_path' => $installation->getPath()],
                 [$installation->getPath()],
-                ['Fix the test issue']
-            )
+                ['Fix the test issue'],
+            ),
         ];
     }
 

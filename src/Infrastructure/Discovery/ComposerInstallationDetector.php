@@ -13,14 +13,14 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
 
 /**
- * Detection strategy for Composer-based TYPO3 installations
- * 
+ * Detection strategy for Composer-based TYPO3 installations.
+ *
  * This strategy detects TYPO3 installations that were set up using Composer.
  * It identifies the installation by looking for key Composer indicators and
  * TYPO3-specific directory structures.
@@ -32,18 +32,18 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         'public/typo3conf',
         'public/typo3',
         'config/system',
-        'var/log'
+        'var/log',
     ];
 
     private const TYPO3_CORE_PACKAGES = [
         'typo3/cms-core',
         'typo3/cms',
-        'typo3/minimal'
+        'typo3/minimal',
     ];
 
     public function __construct(
         private readonly VersionExtractor $versionExtractor,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -53,6 +53,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
 
         if (!$this->supports($path)) {
             $this->logger->debug('Path not supported by Composer detector', ['path' => $path]);
+
             return null;
         }
 
@@ -62,14 +63,16 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             if (!$versionResult->isSuccessful()) {
                 $this->logger->debug('Version extraction failed', [
                     'path' => $path,
-                    'error' => $versionResult->getErrorMessage()
+                    'error' => $versionResult->getErrorMessage(),
                 ]);
+
                 return null;
             }
 
             $version = $versionResult->getVersion();
-            if ($version === null) {
+            if (null === $version) {
                 $this->logger->debug('No version extracted', ['path' => $path]);
+
                 return null;
             }
 
@@ -86,18 +89,18 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
 
             $this->logger->info('Composer TYPO3 installation detected', [
                 'path' => $path,
-                'version' => $version->toString()
+                'version' => $version->toString(),
             ]);
 
             return $installation;
-
         } catch (\Throwable $e) {
             $this->logger->error('Error during Composer installation detection', [
                 'path' => $path,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
+
             return null;
         }
     }
@@ -129,13 +132,13 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             $webDir . '/typo3conf',
             $webDir . '/typo3',
             'config/system',
-            'var/log'
+            'var/log',
         ];
 
         $foundIndicators = 0;
         foreach ($typo3Indicators as $indicator) {
             if (file_exists($path . '/' . $indicator)) {
-                $foundIndicators++;
+                ++$foundIndicators;
             }
         }
 
@@ -165,29 +168,30 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     }
 
     /**
-     * Check if composer.json contains TYPO3 packages
-     * 
+     * Check if composer.json contains TYPO3 packages.
+     *
      * @param string $path Installation path
+     *
      * @return bool True if TYPO3 packages are found
      */
     private function hasTypo3Packages(string $path): bool
     {
         $composerJsonPath = $path . '/composer.json';
-        
+
         if (!file_exists($composerJsonPath)) {
             return false;
         }
 
         try {
             $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-            
-            if (!is_array($composerData)) {
+
+            if (!\is_array($composerData)) {
                 return false;
             }
 
             $requirements = array_merge(
                 $composerData['require'] ?? [],
-                $composerData['require-dev'] ?? []
+                $composerData['require-dev'] ?? [],
             );
 
             foreach (self::TYPO3_CORE_PACKAGES as $package) {
@@ -197,20 +201,21 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             }
 
             return false;
-
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse composer.json for TYPO3 package check', [
                 'path' => $composerJsonPath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Create installation metadata from discovered information
-     * 
+     * Create installation metadata from discovered information.
+     *
      * @param string $path Installation path
+     *
      * @return InstallationMetadata Metadata object
      */
     private function createInstallationMetadata(string $path): InstallationMetadata
@@ -229,43 +234,44 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             $customPaths,
             [
                 'detection_strategy' => $this->getName(),
-                'composer_mode' => true
-            ]
+                'composer_mode' => true,
+            ],
         );
     }
 
     /**
-     * Detect PHP version requirements from composer.json
-     * 
+     * Detect PHP version requirements from composer.json.
+     *
      * @param string $path Installation path
+     *
      * @return array<string> PHP versions
      */
     private function detectPhpVersions(string $path): array
     {
         $composerJsonPath = $path . '/composer.json';
-        
+
         if (!file_exists($composerJsonPath)) {
             return [];
         }
 
         try {
             $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-            
+
             if (isset($composerData['require']['php'])) {
                 return [$composerData['require']['php']];
             }
 
             return [];
-
         } catch (\JsonException) {
             return [];
         }
     }
 
     /**
-     * Detect database configuration from TYPO3 configuration
-     * 
+     * Detect database configuration from TYPO3 configuration.
+     *
      * @param string $path Installation path
+     *
      * @return array<string, mixed> Database configuration
      */
     private function detectDatabaseConfig(string $path): array
@@ -289,9 +295,10 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     }
 
     /**
-     * Detect enabled TYPO3 features
-     * 
+     * Detect enabled TYPO3 features.
+     *
      * @param string $path Installation path
+     *
      * @return array<string> Enabled features
      */
     private function detectEnabledFeatures(string $path): array
@@ -315,9 +322,10 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     }
 
     /**
-     * Detect custom paths in TYPO3 installation
-     * 
+     * Detect custom paths in TYPO3 installation.
+     *
      * @param string $path Installation path
+     *
      * @return array<string, string> Custom paths
      */
     private function detectCustomPaths(string $path): array
@@ -327,27 +335,28 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             'web-dir' => 'public',
             'typo3conf-dir' => 'public/typo3conf',
             'var' => 'var',
-            'config' => 'config'
+            'config' => 'config',
         ];
 
         $composerJsonPath = $path . '/composer.json';
-        
+
         if (!file_exists($composerJsonPath)) {
             $this->logger->debug('composer.json not found, using default paths');
+
             return $paths;
         }
 
         try {
             $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-            
-            if (!is_array($composerData)) {
+
+            if (!\is_array($composerData)) {
                 return $paths;
             }
 
             // Read composer config section
             if (isset($composerData['config'])) {
                 $composerConfig = $composerData['config'];
-                
+
                 if (isset($composerConfig['vendor-dir'])) {
                     $paths['vendor-dir'] = $composerConfig['vendor-dir'];
                 }
@@ -356,7 +365,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             // Read TYPO3-specific configuration from extra section
             if (isset($composerData['extra']['typo3/cms'])) {
                 $typo3Config = $composerData['extra']['typo3/cms'];
-                
+
                 if (isset($typo3Config['web-dir'])) {
                     $paths['web-dir'] = $typo3Config['web-dir'];
                 }
@@ -366,33 +375,34 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             $paths['typo3conf-dir'] = $paths['web-dir'] . '/typo3conf';
 
             $this->logger->debug('Custom paths detected from composer.json', [
-                'paths' => $paths
+                'paths' => $paths,
             ]);
 
             return $paths;
-
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse composer.json for custom paths', [
                 'path' => $composerJsonPath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return $paths;
         }
     }
 
     /**
-     * Get last modification time of the installation
-     * 
+     * Get last modification time of the installation.
+     *
      * @param string $path Installation path
+     *
      * @return \DateTimeImmutable Last modified time
      */
     private function getLastModifiedTime(string $path): \DateTimeImmutable
     {
         $composerLockPath = $path . '/composer.lock';
-        
+
         if (file_exists($composerLockPath)) {
             $timestamp = filemtime($composerLockPath);
-            if ($timestamp !== false) {
+            if (false !== $timestamp) {
                 return new \DateTimeImmutable('@' . $timestamp);
             }
         }
@@ -400,5 +410,4 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         // Fall back to current time
         return new \DateTimeImmutable();
     }
-
 }

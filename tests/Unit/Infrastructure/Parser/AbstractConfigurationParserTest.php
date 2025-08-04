@@ -12,16 +12,15 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
-use Psr\Log\LoggerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
- * Test case for AbstractConfigurationParser
+ * Test case for AbstractConfigurationParser.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser
  */
@@ -36,7 +35,7 @@ class AbstractConfigurationParserTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->parser = new TestableAbstractParser($this->logger);
         $this->tempFile = tempnam(sys_get_temp_dir(), 'parser_test_') . '.test';
-        
+
         // Create the temp file so it exists for file accessibility tests
         touch($this->tempFile);
     }
@@ -55,7 +54,7 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseFileWithValidFile(): void
     {
-        $content = "test content";
+        $content = 'test content';
         $data = ['key' => 'value'];
         file_put_contents($this->tempFile, $content);
 
@@ -118,7 +117,7 @@ class AbstractConfigurationParserTest extends TestCase
                 'Configuration parsing failed',
                 self::callback(function ($context) {
                     return isset($context['error'], $context['line'], $context['column']);
-                })
+                }),
             );
 
         $result = $this->parser->parseFile($this->tempFile);
@@ -142,7 +141,7 @@ class AbstractConfigurationParserTest extends TestCase
                 'Configuration parsing failed',
                 self::callback(function ($context) {
                     return isset($context['error'], $context['file_path'], $context['parser']);
-                })
+                }),
             );
 
         $result = $this->parser->parseFile($this->tempFile);
@@ -150,14 +149,14 @@ class AbstractConfigurationParserTest extends TestCase
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
         self::assertStringContainsString('Unexpected error', $result->getFirstError());
-        
+
         // Additional assertion to ensure test is not risky
         self::assertSame('test', $result->getFormat());
     }
 
     public function testParseContentWithValidContent(): void
     {
-        $content = "valid content";
+        $content = 'valid content';
         $data = ['parsed' => 'data'];
         $sourcePath = '/path/to/source.test';
 
@@ -184,7 +183,7 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseContentWithParseException(): void
     {
-        $content = "invalid content";
+        $content = 'invalid content';
         $exception = new ParseException('Parse failed', '/source', 'test');
         $this->parser->setThrowException($exception);
 
@@ -196,7 +195,7 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseContentWithUnexpectedException(): void
     {
-        $content = "content";
+        $content = 'content';
         $exception = new \InvalidArgumentException('Unexpected error');
         $this->parser->setThrowException($exception);
 
@@ -208,13 +207,13 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseContentWithValidationErrors(): void
     {
-        $content = "content";
+        $content = 'content';
         $data = ['invalid' => 'data'];
         $this->parser->setParseResult($data);
         $this->parser->setValidationResult([
             'valid' => false,
             'errors' => ['Validation error 1', 'Validation error 2'],
-            'warnings' => ['Validation warning']
+            'warnings' => ['Validation warning'],
         ]);
 
         $result = $this->parser->parseContent($content);
@@ -228,10 +227,10 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseContentWithPostProcessing(): void
     {
-        $content = "content";
+        $content = 'content';
         $originalData = ['original' => 'data'];
         $processedData = ['processed' => 'data'];
-        
+
         $this->parser->setParseResult($originalData);
         $this->parser->setPostProcessedData($processedData);
 
@@ -296,10 +295,10 @@ class AbstractConfigurationParserTest extends TestCase
     public function testIsReadyWithMissingClassDependency(): void
     {
         $this->parser->setRequiredDependencies(['NonExistentClass']);
-        
+
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Required dependency not available: NonExistentClass');
-        
+
         $this->parser->isReady();
     }
 
@@ -336,7 +335,7 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testReadFileContent(): void
     {
-        $content = "test file content";
+        $content = 'test file content';
         file_put_contents($this->tempFile, $content);
 
         self::assertSame($content, $this->parser->testReadFileContent($this->tempFile));
@@ -346,7 +345,7 @@ class AbstractConfigurationParserTest extends TestCase
     {
         $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Cannot access configuration file');
-        
+
         $this->parser->testReadFileContent('/nonexistent/file.test');
     }
 
@@ -381,10 +380,10 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testParseContentMetadata(): void
     {
-        $content = "test content";
+        $content = 'test content';
         $data = [
             'key1' => 'value1',
-            'key2' => ['nested' => 'value']
+            'key2' => ['nested' => 'value'],
         ];
         $this->parser->setParseResult($data);
 
@@ -392,14 +391,14 @@ class AbstractConfigurationParserTest extends TestCase
 
         self::assertTrue($result->isSuccessful());
         self::assertSame('TestParser', $result->getMetadataValue('parser'));
-        self::assertSame(strlen($content), $result->getMetadataValue('content_length'));
+        self::assertSame(\strlen($content), $result->getMetadataValue('content_length'));
         self::assertSame(2, $result->getMetadataValue('data_keys'));
         self::assertTrue($result->getMetadataValue('has_nested_data'));
     }
 
     public function testLoggerIntegration(): void
     {
-        $content = "test content";
+        $content = 'test content';
         $data = ['key' => 'value'];
         file_put_contents($this->tempFile, $content);
         $this->parser->setParseResult($data);
@@ -409,15 +408,15 @@ class AbstractConfigurationParserTest extends TestCase
             ->method('debug')
             ->willReturnCallback(function ($message, $context) {
                 static $callCount = 0;
-                $callCount++;
-                
-                if ($callCount === 1) {
+                ++$callCount;
+
+                if (1 === $callCount) {
                     self::assertSame('Starting configuration file parsing', $message);
                     self::assertIsArray($context);
                     self::assertArrayHasKey('file_path', $context);
                     self::assertArrayHasKey('parser', $context);
                     self::assertArrayHasKey('format', $context);
-                } elseif ($callCount === 2) {
+                } elseif (2 === $callCount) {
                     self::assertSame('Starting content parsing', $message);
                     self::assertIsArray($context);
                     self::assertArrayHasKey('source_path', $context);
@@ -433,7 +432,7 @@ class AbstractConfigurationParserTest extends TestCase
                 'Configuration file parsed successfully',
                 self::callback(function ($context) {
                     return isset($context['file_path'], $context['parser'], $context['data_keys'], $context['warnings']);
-                })
+                }),
             );
 
         $this->parser->parseFile($this->tempFile);
@@ -441,19 +440,19 @@ class AbstractConfigurationParserTest extends TestCase
 
     public function testCompleteParsingFlow(): void
     {
-        $content = "complex test content";
+        $content = 'complex test content';
         $originalData = ['original' => 'data', 'complex' => ['nested' => 'structure']];
         $processedData = ['processed' => 'data', 'complex' => ['nested' => 'structure']];
         $warnings = ['Processing warning'];
-        
+
         file_put_contents($this->tempFile, $content);
-        
+
         $this->parser->setParseResult($originalData);
         $this->parser->setPostProcessedData($processedData);
         $this->parser->setValidationResult([
             'valid' => true,
             'errors' => [],
-            'warnings' => $warnings
+            'warnings' => $warnings,
         ]);
 
         $result = $this->parser->parseFile($this->tempFile);
@@ -463,17 +462,17 @@ class AbstractConfigurationParserTest extends TestCase
         self::assertSame($warnings, $result->getWarnings());
         self::assertSame($this->tempFile, $result->getSourcePath());
         self::assertSame('test', $result->getFormat());
-        
+
         // Verify metadata
         self::assertSame('TestParser', $result->getMetadataValue('parser'));
-        self::assertSame(strlen($content), $result->getMetadataValue('content_length'));
+        self::assertSame(\strlen($content), $result->getMetadataValue('content_length'));
         self::assertSame(2, $result->getMetadataValue('data_keys'));
         self::assertTrue($result->getMetadataValue('has_nested_data'));
     }
 }
 
 /**
- * Testable implementation of AbstractConfigurationParser for testing
+ * Testable implementation of AbstractConfigurationParser for testing.
  */
 class TestableAbstractParser extends AbstractConfigurationParser
 {
@@ -567,9 +566,10 @@ class TestableAbstractParser extends AbstractConfigurationParser
 
     protected function doParse(string $content, string $sourcePath): array
     {
-        if ($this->throwException !== null) {
+        if (null !== $this->throwException) {
             throw $this->throwException;
         }
+
         return $this->parseResult;
     }
 

@@ -18,8 +18,8 @@ use Symfony\Component\Yaml\Exception\ParseException as SymfonyParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * YAML configuration parser for TYPO3
- * 
+ * YAML configuration parser for TYPO3.
+ *
  * Parses YAML configuration files such as Services.yaml, site configurations,
  * and other YAML-based configuration files used in modern TYPO3 installations.
  */
@@ -30,9 +30,9 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     public function __construct(LoggerInterface $logger)
     {
         parent::__construct($logger);
-        
+
         // Set YAML parsing flags for TYPO3 compatibility
-        $this->yamlFlags = Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | 
+        $this->yamlFlags = Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE |
                           Yaml::PARSE_DATETIME;
     }
 
@@ -66,14 +66,14 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         if (!class_exists(Yaml::class)) {
             throw new \RuntimeException('Symfony YAML component is required but not available');
         }
-        
+
         return parent::isReady();
     }
 
     protected function supportsSpecific(string $filePath): bool
     {
         $fileName = basename($filePath);
-        
+
         // Check for known TYPO3 YAML configuration files
         $supportedFiles = [
             'Services.yaml',
@@ -81,18 +81,18 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
             'config.yaml',
             'site.yaml',
         ];
-        
-        if (in_array($fileName, $supportedFiles, true)) {
+
+        if (\in_array($fileName, $supportedFiles, true)) {
             return true;
         }
-        
+
         // Check for filename patterns (for test files)
-        if ((str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml')) ||
-            (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml')) ||
-            (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))) {
+        if ((str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml'))
+            || (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml'))
+            || (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))) {
             return true;
         }
-        
+
         // Check if it's in a TYPO3 configuration directory
         $supportedPaths = [
             '/config/sites/',
@@ -100,13 +100,13 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
             '/Configuration/',
             '/Resources/Private/Language/',
         ];
-        
+
         foreach ($supportedPaths as $path) {
             if (str_contains($filePath, $path)) {
                 return true;
             }
         }
-        
+
         // Check if file contains TYPO3-specific YAML patterns
         return $this->looksLikeTypo3YamlFile($filePath);
     }
@@ -116,41 +116,35 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         try {
             // Apply custom parsing options if set
             $flags = $this->getOption('yaml_flags', $this->yamlFlags);
-            
+
             // Parse YAML content
             $parsedData = Yaml::parse($content, $flags);
-            
+
             // Handle null result (empty YAML file)
-            if ($parsedData === null) {
+            if (null === $parsedData) {
                 $this->logger->debug('YAML file is empty or contains only comments', [
-                    'source' => $sourcePath
+                    'source' => $sourcePath,
                 ]);
+
                 return [];
             }
-            
+
             // Ensure we return an array
-            if (!is_array($parsedData)) {
-                throw YamlParseException::invalidYamlStructure(
-                    'YAML root must be an array or object, got ' . gettype($parsedData),
-                    $sourcePath
-                );
+            if (!\is_array($parsedData)) {
+                throw YamlParseException::invalidYamlStructure('YAML root must be an array or object, got ' . \gettype($parsedData), $sourcePath);
             }
-            
+
             $this->logger->debug('YAML configuration parsed successfully', [
                 'source' => $sourcePath,
-                'keys_found' => count($parsedData),
-                'has_nested_data' => $this->hasNestedArrays($parsedData)
+                'keys_found' => \count($parsedData),
+                'has_nested_data' => $this->hasNestedArrays($parsedData),
             ]);
-            
+
             return $parsedData;
-            
         } catch (SymfonyParseException $e) {
             throw YamlParseException::fromSymfonyYamlException($e, $sourcePath);
         } catch (\Throwable $e) {
-            throw YamlParseException::invalidYamlStructure(
-                $e->getMessage(),
-                $sourcePath
-            );
+            throw YamlParseException::invalidYamlStructure($e->getMessage(), $sourcePath);
         }
     }
 
@@ -158,28 +152,28 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     {
         $errors = [];
         $warnings = [];
-        
+
         $fileName = basename($sourcePath);
-        
+
         // Validate specific TYPO3 YAML file types
-        if ($fileName === 'Services.yaml' || $fileName === 'services.yaml' || 
-            (str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml'))) {
+        if ('Services.yaml' === $fileName || 'services.yaml' === $fileName
+            || (str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml'))) {
             $this->validateServicesYaml($data, $errors, $warnings);
-        } elseif ($fileName === 'site.yaml' || str_contains($sourcePath, '/config/sites/') ||
-                 (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml'))) {
+        } elseif ('site.yaml' === $fileName || str_contains($sourcePath, '/config/sites/')
+                 || (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml'))) {
             $this->validateSiteConfiguration($data, $errors, $warnings);
-        } elseif (str_contains($sourcePath, '/Resources/Private/Language/') ||
-                 (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))) {
+        } elseif (str_contains($sourcePath, '/Resources/Private/Language/')
+                 || (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))) {
             $this->validateLanguageFile($data, $errors, $warnings);
         }
-        
+
         // General YAML structure validation
         $this->validateYamlStructure($data, $errors, $warnings, $sourcePath);
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
-            'warnings' => $warnings
+            'warnings' => $warnings,
         ];
     }
 
@@ -188,14 +182,15 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         // Apply TYPO3-specific post-processing
         $processedData = $this->processTypo3Placeholders($data);
         $processedData = $this->normalizeTypo3Configuration($processedData);
-        
+
         return $processedData;
     }
 
     /**
-     * Check if file looks like a TYPO3 YAML configuration file
-     * 
+     * Check if file looks like a TYPO3 YAML configuration file.
+     *
      * @param string $filePath File path to check
+     *
      * @return bool True if file looks like TYPO3 YAML config
      */
     private function looksLikeTypo3YamlFile(string $filePath): bool
@@ -203,24 +198,24 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         if (!$this->isFileAccessible($filePath)) {
             return false;
         }
-        
+
         // Read first few lines to check for TYPO3 patterns
         $handle = fopen($filePath, 'r');
-        if ($handle === false) {
+        if (false === $handle) {
             return false;
         }
-        
+
         $lines = [];
-        for ($i = 0; $i < 50 && !feof($handle); $i++) {
+        for ($i = 0; $i < 50 && !feof($handle); ++$i) {
             $line = fgets($handle);
-            if ($line !== false) {
+            if (false !== $line) {
                 $lines[] = trim($line);
             }
         }
         fclose($handle);
-        
+
         $content = implode(' ', $lines);
-        
+
         // Look for TYPO3-specific YAML patterns
         $patterns = [
             '/services\s*:/',
@@ -234,124 +229,126 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
             '/tags\s*:/',
             '/_defaults\s*:/',
         ];
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $content)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
-     * Validate Services.yaml structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
+     * Validate Services.yaml structure.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
      */
     private function validateServicesYaml(array $data, array &$errors, array &$warnings): void
     {
         // Check for services section
         if (!isset($data['services'])) {
             $warnings[] = 'Services.yaml file does not contain services section';
+
             return;
         }
-        
+
         $services = $data['services'];
-        if (!is_array($services)) {
+        if (!\is_array($services)) {
             $errors[] = 'Services section must be an array';
+
             return;
         }
-        
+
         // Check for _defaults section
         if (!isset($services['_defaults'])) {
             $warnings[] = 'Services configuration missing _defaults section';
         }
-        
+
         // Validate individual service definitions
         foreach ($services as $serviceId => $serviceConfig) {
-            if ($serviceId === '_defaults') {
+            if ('_defaults' === $serviceId) {
                 continue;
             }
-            
-            if (!is_array($serviceConfig)) {
+
+            if (!\is_array($serviceConfig)) {
                 $warnings[] = "Service '{$serviceId}' configuration is not an array";
                 continue;
             }
-            
+
             // Check for class definition
             if (!isset($serviceConfig['class']) && !str_contains($serviceId, '\\')) {
                 $warnings[] = "Service '{$serviceId}' missing class definition";
             }
-            
+
             // Check for common configuration issues
-            if (isset($serviceConfig['arguments']) && !is_array($serviceConfig['arguments'])) {
+            if (isset($serviceConfig['arguments']) && !\is_array($serviceConfig['arguments'])) {
                 $errors[] = "Service '{$serviceId}' arguments must be an array";
             }
-            
-            if (isset($serviceConfig['tags']) && !is_array($serviceConfig['tags'])) {
+
+            if (isset($serviceConfig['tags']) && !\is_array($serviceConfig['tags'])) {
                 $errors[] = "Service '{$serviceId}' tags must be an array";
             }
         }
     }
 
     /**
-     * Validate site configuration structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
+     * Validate site configuration structure.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
      */
     private function validateSiteConfiguration(array $data, array &$errors, array &$warnings): void
     {
         $requiredKeys = ['rootPageId', 'base'];
         $recommendedKeys = ['languages', 'routes'];
-        
+
         // Check required keys
         foreach ($requiredKeys as $key) {
             if (!isset($data[$key])) {
                 $errors[] = "Missing required site configuration key: {$key}";
             }
         }
-        
+
         // Check recommended keys
         foreach ($recommendedKeys as $key) {
             if (!isset($data[$key])) {
                 $warnings[] = "Missing recommended site configuration key: {$key}";
             }
         }
-        
+
         // Validate rootPageId
         if (isset($data['rootPageId'])) {
-            if (!is_int($data['rootPageId']) || $data['rootPageId'] < 1) {
+            if (!\is_int($data['rootPageId']) || $data['rootPageId'] < 1) {
                 $errors[] = 'rootPageId must be a positive integer';
             }
         }
-        
+
         // Validate base URL
         if (isset($data['base'])) {
-            if (!is_string($data['base']) || !filter_var($data['base'], FILTER_VALIDATE_URL)) {
+            if (!\is_string($data['base']) || !filter_var($data['base'], FILTER_VALIDATE_URL)) {
                 $errors[] = 'base must be a valid URL';
             }
         }
-        
+
         // Validate languages configuration
         if (isset($data['languages'])) {
-            if (!is_array($data['languages'])) {
+            if (!\is_array($data['languages'])) {
                 $errors[] = 'languages must be an array';
             } else {
                 foreach ($data['languages'] as $languageId => $languageConfig) {
-                    if (!is_array($languageConfig)) {
+                    if (!\is_array($languageConfig)) {
                         $errors[] = "Language configuration '{$languageId}' must be an array";
                         continue;
                     }
-                    
+
                     if (!isset($languageConfig['title'])) {
                         $warnings[] = "Language '{$languageId}' missing title";
                     }
-                    
+
                     if (!isset($languageConfig['enabled'])) {
                         $warnings[] = "Language '{$languageId}' missing enabled flag";
                     }
@@ -361,63 +358,65 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     }
 
     /**
-     * Validate language file structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
+     * Validate language file structure.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
      */
     private function validateLanguageFile(array $data, array &$errors, array &$warnings): void
     {
         // Language files should have specific structure
         if (empty($data)) {
             $warnings[] = 'Language file is empty';
+
             return;
         }
-        
+
         // Check for common language file patterns
         $hasLanguageKeys = false;
         foreach ($data as $key => $value) {
-            if (is_string($key) && (str_starts_with($key, 'LLL:') || str_contains($key, '.'))) {
+            if (\is_string($key) && (str_starts_with($key, 'LLL:') || str_contains($key, '.'))) {
                 $hasLanguageKeys = true;
                 break;
             }
         }
-        
+
         if (!$hasLanguageKeys) {
             $warnings[] = 'File does not appear to contain language labels';
         }
     }
 
     /**
-     * Validate general YAML structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
-     * @param string $sourcePath Source path for context
+     * Validate general YAML structure.
+     *
+     * @param array<string, mixed> $data       Configuration data
+     * @param array<string>        $errors     Error array to populate
+     * @param array<string>        $warnings   Warning array to populate
+     * @param string               $sourcePath Source path for context
      */
     private function validateYamlStructure(array $data, array &$errors, array &$warnings, string $sourcePath): void
     {
         // Check for extremely deep nesting
         $maxDepth = $this->getOption('max_nesting_depth', 10);
         $actualDepth = $this->getArrayDepth($data);
-        
+
         if ($actualDepth > $maxDepth) {
             $warnings[] = "YAML structure is deeply nested (depth: {$actualDepth}, max recommended: {$maxDepth})";
         }
-        
+
         // Check for potential circular references (simplified check)
         $this->checkForCircularReferences($data, $warnings);
-        
+
         // Check for empty sections
         $this->checkForEmptySections($data, $warnings);
     }
 
     /**
-     * Process TYPO3 placeholders in configuration
-     * 
+     * Process TYPO3 placeholders in configuration.
+     *
      * @param array<string, mixed> $data Configuration data
+     *
      * @return array<string, mixed> Processed data
      */
     private function processTypo3Placeholders(array $data): array
@@ -428,9 +427,10 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     }
 
     /**
-     * Normalize TYPO3 configuration values
-     * 
+     * Normalize TYPO3 configuration values.
+     *
      * @param array<string, mixed> $data Configuration data
+     *
      * @return array<string, mixed> Normalized data
      */
     private function normalizeTypo3Configuration(array $data): array
@@ -440,80 +440,83 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     }
 
     /**
-     * Recursively normalize boolean values
-     * 
+     * Recursively normalize boolean values.
+     *
      * @param mixed $data Data to normalize
+     *
      * @return mixed Normalized data
      */
     private function normalizeBooleansRecursive($data)
     {
-        if (is_array($data)) {
+        if (\is_array($data)) {
             $result = [];
             foreach ($data as $key => $value) {
                 $result[$key] = $this->normalizeBooleansRecursive($value);
             }
+
             return $result;
         }
-        
-        if (is_string($data)) {
+
+        if (\is_string($data)) {
             $lower = strtolower($data);
-            if (in_array($lower, ['true', '1', 'yes', 'on'], true)) {
+            if (\in_array($lower, ['true', '1', 'yes', 'on'], true)) {
                 return true;
             }
-            if (in_array($lower, ['false', '0', 'no', 'off'], true)) {
+            if (\in_array($lower, ['false', '0', 'no', 'off'], true)) {
                 return false;
             }
         }
-        
+
         return $data;
     }
 
     /**
-     * Get maximum array depth
-     * 
+     * Get maximum array depth.
+     *
      * @param array<mixed> $array Array to check
+     *
      * @return int Maximum depth
      */
     private function getArrayDepth(array $array): int
     {
         $maxDepth = 0;
-        
+
         foreach ($array as $value) {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $depth = 1 + $this->getArrayDepth($value);
                 $maxDepth = max($maxDepth, $depth);
             }
         }
-        
+
         return $maxDepth;
     }
 
     /**
-     * Check for potential circular references
-     * 
-     * @param array<string, mixed> $data Data to check
-     * @param array<string> $warnings Warning array to populate
+     * Check for potential circular references.
+     *
+     * @param array<string, mixed> $data     Data to check
+     * @param array<string>        $warnings Warning array to populate
      */
     private function checkForCircularReferences(array $data, array &$warnings): void
     {
         // Simplified check - look for suspicious self-references
         foreach ($data as $key => $value) {
-            if (is_string($value) && str_contains($value, (string) $key)) {
+            if (\is_string($value) && str_contains($value, (string) $key)) {
                 $warnings[] = "Potential circular reference detected in key: {$key}";
             }
         }
     }
 
     /**
-     * Check for empty configuration sections
-     * 
-     * @param array<string, mixed> $data Data to check
-     * @param array<string> $warnings Warning array to populate
+     * Check for empty configuration sections.
+     *
+     * @param array<string, mixed> $data     Data to check
+     * @param array<string>        $warnings Warning array to populate
      */
     private function checkForEmptySections(array $data, array &$warnings): void
     {
         foreach ($data as $key => $value) {
-            if (is_array($value) && empty($value) && is_string($key)) {
+            if (\is_array($value) && empty($value) && \is_string($key)) {
                 $warnings[] = "Empty configuration section found: {$key}";
             }
         }

@@ -15,16 +15,16 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Configuration;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
-class ConfigurationService
+class ConfigurationService implements ConfigurationServiceInterface
 {
     public const string DEFAULT_CONFIG_PATH = 'typo3-analyzer.yaml';
-    
+
     private array $configuration = [];
     private string $configPath;
 
     public function __construct(
         private readonly LoggerInterface $logger,
-        string $configPath = self::DEFAULT_CONFIG_PATH
+        string $configPath = self::DEFAULT_CONFIG_PATH,
     ) {
         $this->configPath = $configPath;
         $this->loadConfiguration();
@@ -56,7 +56,7 @@ class ConfigurationService
         $value = $this->configuration;
 
         foreach ($keys as $keyPart) {
-            if (!is_array($value) || !array_key_exists($keyPart, $value)) {
+            if (!\is_array($value) || !\array_key_exists($keyPart, $value)) {
                 return $default;
             }
             $value = $value[$keyPart];
@@ -71,10 +71,10 @@ class ConfigurationService
         $current = &$this->configuration;
 
         foreach ($keys as $i => $keyPart) {
-            if ($i === count($keys) - 1) {
+            if ($i === \count($keys) - 1) {
                 $current[$keyPart] = $value;
             } else {
-                if (!isset($current[$keyPart]) || !is_array($current[$keyPart])) {
+                if (!isset($current[$keyPart]) || !\is_array($current[$keyPart])) {
                     $current[$keyPart] = [];
                 }
                 $current = &$current[$keyPart];
@@ -93,7 +93,7 @@ class ConfigurationService
     }
 
     /**
-     * Create a new ConfigurationService instance with a different config path
+     * Create a new ConfigurationService instance with a different config path.
      */
     public function withConfigPath(string $configPath): self
     {
@@ -105,19 +105,19 @@ class ConfigurationService
         if (!file_exists($this->configPath)) {
             $this->logger->warning('Configuration file not found, using defaults', ['path' => $this->configPath]);
             $this->configuration = $this->getDefaultConfiguration();
+
             return;
         }
 
         try {
             $config = Yaml::parseFile($this->configPath);
-            $this->configuration = is_array($config) ? $config : [];
+            $this->configuration = \is_array($config) ? $config : [];
 
             $this->logger->debug('Configuration loaded', ['path' => $this->configPath]);
-
         } catch (\Exception $e) {
             $this->logger->error('Failed to load configuration file', [
                 'path' => $this->configPath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             $this->configuration = $this->getDefaultConfiguration();
         }
@@ -131,9 +131,9 @@ class ConfigurationService
                 'targetVersion' => '13.4',
                 'resultCache' => [
                     'enabled' => false,
-                    'ttl' => 3600
-                ]
-            ]
+                    'ttl' => 3600,
+                ],
+            ],
         ];
     }
 }

@@ -15,17 +15,18 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Parses Git repository versions and determines TYPO3 compatibility
+ * Parses Git repository versions and determines TYPO3 compatibility.
  */
 class GitVersionParser
 {
     /**
-     * Find Git tags that are compatible with the target TYPO3 version
+     * Find Git tags that are compatible with the target TYPO3 version.
      *
      * For Git repositories, we need to check composer.json to determine TYPO3 compatibility
      * since extension version numbers are independent from TYPO3 versions.
      *
      * @param array<GitTag> $tags
+     *
      * @return array<GitTag>
      */
     public function findCompatibleVersions(array $tags, Version $targetVersion, ?array $composerJson = null): array
@@ -34,7 +35,7 @@ class GitVersionParser
         if ($composerJson && $this->isComposerCompatible($composerJson, $targetVersion)) {
             // If main branch is compatible, return all stable tags
             // This is a simplified approach - ideally we'd check composer.json for each tag
-            return array_filter($tags, fn($tag) => !$tag->isPreRelease());
+            return array_filter($tags, fn ($tag) => !$tag->isPreRelease());
         }
 
         // Fallback: without composer.json analysis, we can't reliably determine compatibility
@@ -43,7 +44,7 @@ class GitVersionParser
     }
 
     /**
-     * Check if composer.json content is compatible with target TYPO3 version
+     * Check if composer.json content is compatible with target TYPO3 version.
      */
     public function isComposerCompatible(?array $composerJson, Version $targetVersion): bool
     {
@@ -73,7 +74,7 @@ class GitVersionParser
     }
 
     /**
-     * Check if a composer constraint is compatible with target TYPO3 version
+     * Check if a composer constraint is compatible with target TYPO3 version.
      */
     private function isConstraintCompatible(string $constraint, Version $targetVersion): bool
     {
@@ -89,8 +90,8 @@ class GitVersionParser
             $constraintVersion = Version::fromString($version);
 
             // Caret allows patch-level and minor updates
-            return $constraintVersion->getMajor() === $targetVersion->getMajor() &&
-                   $constraintVersion->getMinor() <= $targetVersion->getMinor();
+            return $constraintVersion->getMajor() === $targetVersion->getMajor()
+                   && $constraintVersion->getMinor() <= $targetVersion->getMinor();
         }
 
         // Handle tilde constraints (~12.4)
@@ -99,8 +100,8 @@ class GitVersionParser
             $constraintVersion = Version::fromString($version);
 
             // Tilde allows patch-level updates only
-            return $constraintVersion->getMajor() === $targetVersion->getMajor() &&
-                   $constraintVersion->getMinor() === $targetVersion->getMinor();
+            return $constraintVersion->getMajor() === $targetVersion->getMajor()
+                   && $constraintVersion->getMinor() === $targetVersion->getMinor();
         }
 
         // Handle range constraints (>=12.0,<13.0)
@@ -115,7 +116,7 @@ class GitVersionParser
             $minor = isset($matches[2]) ? (int) $matches[2] : null;
 
             if ($major === $targetVersion->getMajor()) {
-                return $minor === null || $minor <= $targetVersion->getMinor();
+                return null === $minor || $minor <= $targetVersion->getMinor();
             }
         }
 

@@ -1,7 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Example TYPO3 PackageStates.php file for testing
+ * Example TYPO3 PackageStates.php file for testing.
  */
 return [
     'packages' => [

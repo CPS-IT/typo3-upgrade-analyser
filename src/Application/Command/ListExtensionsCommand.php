@@ -13,8 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -25,15 +26,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'list-extensions',
-    description: 'List extensions in a TYPO3 installation with target version compatibility'
+    description: 'List extensions in a TYPO3 installation with target version compatibility',
 )]
 class ListExtensionsCommand extends Command
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ExtensionDiscoveryService $extensionDiscovery,
-        private readonly InstallationDiscoveryService $installationDiscovery,
-        private readonly ConfigurationService $configService
+        private readonly ExtensionDiscoveryServiceInterface $extensionDiscovery,
+        private readonly InstallationDiscoveryServiceInterface $installationDiscovery,
+        private readonly ConfigurationServiceInterface $configService,
     ) {
         parent::__construct();
     }
@@ -46,7 +47,7 @@ class ListExtensionsCommand extends Command
                 'c',
                 InputOption::VALUE_REQUIRED,
                 'Path to custom configuration file',
-                ConfigurationService::DEFAULT_CONFIG_PATH
+                ConfigurationService::DEFAULT_CONFIG_PATH,
             );
     }
 
@@ -58,13 +59,14 @@ class ListExtensionsCommand extends Command
 
         // Validate config file exists
         if (!file_exists($configPath)) {
-            $io->error(sprintf('Configuration file does not exist: %s', $configPath));
+            $io->error(\sprintf('Configuration file does not exist: %s', $configPath));
+
             return Command::FAILURE;
         }
 
         try {
             // Use ConfigurationService with custom config path if provided
-            $configService = $configPath !== ConfigurationService::DEFAULT_CONFIG_PATH 
+            $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
                 ? $this->configService->withConfigPath($configPath)
                 : $this->configService;
 
@@ -74,16 +76,18 @@ class ListExtensionsCommand extends Command
 
             if (!$installationPath) {
                 $io->error('No installation path specified in configuration file');
+
                 return Command::FAILURE;
             }
 
             $io->title('TYPO3 Extension List');
-            $io->section(sprintf('Installation: %s', $installationPath));
-            $io->note(sprintf('Target TYPO3 version: %s', $targetVersion));
+            $io->section(\sprintf('Installation: %s', $installationPath));
+            $io->note(\sprintf('Target TYPO3 version: %s', $targetVersion));
 
             // Validate installation path exists
             if (!is_dir($installationPath)) {
-                $io->error(sprintf('Installation path does not exist: %s', $installationPath));
+                $io->error(\sprintf('Installation path does not exist: %s', $installationPath));
+
                 return Command::FAILURE;
             }
 
@@ -92,13 +96,15 @@ class ListExtensionsCommand extends Command
             $installationResult = $this->installationDiscovery->discoverInstallation($installationPath);
 
             if (!$installationResult->isSuccessful()) {
-                $io->warning(sprintf('Installation discovery failed: %s', $installationResult->getErrorMessage()));
+                $io->warning(\sprintf('Installation discovery failed: %s', $installationResult->getErrorMessage()));
                 $io->text('Proceeding with extension discovery using default paths...');
-                $customPaths = null;
+                
+                // Check if this is a legacy installation and provide appropriate custom paths
+                $customPaths = $this->detectLegacyInstallationPaths($installationPath);
             } else {
                 $installation = $installationResult->getInstallation();
                 $customPaths = $installation?->getMetadata()?->getCustomPaths();
-                $io->text(sprintf('Installation discovered: TYPO3 %s', $installation?->getVersion()->toString() ?? 'unknown'));
+                $io->text(\sprintf('Installation discovered: TYPO3 %s', $installation?->getVersion()->toString() ?? 'unknown'));
             }
 
             // Discover extensions using installation metadata
@@ -106,12 +112,14 @@ class ListExtensionsCommand extends Command
             $discoveryResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
 
             if (!$discoveryResult->isSuccessful()) {
-                $io->error(sprintf('Extension discovery failed: %s', $discoveryResult->getErrorMessage()));
+                $io->error(\sprintf('Extension discovery failed: %s', $discoveryResult->getErrorMessage()));
+
                 return Command::FAILURE;
             }
 
             if (!$discoveryResult->hasExtensions()) {
                 $io->warning('No extensions found in the installation');
+
                 return Command::SUCCESS;
             }
 
@@ -123,38 +131,57 @@ class ListExtensionsCommand extends Command
             // Display table
             $io->table(
                 ['Extension', 'Current Version', 'Target Available'],
-                array_map(fn($ext) => [
+                array_map(fn ($ext) => [
                     $ext->getKey(),
                     $ext->getVersion()->toString(),
-                    'UNKNOWN' // TODO: Real compatibility check in next iteration
-                ], $extensions)
+                    'UNKNOWN', // TODO: Real compatibility check in next iteration
+                ], $extensions),
             );
 
             // Summary
             $compatible = 0; // TODO: Count real compatibility once implemented
             $incompatible = 0;
-            $unknown = count($extensions);
+            $unknown = \count($extensions);
 
             $io->writeln('');
-            $io->writeln(sprintf(
+            $io->writeln(\sprintf(
                 'Summary: %d compatible, %d incompatible, %d unknown',
                 $compatible,
                 $incompatible,
-                $unknown
+                $unknown,
             ));
 
             $this->logger->info('Extension list generated', [
                 'installation_path' => $installationPath,
                 'target_version' => $targetVersion,
-                'discovery_result' => $discoveryResult->getStatistics()
+                'discovery_result' => $discoveryResult->getStatistics(),
             ]);
 
             return Command::SUCCESS;
-
         } catch (\Exception $e) {
-            $io->error(sprintf('Failed to process configuration: %s', $e->getMessage()));
+            $io->error(\sprintf('Failed to process configuration: %s', $e->getMessage()));
             $this->logger->error('List extensions failed', ['exception' => $e]);
+
             return Command::FAILURE;
         }
+    }
+
+    /**
+     * Detect if this is a legacy installation and return appropriate custom paths.
+     */
+    private function detectLegacyInstallationPaths(string $installationPath): ?array
+    {
+        // Check for legacy TYPO3 installation structure (typo3conf directly in root)
+        $legacyPackageStatesPath = $installationPath . '/typo3conf/PackageStates.php';
+        $legacyTypo3ConfPath = $installationPath . '/typo3conf';
+        
+        if (file_exists($legacyPackageStatesPath) && is_dir($legacyTypo3ConfPath)) {
+            return [
+                'web-dir' => '.',
+                'typo3conf-dir' => 'typo3conf',
+            ];
+        }
+        
+        return null;
     }
 }

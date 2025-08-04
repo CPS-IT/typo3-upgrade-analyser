@@ -12,10 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
-use DateTimeImmutable;
-
 /**
- * Immutable result of configuration parsing operation
+ * Immutable result of configuration parsing operation.
  *
  * Contains parsed configuration data, metadata about the parsing process,
  * and detailed error information if parsing failed.
@@ -23,35 +21,36 @@ use DateTimeImmutable;
 final readonly class ParseResult
 {
     /**
-     * @param bool $isSuccessful Whether parsing was successful
-     * @param array<string, mixed> $data Parsed configuration data
-     * @param string $format Configuration format that was parsed
-     * @param string $sourcePath Source file path or identifier
-     * @param array<string> $errors Error messages if parsing failed
-     * @param array<string> $warnings Non-fatal warnings during parsing
-     * @param array<string, mixed> $metadata Additional parsing metadata
-     * @param \DateTimeImmutable $parsedAt When parsing was performed
+     * @param bool                 $isSuccessful Whether parsing was successful
+     * @param array<string, mixed> $data         Parsed configuration data
+     * @param string               $format       Configuration format that was parsed
+     * @param string               $sourcePath   Source file path or identifier
+     * @param array<string>        $errors       Error messages if parsing failed
+     * @param array<string>        $warnings     Non-fatal warnings during parsing
+     * @param array<string, mixed> $metadata     Additional parsing metadata
+     * @param \DateTimeImmutable   $parsedAt     When parsing was performed
      */
     private function __construct(
-        private bool               $isSuccessful,
-        private array              $data,
-        private string             $format,
-        private string             $sourcePath,
-        private array              $errors,
-        private array              $warnings,
-        private array              $metadata,
-        private DateTimeImmutable $parsedAt
+        private bool $isSuccessful,
+        private array $data,
+        private string $format,
+        private string $sourcePath,
+        private array $errors,
+        private array $warnings,
+        private array $metadata,
+        private \DateTimeImmutable $parsedAt,
     ) {
     }
 
     /**
-     * Create successful parse result
+     * Create successful parse result.
      *
-     * @param array<string, mixed> $data Parsed configuration data
-     * @param string $format Configuration format
-     * @param string $sourcePath Source file path
-     * @param array<string> $warnings Optional warnings
-     * @param array<string, mixed> $metadata Optional metadata
+     * @param array<string, mixed> $data       Parsed configuration data
+     * @param string               $format     Configuration format
+     * @param string               $sourcePath Source file path
+     * @param array<string>        $warnings   Optional warnings
+     * @param array<string, mixed> $metadata   Optional metadata
+     *
      * @return self Successful result
      */
     public static function success(
@@ -59,7 +58,7 @@ final readonly class ParseResult
         string $format,
         string $sourcePath,
         array $warnings = [],
-        array $metadata = []
+        array $metadata = [],
     ): self {
         return new self(
             true,
@@ -69,18 +68,19 @@ final readonly class ParseResult
             [],
             $warnings,
             $metadata,
-            new DateTimeImmutable()
+            new \DateTimeImmutable(),
         );
     }
 
     /**
-     * Create failed parse result
+     * Create failed parse result.
      *
-     * @param array<string> $errors Error messages
-     * @param string $format Configuration format that failed
-     * @param string $sourcePath Source file path
-     * @param array<string> $warnings Optional warnings
-     * @param array<string, mixed> $metadata Optional metadata
+     * @param array<string>        $errors     Error messages
+     * @param string               $format     Configuration format that failed
+     * @param string               $sourcePath Source file path
+     * @param array<string>        $warnings   Optional warnings
+     * @param array<string, mixed> $metadata   Optional metadata
+     *
      * @return self Failed result
      */
     public static function failure(
@@ -88,7 +88,7 @@ final readonly class ParseResult
         string $format,
         string $sourcePath,
         array $warnings = [],
-        array $metadata = []
+        array $metadata = [],
     ): self {
         return new self(
             false,
@@ -98,12 +98,12 @@ final readonly class ParseResult
             $errors,
             $warnings,
             $metadata,
-            new DateTimeImmutable()
+            new \DateTimeImmutable(),
         );
     }
 
     /**
-     * Check if parsing was successful
+     * Check if parsing was successful.
      *
      * @return bool True if parsing succeeded
      */
@@ -113,7 +113,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get parsed configuration data
+     * Get parsed configuration data.
      *
      * @return array<string, mixed> Configuration data (empty if parsing failed)
      */
@@ -123,7 +123,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get configuration format
+     * Get configuration format.
      *
      * @return string Format identifier
      */
@@ -133,7 +133,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get source path
+     * Get source path.
      *
      * @return string Source file path or identifier
      */
@@ -143,7 +143,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get error messages
+     * Get error messages.
      *
      * @return array<string> Error messages (empty if successful)
      */
@@ -153,7 +153,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get warning messages
+     * Get warning messages.
      *
      * @return array<string> Warning messages
      */
@@ -163,7 +163,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get parsing metadata
+     * Get parsing metadata.
      *
      * @return array<string, mixed> Metadata about parsing process
      */
@@ -173,17 +173,17 @@ final readonly class ParseResult
     }
 
     /**
-     * Get parsing timestamp
+     * Get parsing timestamp.
      *
      * @return \DateTimeImmutable When parsing was performed
      */
-    public function getParsedAt(): DateTimeImmutable
+    public function getParsedAt(): \DateTimeImmutable
     {
         return $this->parsedAt;
     }
 
     /**
-     * Check if result has errors
+     * Check if result has errors.
      *
      * @return bool True if errors are present
      */
@@ -193,7 +193,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Check if result has warnings
+     * Check if result has warnings.
      *
      * @return bool True if warnings are present
      */
@@ -203,12 +203,13 @@ final readonly class ParseResult
     }
 
     /**
-     * Get specific configuration value by key path
+     * Get specific configuration value by key path.
      *
      * Supports dot notation for nested values (e.g., 'database.connections.default.host')
      *
      * @param string $keyPath Key path using dot notation
-     * @param mixed $default Default value if key not found
+     * @param mixed  $default Default value if key not found
+     *
      * @return mixed Configuration value or default
      */
     public function getValue(string $keyPath, $default = null)
@@ -221,7 +222,7 @@ final readonly class ParseResult
         $value = $this->data;
 
         foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
+            if (!\is_array($value) || !\array_key_exists($key, $value)) {
                 return $default;
             }
             $value = $value[$key];
@@ -231,9 +232,10 @@ final readonly class ParseResult
     }
 
     /**
-     * Check if configuration has specific key path
+     * Check if configuration has specific key path.
      *
      * @param string $keyPath Key path using dot notation
+     *
      * @return bool True if key exists
      */
     public function hasValue(string $keyPath): bool
@@ -246,7 +248,7 @@ final readonly class ParseResult
         $value = $this->data;
 
         foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
+            if (!\is_array($value) || !\array_key_exists($key, $value)) {
                 return false;
             }
             $value = $value[$key];
@@ -256,10 +258,11 @@ final readonly class ParseResult
     }
 
     /**
-     * Get metadata value by key
+     * Get metadata value by key.
      *
-     * @param string $key Metadata key
-     * @param mixed $default Default value
+     * @param string $key     Metadata key
+     * @param mixed  $default Default value
+     *
      * @return mixed Metadata value or default
      */
     public function getMetadataValue(string $key, $default = null)
@@ -268,7 +271,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get first error message
+     * Get first error message.
      *
      * @return string|null First error message or null if no errors
      */
@@ -278,7 +281,7 @@ final readonly class ParseResult
     }
 
     /**
-     * Get first warning message
+     * Get first warning message.
      *
      * @return string|null First warning message or null if no warnings
      */
@@ -288,38 +291,39 @@ final readonly class ParseResult
     }
 
     /**
-     * Create summary string of parse result
+     * Create summary string of parse result.
      *
      * @return string Human-readable summary
      */
     public function getSummary(): string
     {
         if ($this->isSuccessful) {
-            $summary = sprintf(
+            $summary = \sprintf(
                 '%s configuration parsed successfully from %s',
                 ucfirst($this->format),
-                basename($this->sourcePath)
+                basename($this->sourcePath),
             );
 
             if (!empty($this->warnings)) {
-                $summary .= sprintf(' (%d warning%s)', count($this->warnings), count($this->warnings) === 1 ? '' : 's');
+                $summary .= \sprintf(' (%d warning%s)', \count($this->warnings), 1 === \count($this->warnings) ? '' : 's');
             }
 
             return $summary;
         }
 
-        $errorCount = count($this->errors);
-        return sprintf(
+        $errorCount = \count($this->errors);
+
+        return \sprintf(
             '%s configuration parsing failed: %s (%d error%s)',
             ucfirst($this->format),
             $this->getFirstError() ?? 'Unknown error',
             $errorCount,
-            $errorCount === 1 ? '' : 's'
+            1 === $errorCount ? '' : 's',
         );
     }
 
     /**
-     * Convert result to array for serialization
+     * Convert result to array for serialization.
      *
      * @return array<string, mixed> Array representation
      */
@@ -336,16 +340,16 @@ final readonly class ParseResult
             'parsed_at' => $this->parsedAt->format(\DateTimeInterface::ATOM),
             'summary' => $this->getSummary(),
             'statistics' => [
-                'error_count' => count($this->errors),
-                'warning_count' => count($this->warnings),
-                'data_keys' => $this->isSuccessful ? count($this->data) : 0,
+                'error_count' => \count($this->errors),
+                'warning_count' => \count($this->warnings),
+                'data_keys' => $this->isSuccessful ? \count($this->data) : 0,
                 'has_nested_data' => $this->hasNestedData(),
             ],
         ];
     }
 
     /**
-     * Check if data contains nested arrays
+     * Check if data contains nested arrays.
      *
      * @return bool True if data has nested structure
      */
@@ -356,7 +360,7 @@ final readonly class ParseResult
         }
 
         foreach ($this->data as $value) {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 return true;
             }
         }

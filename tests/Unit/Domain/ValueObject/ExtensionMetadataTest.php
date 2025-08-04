@@ -47,7 +47,7 @@ final class ExtensionMetadataTest extends TestCase
             $supportedPhpVersions,
             $supportedTypo3Versions,
             $this->testDate,
-            $additionalData
+            $additionalData,
         );
 
         self::assertSame($description, $metadata->getDescription());
@@ -71,7 +71,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             [],
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame([], $metadata->getAdditionalData());
@@ -90,7 +90,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             [],
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame($expected, $metadata->hasKeyword($searchKeyword));
@@ -124,7 +124,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             $supportedVersions,
             [],
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame($expected, $metadata->supportsPhpVersion($testVersion));
@@ -157,7 +157,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             $supportedVersions,
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame($expected, $metadata->supportsTypo3Version($testVersion));
@@ -194,7 +194,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            $additionalData
+            $additionalData,
         );
 
         self::assertSame('local', $metadata->getAdditionalValue('source'));
@@ -214,7 +214,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['composer_data' => ['name' => 'vendor/package']]
+            ['composer_data' => ['name' => 'vendor/package']],
         );
 
         $metadataWithoutComposer = new ExtensionMetadata(
@@ -226,7 +226,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['other_data' => 'value']
+            ['other_data' => 'value'],
         );
 
         self::assertTrue($metadataWithComposer->hasComposerData());
@@ -244,7 +244,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['emconf_data' => ['title' => 'Extension Title']]
+            ['emconf_data' => ['title' => 'Extension Title']],
         );
 
         $metadataWithoutEmconf = new ExtensionMetadata(
@@ -256,7 +256,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['other_data' => 'value']
+            ['other_data' => 'value'],
         );
 
         self::assertTrue($metadataWithEmconf->hasEmconfData());
@@ -266,7 +266,7 @@ final class ExtensionMetadataTest extends TestCase
     public function testGetComposerData(): void
     {
         $composerData = ['name' => 'vendor/package', 'type' => 'typo3-cms-extension'];
-        
+
         $metadataWithComposer = new ExtensionMetadata(
             'Test',
             'Author',
@@ -276,7 +276,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['composer_data' => $composerData]
+            ['composer_data' => $composerData],
         );
 
         $metadataWithoutComposer = new ExtensionMetadata(
@@ -287,7 +287,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             [],
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame($composerData, $metadataWithComposer->getComposerData());
@@ -297,7 +297,7 @@ final class ExtensionMetadataTest extends TestCase
     public function testGetEmconfData(): void
     {
         $emconfData = ['title' => 'Extension Title', 'version' => '1.0.0'];
-        
+
         $metadataWithEmconf = new ExtensionMetadata(
             'Test',
             'Author',
@@ -307,7 +307,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['emconf_data' => $emconfData]
+            ['emconf_data' => $emconfData],
         );
 
         $metadataWithoutEmconf = new ExtensionMetadata(
@@ -318,7 +318,7 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             [],
-            $this->testDate
+            $this->testDate,
         );
 
         self::assertSame($emconfData, $metadataWithEmconf->getEmconfData());
@@ -337,7 +337,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            $originalData
+            $originalData,
         );
 
         $additionalData = ['version' => '1.0.0', 'type' => 'extension'];
@@ -345,14 +345,14 @@ final class ExtensionMetadataTest extends TestCase
 
         // Original should be unchanged
         self::assertSame($originalData, $metadata->getAdditionalData());
-        
+
         // New should have merged data
         $expectedMerged = ['source' => 'local', 'version' => '1.0.0', 'type' => 'extension'];
         self::assertSame($expectedMerged, $newMetadata->getAdditionalData());
-        
+
         // Should be different instances
         self::assertNotSame($metadata, $newMetadata);
-        
+
         // Other properties should be the same
         self::assertSame($metadata->getDescription(), $newMetadata->getDescription());
         self::assertSame($metadata->getAuthor(), $newMetadata->getAuthor());
@@ -370,7 +370,7 @@ final class ExtensionMetadataTest extends TestCase
             [],
             [],
             $this->testDate,
-            ['source' => 'local', 'version' => '1.0.0']
+            ['source' => 'local', 'version' => '1.0.0'],
         );
 
         $newMetadata = $metadata->withAdditionalData(['version' => '2.0.0', 'new_key' => 'new_value']);
@@ -399,7 +399,7 @@ final class ExtensionMetadataTest extends TestCase
             $supportedPhpVersions,
             $supportedTypo3Versions,
             $this->testDate,
-            $additionalData
+            $additionalData,
         );
 
         $array = $metadata->toArray();
@@ -441,7 +441,7 @@ final class ExtensionMetadataTest extends TestCase
         $after = new \DateTimeImmutable();
 
         $timestamp = $metadata->getLastModified();
-        
+
         self::assertGreaterThanOrEqual($before->getTimestamp(), $timestamp->getTimestamp());
         self::assertLessThanOrEqual($after->getTimestamp(), $timestamp->getTimestamp());
     }
@@ -462,7 +462,7 @@ final class ExtensionMetadataTest extends TestCase
             $supportedPhpVersions,
             $supportedTypo3Versions,
             $this->testDate,
-            $additionalData
+            $additionalData,
         );
 
         // Modify original arrays
@@ -489,11 +489,11 @@ final class ExtensionMetadataTest extends TestCase
             'GPL-2.0',
             [],
             [],
-            $date
+            $date,
         );
 
         $retrievedDate = $metadata->getLastModified();
-        
+
         self::assertInstanceOf(\DateTimeImmutable::class, $retrievedDate);
         self::assertEquals($date, $retrievedDate);
         self::assertSame($date, $retrievedDate); // Should be the same instance

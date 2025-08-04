@@ -13,18 +13,18 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 /**
- * Represents a validation issue found during installation validation
+ * Represents a validation issue found during installation validation.
  */
 final class ValidationIssue
 {
     /**
-     * @param string $ruleName Name of the validation rule that detected this issue
-     * @param ValidationSeverity $severity Severity level of the issue
-     * @param string $message Human-readable description of the issue
-     * @param string $category Category of the validation rule
-     * @param array<string, mixed> $context Additional context information
-     * @param array<string> $affectedPaths File paths affected by this issue
-     * @param array<string> $recommendations Suggested actions to resolve the issue
+     * @param string               $ruleName        Name of the validation rule that detected this issue
+     * @param ValidationSeverity   $severity        Severity level of the issue
+     * @param string               $message         Human-readable description of the issue
+     * @param string               $category        Category of the validation rule
+     * @param array<string, mixed> $context         Additional context information
+     * @param array<string>        $affectedPaths   File paths affected by this issue
+     * @param array<string>        $recommendations Suggested actions to resolve the issue
      */
     public function __construct(
         private readonly string $ruleName,
@@ -33,7 +33,7 @@ final class ValidationIssue
         private readonly string $category,
         private readonly array $context = [],
         private readonly array $affectedPaths = [],
-        private readonly array $recommendations = []
+        private readonly array $recommendations = [],
     ) {
     }
 
@@ -106,7 +106,7 @@ final class ValidationIssue
             $this->category,
             array_merge($this->context, $context),
             $this->affectedPaths,
-            $this->recommendations
+            $this->recommendations,
         );
     }
 
@@ -119,7 +119,7 @@ final class ValidationIssue
             $this->category,
             $this->context,
             $this->affectedPaths,
-            array_merge($this->recommendations, $recommendations)
+            array_merge($this->recommendations, $recommendations),
         );
     }
 }

@@ -22,8 +22,8 @@ use PhpParser\ParserFactory;
 use Psr\Log\LoggerInterface;
 
 /**
- * Safe PHP configuration parser using AST
- * 
+ * Safe PHP configuration parser using AST.
+ *
  * Parses PHP configuration files like LocalConfiguration.php and
  * AdditionalConfiguration.php without executing code, using abstract
  * syntax tree parsing to extract configuration values safely.
@@ -36,11 +36,11 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
     public function __construct(LoggerInterface $logger)
     {
         parent::__construct($logger);
-        
+
         // Initialize PHP parser
         $parserFactory = new ParserFactory();
         $this->parser = $parserFactory->createForNewestSupportedVersion();
-        
+
         // Initialize node traverser
         $this->traverser = new NodeTraverser();
     }
@@ -75,7 +75,7 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         if (!class_exists(ParserFactory::class)) {
             throw new \RuntimeException('PHP-Parser library is required but not available');
         }
-        
+
         return parent::isReady();
     }
 
@@ -90,11 +90,11 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
             'ext_localconf.php',
             'ext_tables.php',
         ];
-        
-        if (in_array($fileName, $supportedFiles, true)) {
+
+        if (\in_array($fileName, $supportedFiles, true)) {
             return true;
         }
-        
+
         // Check if file contains PHP configuration patterns
         return $this->looksLikeConfigurationFile($filePath);
     }
@@ -104,38 +104,28 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         try {
             // Parse PHP code into AST
             $ast = $this->parser->parse($content);
-            
-            if ($ast === null) {
-                throw PhpParseException::syntaxError(
-                    'Failed to parse PHP content',
-                    $sourcePath,
-                    'php'
-                );
+
+            if (null === $ast) {
+                throw PhpParseException::syntaxError('Failed to parse PHP content', $sourcePath, 'php');
             }
-            
+
             // Extract configuration data from AST
             $extractor = new ConfigurationExtractor($sourcePath);
             $this->traverser->addVisitor($extractor);
             $this->traverser->traverse($ast);
             $this->traverser->removeVisitor($extractor);
-            
+
             $configData = $extractor->getConfiguration();
-            
+
             $this->logger->debug('PHP configuration parsed successfully', [
                 'source' => $sourcePath,
-                'keys_found' => count($configData),
-                'extraction_method' => $extractor->getExtractionMethod()
+                'keys_found' => \count($configData),
+                'extraction_method' => $extractor->getExtractionMethod(),
             ]);
-            
+
             return $configData;
-            
         } catch (Error $e) {
-            throw PhpParseException::fromAstErrors(
-                [$e->getMessage()],
-                $sourcePath,
-                $e->getStartLine(),
-                $e->hasColumnInfo() ? $e->getStartColumn($content) : null
-            );
+            throw PhpParseException::fromAstErrors([$e->getMessage()], $sourcePath, $e->getStartLine(), $e->hasColumnInfo() ? $e->getStartColumn($content) : null);
         }
     }
 
@@ -143,32 +133,33 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
     {
         $errors = [];
         $warnings = [];
-        
+
         // Check for common TYPO3 configuration structure
         $fileName = basename($sourcePath);
-        
-        if ($fileName === 'LocalConfiguration.php' || 
-            (str_starts_with($fileName, 'LocalConfiguration') && str_ends_with($fileName, '.php'))) {
+
+        if ('LocalConfiguration.php' === $fileName
+            || (str_starts_with($fileName, 'LocalConfiguration') && str_ends_with($fileName, '.php'))) {
             $this->validateLocalConfiguration($data, $errors, $warnings);
-        } elseif ($fileName === 'PackageStates.php' || 
-                 (str_starts_with($fileName, 'PackageStates') && str_ends_with($fileName, '.php'))) {
+        } elseif ('PackageStates.php' === $fileName
+                 || (str_starts_with($fileName, 'PackageStates') && str_ends_with($fileName, '.php'))) {
             $this->validatePackageStates($data, $errors, $warnings);
-        } elseif (str_ends_with($fileName, 'ext_localconf.php') || 
-                 (str_starts_with($fileName, 'ext_localconf') && str_ends_with($fileName, '.php'))) {
+        } elseif (str_ends_with($fileName, 'ext_localconf.php')
+                 || (str_starts_with($fileName, 'ext_localconf') && str_ends_with($fileName, '.php'))) {
             $this->validateExtensionConfiguration($data, $errors, $warnings, 'localconf');
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
-            'warnings' => $warnings
+            'warnings' => $warnings,
         ];
     }
 
     /**
-     * Check if file looks like a TYPO3 configuration file
-     * 
+     * Check if file looks like a TYPO3 configuration file.
+     *
      * @param string $filePath File path to check
+     *
      * @return bool True if file looks like configuration
      */
     private function looksLikeConfigurationFile(string $filePath): bool
@@ -176,24 +167,24 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         if (!$this->isFileAccessible($filePath)) {
             return false;
         }
-        
+
         // Read first few lines to check for configuration patterns
         $handle = fopen($filePath, 'r');
-        if ($handle === false) {
+        if (false === $handle) {
             return false;
         }
-        
+
         $lines = [];
-        for ($i = 0; $i < 20 && !feof($handle); $i++) {
+        for ($i = 0; $i < 20 && !feof($handle); ++$i) {
             $line = fgets($handle);
-            if ($line !== false) {
+            if (false !== $line) {
                 $lines[] = trim($line);
             }
         }
         fclose($handle);
-        
+
         $content = implode(' ', $lines);
-        
+
         // Look for TYPO3 configuration patterns
         $patterns = [
             '/\$GLOBALS\s*\[\s*[\'"]TYPO3_CONF_VARS[\'"]\s*\]/',
@@ -202,45 +193,45 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
             '/return\s*\[/',
             '/\$GLOBALS\s*\[\s*[\'"]T3_VAR[\'"]\s*\]/',
         ];
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $content)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
-     * Validate LocalConfiguration.php structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
+     * Validate LocalConfiguration.php structure.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
      */
     private function validateLocalConfiguration(array $data, array &$errors, array &$warnings): void
     {
         $requiredSections = ['DB', 'SYS', 'MAIL'];
         $recommendedSections = ['BE', 'FE', 'GFX', 'EXT'];
-        
+
         foreach ($requiredSections as $section) {
             if (!isset($data[$section])) {
                 $errors[] = "Missing required configuration section: {$section}";
             }
         }
-        
+
         foreach ($recommendedSections as $section) {
             if (!isset($data[$section])) {
                 $warnings[] = "Missing recommended configuration section: {$section}";
             }
         }
-        
+
         // Validate database configuration
         if (isset($data['DB']['Connections']['Default'])) {
             $dbConfig = $data['DB']['Connections']['Default'];
             $requiredDbKeys = ['driver', 'host', 'dbname'];
-            
+
             foreach ($requiredDbKeys as $key) {
                 if (!isset($dbConfig[$key])) {
                     $errors[] = "Missing required database configuration: DB.Connections.Default.{$key}";
@@ -252,43 +243,45 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
     }
 
     /**
-     * Validate PackageStates.php structure
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
+     * Validate PackageStates.php structure.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
      */
     private function validatePackageStates(array $data, array &$errors, array &$warnings): void
     {
         if (!isset($data['packages'])) {
             $errors[] = 'Missing packages configuration in PackageStates.php';
+
             return;
         }
-        
+
         $packages = $data['packages'];
-        if (!is_array($packages)) {
+        if (!\is_array($packages)) {
             $errors[] = 'Packages configuration must be an array';
+
             return;
         }
-        
+
         // Check for required system extensions
         $requiredExtensions = ['core', 'backend', 'frontend', 'extbase', 'fluid'];
-        
+
         foreach ($requiredExtensions as $extension) {
             if (!isset($packages[$extension])) {
                 $errors[] = "Missing required system extension: {$extension}";
-            } elseif (!isset($packages[$extension]['state']) || $packages[$extension]['state'] !== 'active') {
+            } elseif (!isset($packages[$extension]['state']) || 'active' !== $packages[$extension]['state']) {
                 $errors[] = "Required system extension not active: {$extension}";
             }
         }
-        
+
         // Check package structure
         foreach ($packages as $packageKey => $packageConfig) {
-            if (!is_array($packageConfig)) {
+            if (!\is_array($packageConfig)) {
                 $warnings[] = "Invalid package configuration for: {$packageKey}";
                 continue;
             }
-            
+
             if (!isset($packageConfig['packagePath'])) {
                 $warnings[] = "Missing package path for: {$packageKey}";
             }
@@ -296,31 +289,31 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
     }
 
     /**
-     * Validate extension configuration files
-     * 
-     * @param array<string, mixed> $data Configuration data
-     * @param array<string> $errors Error array to populate
-     * @param array<string> $warnings Warning array to populate
-     * @param string $type Configuration type (localconf, tables)
+     * Validate extension configuration files.
+     *
+     * @param array<string, mixed> $data     Configuration data
+     * @param array<string>        $errors   Error array to populate
+     * @param array<string>        $warnings Warning array to populate
+     * @param string               $type     Configuration type (localconf, tables)
      */
     private function validateExtensionConfiguration(array $data, array &$errors, array &$warnings, string $type): void
     {
         // Extension configuration files often don't return data structures
         // but contain procedural code, so validation is limited
-        
+
         if (empty($data)) {
             $warnings[] = "Extension {$type} file contains no extractable configuration data";
         }
-        
+
         // Check for common problematic patterns if we have any data
         if (!empty($data)) {
             foreach ($data as $key => $value) {
-                if (is_string($key) && str_starts_with($key, '$GLOBALS')) {
+                if (\is_string($key) && str_starts_with($key, '$GLOBALS')) {
                     // This is normal for extension configuration
                     continue;
                 }
-                
-                if (is_array($value) && empty($value)) {
+
+                if (\is_array($value) && empty($value)) {
                     $warnings[] = "Empty configuration array found: {$key}";
                 }
             }
@@ -329,7 +322,7 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
 }
 
 /**
- * AST visitor to extract configuration data from PHP files
+ * AST visitor to extract configuration data from PHP files.
  */
 class ConfigurationExtractor extends NodeVisitorAbstract
 {
@@ -348,14 +341,15 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         if ($node instanceof Node\Stmt\Return_ && $node->expr instanceof Node\Expr\Array_) {
             $this->extractFromArrayNode($node->expr, $this->configuration);
             $this->extractionMethod = 'return_statement';
+
             return;
         }
-        
+
         // Extract from global variable assignments
         if ($node instanceof Node\Stmt\Expression && $node->expr instanceof Node\Expr\Assign) {
             $this->extractFromAssignment($node->expr);
         }
-        
+
         // Extract from array assignments to $GLOBALS
         if ($node instanceof Node\Expr\ArrayDimFetch) {
             $this->extractFromGlobalsAccess($node);
@@ -373,40 +367,39 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     }
 
     /**
-     * Extract configuration from array node
-     * 
-     * @param Node\Expr\Array_ $arrayNode Array node
-     * @param array<string, mixed> $target Target array to populate
+     * Extract configuration from array node.
+     *
+     * @param Node\Expr\Array_     $arrayNode Array node
+     * @param array<string, mixed> $target    Target array to populate
      */
     private function extractFromArrayNode(Node\Expr\Array_ $arrayNode, array &$target): void
     {
         foreach ($arrayNode->items as $item) {
-            if ($item === null || $item->key === null) {
+            if (null === $item || null === $item->key) {
                 continue;
             }
-            
+
             $key = $this->extractValue($item->key);
             $value = $this->extractValue($item->value);
-            
-            if ($key !== null) {
+
+            if (null !== $key) {
                 $target[$key] = $value;
             }
         }
     }
 
     /**
-     * Extract configuration from assignment expression
-     * 
+     * Extract configuration from assignment expression.
+     *
      * @param Node\Expr\Assign $assignNode Assignment node
      */
     private function extractFromAssignment(Node\Expr\Assign $assignNode): void
     {
         // Handle $TYPO3_CONF_VARS assignments
-        if ($assignNode->var instanceof Node\Expr\Variable && 
-            $assignNode->var->name === 'TYPO3_CONF_VARS') {
-            
+        if ($assignNode->var instanceof Node\Expr\Variable
+            && 'TYPO3_CONF_VARS' === $assignNode->var->name) {
             $value = $this->extractValue($assignNode->expr);
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $this->configuration = array_merge($this->configuration, $value);
                 $this->extractionMethod = 'variable_assignment';
             }
@@ -414,71 +407,72 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     }
 
     /**
-     * Extract configuration from GLOBALS access
-     * 
+     * Extract configuration from GLOBALS access.
+     *
      * @param Node\Expr\ArrayDimFetch $node Array access node
      */
     private function extractFromGlobalsAccess(Node\Expr\ArrayDimFetch $node): void
     {
         // Handle $GLOBALS['TYPO3_CONF_VARS'] patterns
-        if ($node->var instanceof Node\Expr\Variable && 
-            $node->var->name === 'GLOBALS' &&
-            $node->dim instanceof Node\Scalar\String_ &&
-            $node->dim->value === 'TYPO3_CONF_VARS') {
-            
+        if ($node->var instanceof Node\Expr\Variable
+            && 'GLOBALS' === $node->var->name
+            && $node->dim instanceof Node\Scalar\String_
+            && 'TYPO3_CONF_VARS' === $node->dim->value) {
             $this->extractionMethod = 'globals_access';
         }
     }
 
     /**
-     * Extract value from AST node
-     * 
+     * Extract value from AST node.
+     *
      * @param Node|null $node AST node
+     *
      * @return mixed Extracted value
      */
     private function extractValue(?Node $node)
     {
-        if ($node === null) {
+        if (null === $node) {
             return null;
         }
-        
+
         // String literals
         if ($node instanceof Node\Scalar\String_) {
             return $node->value;
         }
-        
+
         // Integer literals
         if ($node instanceof Node\Scalar\LNumber) {
             return $node->value;
         }
-        
+
         // Float literals
         if ($node instanceof Node\Scalar\DNumber) {
             return $node->value;
         }
-        
+
         // Boolean literals
         if ($node instanceof Node\Expr\ConstFetch) {
             $name = strtolower($node->name->toString());
-            if ($name === 'true') {
+            if ('true' === $name) {
                 return true;
             }
-            if ($name === 'false') {
+            if ('false' === $name) {
                 return false;
             }
-            if ($name === 'null') {
+            if ('null' === $name) {
                 return null;
             }
         }
-        
+
         // Array literals
         if ($node instanceof Node\Expr\Array_) {
             $result = [];
             $this->extractFromArrayNode($node, $result);
+
             return $result;
         }
-        
+
         // For other node types, return a placeholder
-        return sprintf('[%s]', get_class($node));
+        return \sprintf('[%s]', \get_class($node));
     }
 }

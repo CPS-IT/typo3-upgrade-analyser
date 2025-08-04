@@ -15,30 +15,29 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use Psr\Log\LoggerInterface;
 
 /**
- * Main service for discovering TYPO3 installations
- * 
+ * Main service for discovering TYPO3 installations.
+ *
  * This service coordinates multiple detection strategies to identify and analyze
  * TYPO3 installations at given filesystem paths. It manages the detection process,
  * handles validation, and provides comprehensive installation discovery results.
  */
-final class InstallationDiscoveryService
+final class InstallationDiscoveryService implements InstallationDiscoveryServiceInterface
 {
     /**
-     * @var array<DetectionStrategyInterface> $detectionStrategies Available detection strategies
+     * @var array<DetectionStrategyInterface> Available detection strategies
      */
     private readonly array $detectionStrategies;
 
     /**
-     * @param iterable<DetectionStrategyInterface> $detectionStrategies Available detection strategies
-     * @param iterable<ValidationRuleInterface> $validationRules Installation validation rules
-     * @param ConfigurationDiscoveryService|null $configurationDiscoveryService Configuration discovery service
-     * @param LoggerInterface $logger Logger instance
-     * @param ConfigurationService|null $configService Configuration service for cache settings
-     * @param CacheService|null $cacheService Cache service for result caching
+     * @param iterable<DetectionStrategyInterface> $detectionStrategies           Available detection strategies
+     * @param iterable<ValidationRuleInterface>    $validationRules               Installation validation rules
+     * @param ConfigurationDiscoveryService|null   $configurationDiscoveryService Configuration discovery service
+     * @param LoggerInterface                      $logger                        Logger instance
+     * @param ConfigurationService|null            $configService                 Configuration service for cache settings
+     * @param CacheService|null                    $cacheService                  Cache service for result caching
      */
     public function __construct(
         iterable $detectionStrategies,
@@ -46,19 +45,20 @@ final class InstallationDiscoveryService
         private readonly ?ConfigurationDiscoveryService $configurationDiscoveryService,
         private readonly LoggerInterface $logger,
         private readonly ?ConfigurationService $configService = null,
-        private readonly ?CacheService $cacheService = null
+        private readonly ?CacheService $cacheService = null,
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);
-        usort($strategiesArray, fn(DetectionStrategyInterface $a, DetectionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
         $this->detectionStrategies = $strategiesArray;
     }
 
     /**
-     * Discover TYPO3 installation at the given path
-     * 
-     * @param string $path Filesystem path to analyze
-     * @param bool $validateInstallation Whether to run validation rules
+     * Discover TYPO3 installation at the given path.
+     *
+     * @param string $path                 Filesystem path to analyze
+     * @param bool   $validateInstallation Whether to run validation rules
+     *
      * @return InstallationDiscoveryResult Discovery result
      */
     public function discoverInstallation(string $path, bool $validateInstallation = true): InstallationDiscoveryResult
@@ -68,7 +68,7 @@ final class InstallationDiscoveryService
         if (!is_dir($path)) {
             return InstallationDiscoveryResult::failed(
                 'Path does not exist or is not a directory',
-                []
+                [],
             );
         }
 
@@ -76,9 +76,10 @@ final class InstallationDiscoveryService
         if ($this->isCacheEnabled()) {
             $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
             $cachedResult = $this->cacheService->get($cacheKey);
-            
-            if ($cachedResult !== null) {
+
+            if (null !== $cachedResult) {
                 $this->logger->debug('Found cached installation discovery result', ['cache_key' => $cacheKey]);
+
                 return $this->deserializeResult($cachedResult);
             }
         }
@@ -94,12 +95,12 @@ final class InstallationDiscoveryService
             if (!$this->hasRequiredIndicators($path, $strategy)) {
                 $this->logger->debug('Required indicators not found', [
                     'strategy' => $strategyName,
-                    'indicators' => $strategy->getRequiredIndicators()
+                    'indicators' => $strategy->getRequiredIndicators(),
                 ]);
                 $attemptedStrategies[] = [
                     'strategy' => $strategyName,
                     'supported' => false,
-                    'reason' => 'Required indicators not found: ' . implode(', ', $strategy->getRequiredIndicators())
+                    'reason' => 'Required indicators not found: ' . implode(', ', $strategy->getRequiredIndicators()),
                 ];
                 continue;
             }
@@ -110,7 +111,7 @@ final class InstallationDiscoveryService
                 $attemptedStrategies[] = [
                     'strategy' => $strategyName,
                     'supported' => false,
-                    'reason' => 'Strategy-specific support check failed'
+                    'reason' => 'Strategy-specific support check failed',
                 ];
                 continue;
             }
@@ -120,22 +121,22 @@ final class InstallationDiscoveryService
                 $this->logger->debug('Attempting installation detection', ['strategy' => $strategyName]);
                 $installation = $strategy->detect($path);
 
-                if ($installation !== null) {
+                if (null !== $installation) {
                     $this->logger->info('Installation detected successfully', [
                         'strategy' => $strategyName,
                         'version' => $installation->getVersion()->toString(),
-                        'mode' => $installation->getMode()?->value ?? 'unknown'
+                        'mode' => $installation->getMode()?->value ?? 'unknown',
                     ]);
 
                     $attemptedStrategies[] = [
                         'strategy' => $strategyName,
                         'supported' => true,
                         'result' => 'success',
-                        'priority' => $strategy->getPriority()
+                        'priority' => $strategy->getPriority(),
                     ];
 
                     // Discover configuration files if configuration discovery service is available
-                    if ($this->configurationDiscoveryService !== null) {
+                    if (null !== $this->configurationDiscoveryService) {
                         try {
                             $installation = $this->configurationDiscoveryService->discoverConfiguration($installation);
                         } catch (\Throwable $e) {
@@ -157,7 +158,7 @@ final class InstallationDiscoveryService
                         $installation,
                         $strategy,
                         $validationIssues,
-                        $attemptedStrategies
+                        $attemptedStrategies,
                     );
 
                     // Cache the result if enabled
@@ -174,15 +175,14 @@ final class InstallationDiscoveryService
                     'strategy' => $strategyName,
                     'supported' => true,
                     'result' => 'no_installation_found',
-                    'priority' => $strategy->getPriority()
+                    'priority' => $strategy->getPriority(),
                 ];
-
             } catch (\Throwable $e) {
                 $this->logger->warning('Detection strategy failed', [
                     'strategy' => $strategyName,
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
+                    'line' => $e->getLine(),
                 ]);
 
                 $attemptedStrategies[] = [
@@ -190,29 +190,29 @@ final class InstallationDiscoveryService
                     'supported' => true,
                     'result' => 'error',
                     'error' => $e->getMessage(),
-                    'priority' => $strategy->getPriority()
+                    'priority' => $strategy->getPriority(),
                 ];
             }
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn($attempt) => $attempt['supported'] ?? false);
+        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
-            : sprintf('All %d supported strategies failed to detect a TYPO3 installation', count($supportedStrategies));
+            : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
 
         $this->logger->warning('Installation discovery failed', [
             'path' => $path,
-            'attempted_strategies' => count($attemptedStrategies),
-            'supported_strategies' => count($supportedStrategies)
+            'attempted_strategies' => \count($attemptedStrategies),
+            'supported_strategies' => \count($supportedStrategies),
         ]);
 
         return InstallationDiscoveryResult::failed($errorMessage, $attemptedStrategies);
     }
 
     /**
-     * Get all available detection strategies
-     * 
+     * Get all available detection strategies.
+     *
      * @return array<DetectionStrategyInterface> Detection strategies ordered by priority
      */
     public function getDetectionStrategies(): array
@@ -221,41 +221,44 @@ final class InstallationDiscoveryService
     }
 
     /**
-     * Get strategies that could potentially handle the given path
-     * 
+     * Get strategies that could potentially handle the given path.
+     *
      * This performs a lightweight check based on required indicators only.
-     * 
+     *
      * @param string $path Path to check
+     *
      * @return array<DetectionStrategyInterface> Potentially applicable strategies
      */
     public function getApplicableStrategies(string $path): array
     {
         return array_filter(
             $this->detectionStrategies,
-            fn(DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy)
+            fn (DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy),
         );
     }
 
     /**
-     * Get strategies that fully support the given path
-     * 
+     * Get strategies that fully support the given path.
+     *
      * This performs the full support check including strategy-specific validation.
-     * 
+     *
      * @param string $path Path to check
+     *
      * @return array<DetectionStrategyInterface> Supported strategies
      */
     public function getSupportedStrategies(string $path): array
     {
         return array_filter(
             $this->detectionStrategies,
-            fn(DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy) && $strategy->supports($path)
+            fn (DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy) && $strategy->supports($path),
         );
     }
 
     /**
-     * Check if installation discovery is possible for the given path
-     * 
+     * Check if installation discovery is possible for the given path.
+     *
      * @param string $path Path to check
+     *
      * @return bool True if at least one strategy can handle the path
      */
     public function canDiscoverInstallation(string $path): bool
@@ -264,8 +267,8 @@ final class InstallationDiscoveryService
     }
 
     /**
-     * Get all validation rules
-     * 
+     * Get all validation rules.
+     *
      * @return array<ValidationRuleInterface> Validation rules
      */
     public function getValidationRules(): array
@@ -274,16 +277,17 @@ final class InstallationDiscoveryService
     }
 
     /**
-     * Validate an installation using all applicable validation rules
-     * 
+     * Validate an installation using all applicable validation rules.
+     *
      * @param Installation $installation Installation to validate
+     *
      * @return array<ValidationIssue> Array of validation issues
      */
     public function validateInstallation(Installation $installation): array
     {
         $this->logger->debug('Starting installation validation', [
             'path' => $installation->getPath(),
-            'version' => $installation->getVersion()->toString()
+            'version' => $installation->getVersion()->toString(),
         ]);
 
         $allIssues = [];
@@ -292,7 +296,7 @@ final class InstallationDiscoveryService
             if (!$rule->appliesTo($installation)) {
                 $this->logger->debug('Validation rule does not apply', [
                     'rule' => $rule->getName(),
-                    'installation' => $installation->getPath()
+                    'installation' => $installation->getPath(),
                 ]);
                 continue;
             }
@@ -300,63 +304,63 @@ final class InstallationDiscoveryService
             try {
                 $this->logger->debug('Running validation rule', ['rule' => $rule->getName()]);
                 $issues = $rule->validate($installation);
-                
+
                 if (!empty($issues)) {
                     $this->logger->debug('Validation rule found issues', [
                         'rule' => $rule->getName(),
-                        'issues_count' => count($issues)
+                        'issues_count' => \count($issues),
                     ]);
                     $allIssues = array_merge($allIssues, $issues);
                 }
-
             } catch (\Throwable $e) {
                 $this->logger->warning('Validation rule failed', [
                     'rule' => $rule->getName(),
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
+                    'line' => $e->getLine(),
                 ]);
 
                 // Create an error issue for the failed validation rule
                 $allIssues[] = new ValidationIssue(
                     $rule->getName(),
                     ValidationSeverity::ERROR,
-                    sprintf('Validation rule failed: %s', $e->getMessage()),
+                    \sprintf('Validation rule failed: %s', $e->getMessage()),
                     $rule->getCategory(),
                     ['exception' => $e->getMessage()],
                     [$installation->getPath()],
-                    ['Check the installation structure and fix any obvious issues']
+                    ['Check the installation structure and fix any obvious issues'],
                 );
             }
         }
 
         $this->logger->info('Installation validation completed', [
             'installation' => $installation->getPath(),
-            'total_issues' => count($allIssues),
-            'blocking_issues' => count(array_filter($allIssues, fn(ValidationIssue $issue) => $issue->isBlockingAnalysis()))
+            'total_issues' => \count($allIssues),
+            'blocking_issues' => \count(array_filter($allIssues, fn (ValidationIssue $issue) => $issue->isBlockingAnalysis())),
         ]);
 
         return $allIssues;
     }
 
     /**
-     * Check if path has required indicators for a detection strategy
-     * 
-     * @param string $path Path to check
+     * Check if path has required indicators for a detection strategy.
+     *
+     * @param string                     $path     Path to check
      * @param DetectionStrategyInterface $strategy Strategy to check
+     *
      * @return bool True if all required indicators are present
      */
     private function hasRequiredIndicators(string $path, DetectionStrategyInterface $strategy): bool
     {
         $requiredIndicators = $strategy->getRequiredIndicators();
-        
+
         if (empty($requiredIndicators)) {
             return true; // No specific requirements
         }
 
         foreach ($requiredIndicators as $indicator) {
             $indicatorPath = $path . '/' . ltrim($indicator, '/');
-            
+
             if (!file_exists($indicatorPath)) {
                 return false;
             }
@@ -367,8 +371,8 @@ final class InstallationDiscoveryService
 
     private function isCacheEnabled(): bool
     {
-        return $this->configService !== null 
-            && $this->cacheService !== null 
+        return null !== $this->configService
+            && null !== $this->cacheService
             && $this->configService->isResultCacheEnabled();
     }
 
@@ -376,15 +380,16 @@ final class InstallationDiscoveryService
     {
         $data = $result->toArray();
         $data['cached_at'] = time();
+
         return $data;
     }
 
     private function deserializeResult(array $data): InstallationDiscoveryResult
     {
         $this->logger->info('Using cached installation discovery result', [
-            'cached_at' => $data['cached_at'] ?? 'unknown'
+            'cached_at' => $data['cached_at'] ?? 'unknown',
         ]);
-        
+
         return InstallationDiscoveryResult::fromArray($data);
     }
 }

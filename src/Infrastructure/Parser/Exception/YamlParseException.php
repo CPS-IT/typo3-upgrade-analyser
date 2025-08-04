@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception;
 
 /**
- * Exception for YAML configuration parsing errors
- * 
+ * Exception for YAML configuration parsing errors.
+ *
  * Specialized exception for YAML configuration files like Services.yaml
  * and site configuration files that provides YAML-specific error information.
  */
@@ -24,15 +24,15 @@ final class YamlParseException extends ParseException
     private ?string $problemMark;
 
     /**
-     * @param string $message Error message
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @param int|null $column Column number
-     * @param string|null $yamlSnippet YAML snippet around error
-     * @param string|null $problemMark Problem mark from YAML parser
-     * @param array<string, mixed> $context Additional context
-     * @param int $code Error code
-     * @param \Throwable|null $previous Previous exception
+     * @param string               $message     Error message
+     * @param string               $sourcePath  Source file path
+     * @param int|null             $line        Line number
+     * @param int|null             $column      Column number
+     * @param string|null          $yamlSnippet YAML snippet around error
+     * @param string|null          $problemMark Problem mark from YAML parser
+     * @param array<string, mixed> $context     Additional context
+     * @param int                  $code        Error code
+     * @param \Throwable|null      $previous    Previous exception
      */
     public function __construct(
         string $message,
@@ -43,7 +43,7 @@ final class YamlParseException extends ParseException
         ?string $problemMark = null,
         array $context = [],
         int $code = 0,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         $this->yamlSnippet = $yamlSnippet;
         $this->problemMark = $problemMark;
@@ -52,8 +52,8 @@ final class YamlParseException extends ParseException
     }
 
     /**
-     * Get YAML snippet around the error
-     * 
+     * Get YAML snippet around the error.
+     *
      * @return string|null YAML snippet or null if not available
      */
     public function getYamlSnippet(): ?string
@@ -62,8 +62,8 @@ final class YamlParseException extends ParseException
     }
 
     /**
-     * Get problem mark from YAML parser
-     * 
+     * Get problem mark from YAML parser.
+     *
      * @return string|null Problem mark or null if not available
      */
     public function getProblemMark(): ?string
@@ -72,21 +72,20 @@ final class YamlParseException extends ParseException
     }
 
     /**
-     * Check if error has YAML snippet
-     * 
+     * Check if error has YAML snippet.
+     *
      * @return bool True if snippet is available
      */
     public function hasYamlSnippet(): bool
     {
-        return $this->yamlSnippet !== null;
+        return null !== $this->yamlSnippet;
     }
 
     /**
-     * Create exception from Symfony YAML parser exception
-     * 
+     * Create exception from Symfony YAML parser exception.
+     *
      * @param \Throwable $yamlException Symfony YAML exception
-     * @param string $sourcePath Source file path
-     * @return self
+     * @param string     $sourcePath    Source file path
      */
     public static function fromSymfonyYamlException(\Throwable $yamlException, string $sourcePath): self
     {
@@ -117,26 +116,25 @@ final class YamlParseException extends ParseException
             $column,
             $snippet,
             $problemMark,
-            ['original_exception' => get_class($yamlException)],
+            ['original_exception' => \get_class($yamlException)],
             $yamlException->getCode(),
-            $yamlException
+            $yamlException,
         );
     }
 
     /**
-     * Create exception for indentation errors
-     * 
-     * @param string $sourcePath Source file path
-     * @param int $line Line number
-     * @param int $expectedIndent Expected indentation level
-     * @param int $actualIndent Actual indentation level
-     * @return self
+     * Create exception for indentation errors.
+     *
+     * @param string $sourcePath     Source file path
+     * @param int    $line           Line number
+     * @param int    $expectedIndent Expected indentation level
+     * @param int    $actualIndent   Actual indentation level
      */
     public static function indentationError(
         string $sourcePath,
         int $line,
         int $expectedIndent,
-        int $actualIndent
+        int $actualIndent,
     ): self {
         $message = "Indentation error: expected {$expectedIndent} spaces, got {$actualIndent}";
         $context = [
@@ -148,30 +146,28 @@ final class YamlParseException extends ParseException
     }
 
     /**
-     * Create exception for invalid YAML structure
-     * 
-     * @param string $message Error message
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @param string|null $snippet YAML snippet
-     * @return self
+     * Create exception for invalid YAML structure.
+     *
+     * @param string      $message    Error message
+     * @param string      $sourcePath Source file path
+     * @param int|null    $line       Line number
+     * @param string|null $snippet    YAML snippet
      */
     public static function invalidYamlStructure(
         string $message,
         string $sourcePath,
         ?int $line = null,
-        ?string $snippet = null
+        ?string $snippet = null,
     ): self {
         return new self($message, $sourcePath, $line, null, $snippet);
     }
 
     /**
-     * Create exception for unsupported YAML features
-     * 
-     * @param string $feature Unsupported feature
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @return self
+     * Create exception for unsupported YAML features.
+     *
+     * @param string   $feature    Unsupported feature
+     * @param string   $sourcePath Source file path
+     * @param int|null $line       Line number
      */
     public static function unsupportedFeature(string $feature, string $sourcePath, ?int $line = null): self
     {
@@ -182,12 +178,11 @@ final class YamlParseException extends ParseException
     }
 
     /**
-     * Create exception for duplicate keys
-     * 
-     * @param string $key Duplicate key
-     * @param string $sourcePath Source file path
-     * @param int|null $line Line number
-     * @return self
+     * Create exception for duplicate keys.
+     *
+     * @param string   $key        Duplicate key
+     * @param string   $sourcePath Source file path
+     * @param int|null $line       Line number
      */
     public static function duplicateKey(string $key, string $sourcePath, ?int $line = null): self
     {

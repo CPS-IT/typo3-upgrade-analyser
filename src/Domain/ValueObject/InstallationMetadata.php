@@ -13,20 +13,20 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 
 /**
- * Contains metadata about a discovered TYPO3 installation
- * 
+ * Contains metadata about a discovered TYPO3 installation.
+ *
  * This value object stores additional information gathered during the discovery process
  * that might be useful for analysis and validation.
  */
 final class InstallationMetadata
 {
     /**
-     * @param array<string, string> $phpVersions Detected PHP versions and requirements
-     * @param array<string, mixed> $databaseConfig Database configuration metadata
-     * @param array<string> $enabledFeatures Enabled TYPO3 features and extensions
-     * @param \DateTimeImmutable $lastModified Last modification timestamp of the installation
-     * @param array<string, string> $customPaths Custom paths configured in the installation
-     * @param array<string, mixed> $discoveryData Additional data collected during discovery
+     * @param array<string, string> $phpVersions     Detected PHP versions and requirements
+     * @param array<string, mixed>  $databaseConfig  Database configuration metadata
+     * @param array<string>         $enabledFeatures Enabled TYPO3 features and extensions
+     * @param \DateTimeImmutable    $lastModified    Last modification timestamp of the installation
+     * @param array<string, string> $customPaths     Custom paths configured in the installation
+     * @param array<string, mixed>  $discoveryData   Additional data collected during discovery
      */
     public function __construct(
         private readonly array $phpVersions,
@@ -34,7 +34,7 @@ final class InstallationMetadata
         private readonly array $enabledFeatures,
         private readonly \DateTimeImmutable $lastModified,
         private readonly array $customPaths,
-        private readonly array $discoveryData = []
+        private readonly array $discoveryData = [],
     ) {
     }
 
@@ -70,7 +70,7 @@ final class InstallationMetadata
 
     public function hasFeature(string $feature): bool
     {
-        return in_array($feature, $this->enabledFeatures, true);
+        return \in_array($feature, $this->enabledFeatures, true);
     }
 
     public function getLastModified(): \DateTimeImmutable
@@ -106,7 +106,7 @@ final class InstallationMetadata
             $this->enabledFeatures,
             $this->lastModified,
             $this->customPaths,
-            array_merge($this->discoveryData, $additionalData)
+            array_merge($this->discoveryData, $additionalData),
         );
     }
 

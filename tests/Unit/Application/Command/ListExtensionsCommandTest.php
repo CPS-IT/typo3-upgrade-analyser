@@ -18,23 +18,22 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class ListExtensionsCommandTest extends TestCase
 {
     private LoggerInterface $logger;
-    private ExtensionDiscoveryService $extensionDiscovery;
-    private InstallationDiscoveryService $installationDiscovery;
-    private ConfigurationService $configService;
+    private ExtensionDiscoveryServiceInterface $extensionDiscovery;
+    private InstallationDiscoveryServiceInterface $installationDiscovery;
+    private ConfigurationServiceInterface $configService;
     private ListExtensionsCommand $command;
     private CommandTester $commandTester;
     private string $tempConfigFile;
@@ -42,15 +41,15 @@ final class ListExtensionsCommandTest extends TestCase
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryService::class);
-        $this->installationDiscovery = $this->createMock(InstallationDiscoveryService::class);
-        $this->configService = $this->createMock(ConfigurationService::class);
+        $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryServiceInterface::class);
+        $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
+        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
 
         $this->command = new ListExtensionsCommand(
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService
+            $this->configService,
         );
 
         $this->commandTester = new CommandTester($this->command);
@@ -71,20 +70,26 @@ final class ListExtensionsCommandTest extends TestCase
             ucfirst($key) . ' Extension',
             Version::fromString($version),
             $type,
-            $type === 'composer' ? "vendor/$key" : null
+            'composer' === $type ? "vendor/$key" : null,
         );
         $extension->setActive($active);
+
         return $extension;
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::configure
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::getName
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::getDescription
+     */
     public function testCommandConfiguration(): void
     {
         $this->assertSame('list-extensions', $this->command->getName());
         $this->assertSame('List extensions in a TYPO3 installation with target version compatibility', $this->command->getDescription());
-        
+
         $definition = $this->command->getDefinition();
         $this->assertTrue($definition->hasOption('config'));
-        
+
         $configOption = $definition->getOption('config');
         $this->assertSame('c', $configOption->getShortcut());
         $this->assertTrue($configOption->isValueRequired());
@@ -92,10 +97,13 @@ final class ListExtensionsCommandTest extends TestCase
         $this->assertSame(ConfigurationService::DEFAULT_CONFIG_PATH, $configOption->getDefault());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithNonExistentConfigFile(): void
     {
         $result = $this->commandTester->execute([
-            '--config' => '/non/existent/config.yaml'
+            '--config' => '/non/existent/config.yaml',
         ]);
 
         $this->assertSame(Command::FAILURE, $result);
@@ -103,148 +111,23 @@ final class ListExtensionsCommandTest extends TestCase
         $this->assertStringContainsString('Configuration file does not exist: /non/existent/config.yaml', $output);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithDefaultConfigPath(): void
     {
-        file_put_contents($this->tempConfigFile, '');
+        // Create a config file at the default path for this test
+        $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
+        file_put_contents($defaultConfigPath, '');
 
-        $this->configService->expects($this->once())
-            ->method('getInstallationPath')
-            ->willReturn('/path/to/typo3');
-
-        $this->configService->expects($this->once())
-            ->method('getTargetVersion')
-            ->willReturn('13.4');
-
-        // Mock installation discovery
-        $installationResult = InstallationDiscoveryResult::failed('Installation not found');
-        $this->installationDiscovery->expects($this->once())
-            ->method('discoverInstallation')
-            ->with('/path/to/typo3')
-            ->willReturn($installationResult);
-
-        // Mock extension discovery
-        $extensions = [$this->createTestExtension('news', '10.0.0')];
-        $extensionResult = ExtensionDiscoveryResult::success($extensions, ['PackageStates.php']);
-        $this->extensionDiscovery->expects($this->once())
-            ->method('discoverExtensions')
-            ->with('/path/to/typo3', null)
-            ->willReturn($extensionResult);
-
-        $this->logger->expects($this->once())
-            ->method('info')
-            ->with('Extension list generated', $this->callback(function ($context) {
-                return isset($context['installation_path'])
-                    && isset($context['target_version'])
-                    && isset($context['discovery_result']);
-            }));
-
-        $result = $this->commandTester->execute([
-            '--config' => $this->tempConfigFile
-        ]);
-
-        $this->assertSame(Command::SUCCESS, $result);
-        $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('TYPO3 Extension List', $output);
-        $this->assertStringContainsString('Installation: /path/to/typo3', $output);
-        $this->assertStringContainsString('Target TYPO3 version: 13.4', $output);
-        $this->assertStringContainsString('news', $output);
-        $this->assertStringContainsString('10.0.0', $output);
-    }
-
-    public function testExecuteWithCustomConfigPath(): void
-    {
-        $customConfigFile = tempnam(sys_get_temp_dir(), 'custom_config_');
-        file_put_contents($customConfigFile, '');
-
-        try {
-            $customConfigService = $this->createMock(ConfigurationService::class);
-            
-            $this->configService->expects($this->once())
-                ->method('withConfigPath')
-                ->with($customConfigFile)
-                ->willReturn($customConfigService);
-
-            $customConfigService->expects($this->once())
-                ->method('getInstallationPath')
-                ->willReturn('/custom/path/to/typo3');
-
-            $customConfigService->expects($this->once())
-                ->method('getTargetVersion')
-                ->willReturn('12.4');
-
-            // Mock installation discovery
-            $installationResult = InstallationDiscoveryResult::failed('Installation not found');
-            $this->installationDiscovery->expects($this->once())
-                ->method('discoverInstallation')
-                ->with('/custom/path/to/typo3')
-                ->willReturn($installationResult);
-
-            // Mock extension discovery
-            $extensionResult = ExtensionDiscoveryResult::success([], []);
-            $this->extensionDiscovery->expects($this->once())
-                ->method('discoverExtensions')
-                ->with('/custom/path/to/typo3', null)
-                ->willReturn($extensionResult);
-
-            $result = $this->commandTester->execute([
-                '--config' => $customConfigFile
-            ]);
-
-            $this->assertSame(Command::SUCCESS, $result);
-            $output = $this->commandTester->getDisplay();
-            $this->assertStringContainsString('Installation: /custom/path/to/typo3', $output);
-            $this->assertStringContainsString('Target TYPO3 version: 12.4', $output);
-
-        } finally {
-            unlink($customConfigFile);
-        }
-    }
-
-    public function testExecuteWithMissingInstallationPath(): void
-    {
-        file_put_contents($this->tempConfigFile, '');
-
-        $this->configService->expects($this->once())
-            ->method('getInstallationPath')
-            ->willReturn(null);
-
-        $result = $this->commandTester->execute([
-            '--config' => $this->tempConfigFile
-        ]);
-
-        $this->assertSame(Command::FAILURE, $result);
-        $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('No installation path specified in configuration file', $output);
-    }
-
-    public function testExecuteWithNonExistentInstallationPath(): void
-    {
-        file_put_contents($this->tempConfigFile, '');
-
-        $this->configService->expects($this->once())
-            ->method('getInstallationPath')
-            ->willReturn('/non/existent/path');
-
-        $this->configService->expects($this->once())
-            ->method('getTargetVersion')
-            ->willReturn('13.4');
-
-        $result = $this->commandTester->execute([
-            '--config' => $this->tempConfigFile
-        ]);
-
-        $this->assertSame(Command::FAILURE, $result);
-        $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Installation path does not exist: /non/existent/path', $output);
-    }
-
-    public function testExecuteWithSuccessfulInstallationDiscovery(): void
-    {
+        // Create a real directory for the installation path
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
-            file_put_contents($this->tempConfigFile, '');
+            // Since we're using the default config path, withConfigPath should not be called
+            $this->configService->expects($this->never())
+                ->method('withConfigPath');
 
             $this->configService->expects($this->once())
                 ->method('getInstallationPath')
@@ -254,11 +137,200 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
+            // Mock installation discovery
+            $installationResult = InstallationDiscoveryResult::failed('Installation not found');
+            $this->installationDiscovery->expects($this->once())
+                ->method('discoverInstallation')
+                ->with($tempDir)
+                ->willReturn($installationResult);
+
+            // Mock extension discovery
+            $extensions = [$this->createTestExtension('news', '10.0.0')];
+            $extensionResult = ExtensionDiscoveryResult::success($extensions, ['PackageStates.php']);
+            $this->extensionDiscovery->expects($this->once())
+                ->method('discoverExtensions')
+                ->with($tempDir, null)
+                ->willReturn($extensionResult);
+
+            $this->logger->expects($this->once())
+                ->method('info')
+                ->with('Extension list generated', $this->callback(function ($context) {
+                    return isset($context['installation_path'])
+                        && isset($context['target_version'])
+                        && isset($context['discovery_result']);
+                }));
+
+            $result = $this->commandTester->execute([]);
+
+            $this->assertSame(Command::SUCCESS, $result);
+            $output = $this->commandTester->getDisplay();
+            $this->assertStringContainsString('TYPO3 Extension List', $output);
+            $this->assertStringContainsString('Installation: ' . $tempDir, $output);
+            $this->assertStringContainsString('Target TYPO3 version: 13.4', $output);
+            $this->assertStringContainsString('news', $output);
+            $this->assertStringContainsString('10.0.0', $output);
+        } finally {
+            if (file_exists($defaultConfigPath)) {
+                unlink($defaultConfigPath);
+            }
+            if (is_dir($tempDir)) {
+                rmdir($tempDir);
+            }
+        }
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
+    public function testExecuteWithCustomConfigPath(): void
+    {
+        $customConfigFile = tempnam(sys_get_temp_dir(), 'custom_config_');
+        file_put_contents($customConfigFile, '');
+
+        // Create a real directory for the installation path
+        $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
+        mkdir($tempDir, 0o755, true);
+
+        try {
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
+
+            $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($customConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
+                ->method('getInstallationPath')
+                ->willReturn($tempDir);
+
+            $customConfigService->expects($this->once())
+                ->method('getTargetVersion')
+                ->willReturn('12.4');
+
+            // Mock installation discovery
+            $installationResult = InstallationDiscoveryResult::failed('Installation not found');
+            $this->installationDiscovery->expects($this->once())
+                ->method('discoverInstallation')
+                ->with($tempDir)
+                ->willReturn($installationResult);
+
+            // Mock extension discovery
+            $extensionResult = ExtensionDiscoveryResult::success([], []);
+            $this->extensionDiscovery->expects($this->once())
+                ->method('discoverExtensions')
+                ->with($tempDir, null)
+                ->willReturn($extensionResult);
+
+            $result = $this->commandTester->execute([
+                '--config' => $customConfigFile,
+            ]);
+
+            $this->assertSame(Command::SUCCESS, $result);
+            $output = $this->commandTester->getDisplay();
+            $this->assertStringContainsString('Installation: ' . $tempDir, $output);
+            $this->assertStringContainsString('Target TYPO3 version: 12.4', $output);
+        } finally {
+            unlink($customConfigFile);
+            if (is_dir($tempDir)) {
+                rmdir($tempDir);
+            }
+        }
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
+    public function testExecuteWithMissingInstallationPath(): void
+    {
+        file_put_contents($this->tempConfigFile, '');
+
+        $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configService->expects($this->once())
+            ->method('withConfigPath')
+            ->with($this->tempConfigFile)
+            ->willReturn($customConfigService);
+
+        $customConfigService->expects($this->once())
+            ->method('getInstallationPath')
+            ->willReturn(null);
+
+        $result = $this->commandTester->execute([
+            '--config' => $this->tempConfigFile,
+        ]);
+
+        $this->assertSame(Command::FAILURE, $result);
+        $output = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('No installation path specified in configuration file', $output);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
+    public function testExecuteWithNonExistentInstallationPath(): void
+    {
+        file_put_contents($this->tempConfigFile, '');
+
+        $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configService->expects($this->once())
+            ->method('withConfigPath')
+            ->with($this->tempConfigFile)
+            ->willReturn($customConfigService);
+
+        $customConfigService->expects($this->once())
+            ->method('getInstallationPath')
+            ->willReturn('/non/existent/path');
+
+        $customConfigService->expects($this->once())
+            ->method('getTargetVersion')
+            ->willReturn('13.4');
+
+        $result = $this->commandTester->execute([
+            '--config' => $this->tempConfigFile,
+        ]);
+
+        $this->assertSame(Command::FAILURE, $result);
+        $output = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('Installation path does not exist: /non/existent/path', $output);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
+    public function testExecuteWithSuccessfulInstallationDiscovery(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
+        mkdir($tempDir, 0o755, true);
+
+        try {
+            file_put_contents($this->tempConfigFile, '');
+
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
+            $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
+                ->method('getInstallationPath')
+                ->willReturn($tempDir);
+
+            $customConfigService->expects($this->once())
+                ->method('getTargetVersion')
+                ->willReturn('13.4');
+
             // Mock successful installation discovery
             $customPaths = ['vendor-dir' => 'custom-vendor', 'web-dir' => 'web'];
-            $metadata = new InstallationMetadata('composer', $customPaths);
-            $installation = new Installation($tempDir, Version::fromString('12.4.0'), $metadata);
-            $installationResult = InstallationDiscoveryResult::success($installation);
+            $metadata = new InstallationMetadata(
+                ['required' => '8.1', 'current' => '8.2'],
+                ['driver' => 'mysql', 'host' => 'localhost'],
+                ['feature1', 'feature2'],
+                new \DateTimeImmutable(),
+                $customPaths,
+            );
+            $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
+            $installation->setMetadata($metadata);
+            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())
                 ->method('discoverInstallation')
@@ -274,31 +346,39 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('Installation discovered: TYPO3 12.4.0', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithInstallationDiscoveryWarning(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -318,32 +398,40 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('Installation discovery failed: Installation files not found', $output);
             $this->assertStringContainsString('Proceeding with extension discovery using default paths...', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithFailedExtensionDiscovery(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -360,31 +448,39 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::FAILURE, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('Extension discovery failed: Failed to read PackageStates.php', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithNoExtensionsFound(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -401,31 +497,39 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('No extensions found in the installation', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithMultipleExtensions(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -439,7 +543,7 @@ final class ListExtensionsCommandTest extends TestCase
             $extensions = [
                 $this->createTestExtension('news', '10.0.0', 'composer', true),
                 $this->createTestExtension('tt_address', '7.1.0', 'composer', false),
-                $this->createTestExtension('local_ext', '1.0.0', 'local', true)
+                $this->createTestExtension('local_ext', '1.0.0', 'local', true),
             ];
             $extensionResult = ExtensionDiscoveryResult::success($extensions, ['PackageStates.php', 'composer installed.json']);
             $this->extensionDiscovery->expects($this->once())
@@ -447,17 +551,17 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
-            
+
             // Check table headers
             $this->assertStringContainsString('Extension', $output);
             $this->assertStringContainsString('Current Version', $output);
             $this->assertStringContainsString('Target Available', $output);
-            
+
             // Check extension data
             $this->assertStringContainsString('news', $output);
             $this->assertStringContainsString('10.0.0', $output);
@@ -465,20 +569,28 @@ final class ListExtensionsCommandTest extends TestCase
             $this->assertStringContainsString('7.1.0', $output);
             $this->assertStringContainsString('local_ext', $output);
             $this->assertStringContainsString('1.0.0', $output);
-            
+
             // Check summary
             $this->assertStringContainsString('Summary: 0 compatible, 0 incompatible, 3 unknown', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithException(): void
     {
         file_put_contents($this->tempConfigFile, '');
 
+        $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
         $this->configService->expects($this->once())
+            ->method('withConfigPath')
+            ->with($this->tempConfigFile)
+            ->willReturn($customConfigService);
+
+        $customConfigService->expects($this->once())
             ->method('getInstallationPath')
             ->willThrowException(new \RuntimeException('Configuration error'));
 
@@ -489,7 +601,7 @@ final class ListExtensionsCommandTest extends TestCase
             }));
 
         $result = $this->commandTester->execute([
-            '--config' => $this->tempConfigFile
+            '--config' => $this->tempConfigFile,
         ]);
 
         $this->assertSame(Command::FAILURE, $result);
@@ -497,19 +609,28 @@ final class ListExtensionsCommandTest extends TestCase
         $this->assertStringContainsString('Failed to process configuration: Configuration error', $output);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteDisplaysDiscoverySummary(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -527,34 +648,42 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
-            
+
             // Should display the discovery summary
             $summary = $extensionResult->getSummary();
             $this->assertStringContainsString($summary, $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteLogsSuccessfulCompletion(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -576,39 +705,48 @@ final class ListExtensionsCommandTest extends TestCase
                 ->with('Extension list generated', [
                     'installation_path' => $tempDir,
                     'target_version' => '13.4',
-                    'discovery_result' => $extensionResult->getStatistics()
+                    'discovery_result' => $extensionResult->getStatistics(),
                 ]);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteHandlesInstallationWithoutMetadata(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
             // Mock installation discovery with installation but no metadata
-            $installation = new Installation($tempDir, Version::fromString('12.4.0'), null);
-            $installationResult = InstallationDiscoveryResult::success($installation);
+            $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
+            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())
                 ->method('discoverInstallation')
@@ -623,36 +761,46 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
             $this->assertStringContainsString('Installation discovered: TYPO3 12.4.0', $output);
-
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testExecuteWithUnknownVersionInstallation(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
-            // Mock installation discovery with null installation
-            $installationResult = InstallationDiscoveryResult::success(null);
+            // Mock installation discovery with unknown version - create minimal installation
+            $installation = new Installation($tempDir, Version::fromString('0.0.0'), 'unknown');
+            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())
                 ->method('discoverInstallation')
@@ -667,31 +815,39 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
-            $this->assertStringContainsString('Installation discovered: TYPO3 unknown', $output);
-
+            $this->assertStringContainsString('Installation discovered: TYPO3 0.0.0', $output);
         } finally {
             rmdir($tempDir);
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
+     */
     public function testTableFormatting(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
-        mkdir($tempDir, 0755, true);
+        mkdir($tempDir, 0o755, true);
 
         try {
             file_put_contents($this->tempConfigFile, '');
 
+            $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
             $this->configService->expects($this->once())
+                ->method('withConfigPath')
+                ->with($this->tempConfigFile)
+                ->willReturn($customConfigService);
+
+            $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects($this->once())
+            $customConfigService->expects($this->once())
                 ->method('getTargetVersion')
                 ->willReturn('13.4');
 
@@ -704,7 +860,7 @@ final class ListExtensionsCommandTest extends TestCase
             // Mock extension discovery with extension having different versions
             $extensions = [
                 $this->createTestExtension('extension_with_long_name', '10.5.2', 'composer', true),
-                $this->createTestExtension('ext', '1.0.0-dev', 'local', false)
+                $this->createTestExtension('ext', '1.0.0-dev', 'local', false),
             ];
             $extensionResult = ExtensionDiscoveryResult::success($extensions, ['PackageStates.php']);
             $this->extensionDiscovery->expects($this->once())
@@ -712,19 +868,18 @@ final class ListExtensionsCommandTest extends TestCase
                 ->willReturn($extensionResult);
 
             $result = $this->commandTester->execute([
-                '--config' => $this->tempConfigFile
+                '--config' => $this->tempConfigFile,
             ]);
 
             $this->assertSame(Command::SUCCESS, $result);
             $output = $this->commandTester->getDisplay();
-            
+
             // Check that all extensions are displayed in table format
             $this->assertStringContainsString('extension_with_long_name', $output);
             $this->assertStringContainsString('10.5.2', $output);
             $this->assertStringContainsString('ext', $output);
             $this->assertStringContainsString('1.0.0-dev', $output);
             $this->assertStringContainsString('UNKNOWN', $output); // Target compatibility status
-
         } finally {
             rmdir($tempDir);
         }

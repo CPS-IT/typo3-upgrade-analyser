@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
-use PHPUnit\Framework\TestCase;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for ConfigurationMetadata value object
+ * Test case for ConfigurationMetadata value object.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata
  */
@@ -64,7 +64,7 @@ class ConfigurationMetadataTest extends TestCase
             2048,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         self::assertSame('/var/www/config/LocalConfiguration.php', $metadata->getFilePath());
@@ -95,7 +95,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleConfigurationKeys,
             '12.4.0',
             '8.1.0',
-            $this->sampleCustomData
+            $this->sampleCustomData,
         );
 
         self::assertSame('/var/www/config/Services.yaml', $metadata->getFilePath());
@@ -123,7 +123,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleParsedAt,
             'PhpConfigurationParser',
             [],
-            $this->sampleConfigurationKeys
+            $this->sampleConfigurationKeys,
         );
 
         self::assertTrue($metadata->hasConfigurationKey('DB'));
@@ -143,7 +143,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleLastModified,
             $this->sampleParsedAt,
             'PhpConfigurationParser',
-            $this->sampleParseStatistics
+            $this->sampleParseStatistics,
         );
 
         self::assertSame(0.025, $metadata->getParseStatistic('parse_duration_seconds'));
@@ -168,7 +168,7 @@ class ConfigurationMetadataTest extends TestCase
             [],
             null,
             null,
-            $this->sampleCustomData
+            $this->sampleCustomData,
         );
 
         self::assertSame(25, $metadata->getCustomDataValue('extension_count'));
@@ -187,7 +187,7 @@ class ConfigurationMetadataTest extends TestCase
             1024, // 1KB
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         $largeMetadata = new ConfigurationMetadata(
@@ -197,7 +197,7 @@ class ConfigurationMetadataTest extends TestCase
             2097152, // 2MB
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         // Test with default threshold (1MB)
@@ -223,7 +223,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $oldDate,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         $recentMetadata = new ConfigurationMetadata(
@@ -233,7 +233,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $recentDate,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         // Test with default interval (1 day)
@@ -260,7 +260,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $tenDaysAgo,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         $age = $metadata->getFileAgeInDays();
@@ -277,7 +277,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleLastModified,
             $this->sampleParsedAt,
             'PhpConfigurationParser',
-            $this->sampleParseStatistics
+            $this->sampleParseStatistics,
         );
 
         self::assertSame(0.025, $metadata->getParseDuration());
@@ -293,7 +293,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleLastModified,
             $this->sampleParsedAt,
             'PhpConfigurationParser',
-            [] // No statistics
+            [], // No statistics
         );
 
         self::assertNull($metadata->getParseDuration());
@@ -308,7 +308,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         // Test with matching installation root
@@ -339,7 +339,7 @@ class ConfigurationMetadataTest extends TestCase
                 1024,
                 $this->sampleLastModified,
                 $this->sampleParsedAt,
-                'PhpConfigurationParser'
+                'PhpConfigurationParser',
             );
 
             self::assertTrue($metadata->isCoreConfiguration(), "File {$fileName} should be considered core configuration");
@@ -352,7 +352,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         self::assertFalse($nonCoreMetadata->isCoreConfiguration());
@@ -367,7 +367,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'YamlConfigurationParser'
+            'YamlConfigurationParser',
         );
 
         $nonSiteMetadata = new ConfigurationMetadata(
@@ -377,7 +377,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'YamlConfigurationParser'
+            'YamlConfigurationParser',
         );
 
         $nonYamlSiteMetadata = new ConfigurationMetadata(
@@ -387,7 +387,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         self::assertTrue($siteMetadata->isSiteConfiguration());
@@ -411,7 +411,7 @@ class ConfigurationMetadataTest extends TestCase
                 1024,
                 $this->sampleLastModified,
                 $this->sampleParsedAt,
-                'PhpConfigurationParser'
+                'PhpConfigurationParser',
             );
 
             self::assertTrue($metadata->isExtensionConfiguration(), "File {$filePath} should be considered extension configuration");
@@ -424,7 +424,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         self::assertFalse($nonExtensionMetadata->isExtensionConfiguration());
@@ -440,7 +440,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
         self::assertSame('core', $coreMetadata->getCategory());
 
@@ -452,7 +452,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'YamlConfigurationParser'
+            'YamlConfigurationParser',
         );
         self::assertSame('site', $siteMetadata->getCategory());
 
@@ -464,7 +464,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
         self::assertSame('extension', $extensionMetadata->getCategory());
 
@@ -476,7 +476,7 @@ class ConfigurationMetadataTest extends TestCase
             1024,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
         self::assertSame('custom', $customMetadata->getCategory());
     }
@@ -495,7 +495,7 @@ class ConfigurationMetadataTest extends TestCase
             [],
             null,
             null,
-            $this->sampleCustomData
+            $this->sampleCustomData,
         );
 
         $additionalData = [
@@ -531,7 +531,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleParsedAt,
             'PhpConfigurationParser',
             [],
-            $this->sampleConfigurationKeys
+            $this->sampleConfigurationKeys,
         );
 
         $newKeys = ['NEW_KEY', 'ANOTHER_KEY', 'DB']; // Some new, some existing
@@ -568,7 +568,7 @@ class ConfigurationMetadataTest extends TestCase
             $this->sampleConfigurationKeys,
             '12.4.0',
             '8.1.0',
-            $this->sampleCustomData
+            $this->sampleCustomData,
         );
 
         $array = $metadata->toArray();
@@ -608,7 +608,7 @@ class ConfigurationMetadataTest extends TestCase
             512,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         $array = $metadata->toArray();
@@ -644,7 +644,7 @@ class ConfigurationMetadataTest extends TestCase
             $fileSize,
             $this->sampleLastModified,
             $this->sampleParsedAt,
-            'PhpConfigurationParser'
+            'PhpConfigurationParser',
         );
 
         $array = $metadata->toArray();
@@ -686,7 +686,7 @@ class ConfigurationMetadataTest extends TestCase
             $originalKeys,
             '12.4.0',
             '8.1.0',
-            $originalCustomData
+            $originalCustomData,
         );
 
         // Modify original arrays
@@ -749,7 +749,7 @@ class ConfigurationMetadataTest extends TestCase
             $complexKeys,
             '12.4.8',
             '8.2.0',
-            $complexCustomData
+            $complexCustomData,
         );
 
         // Test comprehensive functionality

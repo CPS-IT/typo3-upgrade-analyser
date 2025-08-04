@@ -21,7 +21,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'validate',
-    description: 'Validate a TYPO3 installation for analysis compatibility'
+    description: 'Validate a TYPO3 installation for analysis compatibility',
 )]
 class ValidateCommand extends Command
 {
@@ -30,22 +30,22 @@ class ValidateCommand extends Command
         $this->addArgument(
             'path',
             InputArgument::REQUIRED,
-            'Path to the TYPO3 installation'
+            'Path to the TYPO3 installation',
         );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        
+
         $path = $input->getArgument('path');
-        
+
         $io->title('TYPO3 Installation Validation');
-        $io->section(sprintf('Validating: %s', $path));
-        
+        $io->section(\sprintf('Validating: %s', $path));
+
         $issues = [];
         $checks = [];
-        
+
         // Check if path exists
         if (!is_dir($path)) {
             $issues[] = 'Directory does not exist';
@@ -53,7 +53,7 @@ class ValidateCommand extends Command
         } else {
             $checks[] = ['Path exists', '✅', 'Directory found'];
         }
-        
+
         // Check for TYPO3 indicators
         $typo3Indicators = [
             'typo3conf/LocalConfiguration.php' => 'LocalConfiguration found',
@@ -61,21 +61,21 @@ class ValidateCommand extends Command
             'vendor/typo3/cms-core' => 'TYPO3 Core found (Composer mode)',
             'composer.json' => 'Composer configuration found',
         ];
-        
+
         $foundIndicators = 0;
         foreach ($typo3Indicators as $indicator => $description) {
             if (file_exists($path . '/' . $indicator)) {
                 $checks[] = [$description, '✅', 'Found'];
-                $foundIndicators++;
+                ++$foundIndicators;
             } else {
                 $checks[] = [$description, '❌', 'Not found'];
             }
         }
-        
-        if ($foundIndicators === 0) {
+
+        if (0 === $foundIndicators) {
             $issues[] = 'No TYPO3 installation indicators found';
         }
-        
+
         // Check permissions
         if (is_dir($path) && !is_readable($path)) {
             $issues[] = 'Directory is not readable';
@@ -83,7 +83,7 @@ class ValidateCommand extends Command
         } else {
             $checks[] = ['Read permissions', '✅', 'Directory is readable'];
         }
-        
+
         // Check for database configuration
         $localConfigPath = $path . '/typo3conf/LocalConfiguration.php';
         if (file_exists($localConfigPath) && is_readable($localConfigPath)) {
@@ -91,27 +91,28 @@ class ValidateCommand extends Command
         } else {
             $checks[] = ['Database configuration', '⚠️', 'LocalConfiguration.php not accessible'];
         }
-        
+
         // Display results
         $io->table(['Check', 'Status', 'Details'], $checks);
-        
+
         if (empty($issues)) {
             $io->success('TYPO3 installation is valid and ready for analysis!');
-            
+
             // Show detected version if possible
             $version = $this->detectTYPO3Version($path);
             if ($version) {
-                $io->note(sprintf('Detected TYPO3 version: %s', $version));
+                $io->note(\sprintf('Detected TYPO3 version: %s', $version));
             }
-            
+
             return Command::SUCCESS;
         } else {
             $io->error('Validation failed with the following issues:');
             $io->listing($issues);
+
             return Command::FAILURE;
         }
     }
-    
+
     private function detectTYPO3Version(string $path): ?string
     {
         // Try to detect version from composer.json
@@ -122,7 +123,7 @@ class ValidateCommand extends Command
                 return $composer['require']['typo3/cms-core'];
             }
         }
-        
+
         // Try to detect from TYPO3 constants
         $constantsFile = $path . '/typo3/sysext/core/Classes/Information/Typo3Version.php';
         if (file_exists($constantsFile)) {
@@ -131,7 +132,7 @@ class ValidateCommand extends Command
                 return $matches[1];
             }
         }
-        
+
         return null;
     }
 }

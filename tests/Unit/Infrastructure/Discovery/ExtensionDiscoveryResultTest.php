@@ -31,7 +31,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
             'News System',
             Version::fromString('10.0.0'),
             'composer',
-            'georgringer/news'
+            'georgringer/news',
         );
         $this->newsExtension->setActive(true);
 
@@ -40,7 +40,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
             'Address Management',
             Version::fromString('7.1.0'),
             'composer',
-            'friendsoftypo3/tt-address'
+            'friendsoftypo3/tt-address',
         );
         $this->addressExtension->setActive(false);
 
@@ -49,23 +49,34 @@ final class ExtensionDiscoveryResultTest extends TestCase
             'Local Extension',
             Version::fromString('1.0.0'),
             'local',
-            null
+            null,
         );
         $this->localExtension->setActive(true);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success
+     */
     public function testImplementsSerializableInterface(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
         $this->assertInstanceOf(SerializableInterface::class, $result);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::isSuccessful
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getErrorMessage
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSuccessfulMethods
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getDiscoveryMetadata
+     */
     public function testSuccessFactoryMethod(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
         $methods = ['PackageStates.php', 'composer installed.json'];
         $metadata = [
-            ['method' => 'PackageStates.php', 'successful' => true]
+            ['method' => 'PackageStates.php', 'successful' => true],
         ];
 
         $result = ExtensionDiscoveryResult::success($extensions, $methods, $metadata);
@@ -77,6 +88,14 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($metadata, $result->getDiscoveryMetadata());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::isSuccessful
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getErrorMessage
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSuccessfulMethods
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getDiscoveryMetadata
+     */
     public function testSuccessFactoryMethodWithDefaults(): void
     {
         $extensions = [$this->newsExtension];
@@ -90,11 +109,19 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getDiscoveryMetadata());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::failed
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::isSuccessful
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getErrorMessage
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSuccessfulMethods
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getDiscoveryMetadata
+     */
     public function testFailedFactoryMethod(): void
     {
         $errorMessage = 'Discovery failed due to file not found';
         $metadata = [
-            ['method' => 'PackageStates.php', 'successful' => false, 'error' => 'File not found']
+            ['method' => 'PackageStates.php', 'successful' => false, 'error' => 'File not found'],
         ];
 
         $result = ExtensionDiscoveryResult::failed($errorMessage, $metadata);
@@ -106,6 +133,14 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($metadata, $result->getDiscoveryMetadata());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::failed
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::isSuccessful
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getErrorMessage
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensions
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSuccessfulMethods
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getDiscoveryMetadata
+     */
     public function testFailedFactoryMethodWithDefaults(): void
     {
         $errorMessage = 'Generic error';
@@ -119,6 +154,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getDiscoveryMetadata());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionCount
+     */
     public function testGetExtensionCount(): void
     {
         $result = ExtensionDiscoveryResult::success([$this->newsExtension, $this->addressExtension]);
@@ -128,6 +166,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame(0, $emptyResult->getExtensionCount());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::hasExtensions
+     */
     public function testHasExtensions(): void
     {
         $result = ExtensionDiscoveryResult::success([$this->newsExtension]);
@@ -137,6 +178,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertFalse($emptyResult->hasExtensions());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsByType
+     */
     public function testGetExtensionsByType(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -155,6 +199,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertCount(0, $systemExtensions);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsByActiveStatus
+     */
     public function testGetExtensionsByActiveStatus(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -170,6 +217,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertContains($this->addressExtension, $inactiveExtensions);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionByKey
+     */
     public function testGetExtensionByKey(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -185,6 +235,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertNull($notFound);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::hasExtension
+     */
     public function testHasExtension(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -195,6 +248,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertFalse($result->hasExtension('nonexistent'));
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsGroupedByType
+     */
     public function testGetExtensionsGroupedByType(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -211,6 +267,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertContains($this->localExtension, $grouped['local']);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsGroupedByType
+     */
     public function testGetExtensionsGroupedByTypeEmpty(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
@@ -218,6 +277,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $grouped);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getStatistics
+     */
     public function testGetStatistics(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -235,6 +297,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertTrue($stats['successful']);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getStatistics
+     */
     public function testGetStatisticsForEmptyResult(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
@@ -249,6 +314,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertTrue($stats['successful']);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getStatistics
+     */
     public function testGetStatisticsForFailedResult(): void
     {
         $result = ExtensionDiscoveryResult::failed('Discovery failed');
@@ -263,6 +331,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertFalse($stats['successful']);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForSuccessfulResultWithExtensions(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -275,6 +346,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($expected, $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForSuccessfulResultWithOneExtension(): void
     {
         $methods = ['PackageStates.php'];
@@ -286,6 +360,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($expected, $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForSuccessfulResultWithNoExtensions(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
@@ -295,11 +372,14 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('No extensions found in installation', $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForFailedResult(): void
     {
         $metadata = [
             ['method' => 'PackageStates.php'],
-            ['method' => 'composer installed.json']
+            ['method' => 'composer installed.json'],
         ];
         $result = ExtensionDiscoveryResult::failed('File system error', $metadata);
 
@@ -309,10 +389,13 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($expected, $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForFailedResultWithOneMethod(): void
     {
         $metadata = [
-            ['method' => 'PackageStates.php']
+            ['method' => 'PackageStates.php'],
         ];
         $result = ExtensionDiscoveryResult::failed('File not found', $metadata);
 
@@ -322,6 +405,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($expected, $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testGetSummaryForFailedResultWithNoMetadata(): void
     {
         $result = ExtensionDiscoveryResult::failed('Generic error');
@@ -332,6 +418,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($expected, $summary);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::toArray
+     */
     public function testToArrayForSuccessfulResult(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -354,6 +443,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('tt_address', $array['extensions'][1]['key']);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::toArray
+     */
     public function testToArrayForFailedResult(): void
     {
         $errorMessage = 'Discovery failed';
@@ -371,6 +463,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertArrayHasKey('summary', $array);
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::fromArray
+     */
     public function testFromArrayForSuccessfulResult(): void
     {
         $data = [
@@ -384,7 +479,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
                     'type' => 'composer',
                     'composer_name' => 'georgringer/news',
                     'is_active' => true,
-                    'em_configuration' => ['priority' => 'top']
+                    'em_configuration' => ['priority' => 'top'],
                 ],
                 [
                     'key' => 'tt_address',
@@ -393,11 +488,11 @@ final class ExtensionDiscoveryResultTest extends TestCase
                     'type' => 'composer',
                     'composer_name' => 'friendsoftypo3/tt-address',
                     'is_active' => false,
-                    'em_configuration' => []
-                ]
+                    'em_configuration' => [],
+                ],
             ],
             'successful_methods' => ['PackageStates.php'],
-            'discovery_metadata' => [['method' => 'PackageStates.php', 'successful' => true]]
+            'discovery_metadata' => [['method' => 'PackageStates.php', 'successful' => true]],
         ];
 
         $result = ExtensionDiscoveryResult::fromArray($data);
@@ -418,6 +513,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertFalse($extensions[1]->isActive());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::fromArray
+     */
     public function testFromArrayForFailedResult(): void
     {
         $data = [
@@ -425,7 +523,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
             'error_message' => 'Discovery failed',
             'extensions' => [],
             'successful_methods' => [],
-            'discovery_metadata' => [['method' => 'PackageStates.php', 'successful' => false]]
+            'discovery_metadata' => [['method' => 'PackageStates.php', 'successful' => false]],
         ];
 
         $result = ExtensionDiscoveryResult::fromArray($data);
@@ -436,6 +534,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getSuccessfulMethods());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::fromArray
+     */
     public function testFromArrayWithMissingOptionalFields(): void
     {
         $data = [
@@ -447,10 +548,10 @@ final class ExtensionDiscoveryResultTest extends TestCase
                     'version' => '1.0.0',
                     'type' => 'local',
                     'composer_name' => null,
-                    'is_active' => true
+                    'is_active' => true,
                     // Missing em_configuration
-                ]
-            ]
+                ],
+            ],
             // Missing successful_methods and discovery_metadata
         ];
 
@@ -466,10 +567,13 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $extension->getEmConfiguration());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::fromArray
+     */
     public function testFromArrayForFailedResultWithMissingErrorMessage(): void
     {
         $data = [
-            'successful' => false
+            'successful' => false,
             // Missing error_message
         ];
 
@@ -479,13 +583,17 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('Unknown cached error', $result->getErrorMessage());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::toArray
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::fromArray
+     */
     public function testSerializationRoundTrip(): void
     {
         $extensions = [$this->newsExtension, $this->localExtension];
         $methods = ['PackageStates.php', 'composer installed.json'];
         $metadata = [
             ['method' => 'PackageStates.php', 'successful' => true, 'extensions_found' => 1],
-            ['method' => 'composer installed.json', 'successful' => true, 'extensions_found' => 1]
+            ['method' => 'composer installed.json', 'successful' => true, 'extensions_found' => 1],
         ];
 
         $original = ExtensionDiscoveryResult::success($extensions, $methods, $metadata);
@@ -503,9 +611,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $originalExtensions = $original->getExtensions();
         $deserializedExtensions = $deserialized->getExtensions();
 
-        $this->assertCount(count($originalExtensions), $deserializedExtensions);
+        $this->assertCount(\count($originalExtensions), $deserializedExtensions);
 
-        for ($i = 0; $i < count($originalExtensions); $i++) {
+        for ($i = 0; $i < \count($originalExtensions); ++$i) {
             $origExt = $originalExtensions[$i];
             $deserExt = $deserializedExtensions[$i];
 
@@ -518,6 +626,9 @@ final class ExtensionDiscoveryResultTest extends TestCase
         }
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensions
+     */
     public function testReadonlyBehavior(): void
     {
         $extensions = [$this->newsExtension];
@@ -532,6 +643,13 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertNotContains($this->addressExtension, $result->getExtensions());
     }
 
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsByType
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsByActiveStatus
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getExtensionsGroupedByType
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getStatistics
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::getSummary
+     */
     public function testComplexScenarioWithMixedExtensions(): void
     {
         // Create system extension
@@ -547,7 +665,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $methods = ['PackageStates.php', 'composer installed.json'];
         $metadata = [
             ['method' => 'PackageStates.php', 'successful' => true, 'extensions_found' => 3],
-            ['method' => 'composer installed.json', 'successful' => true, 'extensions_found' => 2]
+            ['method' => 'composer installed.json', 'successful' => true, 'extensions_found' => 2],
         ];
 
         $result = ExtensionDiscoveryResult::success($extensions, $methods, $metadata);

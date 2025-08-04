@@ -32,7 +32,7 @@ class VersionCompatibilityCheckerTest extends TestCase
     {
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [11, 12]],
-            ['number' => '2.0.0', 'typo3_versions' => [10]]
+            ['number' => '2.0.0', 'typo3_versions' => [10]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -45,7 +45,7 @@ class VersionCompatibilityCheckerTest extends TestCase
     {
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [10, 11]],
-            ['number' => '2.0.0', 'typo3_versions' => [9]]
+            ['number' => '2.0.0', 'typo3_versions' => [9]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -59,7 +59,7 @@ class VersionCompatibilityCheckerTest extends TestCase
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [11, 12]],
             ['number' => '2.0.0', 'typo3_versions' => [10, 11]],
-            ['number' => '3.0.0', 'typo3_versions' => [12, 13]]
+            ['number' => '3.0.0', 'typo3_versions' => [12, 13]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -72,7 +72,7 @@ class VersionCompatibilityCheckerTest extends TestCase
     {
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [10, 11]],
-            ['number' => '2.0.0', 'typo3_versions' => [9]]
+            ['number' => '2.0.0', 'typo3_versions' => [9]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -86,7 +86,7 @@ class VersionCompatibilityCheckerTest extends TestCase
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [11, 12]],
             ['number' => '2.5.0', 'typo3_versions' => [12, 13]],
-            ['number' => '2.0.0', 'typo3_versions' => [12]]
+            ['number' => '2.0.0', 'typo3_versions' => [12]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -99,7 +99,7 @@ class VersionCompatibilityCheckerTest extends TestCase
     {
         $versions = [
             ['number' => '1.0.0', 'typo3_versions' => [10, 11]],
-            ['number' => '2.0.0', 'typo3_versions' => [9]]
+            ['number' => '2.0.0', 'typo3_versions' => [9]],
         ];
         $typo3Version = new Version('12.4.0');
 
@@ -202,7 +202,7 @@ class VersionCompatibilityCheckerTest extends TestCase
     {
         $versions = [
             ['typo3_versions' => [12]], // Missing number field
-            ['number' => '2.0.0', 'typo3_versions' => [12]]
+            ['number' => '2.0.0', 'typo3_versions' => [12]],
         ];
         $typo3Version = new Version('12.4.0');
 

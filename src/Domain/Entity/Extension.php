@@ -12,12 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Represents a TYPO3 extension
+ * Represents a TYPO3 extension.
  */
 class Extension
 {
@@ -34,7 +33,7 @@ class Extension
         private readonly string $title,
         private readonly Version $version,
         private readonly string $type = 'local',
-        private readonly ?string $composerName = null
+        private readonly ?string $composerName = null,
     ) {
     }
 
@@ -65,7 +64,7 @@ class Extension
 
     public function hasComposerName(): bool
     {
-        return $this->composerName !== null;
+        return null !== $this->composerName;
     }
 
     public function addDependency(string $extensionKey, ?string $version = null): void
@@ -80,7 +79,7 @@ class Extension
 
     public function hasDependency(string $extensionKey): bool
     {
-        return array_key_exists($extensionKey, $this->dependencies);
+        return \array_key_exists($extensionKey, $this->dependencies);
     }
 
     public function addFile(string $filePath): void
@@ -95,32 +94,32 @@ class Extension
 
     public function getPhpFiles(): array
     {
-        return array_filter($this->files, fn($file) => str_ends_with($file, '.php'));
+        return array_filter($this->files, fn ($file) => str_ends_with($file, '.php'));
     }
 
     public function getTcaFiles(): array
     {
-        return array_filter($this->files, fn($file) => str_contains($file, '/TCA/') && str_ends_with($file, '.php'));
+        return array_filter($this->files, fn ($file) => str_contains($file, '/TCA/') && str_ends_with($file, '.php'));
     }
 
     public function getTemplateFiles(): array
     {
-        return array_filter($this->files, fn($file) => str_ends_with($file, '.html') || str_ends_with($file, '.fluid'));
+        return array_filter($this->files, fn ($file) => str_ends_with($file, '.html') || str_ends_with($file, '.fluid'));
     }
 
     public function isSystemExtension(): bool
     {
-        return $this->type === 'system';
+        return 'system' === $this->type;
     }
 
     public function isLocalExtension(): bool
     {
-        return $this->type === 'local';
+        return 'local' === $this->type;
     }
 
     public function isTerExtension(): bool
     {
-        return $this->type === 'ter';
+        return 'ter' === $this->type;
     }
 
     public function getLinesOfCode(): int
@@ -128,9 +127,10 @@ class Extension
         $lines = 0;
         foreach ($this->getPhpFiles() as $file) {
             if (file_exists($file)) {
-                $lines += count(file($file));
+                $lines += \count(file($file));
             }
         }
+
         return $lines;
     }
 
@@ -146,7 +146,7 @@ class Extension
 
     public function hasRepositoryUrl(): bool
     {
-        return $this->repositoryUrl !== null;
+        return null !== $this->repositoryUrl;
     }
 
     public function setEmConfiguration(array $emConfiguration): void
@@ -178,7 +178,7 @@ class Extension
 
     public function hasConflict(string $extensionKey): bool
     {
-        return array_key_exists($extensionKey, $this->conflicts);
+        return \array_key_exists($extensionKey, $this->conflicts);
     }
 
     public function getMetadata(): ?ExtensionMetadata
@@ -193,7 +193,7 @@ class Extension
 
     public function hasMetadata(): bool
     {
-        return $this->metadata !== null;
+        return null !== $this->metadata;
     }
 
     public function isActive(): bool

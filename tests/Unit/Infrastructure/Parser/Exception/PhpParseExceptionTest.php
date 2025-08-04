@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
-use PHPUnit\Framework\TestCase;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test case for PhpParseException
+ * Test case for PhpParseException.
  *
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException
  */
@@ -64,7 +64,7 @@ class PhpParseExceptionTest extends TestCase
             'Version-specific error',
             '/path/to/config.php',
             [],
-            $customPhpVersion
+            $customPhpVersion,
         );
 
         self::assertSame($customPhpVersion, $exception->getPhpVersion());
@@ -90,7 +90,7 @@ class PhpParseExceptionTest extends TestCase
             $phpVersion,
             $line,
             $column,
-            $context
+            $context,
         );
 
         self::assertSame($line, $exception->getParseLine());
@@ -115,7 +115,7 @@ class PhpParseExceptionTest extends TestCase
             null,
             [],
             $code,
-            $previous
+            $previous,
         );
 
         self::assertSame($code, $exception->getCode());
@@ -293,7 +293,7 @@ class PhpParseExceptionTest extends TestCase
             $column,
             $context,
             $code,
-            $previous
+            $previous,
         );
 
         // Verify all properties are correctly set
@@ -351,7 +351,7 @@ class PhpParseExceptionTest extends TestCase
             'multiple errors' => [
                 ['First error', 'Second error', 'Third error'],
                 true,
-                'First error'
+                'First error',
             ],
             'realistic errors' => [
                 [
@@ -359,7 +359,7 @@ class PhpParseExceptionTest extends TestCase
                     'Fatal error: Cannot redeclare function foo() on line 15',
                 ],
                 true,
-                'Parse error: syntax error, unexpected T_STRING on line 10'
+                'Parse error: syntax error, unexpected T_STRING on line 10',
             ],
         ];
     }

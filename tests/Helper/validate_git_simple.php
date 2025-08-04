@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 /**
  * Simple manual validation of Git repository support
- * Manually constructs services to test real-world functionality
+ * Manually constructs services to test real-world functionality.
  */
 
 require_once __DIR__ . '/vendor/autoload.php';
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
-use Monolog\Logger;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Symfony\Component\HttpClient\HttpClient;
 
 echo "🔍 TYPO3 Upgrade Analyzer - Git Repository Support Validation\n";
@@ -54,7 +54,7 @@ try {
         $terApiClient,
         $packagistClient,
         $gitRepositoryAnalyzer,
-        $logger
+        $logger,
     );
 
     // Test with a well-known TYPO3 extension
@@ -63,19 +63,19 @@ try {
         'News system',
         Version::fromString('11.0.0'),
         'local',
-        'georgringer/news'
+        'georgringer/news',
     );
 
     // Set repository URL and EM configuration
     $extension->setRepositoryUrl('https://github.com/georgringer/news');
     $extension->setEmConfiguration([
-        'git_repository_url' => 'https://github.com/georgringer/news'
+        'git_repository_url' => 'https://github.com/georgringer/news',
     ]);
 
     // Create analysis context
     $context = new AnalysisContext(
         Version::fromString('11.5.0'),
-        Version::fromString('12.4.0')
+        Version::fromString('12.4.0'),
     );
 
     echo "📦 Testing Extension: {$extension->getKey()}\n";
@@ -84,7 +84,7 @@ try {
 
     // Test GitHub token availability
     $hasToken = !empty(getenv('GITHUB_TOKEN') ?? '');
-    echo "🔑 GitHub Token: " . ($hasToken ? '✅ Available' : '⚠️  Not set (rate limited)') . "\n\n";
+    echo '🔑 GitHub Token: ' . ($hasToken ? '✅ Available' : '⚠️  Not set (rate limited)') . "\n\n";
 
     echo "⏳ Running analysis...\n";
 
@@ -99,22 +99,22 @@ try {
     echo "✅ Analysis completed in {$analysisTime}ms\n\n";
 
     echo "📊 Results:\n";
-    echo "  Status: " . ($result->isSuccessful() ? '✅ Success' : '❌ Failed') . "\n";
+    echo '  Status: ' . ($result->isSuccessful() ? '✅ Success' : '❌ Failed') . "\n";
     echo "  Risk Score: {$result->getRiskScore()}\n";
     echo "  Risk Level: {$result->getRiskLevel()}\n\n";
 
     echo "📈 Availability Metrics:\n";
-    echo "  TER Available: " . ($result->getMetric('ter_available') ? '✅ Yes' : '❌ No') . "\n";
-    echo "  Packagist Available: " . ($result->getMetric('packagist_available') ? '✅ Yes' : '❌ No') . "\n";
-    echo "  Git Available: " . ($result->getMetric('git_available') ? '✅ Yes' : '❌ No') . "\n";
+    echo '  TER Available: ' . ($result->getMetric('ter_available') ? '✅ Yes' : '❌ No') . "\n";
+    echo '  Packagist Available: ' . ($result->getMetric('packagist_available') ? '✅ Yes' : '❌ No') . "\n";
+    echo '  Git Available: ' . ($result->getMetric('git_available') ? '✅ Yes' : '❌ No') . "\n";
 
     // Git-specific metrics
     if ($result->getMetric('git_available')) {
         echo "\n🔍 Git Repository Analysis:\n";
         $health = $result->getMetric('git_repository_health');
-        echo "  Repository Health: " . ($health !== null ? sprintf('%.2f', $health) : 'N/A') . "\n";
-        echo "  Repository URL: " . ($result->getMetric('git_repository_url') ?? 'N/A') . "\n";
-        echo "  Latest Version: " . ($result->getMetric('git_latest_version') ?? 'N/A') . "\n";
+        echo '  Repository Health: ' . (null !== $health ? \sprintf('%.2f', $health) : 'N/A') . "\n";
+        echo '  Repository URL: ' . ($result->getMetric('git_repository_url') ?? 'N/A') . "\n";
+        echo '  Latest Version: ' . ($result->getMetric('git_latest_version') ?? 'N/A') . "\n";
     }
 
     // Test Git components individually for more details
@@ -123,10 +123,10 @@ try {
     try {
         $gitInfo = $gitRepositoryAnalyzer->analyzeExtension($extension, $context->getTargetVersion());
         echo "  Git Analysis: ✅ Success\n";
-        echo "    - Health Score: " . sprintf('%.2f', $gitInfo->getHealthScore()) . "\n";
-        echo "    - Compatible Versions: " . count($gitInfo->getCompatibleVersions()) . "\n";
-        echo "    - Has Compatible Version: " . ($gitInfo->hasCompatibleVersion() ? 'Yes' : 'No') . "\n";
-    } catch (\Throwable $e) {
+        echo '    - Health Score: ' . \sprintf('%.2f', $gitInfo->getHealthScore()) . "\n";
+        echo '    - Compatible Versions: ' . \count($gitInfo->getCompatibleVersions()) . "\n";
+        echo '    - Has Compatible Version: ' . ($gitInfo->hasCompatibleVersion() ? 'Yes' : 'No') . "\n";
+    } catch (Throwable $e) {
         echo "  Git Analysis: ❌ Failed ({$e->getMessage()})\n";
     }
 
@@ -135,7 +135,7 @@ try {
     if (!empty($recommendations)) {
         echo "\n💡 Recommendations:\n";
         foreach ($recommendations as $i => $recommendation) {
-            echo "  " . ($i + 1) . ". {$recommendation}\n";
+            echo '  ' . ($i + 1) . ". {$recommendation}\n";
         }
     }
 
@@ -147,18 +147,17 @@ try {
     $packagistWorking = $result->getMetric('packagist_available');
 
     echo "\n📋 Summary:\n";
-    echo "  TER Integration: " . ($terWorking ? '✅ Working' : '❌ Failed') . "\n";
-    echo "  Packagist Integration: " . ($packagistWorking ? '✅ Working' : '❌ Failed') . "\n";
-    echo "  Git Integration: " . ($gitWorking ? '✅ Working' : '❌ Failed') . "\n";
-    echo "  Overall: " . ($result->isSuccessful() ? '✅ Success' : '❌ Failed') . "\n";
+    echo '  TER Integration: ' . ($terWorking ? '✅ Working' : '❌ Failed') . "\n";
+    echo '  Packagist Integration: ' . ($packagistWorking ? '✅ Working' : '❌ Failed') . "\n";
+    echo '  Git Integration: ' . ($gitWorking ? '✅ Working' : '❌ Failed') . "\n";
+    echo '  Overall: ' . ($result->isSuccessful() ? '✅ Success' : '❌ Failed') . "\n";
 
     if ($gitWorking && $terWorking && $packagistWorking) {
         echo "\n🚀 All systems operational! Ready for production use.\n";
     } else {
         echo "\n⚠️  Some components failed. Check network connectivity and API availability.\n";
     }
-
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     echo "❌ Critical Error: {$e->getMessage()}\n";
     echo "🔍 File: {$e->getFile()}:{$e->getLine()}\n\n";
 
