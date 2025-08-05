@@ -50,13 +50,27 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
      */
     public function isGitRepository(string $url): bool
     {
-        // Check common Git URL patterns
-        return preg_match('/\.git$/', $url) === 1
-               || str_contains($url, 'github.com')
-               || str_contains($url, 'gitlab.com')
-               || str_contains($url, 'bitbucket.org')
-               || str_contains($url, 'git.')
-               || preg_match('#^(git|ssh|https?)://#', $url) === 1;
+        // URLs ending with .git are definitely Git repositories
+        if (preg_match('/\.git$/', $url) === 1) {
+            return true;
+        }
+        
+        // Check for repository URLs with owner/repo pattern
+        if (preg_match('#(github\.com|gitlab\.com|bitbucket\.org)[:/]([^/]+)/([^/\.]+)#', $url)) {
+            return true;
+        }
+        
+        // Check for Git protocol URLs
+        if (preg_match('#^(git|ssh)://#', $url) === 1) {
+            return true;
+        }
+        
+        // Check for URLs with git subdomain or containing 'git' in domain
+        if (preg_match('#^https?://git\.#', $url) === 1 || preg_match('#^https?://[^/]*\.git\.[^/]*/#', $url) === 1 || preg_match('#^https?://[^/]*git[^/]*\.com/#', $url) === 1) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**

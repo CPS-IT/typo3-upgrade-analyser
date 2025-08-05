@@ -17,6 +17,8 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
 
 /**
@@ -49,8 +51,9 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
 
         // Create GitHub client with optional authentication
         $this->gitHubClient = new GitHubClient(
-            $this->createAuthenticatedGitHubClient(),
+            $this->createHttpClientService(),
             $this->createLogger(),
+            new RepositoryUrlHandler(),
             $this->getGitHubToken(),
         );
 
@@ -60,7 +63,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
         // Create repository analyzer
         $this->repositoryAnalyzer = new GitRepositoryAnalyzer(
             $this->providerFactory,
-            new GitVersionParser(),
+            new GitVersionParser(new ComposerConstraintChecker()),
             $this->createLogger(),
         );
     }
@@ -449,8 +452,9 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
 
         // Test unauthenticated access
         $unauthenticatedClient = new GitHubClient(
-            $this->httpClient,
+            $this->createHttpClientService(),
             $this->createLogger(),
+            new RepositoryUrlHandler(),
         );
 
         try {

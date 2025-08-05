@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\EnvironmentLoader;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Client for interacting with the TYPO3 Extension Repository (TER) API.
@@ -27,7 +27,7 @@ class TerApiClient
     private readonly VersionCompatibilityChecker $compatibilityChecker;
 
     public function __construct(
-        HttpClientInterface $httpClient,
+        HttpClientServiceInterface $httpClient,
         private readonly LoggerInterface $logger,
     ) {
         // Load TER token from environment

@@ -79,6 +79,10 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         th, td {
             padding: 12px;
@@ -88,6 +92,20 @@
         th {
             background: #f8f9fa;
             font-weight: 600;
+            color: #495057;
+        }
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .table-status {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .status-available {
+            color: #28a745;
+        }
+        .status-unavailable {
+            color: #dc3545;
         }
         .footer {
             margin-top: 50px;
@@ -109,7 +127,8 @@
         <div class="summary-card">
             <h3>Installation</h3>
             <p><strong>Path:</strong> {{ installation.path }}</p>
-            <p><strong>Version:</strong> {{ installation.version.toString() }}</p>
+            <p><strong>Current Version:</strong> {{ installation.version.toString() }}</p>
+            <p><strong>Target Version:</strong> {{ target_version }}</p>
             <p><strong>Type:</strong> {{ installation.type }}</p>
         </div>
         
@@ -135,7 +154,31 @@
         </div>
     </div>
 
-    <h2>Extension Analysis</h2>
+    <h2>Extensions Overview</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Extension</th>
+                <th>Version</th>
+                <th>Risk Level</th>
+                <th>Available</th>
+                <th>Latest Version</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in extension_data %}
+            <tr>
+                <td><strong>{{ data.extension.key }}</strong></td>
+                <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
+                <td><span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span></td>
+                <td>{% if data.version_analysis %}{% if data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available %}✅{% else %}❌{% endif %}{% else %}❓{% endif %}</td>
+                <td>{{ data.version_analysis and data.version_analysis.git_latest_version ? data.version_analysis.git_latest_version : 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Detailed Extension Analysis</h2>
     
     {% for data in extension_data %}
     <div class="extension">
@@ -157,6 +200,20 @@
                     {% endif %}
                     {% if data.extension.version %}
                     <p><strong>Version:</strong> {{ data.extension.version.toString() }}</p>
+                    {% endif %}
+                    
+                    {% if data.loc_analysis %}
+                    <h4>Codebase Analysis</h4>
+                    <p><strong>Total Lines:</strong> {{ data.loc_analysis.total_lines|number_format }}</p>
+                    <p><strong>PHP Files:</strong> {{ data.loc_analysis.php_files }}</p>
+                    <p><strong>Code Lines:</strong> {{ data.loc_analysis.code_lines|number_format }}</p>
+                    <p><strong>Comment Lines:</strong> {{ data.loc_analysis.comment_lines|number_format }}</p>
+                    <p><strong>Average File Size:</strong> {{ data.loc_analysis.average_file_size }} lines</p>
+                    <p><strong>Largest File:</strong> {{ data.loc_analysis.largest_file_lines }} lines<br>
+                       <small>({{ data.loc_analysis.largest_file_path }})</small></p>
+                    <p><strong>Classes:</strong> {{ data.loc_analysis.classes }} | 
+                       <strong>Methods:</strong> {{ data.loc_analysis.methods }} | 
+                       <strong>Functions:</strong> {{ data.loc_analysis.functions }}</p>
                     {% endif %}
                 </div>
                 
@@ -181,6 +238,9 @@
                     </p>
                     {% if data.version_analysis.git_repository_health %}
                     <p><strong>Repository Health:</strong> {{ "%.0f"|format(data.version_analysis.git_repository_health * 100) }}%</p>
+                    {% endif %}
+                    {% if data.version_analysis.git_latest_version %}
+                    <p><strong>Latest Compatible Version:</strong> {{ data.version_analysis.git_latest_version }}</p>
                     {% endif %}
                     {% endif %}
                     

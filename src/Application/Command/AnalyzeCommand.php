@@ -124,7 +124,7 @@ class AnalyzeCommand extends Command
 
             // Phase 2: Analysis
             $io->text('Phase 2: Running analyzers...');
-            $analysisResults = $this->executeAnalysisPhase($extensions, $targetVersion, $input->getOption('analyzers'), $io);
+            $analysisResults = $this->executeAnalysisPhase($installation, $extensions, $targetVersion, $input->getOption('analyzers'), $io);
             $io->progressAdvance();
 
             // Phase 3: Reporting
@@ -199,7 +199,7 @@ class AnalyzeCommand extends Command
      *
      * @return array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>>
      */
-    private function executeAnalysisPhase(array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
+    private function executeAnalysisPhase(?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
     {
         if (empty($extensions)) {
             $io->warning('No extensions found to analyze');
@@ -217,9 +217,17 @@ class AnalyzeCommand extends Command
             return [];
         }
 
+        // Get custom paths from installation metadata
+        $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
+        
         $context = new AnalysisContext(
             Version::fromString('12.4'), // Current version placeholder
-            Version::fromString($targetVersion)
+            Version::fromString($targetVersion),
+            [], // phpVersions
+            [
+                'installation_path' => $installation?->getPath() ?? '', 
+                'custom_paths' => $customPaths
+            ]
         );
         $results = [];
 
@@ -327,7 +335,8 @@ class AnalyzeCommand extends Command
                 $extensions,
                 $combinedResults,
                 $formats,
-                $outputDir
+                $outputDir,
+                $configService->getTargetVersion()
             );
 
             // Log report generation results

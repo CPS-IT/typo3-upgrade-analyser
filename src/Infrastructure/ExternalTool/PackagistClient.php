@@ -168,6 +168,14 @@ class PackagistClient
             return false;
         }
 
+        $packageName = $versionData['name'] ?? '';
+        $packageVersion = $versionData['version'] ?? '';
+
+        // Special handling for typo3/cms-core - its version IS the TYPO3 version
+        if ($packageName === 'typo3/cms-core') {
+            return $this->isCoreVersionCompatible($packageVersion, $typo3Version);
+        }
+
         $requirements = $versionData['require'];
         $typo3Requirements = $this->constraintChecker->findTypo3Requirements($requirements);
 
@@ -184,5 +192,40 @@ class PackagistClient
         }
 
         return false;
+    }
+
+    /**
+     * Check if a typo3/cms-core version is compatible with target TYPO3 version.
+     */  
+    private function isCoreVersionCompatible(string $packageVersion, Version $typo3Version): bool
+    {
+        // Remove 'v' prefix if present
+        $normalizedVersion = ltrim($packageVersion, 'v');
+        
+        // Skip dev versions
+        if (str_contains($normalizedVersion, 'dev')) {
+            return false;
+        }
+
+        // For typo3/cms-core, the package version should match the TYPO3 version
+        // Check if versions are in the same major.minor branch  
+        $versionParts = explode('.', $normalizedVersion);
+        $targetParts = explode('.', $typo3Version->toString());
+
+        if (count($versionParts) < 2 || count($targetParts) < 2) {
+            return false;
+        }
+
+        // Check major.minor compatibility and that package version >= target version
+        if ($versionParts[0] !== $targetParts[0] || $versionParts[1] !== $targetParts[1]) {
+            return false;
+        }
+
+        // If we have patch versions, check that package version >= target version
+        if (count($versionParts) >= 3 && count($targetParts) >= 3) {
+            return (int)$versionParts[2] >= (int)$targetParts[2];
+        }
+
+        return true;
     }
 }

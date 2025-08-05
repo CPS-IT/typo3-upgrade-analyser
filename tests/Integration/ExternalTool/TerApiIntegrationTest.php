@@ -41,7 +41,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         // Create TER API client
         $this->terApiClient = new TerApiClient(
-            $this->httpClient,
+            $this->createHttpClientService(),
             $this->createLogger(),
         );
     }
@@ -383,7 +383,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         }
 
         // Make a direct API call to inspect response structure
-        $response = $this->httpClient->request('GET', 'https://extensions.typo3.org/api/v1/extension/' . $extensionKey, ['headers' => $headers]);
+        $response = $this->createHttpClientService()->request('GET', 'https://extensions.typo3.org/api/v1/extension/' . $extensionKey, ['headers' => $headers]);
 
         // Handle TER API server instability
         if (500 === $response->getStatusCode()) {

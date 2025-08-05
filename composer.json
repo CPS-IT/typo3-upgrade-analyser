@@ -1,8 +1,8 @@
 {
     "name": "cpsit/typo3-upgrade-analyser",
     "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
-    "type": "project",
     "license": "GPL-2.0-or-later",
+    "type": "project",
     "authors": [
         {
             "name": "Dirk Wenzel"
@@ -11,14 +11,13 @@
     "require": {
         "php": "^8.1",
         "composer/semver": "^3.4",
-        "doctrine/dbal": "^3.7",
         "guzzlehttp/guzzle": "^7.8",
         "monolog/monolog": "^3.5",
         "nikic/php-parser": "^4.18 || ^5.0",
         "symfony/config": "^6.4 || ^7.0",
-      "symfony/dotenv": "^6.4",
         "symfony/console": "^6.4 || ^7.0",
         "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/dotenv": "^6.4",
         "symfony/filesystem": "^6.4 || ^7.0",
         "symfony/finder": "^6.4 || ^7.0",
         "symfony/http-client": "^6.4 || ^7.0",
@@ -30,6 +29,7 @@
         "friendsofphp/php-cs-fixer": "^3.45",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^10.5",
+        "roave/security-advisories": "dev-latest",
         "symfony/var-dumper": "^6.4 || ^7.0"
     },
     "autoload": {
@@ -46,13 +46,13 @@
         "bin/typo3-analyzer"
     ],
     "config": {
-        "sort-packages": true,
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        },
         "platform": {
             "php": "8.3"
         },
-        "allow-plugins": {
-            "ergebnis/composer-normalize": true
-        }
+        "sort-packages": true
     },
     "extra": {
         "branch-alias": {
@@ -60,17 +60,18 @@
         }
     },
     "scripts": {
-        "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
-        "test:unit": "phpunit --testsuite=Unit",
-        "test:integration": "phpunit --testsuite=Integration --no-coverage",
-        "test:functional": "phpunit --testsuite=Functional",
-        "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
-        "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
-        "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
-        "test:performance": "phpunit --group=performance --no-coverage",
-        "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
-        "static-analysis": "phpstan analyse --memory-limit=2G"
+        "static-analysis": "phpstan analyse --memory-limit=2G",
+        "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
+        "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
+        "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional",
+        "test:functional": "phpunit --testsuite=Functional",
+        "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
+        "test:integration": "phpunit --testsuite=Integration --no-coverage",
+        "test:performance": "phpunit --group=performance --no-coverage",
+        "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
+        "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
+        "test:unit": "phpunit --testsuite=Unit"
     }
 }

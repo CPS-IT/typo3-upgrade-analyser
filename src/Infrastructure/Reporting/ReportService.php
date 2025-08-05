@@ -43,7 +43,8 @@ class ReportService
         array $extensions,
         array $results,
         array $formats = ['markdown'],
-        string $outputDirectory = 'var/reports/'
+        string $outputDirectory = 'var/reports/',
+        ?string $targetVersion = null
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => count($extensions),
@@ -57,7 +58,7 @@ class ReportService
         $groupedResults = $this->groupResultsByType($results);
 
         // Generate context for templates
-        $context = $this->buildReportContext($installation, $extensions, $groupedResults);
+        $context = $this->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
 
         foreach ($formats as $format) {
             try {
@@ -112,7 +113,8 @@ class ReportService
     private function buildReportContext(
         Installation $installation,
         array $extensions,
-        array $groupedResults
+        array $groupedResults,
+        ?string $targetVersion = null
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
@@ -131,6 +133,10 @@ class ReportService
             $analysisResults,
             fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'version_availability'
         );
+        $locAnalysis = array_filter(
+            $analysisResults,
+            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'lines_of_code'
+        );
 
         // Build detailed extension data with analysis results
         $extensionData = [];
@@ -144,6 +150,7 @@ class ReportService
                 'extension' => $extension,
                 'results' => $extensionResults,
                 'version_analysis' => $this->extractVersionAnalysis($extensionResults),
+                'loc_analysis' => $this->extractLinesOfCodeAnalysis($extensionResults),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
             ];
         }
@@ -155,6 +162,7 @@ class ReportService
             'installation' => $installation,
             'extensions' => $extensions,
             'extension_data' => $extensionData,
+            'target_version' => $targetVersion ?? '13.4', // Default fallback
             'discovery' => [
                 'installation' => reset($installationDiscovery) ?: null,
                 'extensions' => reset($extensionDiscovery) ?: null,
@@ -193,6 +201,40 @@ class ReportService
             'git_latest_version' => $result->getMetric('git_latest_version'),
             'risk_score' => $result->getRiskScore(),
             'risk_level' => $result->getRiskLevel(),
+            'recommendations' => $result->getRecommendations(),
+        ];
+    }
+
+    /**
+     * @param array<ResultInterface> $results
+     */
+    private function extractLinesOfCodeAnalysis(array $results): ?array
+    {
+        $locResult = array_filter(
+            $results,
+            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'lines_of_code'
+        );
+
+        if (empty($locResult)) {
+            return null;
+        }
+
+        /** @var AnalysisResult $result */
+        $result = reset($locResult);
+
+        return [
+            'total_lines' => $result->getMetric('total_lines'),
+            'code_lines' => $result->getMetric('code_lines'),
+            'comment_lines' => $result->getMetric('comment_lines'),
+            'blank_lines' => $result->getMetric('blank_lines'),
+            'php_files' => $result->getMetric('php_files'),
+            'classes' => $result->getMetric('classes'),
+            'methods' => $result->getMetric('methods'),
+            'functions' => $result->getMetric('functions'),
+            'largest_file_lines' => $result->getMetric('largest_file_lines'),
+            'largest_file_path' => $result->getMetric('largest_file_path'),
+            'average_file_size' => $result->getMetric('average_file_size'),
+            'risk_score' => $result->getRiskScore(),
             'recommendations' => $result->getRecommendations(),
         ];
     }

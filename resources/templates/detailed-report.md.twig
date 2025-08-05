@@ -8,7 +8,7 @@
 - **Path:** {{ installation.path }}
 - **Current Version:** {{ installation.version.toString() }}
 - **Installation Type:** {{ installation.type }}
-- **Target Version:** 13.4
+- **Target Version:** {{ target_version }}
 
 ### Risk Overview
 - **Total Extensions:** {{ statistics.total_extensions }}
@@ -28,9 +28,20 @@
 
 ---
 
+## Extensions Overview
+
+| Extension | Version | Risk Level | Available | Latest Version |
+|-----------|---------|------------|-----------|----------------|
+{% for data in extension_data %}
+| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.risk_summary.risk_level|upper }} | {% if data.version_analysis %}{% if data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available %}✅{% else %}❌{% endif %}{% else %}❓{% endif %} | {{ data.version_analysis and data.version_analysis.git_latest_version ? data.version_analysis.git_latest_version : 'N/A' }} |
+{% endfor %}
+
+---
+
 ## Discovery Results
 
 ### Installation Discovery
+
 {% if discovery.installation %}
 - **Status:** {{ discovery.installation.isSuccessful ? '✅ Success' : '❌ Failed' }}
 - **Summary:** {{ discovery.installation.summary }}
@@ -41,7 +52,8 @@
 - **Status:** ❌ No installation discovery data available
 {% endif %}
 
-### Extension Discovery  
+### Extension Discovery
+
 {% if discovery.extensions %}
 - **Status:** {{ discovery.extensions.isSuccessful ? '✅ Success' : '❌ Failed' }}
 - **Summary:** {{ discovery.extensions.summary }}
@@ -74,6 +86,19 @@
 - **Risk Level:** {{ data.risk_summary.risk_level|upper }}
 {% if data.risk_summary.has_errors %}
 - **⚠️  Analysis Errors:** Some analyzers failed for this extension
+{% endif %}
+
+{% if data.loc_analysis %}
+**Codebase Analysis:**
+- **Total Lines of Code:** {{ data.loc_analysis.total_lines|number_format }}
+- **PHP Files:** {{ data.loc_analysis.php_files }}
+- **Code Lines:** {{ data.loc_analysis.code_lines|number_format }}
+- **Comment Lines:** {{ data.loc_analysis.comment_lines|number_format }}
+- **Average File Size:** {{ data.loc_analysis.average_file_size }} lines
+- **Largest File:** {{ data.loc_analysis.largest_file_lines }} lines ({{ data.loc_analysis.largest_file_path }})
+- **Classes/Interfaces:** {{ data.loc_analysis.classes }}
+- **Methods:** {{ data.loc_analysis.methods }}
+- **Functions:** {{ data.loc_analysis.functions }}
 {% endif %}
 
 {% if data.version_analysis %}
@@ -157,7 +182,7 @@
 
 ### Development Environment Setup
 
-1. Set up TYPO3 13.4 development instance
+1. Set up TYPO3 {{ target_version }} development instance
 2. Test low-risk extensions first
 3. Gradually integrate medium and high-risk extensions
 4. Plan alternative solutions for critical-risk extensions

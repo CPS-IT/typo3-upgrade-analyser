@@ -68,6 +68,13 @@ services:
       - '@logger'
     tags: ['analyzer']
 
+  # Lines of Code Analyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer:
+    public: true
+    arguments:
+      - '@logger'
+    tags: ['analyzer']
+
   # Shared services
   CPSIT\UpgradeAnalyzer\Shared\Configuration\:
     resource: '../src/Shared/Configuration/*'

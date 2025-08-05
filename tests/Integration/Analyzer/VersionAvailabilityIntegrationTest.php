@@ -19,6 +19,8 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
 
 /**
@@ -43,20 +45,26 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
         $this->testExtensions = $this->loadTestData('known_extensions.json');
 
         // Create all required components
-        $terClient = new TerApiClient($this->httpClient, $this->createLogger());
-        $packagistClient = new PackagistClient($this->httpClient, $this->createLogger());
+        $terClient = new TerApiClient($this->createHttpClientService(), $this->createLogger());
+        $packagistClient = new PackagistClient(
+            $this->createHttpClientService(),
+            $this->createLogger(),
+            new ComposerConstraintChecker(),
+            new RepositoryUrlHandler(),
+        );
 
         // Create Git analyzer with GitHub provider
         $gitHubClient = new GitHubClient(
-            $this->createAuthenticatedGitHubClient(),
+            $this->createHttpClientService(),
             $this->createLogger(),
+            new RepositoryUrlHandler(),
             $this->getGitHubToken(),
         );
 
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
-            new GitVersionParser(),
+            new GitVersionParser(new ComposerConstraintChecker()),
             $this->createLogger(),
         );
 
@@ -105,7 +113,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
             'georgringer/news',
         );
 
-        $context = $this->createTestAnalysisContext('12.4.0');
+        $context = $this->createTestAnalysisContext('12.4.2');
 
         $startTime = microtime(true);
         $result = $this->analyzer->analyze($extension, $context);
@@ -201,7 +209,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
             true, // is system extension
         );
 
-        $context = $this->createTestAnalysisContext('12.4.0');
+        $context = $this->createTestAnalysisContext('12.4.2');
 
         $result = $this->analyzer->analyze($extension, $context);
 
@@ -411,7 +419,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
             $this->createTestExtension('local_ext', null, false, true),
         ];
 
-        $context = $this->createTestAnalysisContext('12.4.0');
+        $context = $this->createTestAnalysisContext('12.4.2');
 
         foreach ($extensions as $extension) {
             $result = $this->analyzer->analyze($extension, $context);

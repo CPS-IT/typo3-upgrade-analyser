@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -24,7 +24,7 @@ class TerApiHttpClient
     private const API_BASE_URL = 'https://extensions.typo3.org/api/v1';
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        private readonly HttpClientServiceInterface $httpClient,
         private readonly LoggerInterface $logger,
         private readonly ?string $terToken = null,
     ) {
