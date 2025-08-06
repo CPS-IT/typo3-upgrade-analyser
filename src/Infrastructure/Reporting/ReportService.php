@@ -67,7 +67,8 @@ class ReportService
 
                 $this->logger->info('Report generated successfully', [
                     'format' => $format,
-                    'output_path' => $reportResult->getValue('output_path'),
+                    'main_report' => $reportResult->getValue('main_report')['path'] ?? null,
+                    'extension_reports' => $reportResult->getValue('extension_reports_count'),
                 ]);
             } catch (\Throwable $e) {
                 $errorResult = new ReportingResult(
@@ -120,11 +121,11 @@ class ReportService
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
             $discoveryResults,
-            fn(ResultInterface $r) => str_contains($r->getId(), 'installation')
+            fn(ResultInterface $r) => $r->getId() === 'installation'
         );
         $extensionDiscovery = array_filter(
             $discoveryResults,
-            fn(ResultInterface $r) => str_contains($r->getId(), 'extension')
+            fn(ResultInterface $r) => $r->getId() === 'extensions'
         );
 
         // Analysis results
@@ -335,20 +336,43 @@ class ReportService
 
         $result->setValue('format', $format);
 
+        // Generate main report
+        $mainReportFiles = $this->generateMainReport($format, $context, $outputPath);
+        
+        // Generate individual extension reports
+        $extensionReportFiles = $this->generateExtensionReports($format, $context, $outputPath);
+        
+        // Combine all generated files
+        $allFiles = array_merge($mainReportFiles, $extensionReportFiles);
+        
+        $result->setValue('output_files', $allFiles);
+        $result->setValue('main_report', $mainReportFiles[0] ?? null);
+        $result->setValue('extension_reports_count', count($extensionReportFiles));
+
+        return $result;
+    }
+
+    private function generateMainReport(string $format, array $context, string $outputPath): array
+    {
+        $files = [];
+        
         switch ($format) {
             case 'markdown':
-                $filename = $outputPath . 'detailed-analysis-report.md';
-                $content = $this->twig->render('detailed-report.md.twig', $context);
+                $filename = $outputPath . 'analysis-report.md';
+                $content = $this->twig->render('main-report.md.twig', $context);
                 break;
 
             case 'html':
-                $filename = $outputPath . 'detailed-analysis-report.html';
-                $content = $this->twig->render('detailed-report.html.twig', $context);
+                $filename = $outputPath . 'analysis-report.html';
+                $content = $this->twig->render('main-report.html.twig', $context);
                 break;
 
             case 'json':
-                $filename = $outputPath . 'detailed-analysis-report.json';
-                $content = json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                $filename = $outputPath . 'analysis-report.json';
+                $context_copy = $context;
+                // Remove extension details from main JSON to avoid duplication
+                unset($context_copy['extension_data']);
+                $content = json_encode($context_copy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
                 break;
 
             default:
@@ -356,11 +380,67 @@ class ReportService
         }
 
         file_put_contents($filename, $content);
+        $files[] = [
+            'type' => 'main_report',
+            'path' => $filename,
+            'size' => filesize($filename)
+        ];
 
-        $result->setValue('output_path', $filename);
-        $result->setValue('file_size', filesize($filename));
+        return $files;
+    }
 
-        return $result;
+    private function generateExtensionReports(string $format, array $context, string $outputPath): array
+    {
+        $files = [];
+        
+        // Create extensions subdirectory
+        $extensionsPath = $outputPath . 'extensions/';
+        if (!is_dir($extensionsPath)) {
+            mkdir($extensionsPath, 0755, true);
+        }
+
+        foreach ($context['extension_data'] as $extensionData) {
+            $extensionKey = $extensionData['extension']->getKey();
+            
+            // Create context for individual extension
+            $extensionContext = [
+                'installation' => $context['installation'],
+                'target_version' => $context['target_version'],
+                'extension' => $extensionData['extension'],
+                'extension_data' => $extensionData,
+                'generated_at' => $context['generated_at'],
+            ];
+
+            switch ($format) {
+                case 'markdown':
+                    $filename = $extensionsPath . $extensionKey . '.md';
+                    $content = $this->twig->render('extension-detail.md.twig', $extensionContext);
+                    break;
+
+                case 'html':
+                    $filename = $extensionsPath . $extensionKey . '.html';
+                    $content = $this->twig->render('extension-detail.html.twig', $extensionContext);
+                    break;
+
+                case 'json':
+                    $filename = $extensionsPath . $extensionKey . '.json';
+                    $content = json_encode($extensionContext, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                    break;
+
+                default:
+                    continue 2; // Skip unsupported formats
+            }
+
+            file_put_contents($filename, $content);
+            $files[] = [
+                'type' => 'extension_report',
+                'extension' => $extensionKey,
+                'path' => $filename,
+                'size' => filesize($filename)
+            ];
+        }
+
+        return $files;
     }
 
     private function getRiskLevel(float $score): string

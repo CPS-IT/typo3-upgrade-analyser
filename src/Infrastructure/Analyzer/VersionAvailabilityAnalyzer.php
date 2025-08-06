@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
@@ -24,14 +25,16 @@ use Psr\Log\LoggerInterface;
 /**
  * Analyzer that checks version availability across different repositories.
  */
-class VersionAvailabilityAnalyzer implements AnalyzerInterface
+class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 {
     public function __construct(
+        CacheService $cacheService,
+        LoggerInterface $logger,
         private readonly TerApiClient $terClient,
         private readonly PackagistClient $packagistClient,
         private readonly GitRepositoryAnalyzer $gitAnalyzer,
-        private readonly LoggerInterface $logger,
     ) {
+        parent::__construct($cacheService, $logger);
     }
 
     public function getName(): string
@@ -50,61 +53,61 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         return true;
     }
 
-    public function analyze(Extension $extension, AnalysisContext $context): AnalysisResult
+    protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
     {
         $result = new AnalysisResult($this->getName(), $extension);
 
-        try {
-            $this->logger->info('Analyzing version availability for extension', [
-                'extension' => $extension->getKey(),
-                'target_version' => $context->getTargetVersion()->toString(),
-            ]);
+        $this->logger->info('Analyzing version availability for extension', [
+            'extension' => $extension->getKey(),
+            'target_version' => $context->getTargetVersion()->toString(),
+        ]);
 
-            // Check TER availability
-            $terAvailable = $this->checkTerAvailability($extension, $context);
-            $result->addMetric('ter_available', $terAvailable);
+        // Check TER availability
+        $terAvailable = $this->checkTerAvailability($extension, $context);
+        $result->addMetric('ter_available', $terAvailable);
 
-            // Check Packagist availability (if extension has composer name)
-            if ($extension->hasComposerName()) {
-                $packagistAvailable = $this->checkPackagistAvailability($extension, $context);
-                $result->addMetric('packagist_available', $packagistAvailable);
-            } else {
-                $result->addMetric('packagist_available', false);
-            }
-
-            // Check Git repository availability (if Git analyzer is available)
-            $gitInfo = $this->checkGitAvailability($extension, $context);
-            $result->addMetric('git_available', $gitInfo['available']);
-            $result->addMetric('git_repository_health', $gitInfo['health']);
-            $result->addMetric('git_repository_url', $gitInfo['url']);
-            if ($gitInfo['latest_version']) {
-                $result->addMetric('git_latest_version', $gitInfo['latest_version']);
-            }
-
-            // Calculate risk score based on availability
-            $riskScore = $this->calculateRiskScore($result->getMetrics(), $extension);
-            $result->setRiskScore($riskScore);
-
-            // Add recommendations
-            $this->addRecommendations($result, $extension);
-
-            $this->logger->info('Version availability analysis completed', [
-                'extension' => $extension->getKey(),
-                'risk_score' => $riskScore,
-            ]);
-        } catch (\Throwable $e) {
-            $this->logger->error('Version availability analysis failed', [
-                'extension' => $extension->getKey(),
-                'error' => $e->getMessage(),
-            ]);
-
-            $result->setError('Analysis failed: ' . $e->getMessage());
-
-            // Return early to ensure failed result
-            return $result;
+        // Check Packagist availability (if extension has composer name)
+        if ($extension->hasComposerName()) {
+            $packagistAvailable = $this->checkPackagistAvailability($extension, $context);
+            $result->addMetric('packagist_available', $packagistAvailable);
+        } else {
+            $result->addMetric('packagist_available', false);
         }
 
+        // Check Git repository availability (if Git analyzer is available)
+        $gitInfo = $this->checkGitAvailability($extension, $context);
+        $result->addMetric('git_available', $gitInfo['available']);
+        $result->addMetric('git_repository_health', $gitInfo['health']);
+        $result->addMetric('git_repository_url', $gitInfo['url']);
+        if ($gitInfo['latest_version']) {
+            $result->addMetric('git_latest_version', $gitInfo['latest_version']);
+        }
+
+        // Calculate risk score based on availability
+        $riskScore = $this->calculateRiskScore($result->getMetrics(), $extension);
+        $result->setRiskScore($riskScore);
+
+        // Add recommendations
+        $this->addRecommendations($result, $extension);
+
+        $this->logger->info('Version availability analysis completed', [
+            'extension' => $extension->getKey(),
+            'risk_score' => $riskScore,
+        ]);
+
         return $result;
+    }
+
+    protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array
+    {
+        // Include composer name if available since it affects Packagist checks
+        $components = [];
+        
+        if ($extension->hasComposerName()) {
+            $components['composer_name'] = $extension->getComposerName();
+        }
+        
+        return $components;
     }
 
     public function getRequiredTools(): array
@@ -274,6 +277,8 @@ class VersionAvailabilityAnalyzer implements AnalyzerInterface
         // Mixed availability recommendations
         if ($gitAvailable && ($terAvailable || $packagistAvailable)) {
             $result->addRecommendation('Extension available in multiple sources. Consider using most stable source for production.');
+        } elseif ($terAvailable && $packagistAvailable && !$gitAvailable) {
+            $result->addRecommendation('Extension available in multiple sources (TER and Packagist). Consider using Composer for better dependency management.');
         }
 
         // Standard TER/Packagist recommendations

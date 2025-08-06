@@ -70,10 +70,17 @@ class ReportServiceTest extends TestCase
         $extensions = [new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local')];
         $results = [];
 
-        $this->twig->expects(self::once())
+        $this->twig->expects(self::exactly(2))
             ->method('render')
-            ->with('detailed-report.md.twig', self::isType('array'))
-            ->willReturn('# Test Report');
+            ->willReturnCallback(function($template, $context) {
+                if ($template === 'main-report.md.twig') {
+                    return '# Main Report';
+                }
+                if ($template === 'extension-detail.md.twig') {
+                    return '# Extension Detail';
+                }
+                return '';
+            });
 
         $this->logger->expects(self::exactly(2))
             ->method('info');
@@ -90,8 +97,15 @@ class ReportServiceTest extends TestCase
         self::assertInstanceOf(ReportingResult::class, $reportResults[0]);
         self::assertSame('report_markdown', $reportResults[0]->getId());
         self::assertSame('markdown', $reportResults[0]->getValue('format'));
-        self::assertStringEndsWith('.md', $reportResults[0]->getValue('output_path'));
-        self::assertFileExists($reportResults[0]->getValue('output_path'));
+        
+        // Test multi-file structure
+        $mainReport = $reportResults[0]->getValue('main_report');
+        self::assertIsArray($mainReport);
+        self::assertStringEndsWith('.md', $mainReport['path']);
+        self::assertFileExists($mainReport['path']);
+        
+        // Test extension reports count
+        self::assertSame(1, $reportResults[0]->getValue('extension_reports_count'));
     }
 
     public function testGenerateReportWithHtmlFormat(): void
@@ -102,7 +116,7 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::once())
             ->method('render')
-            ->with('detailed-report.html.twig', self::isType('array'))
+            ->with('main-report.html.twig', self::isType('array'))
             ->willReturn('<html><body>Test Report</body></html>');
 
         $reportResults = $this->subject->generateReport(
@@ -114,8 +128,10 @@ class ReportServiceTest extends TestCase
         );
 
         self::assertCount(1, $reportResults);
-        self::assertStringEndsWith('.html', $reportResults[0]->getValue('output_path'));
-        self::assertFileExists($reportResults[0]->getValue('output_path'));
+        $mainReport = $reportResults[0]->getValue('main_report');
+        self::assertIsArray($mainReport);
+        self::assertStringEndsWith('.html', $mainReport['path']);
+        self::assertFileExists($mainReport['path']);
     }
 
     public function testGenerateReportWithJsonFormat(): void
@@ -136,10 +152,12 @@ class ReportServiceTest extends TestCase
         );
 
         self::assertCount(1, $reportResults);
-        self::assertStringEndsWith('.json', $reportResults[0]->getValue('output_path'));
-        self::assertFileExists($reportResults[0]->getValue('output_path'));
+        $mainReport = $reportResults[0]->getValue('main_report');
+        self::assertIsArray($mainReport);
+        self::assertStringEndsWith('.json', $mainReport['path']);
+        self::assertFileExists($mainReport['path']);
         
-        $jsonContent = file_get_contents($reportResults[0]->getValue('output_path'));
+        $jsonContent = file_get_contents($mainReport['path']);
         $decoded = json_decode($jsonContent, true);
         self::assertIsArray($decoded);
         self::assertArrayHasKey('installation', $decoded);
@@ -219,7 +237,8 @@ class ReportServiceTest extends TestCase
         );
 
         self::assertDirectoryExists($nonExistentDir);
-        self::assertFileExists($reportResults[0]->getValue('output_path'));
+        $mainReport = $reportResults[0]->getValue('main_report');
+        self::assertFileExists($mainReport['path']);
     }
 
     public function testGenerateReportWithExtensionsAndResults(): void
@@ -244,17 +263,19 @@ class ReportServiceTest extends TestCase
 
         $results = [$discoveryResult, $analysisResult1, $analysisResult2];
 
-        $this->twig->expects(self::once())
+        $this->twig->expects(self::exactly(3))
             ->method('render')
-            ->with('detailed-report.md.twig', self::callback(function ($context) {
-                return isset($context['installation']) &&
-                       isset($context['extensions']) &&
-                       isset($context['extension_data']) &&
-                       isset($context['statistics']) &&
-                       count($context['extensions']) === 2 &&
-                       count($context['extension_data']) === 2;
-            }))
-            ->willReturn('# Detailed Report');
+            ->willReturnCallback(function($template, $context) {
+                if ($template === 'main-report.md.twig') {
+                    self::assertCount(2, $context['extensions']);
+                    self::assertCount(2, $context['extension_data']);
+                    return '# Main Report';
+                }
+                if ($template === 'extension-detail.md.twig') {
+                    return '# Extension Detail';
+                }
+                return '';
+            });
 
         $reportResults = $this->subject->generateReport(
             $installation,
@@ -267,6 +288,7 @@ class ReportServiceTest extends TestCase
 
         self::assertCount(1, $reportResults);
         self::assertTrue($reportResults[0]->isSuccessful());
+        self::assertSame(2, $reportResults[0]->getValue('extension_reports_count'));
     }
 
     public function testGenerateReportBuildsCorrectContext(): void
@@ -284,10 +306,12 @@ class ReportServiceTest extends TestCase
         $results = [$analysisResult];
 
         $capturedContext = null;
-        $this->twig->expects(self::once())
+        $this->twig->expects(self::exactly(2))
             ->method('render')
             ->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-                $capturedContext = $context;
+                if ($template === 'main-report.md.twig') {
+                    $capturedContext = $context;
+                }
                 return '# Test';
             });
 
@@ -383,7 +407,9 @@ class ReportServiceTest extends TestCase
 
         $capturedContext = null;
         $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-            $capturedContext = $context;
+            if ($template === 'main-report.md.twig') {
+                $capturedContext = $context;
+            }
             return '# Test';
         });
 
@@ -433,6 +459,7 @@ class ReportServiceTest extends TestCase
         );
 
         $expectedSize = strlen($content);
-        self::assertSame($expectedSize, $reportResults[0]->getValue('file_size'));
+        $mainReport = $reportResults[0]->getValue('main_report');
+        self::assertSame($expectedSize, $mainReport['size']);
     }
 }

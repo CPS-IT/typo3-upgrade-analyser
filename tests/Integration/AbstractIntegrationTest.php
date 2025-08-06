@@ -110,11 +110,9 @@ abstract class AbstractIntegrationTest extends TestCase
                     $value = substr($value, 1, -1);
                 }
                 
-                // Set environment variable if not already set
-                if (!isset($_ENV[$key])) {
-                    $_ENV[$key] = $value;
-                    putenv("$key=$value");
-                }
+                // Always set the environment variable (override existing values)
+                $_ENV[$key] = $value;
+                putenv("$key=$value");
             }
         }
     }
@@ -232,6 +230,17 @@ abstract class AbstractIntegrationTest extends TestCase
     protected function createLogger(): NullLogger
     {
         return new NullLogger();
+    }
+
+    /**
+     * Create cache service for testing.
+     */
+    protected function createCacheService(): \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService
+    {
+        return new \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService(
+            $this->createLogger(),
+            $this->cacheDir
+        );
     }
 
     /**

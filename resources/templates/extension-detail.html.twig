@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ extension.key }} - Detailed Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff8700 0%, #d63939 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h2 {
+            color: #ff8700;
+            border-bottom: 2px solid #ff8700;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        .section h3 {
+            color: #666;
+            margin: 20px 0 15px 0;
+            font-size: 1.4em;
+        }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ff8700;
+        }
+        .info-card h3 {
+            color: #ff8700;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .risk-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .risk-low { background: #d4edda; color: #155724; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+        .risk-critical { background: #f5c6cb; color: #721c24; }
+        .risk-unknown { background: #e2e3e5; color: #6c757d; }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .available { color: #28a745; }
+        .unavailable { color: #dc3545; }
+        .unknown { color: #6c757d; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ff8700;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .recommendations {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .recommendations h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+        .recommendations ul {
+            margin-left: 20px;
+        }
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            color: #721c24;
+        }
+        .checklist {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .checklist ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        .checklist li {
+            margin: 8px 0;
+        }
+        .checklist input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .upgrade-path {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .upgrade-path h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        .back-link {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #ff8700;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .back-link:hover {
+            background: #e07600;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ extension.key }}</h1>
+            <p>Detailed Analysis Report</p>
+            <p>Generated: {{ generated_at.format('Y-m-d H:i:s T') }}</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>Extension Overview</h2>
+                <div class="overview-grid">
+                    <div class="info-card">
+                        <h3>Basic Information</h3>
+                        <p><strong>Extension Key:</strong> {{ extension.key }}</p>
+                        <p><strong>Current Version:</strong> {{ extension.version ? extension.version.toString() : 'N/A' }}</p>
+                        <p><strong>Composer Name:</strong> {{ extension.composerName ?: 'N/A' }}</p>
+                        <p><strong>Type:</strong> {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}</p>
+                        <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Risk Assessment</h3>
+                        {% set risk_data = extension_data.risk_summary %}
+                        <p><strong>Overall Risk Level:</strong> <span class="risk-indicator risk-{{ risk_data.risk_level }}">{{ risk_data.risk_level|upper }}</span></p>
+                        <p><strong>Risk Score:</strong> {{ "%.1f"|format(risk_data.overall_risk) }}/10.0</p>
+                        {% if risk_data.max_risk %}
+                        <p><strong>Maximum Risk Score:</strong> {{ "%.1f"|format(risk_data.max_risk) }}/10.0</p>
+                        {% endif %}
+                        {% if risk_data.has_errors %}
+                        <p><strong>⚠️ Analysis Errors:</strong> Some analyzers failed</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Version Availability Analysis</h2>
+
+                {% if extension_data.version_analysis %}
+                {% set version_analysis = extension_data.version_analysis %}
+
+                <h3>Availability Status</h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.ter_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>TER</strong><br>
+                        <small>TYPO3 Extension Repository</small>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Packagist</strong><br>
+                        <small>Composer Repository</small>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.git_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Git Repository</strong><br>
+                        <small>Source Code</small>
+                    </div>
+                </div>
+
+                {% if version_analysis.git_repository_url or version_analysis.git_repository_health or version_analysis.git_latest_version %}
+                <h3>Repository Information</h3>
+                <div class="info-card">
+                    {% if version_analysis.git_repository_url %}
+                    <p><strong>Repository URL:</strong> <a href="{{ version_analysis.git_repository_url }}" target="_blank">{{ version_analysis.git_repository_url }}</a></p>
+                    {% endif %}
+                    {% if version_analysis.git_repository_health %}
+                    <p><strong>Repository Health:</strong> {{ "%.0f"|format(version_analysis.git_repository_health * 100) }}%</p>
+                    {% endif %}
+                    {% if version_analysis.git_latest_version %}
+                    <p><strong>Latest Compatible Version:</strong> {{ version_analysis.git_latest_version }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <h3>Risk Analysis</h3>
+                <p><strong>Risk Score:</strong> {{ "%.1f"|format(version_analysis.risk_score) }}/10.0</p>
+                <p><strong>Risk Level:</strong> <span class="risk-indicator risk-{{ version_analysis.risk_level }}">{{ version_analysis.risk_level|upper }}</span></p>
+
+                {% if version_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Recommendations</h3>
+                    <ul>
+                    {% for recommendation in version_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-message">
+                    <strong>❌ Version availability analysis was not performed or failed for this extension.</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="section">
+                <h2>Lines of Code Analysis</h2>
+
+                {% if extension_data.loc_analysis %}
+                {% set loc_analysis = extension_data.loc_analysis %}
+
+                <h3>Codebase Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.total_lines|number_format }}</div>
+                        <div class="metric-label">Total Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.code_lines|number_format }}</div>
+                        <div class="metric-label">Code Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.comment_lines|number_format }}</div>
+                        <div class="metric-label">Comments</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.php_files }}</div>
+                        <div class="metric-label">PHP Files</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.classes }}</div>
+                        <div class="metric-label">Classes</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.methods }}</div>
+                        <div class="metric-label">Methods</div>
+                    </div>
+                </div>
+
+                <h3>File Statistics</h3>
+                <div class="info-card">
+                    <p><strong>Average File Size:</strong> {{ loc_analysis.average_file_size }} lines</p>
+                    <p><strong>Largest File:</strong> {{ loc_analysis.largest_file_lines }} lines{% if loc_analysis.largest_file_path %} ({{ loc_analysis.largest_file_path }}){% endif %}</p>
+                </div>
+
+                <h3>Complexity Assessment</h3>
+                {% set complexity_score = (loc_analysis.methods + loc_analysis.functions) / (loc_analysis.php_files > 0 ? loc_analysis.php_files : 1) %}
+                <div class="info-card">
+                    <p><strong>Complexity Score:</strong> {{ "%.1f"|format(complexity_score) }} (methods+functions per file)</p>
+                    <p><strong>Complexity Level:</strong> {% if complexity_score > 20 %}High{% elseif complexity_score > 10 %}Medium{% else %}Low{% endif %}</p>
+                    <p><strong>Risk Score:</strong> {{ "%.1f"|format(loc_analysis.risk_score) }}/10.0</p>
+                    <p><strong>Estimated Effort:</strong> {% if loc_analysis.total_lines > 10000 %}High{% elseif loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %}</p>
+                </div>
+
+                {% if loc_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Recommendations</h3>
+                    <ul>
+                    {% for recommendation in loc_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-message">
+                    <strong>❌ Lines of code analysis was not performed for this extension.</strong>
+                    <p>This typically occurs when:</p>
+                    <ul>
+                        <li>The extension files could not be located</li>
+                        <li>The extension is a system extension (analysis skipped)</li>
+                        <li>File access permissions prevented scanning</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="section">
+                <h2>Technical Details</h2>
+                <div class="info-card">
+                    <h3>Extension Files</h3>
+                    {% if extension_data.loc_analysis %}
+                    <p><strong>Total Files Analyzed:</strong> {{ extension_data.loc_analysis.php_files }}</p>
+                    <p><strong>Extension Size:</strong> {{ extension_data.loc_analysis.total_lines|number_format }} lines</p>
+                    {% endif %}
+
+                    <h3>Analysis Metadata</h3>
+                    <p><strong>Analysis Date:</strong> {{ generated_at.format('Y-m-d H:i:s T') }}</p>
+                    <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
+                    <p><strong>Current Installation:</strong> {{ installation.path }}</p>
+                </div>
+            </div>
+
+            <a href="../analysis-report.html" class="back-link">← Back to Main Report</a>
+
+            <div class="footer">
+                <p>Generated by TYPO3 Upgrade Analyzer</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

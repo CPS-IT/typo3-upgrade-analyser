@@ -47,7 +47,7 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient:
     public: true
     arguments:
-      - '@http_client'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
       - '@logger'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient:
@@ -62,16 +62,18 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
     public: true
     arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
-      - '@logger'
     tags: ['analyzer']
 
   # Lines of Code Analyzer
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer:
     public: true
     arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@logger'
     tags: ['analyzer']
 

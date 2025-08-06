@@ -225,7 +225,8 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
             'timeout' => 0.1, // Very short timeout
         ]);
 
-        $terClient = new TerApiClient($shortTimeoutClient, $this->createLogger());
+        $httpClientService = new \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService($shortTimeoutClient, $this->createLogger());
+        $terClient = new TerApiClient($httpClientService, $this->createLogger());
 
         $extension = $this->createTestExtension('news');
         $context = $this->createTestAnalysisContext('12.4.0');
@@ -431,13 +432,34 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
         $results = [];
         foreach ($clients as $condition => $client) {
-            $terClient = new TerApiClient($client, $this->createLogger());
+            $httpClientService = new \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService($client, $this->createLogger());
+            $terClient = new TerApiClient($httpClientService, $this->createLogger());
+
+            $gitHubClient = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient(
+                $httpClientService,
+                $this->createLogger(),
+                new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+                $this->getGitHubToken(),
+            );
+
+            $providerFactory = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory([$gitHubClient], $this->createLogger());
+            $gitAnalyzer = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer(
+                $providerFactory,
+                new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
+                $this->createLogger(),
+            );
 
             $analyzer = new VersionAvailabilityAnalyzer(
-                $terClient,
-                new PackagistClient($client, $this->createLogger()),
-                null, // Skip Git analysis for this test
+                $this->createCacheService(),
                 $this->createLogger(),
+                $terClient,
+                new PackagistClient(
+                    $httpClientService,
+                    $this->createLogger(),
+                    new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker(),
+                    new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+                ),
+                $gitAnalyzer,
             );
 
             $startTime = microtime(true);
@@ -469,27 +491,34 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     private function createAnalyzer(): VersionAvailabilityAnalyzer
     {
-        $terClient = new TerApiClient($this->httpClient, $this->createLogger());
-        $packagistClient = new PackagistClient($this->httpClient, $this->createLogger());
+        $terClient = new TerApiClient($this->createHttpClientService(), $this->createLogger());
+        $packagistClient = new PackagistClient(
+            $this->createHttpClientService(),
+            $this->createLogger(),
+            new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker(),
+            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+        );
 
         $gitHubClient = new GitHubClient(
-            $this->createAuthenticatedGitHubClient(),
+            $this->createHttpClientService(),
             $this->createLogger(),
+            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
             $this->getGitHubToken(),
         );
 
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
-            new GitVersionParser(),
+            new GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
             $this->createLogger(),
         );
 
         return new VersionAvailabilityAnalyzer(
+            $this->createCacheService(),
+            $this->createLogger(),
             $terClient,
             $packagistClient,
             $gitAnalyzer,
-            $this->createLogger(),
         );
     }
 }

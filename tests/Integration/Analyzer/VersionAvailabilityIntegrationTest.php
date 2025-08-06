@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Analyzer;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
@@ -70,10 +71,11 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
 
         // Create the analyzer
         $this->analyzer = new VersionAvailabilityAnalyzer(
+            $this->createCacheService(),
+            $this->createLogger(),
             $terClient,
             $packagistClient,
             $gitAnalyzer,
-            $this->createLogger(),
         );
     }
 

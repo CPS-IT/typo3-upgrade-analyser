@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -22,11 +23,13 @@ use Symfony\Component\Finder\SplFileInfo;
 /**
  * Analyzer for counting lines of code in extensions.
  */
-class LinesOfCodeAnalyzer implements AnalyzerInterface
+class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        CacheService $cacheService,
+        LoggerInterface $logger,
     ) {
+        parent::__construct($cacheService, $logger);
     }
 
     public function getName(): string
@@ -56,94 +59,99 @@ class LinesOfCodeAnalyzer implements AnalyzerInterface
         return [];
     }
 
-    public function analyze(Extension $extension, AnalysisContext $context): AnalysisResult
+    protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
     {
         $result = new AnalysisResult($this->getName(), $extension);
 
-        try {
-            // Get installation path from context
-            $installationPath = $context->getConfigurationValue('installation_path', '');
-            
-            if (empty($installationPath)) {
-                $result->setError('No installation path available in context');
-                return $result;
+        // Get installation path from context
+        $installationPath = $context->getConfigurationValue('installation_path', '');
+        
+        if (empty($installationPath)) {
+            throw new \RuntimeException('No installation path available in context');
+        }
+        
+        // Convert relative path to absolute path
+        if (!str_starts_with($installationPath, '/')) {
+            $installationPath = realpath(getcwd() . '/' . $installationPath);
+            if (!$installationPath) {
+                throw new \RuntimeException('Invalid installation path - could not resolve to absolute path');
             }
-            
-            // Convert relative path to absolute path
-            if (!str_starts_with($installationPath, '/')) {
-                $installationPath = realpath(getcwd() . '/' . $installationPath);
-                if (!$installationPath) {
-                    $result->setError('Invalid installation path - could not resolve to absolute path');
-                    return $result;
-                }
-            }
-            
-            // Build extension path - assume typical TYPO3 structure
-            $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
-            
-            $this->logger->debug('LOC analyzer path discovery', [
+        }
+        
+        // Build extension path - assume typical TYPO3 structure
+        $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
+        
+        $this->logger->debug('LOC analyzer path discovery', [
+            'extension' => $extension->getKey(),
+            'installation_path' => $installationPath,
+            'found_path' => $extensionPath,
+            'path_exists' => $extensionPath ? is_dir($extensionPath) : false,
+        ]);
+        
+        if (!$extensionPath || !is_dir($extensionPath)) {
+            // Extension path not found, return zero metrics  
+            $this->logger->warning('Extension path not found for LOC analysis', [
                 'extension' => $extension->getKey(),
                 'installation_path' => $installationPath,
-                'found_path' => $extensionPath,
-                'path_exists' => $extensionPath ? is_dir($extensionPath) : false,
+                'attempted_path' => $extensionPath,
             ]);
             
-            if (!$extensionPath || !is_dir($extensionPath)) {
-                // Extension path not found, return zero metrics  
-                $this->logger->warning('Extension path not found for LOC analysis', [
-                    'extension' => $extension->getKey(),
-                    'installation_path' => $installationPath,
-                    'attempted_path' => $extensionPath,
-                ]);
-                
-                $metrics = [
-                    'total_lines' => 0,
-                    'code_lines' => 0,
-                    'comment_lines' => 0,
-                    'blank_lines' => 0,
-                    'php_files' => 0,
-                    'classes' => 0,
-                    'methods' => 0,
-                    'functions' => 0,
-                    'largest_file_lines' => 0,
-                    'largest_file_path' => '',
-                    'average_file_size' => 0,
-                ];
-            } else {
-                $metrics = $this->scanExtensionDirectory($extensionPath);
-            }
-            
-            // Store metrics
-            foreach ($metrics as $key => $value) {
-                $result->addMetric($key, $value);
-            }
-
-            // Calculate risk score based on codebase size
-            $riskScore = $this->calculateRiskScore($metrics);
-            $result->setRiskScore($riskScore);
-
-            // Add recommendations based on codebase size
-            $recommendations = $this->generateRecommendations($metrics);
-            foreach ($recommendations as $recommendation) {
-                $result->addRecommendation($recommendation);
-            }
-
-            $this->logger->info('Lines of code analysis completed', [
-                'extension' => $extension->getKey(),
-                'total_lines' => $metrics['total_lines'],
-                'php_files' => $metrics['php_files'],
-                'risk_score' => $riskScore,
-            ]);
-
-        } catch (\Exception $e) {
-            $result->setError("Lines of code analysis failed: {$e->getMessage()}");
-            $this->logger->error('Lines of code analysis failed', [
-                'extension' => $extension->getKey(),
-                'error' => $e->getMessage(),
-            ]);
+            $metrics = [
+                'total_lines' => 0,
+                'code_lines' => 0,
+                'comment_lines' => 0,
+                'blank_lines' => 0,
+                'php_files' => 0,
+                'classes' => 0,
+                'methods' => 0,
+                'functions' => 0,
+                'largest_file_lines' => 0,
+                'largest_file_path' => '',
+                'average_file_size' => 0,
+            ];
+        } else {
+            $metrics = $this->scanExtensionDirectory($extensionPath);
+        }
+        
+        // Store metrics
+        foreach ($metrics as $key => $value) {
+            $result->addMetric($key, $value);
         }
 
+        // Calculate risk score based on codebase size
+        $riskScore = $this->calculateRiskScore($metrics);
+        $result->setRiskScore($riskScore);
+
+        // Add recommendations based on codebase size
+        $recommendations = $this->generateRecommendations($metrics);
+        foreach ($recommendations as $recommendation) {
+            $result->addRecommendation($recommendation);
+        }
+
+        $this->logger->info('Lines of code analysis completed', [
+            'extension' => $extension->getKey(),
+            'total_lines' => $metrics['total_lines'],
+            'php_files' => $metrics['php_files'],
+            'risk_score' => $riskScore,
+        ]);
+
         return $result;
+    }
+
+    protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array
+    {
+        // Include installation path since extension paths depend on it
+        $components = [
+            'installation_path' => $context->getConfigurationValue('installation_path', ''),
+        ];
+        
+        // Include custom paths if available
+        $customPaths = $context->getConfigurationValue('custom_paths', []);
+        if (!empty($customPaths)) {
+            $components['custom_paths'] = $customPaths;
+        }
+        
+        return $components;
     }
 
     /**

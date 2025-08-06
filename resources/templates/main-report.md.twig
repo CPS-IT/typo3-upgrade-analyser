@@ -1,0 +1,157 @@
+# TYPO3 Upgrade Analysis Report
+
+**Generated:** {{ generated_at.format('Y-m-d H:i:s T') }}
+
+## Installation Overview
+
+- **Path:** {{ installation.path }}
+- **Current Version:** {{ installation.version.toString() }}
+- **Installation Type:** {{ installation.type }}
+- **Target Version:** {{ target_version }}
+
+---
+
+## Executive Summary
+
+### Risk Overview
+- **Total Extensions:** {{ statistics.total_extensions }}
+- **Critical Risk:** {{ statistics.risk_distribution.critical }} extensions
+- **High Risk:** {{ statistics.risk_distribution.high }} extensions
+- **Medium Risk:** {{ statistics.risk_distribution.medium }} extensions
+- **Low Risk:** {{ statistics.risk_distribution.low }} extensions
+
+### Availability Overview
+- **TER Available:** {{ statistics.availability_stats.ter_available }}/{{ statistics.total_extensions }} extensions
+- **Packagist Available:** {{ statistics.availability_stats.packagist_available }}/{{ statistics.total_extensions }} extensions
+- **Git Available:** {{ statistics.availability_stats.git_available }}/{{ statistics.total_extensions }} extensions
+- **No Availability:** {{ statistics.availability_stats.no_availability }}/{{ statistics.total_extensions }} extensions
+
+---
+
+## Discovery Results
+
+### Installation Discovery
+{% if discovery.installation %}
+- **Status:** {{ discovery.installation.isSuccessful ? '✅ Success' : '❌ Failed' }}
+- **Summary:** {{ discovery.installation.summary }}
+{% if not discovery.installation.isSuccessful and discovery.installation.getError() %}
+- **Error:** {{ discovery.installation.getError() }}
+{% endif %}
+{% else %}
+- **Status:** ❌ No installation discovery data available
+{% endif %}
+
+### Extension Discovery
+{% if discovery.extensions %}
+- **Status:** {{ discovery.extensions.isSuccessful ? '✅ Success' : '❌ Failed' }}
+- **Summary:** {{ discovery.extensions.summary }}
+{% if not discovery.extensions.isSuccessful and discovery.extensions.getError() %}
+- **Error:** {{ discovery.extensions.getError() }}
+{% endif %}
+{% else %}
+- **Status:** ❌ No extension discovery data available
+{% endif %}
+
+---
+
+## Analyzer Results
+
+### Version Availability Analysis
+
+This analyzer checks if extensions are available in TYPO3 Extension Repository (TER), Packagist, and Git repositories for the target TYPO3 version.
+
+| Extension | Current Version | TER | Packagist | Git | Risk Level | Latest Version |
+|-----------|----------------|-----|-----------|-----|------------|----------------|
+{% for data in extension_data %}
+{% if data.version_analysis %}
+| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.version_analysis.ter_available ? '✅' : '❌' }} | {{ data.version_analysis.packagist_available ? '✅' : '❌' }} | {{ data.version_analysis.git_available ? '✅' : '❌' }} | {{ data.version_analysis.risk_level|upper }} | {{ data.version_analysis.git_latest_version ?: 'N/A' }} |
+{% else %}
+| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | ❓ | ❓ | ❓ | UNKNOWN | N/A |
+{% endif %}
+{% endfor %}
+
+### Lines of Code Analysis
+
+This analyzer examines the codebase size and complexity of extensions to estimate upgrade effort.
+
+| Extension | Total Lines | PHP Files | Code Lines | Classes | Methods | Risk Level | Effort Estimate |
+|-----------|-------------|-----------|------------|---------|---------|------------|-----------------|
+{% for data in extension_data %}
+{% if data.loc_analysis %}
+| {{ data.extension.key }} | {{ data.loc_analysis.total_lines|number_format }} | {{ data.loc_analysis.php_files }} | {{ data.loc_analysis.code_lines|number_format }} | {{ data.loc_analysis.classes }} | {{ data.loc_analysis.methods }} | {{ data.risk_summary.risk_level|upper }} | {% if data.loc_analysis.total_lines > 10000 %}High{% elseif data.loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %} |
+{% else %}
+| {{ data.extension.key }} | N/A | N/A | N/A | N/A | N/A | UNKNOWN | N/A |
+{% endif %}
+{% endfor %}
+
+---
+
+## Detailed Extension Reports
+
+Individual detailed reports have been generated for each extension:
+
+{% for data in extension_data %}
+- [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md) - {{ data.risk_summary.risk_level|upper }} risk
+{% endfor %}
+
+---
+
+## Recommendations
+
+### Immediate Actions Required
+
+{% set critical_extensions = [] %}
+{% for data in extension_data %}
+{% if data.risk_summary.risk_level == 'critical' %}
+{% set critical_extensions = critical_extensions|merge([data]) %}
+{% endif %}
+{% endfor %}
+
+{% if critical_extensions|length > 0 %}
+**Critical Risk Extensions** ({{ critical_extensions|length }} extensions require immediate attention):
+
+{% for data in critical_extensions %}
+- **{{ data.extension.key }}**: 
+{% if data.version_analysis and data.version_analysis.recommendations %}
+  {% for recommendation in data.version_analysis.recommendations %}
+  - {{ recommendation }}
+  {% endfor %}
+{% endif %}
+{% if data.loc_analysis and data.loc_analysis.recommendations %}
+  {% for recommendation in data.loc_analysis.recommendations %}
+  - {{ recommendation }}
+  {% endfor %}
+{% endif %}
+{% endfor %}
+{% else %}
+No critical risk extensions found.
+{% endif %}
+
+### Migration Planning
+
+1. **Phase 1 - Low Risk Extensions** ({{ statistics.risk_distribution.low }} extensions)
+   - Start with these extensions as they have minimal compatibility issues
+   - Expected success rate: 95%+
+
+2. **Phase 2 - Medium Risk Extensions** ({{ statistics.risk_distribution.medium }} extensions)
+   - Require testing and potential minor code changes
+   - Expected success rate: 80-90%
+
+3. **Phase 3 - High Risk Extensions** ({{ statistics.risk_distribution.high }} extensions)
+   - Require significant testing and likely code modifications
+   - Expected success rate: 60-80%
+
+4. **Phase 4 - Critical Risk Extensions** ({{ statistics.risk_distribution.critical }} extensions)
+   - May require complete replacement or major refactoring
+   - Expected success rate: 30-60%
+
+### Development Environment Setup
+
+1. Set up TYPO3 {{ target_version }} development instance
+2. Test low-risk extensions first
+3. Gradually integrate medium and high-risk extensions
+4. Plan alternative solutions for critical-risk extensions
+
+---
+
+*Report generated by TYPO3 Upgrade Analyzer*

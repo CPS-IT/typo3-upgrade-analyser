@@ -95,7 +95,7 @@ class DiscoveryResult implements ResultInterface
             return "Discovery failed: {$this->error}";
         }
 
-        return match ($this->type) {
+        return match ($this->id) {
             'installation' => $this->getInstallationSummary(),
             'extensions' => $this->getExtensionsSummary(),
             default => "Discovery completed: {$this->name}",

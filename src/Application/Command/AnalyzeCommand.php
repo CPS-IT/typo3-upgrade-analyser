@@ -119,7 +119,7 @@ class AnalyzeCommand extends Command
 
             // Phase 1: Discovery
             $io->text('Phase 1: Discovering installation and extensions...');
-            [$installation, $extensions] = $this->executeDiscoveryPhase($installationPath, $io);
+            [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $io);
             $io->progressAdvance();
 
             // Phase 2: Analysis
@@ -129,7 +129,7 @@ class AnalyzeCommand extends Command
 
             // Phase 3: Reporting
             $io->text('Phase 3: Generating reports...');
-            $this->executeReportingPhase($configService, $installation, $extensions, $analysisResults, $io);
+            $this->executeReportingPhase($configService, $installation, $extensions, $extensionResult, $analysisResults, $io);
             $io->progressAdvance();
 
             $io->progressFinish();
@@ -151,7 +151,7 @@ class AnalyzeCommand extends Command
     /**
      * Phase 1: Discover installation and extensions.
      *
-     * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>}
+     * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>, 2: mixed}
      */
     private function executeDiscoveryPhase(string $installationPath, SymfonyStyle $io): array
     {
@@ -188,7 +188,7 @@ class AnalyzeCommand extends Command
             'successful_methods' => $extensionResult->getSuccessfulMethods(),
         ]);
 
-        return [$installation, $extensions];
+        return [$installation, $extensions, $extensionResult];
     }
 
     /**
@@ -282,6 +282,7 @@ class AnalyzeCommand extends Command
         ConfigurationServiceInterface $configService,
         ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
         array $extensions,
+        mixed $extensionResult,
         array $analysisResults,
         SymfonyStyle $io
     ): void {
@@ -290,7 +291,7 @@ class AnalyzeCommand extends Command
 
         if (!$installation) {
             $io->warning('No installation data available - generating basic report');
-            $this->generateSummaryReport($outputDir, null, $extensions, $analysisResults);
+            $this->generateSummaryReport($outputDir, null, $extensions, null, $analysisResults);
             return;
         }
 
@@ -305,8 +306,8 @@ class AnalyzeCommand extends Command
         // Create discovery results for the report service
         $discoveryResults = [
             new DiscoveryResult(
+                'discovery',
                 'installation',
-                'installation_discovery',
                 'Installation Discovery',
                 [
                     'version' => $installation->getVersion()->toString(),
@@ -315,12 +316,12 @@ class AnalyzeCommand extends Command
                 ]
             ),
             new DiscoveryResult(
-                'extensions',
-                'extension_discovery', 
+                'discovery',
+                'extensions', 
                 'Extension Discovery',
                 [
                     'count' => count($extensions),
-                    'successful_methods' => ['PackageStates.php'], // This should come from actual discovery
+                    'successful_methods' => $extensionResult->getSuccessfulMethods(),
                 ]
             ),
         ];
@@ -356,12 +357,12 @@ class AnalyzeCommand extends Command
             }
 
             // Also generate a simple summary for backwards compatibility
-            $this->generateSummaryReport($outputDir, $installation, $extensions, $analysisResults);
+            $this->generateSummaryReport($outputDir, $installation, $extensions, $extensionResult, $analysisResults);
 
         } catch (\Exception $e) {
             $io->warning('Detailed report generation failed, falling back to summary report');
             $this->logger->error('Report service failed', ['error' => $e->getMessage()]);
-            $this->generateSummaryReport($outputDir, $installation, $extensions, $analysisResults);
+            $this->generateSummaryReport($outputDir, $installation, $extensions, $extensionResult, $analysisResults);
         }
 
         $this->logger->info('Reporting phase completed', [
@@ -407,6 +408,7 @@ class AnalyzeCommand extends Command
         string $outputDir,
         ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
         array $extensions,
+        mixed $extensionResult,
         array $analysisResults
     ): void {
         $reportPath = $outputDir . '/analysis-summary.md';
