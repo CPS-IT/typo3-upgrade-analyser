@@ -1,78 +1,166 @@
 {
-    "name": "cpsit/typo3-upgrade-analyser",
-    "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
-    "license": "GPL-2.0-or-later",
-    "type": "project",
-    "authors": [
-        {
-            "name": "Dirk Wenzel"
-        }
-    ],
-    "require": {
-        "php": "^8.1",
-        "composer/semver": "^3.4",
-        "guzzlehttp/guzzle": "^7.8",
-        "monolog/monolog": "^3.5",
-        "nikic/php-parser": "^4.18 || ^5.0",
-        "symfony/config": "^6.4 || ^7.0",
-        "symfony/console": "^6.4 || ^7.0",
-        "symfony/dependency-injection": "^6.4 || ^7.0",
-        "symfony/dotenv": "^6.4",
-        "symfony/filesystem": "^6.4 || ^7.0",
-        "symfony/finder": "^6.4 || ^7.0",
-        "symfony/http-client": "^6.4 || ^7.0",
-        "symfony/yaml": "^6.4 || ^7.0",
-        "twig/twig": "^3.8"
-    },
-    "require-dev": {
-        "ergebnis/composer-normalize": "^2.47",
-        "friendsofphp/php-cs-fixer": "^3.45",
-        "phpstan/phpstan": "^2.0",
-        "phpunit/phpunit": "^10.5",
-        "roave/security-advisories": "dev-latest",
-        "ssch/typo3-rector": "^3.6",
-        "symfony/var-dumper": "^6.4 || ^7.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "CPSIT\\UpgradeAnalyzer\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "CPSIT\\UpgradeAnalyzer\\Tests\\": "tests/"
-        }
-    },
-    "bin": [
-        "bin/typo3-analyzer"
-    ],
-    "config": {
-        "allow-plugins": {
-            "ergebnis/composer-normalize": true
-        },
-        "platform": {
-            "php": "8.3"
-        },
-        "sort-packages": true
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-main": "1.0.x-dev"
-        }
-    },
-    "scripts": {
-        "cs:check": "php-cs-fixer fix --dry-run --diff",
-        "cs:fix": "php-cs-fixer fix",
-        "static-analysis": "phpstan analyse --memory-limit=2G",
-        "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
-        "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
-        "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional",
-        "test:functional": "phpunit --testsuite=Functional",
-        "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
-        "test:integration": "phpunit --testsuite=Integration --no-coverage",
-        "test:performance": "phpunit --group=performance --no-coverage",
-        "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
-        "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
-        "test:unit": "phpunit --testsuite=Unit"
+  "name": "cpsit/typo3-upgrade-analyser",
+  "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
+  "license": "GPL-2.0-or-later",
+  "type": "project",
+  "authors": [
+    {
+      "name": "Dirk Wenzel"
     }
+  ],
+  "require": {
+    "php": "^8.1",
+    "composer/semver": "^3.4",
+    "guzzlehttp/guzzle": "^7.8",
+    "monolog/monolog": "^3.5",
+    "nikic/php-parser": "^4.18 || ^5.0",
+    "symfony/config": "^6.4 || ^7.0",
+    "symfony/console": "^6.4 || ^7.0",
+    "symfony/dependency-injection": "^6.4 || ^7.0",
+    "symfony/dotenv": "^6.4",
+    "symfony/filesystem": "^6.4 || ^7.0",
+    "symfony/finder": "^6.4 || ^7.0",
+    "symfony/http-client": "^6.4 || ^7.0",
+    "symfony/yaml": "^6.4 || ^7.0",
+    "twig/twig": "^3.8"
+  },
+  "require-dev": {
+    "armin/editorconfig-cli": "^2.1",
+    "ergebnis/composer-normalize": "^2.47",
+    "friendsofphp/php-cs-fixer": "^3.45",
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^10.5",
+    "roave/security-advisories": "dev-latest",
+    "ssch/typo3-rector": "^3.6",
+    "symfony/var-dumper": "^6.4 || ^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "CPSIT\\UpgradeAnalyzer\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CPSIT\\UpgradeAnalyzer\\Tests\\": "tests/"
+    }
+  },
+  "bin": [
+    "bin/typo3-analyzer"
+  ],
+  "config": {
+    "allow-plugins": {
+      "ergebnis/composer-normalize": true
+    },
+    "platform": {
+      "php": "8.3"
+    },
+    "sort-packages": true
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "scripts": {
+    "fix:composer": {
+      "description": "Fix Composer configuration format and sorting",
+      "script": "@composer normalize"
+    },
+    "fix:editorconfig": {
+      "description": "Fix EditorConfig violations (whitespace, line endings)",
+      "script": "ec --fix"
+    },
+    "fix:fractor": {
+      "description": "Apply automated fractor refactoring rules",
+      "script": "fractor process"
+    },
+    "fix:php": {
+      "description": "Fix PHP coding style violations using PHP CS Fixer",
+      "script": "php-cs-fixer fix"
+    },
+    "fix:rector": {
+      "description": "Apply automated Rector refactoring rules",
+      "script": "rector process"
+    },
+    "lint": {
+      "description": "Run all linting checks (composer, editorconfig, php, rector, fractor)",
+      "script": [
+        "@lint:composer",
+        "@lint:editorconfig",
+        "@lint:php",
+        "@lint:rector",
+        "@lint:fractor"
+      ]
+    },
+    "lint:composer": {
+      "description": "Check Composer configuration format without modifying files",
+      "script": "@composer normalize --dry-run"
+    },
+    "lint:editorconfig": {
+      "description": "Check EditorConfig compliance without modifying files",
+      "script": "ec"
+    },
+    "lint:fractor": {
+      "description": "Check fractor rules without applying changes",
+      "script": "fractor process --dry-run"
+    },
+    "lint:php": {
+      "description": "Check PHP coding style without modifying files",
+      "script": "php-cs-fixer fix --dry-run"
+    },
+    "lint:rector": {
+      "description": "Check Rector rules without applying changes",
+      "script": "rector process --dry-run"
+    },
+    "sca": {
+      "description": "Run static code analysis (PHPStan)",
+      "script": [
+        "@sca:php"
+      ]
+    },
+    "sca:php": {
+      "description": "Run PHPStan static analysis with 2GB memory limit",
+      "script": "phpstan analyse --memory-limit=2G"
+    },
+    "test": {
+      "description": "Run unit tests only (excludes integration, real-world, API, and performance tests)",
+      "script": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance"
+    },
+    "test:all-integration": {
+      "description": "Run all integration tests including real-world and API tests (no coverage)",
+      "script": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage"
+    },
+    "test:coverage": {
+      "description": "Generate test coverage report (HTML, Clover XML, and text formats)",
+      "script": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional"
+    },
+    "test:functional": {
+      "description": "Run functional tests only",
+      "script": "phpunit --testsuite=Functional"
+    },
+    "test:github-api": {
+      "description": "Run GitHub API integration tests (requires network, stops on first failure)",
+      "script": "phpunit --group=github-api --no-coverage --stop-on-failure"
+    },
+    "test:integration": {
+      "description": "Run integration tests without external API calls (no coverage)",
+      "script": "phpunit --testsuite=Integration --no-coverage"
+    },
+    "test:performance": {
+      "description": "Run performance benchmark tests (no coverage)",
+      "script": "phpunit --group=performance --no-coverage"
+    },
+    "test:real-world": {
+      "description": "Run real-world scenario tests (requires network, stops on first failure)",
+      "script": "phpunit --group=real-world --no-coverage --stop-on-failure"
+    },
+    "test:ter-api": {
+      "description": "Run TYPO3 Extension Repository API tests (requires network, stops on first failure)",
+      "script": "phpunit --group=ter-api --no-coverage --stop-on-failure"
+    },
+    "test:unit": {
+      "description": "Run unit tests only (fast, isolated tests)",
+      "script": "phpunit --testsuite=Unit"
+    }
+  }
 }

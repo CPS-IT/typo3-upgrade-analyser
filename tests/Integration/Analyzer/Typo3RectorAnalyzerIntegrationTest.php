@@ -93,16 +93,8 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
             ]
         );
         
-        // Debug: Print the expected path
+        // Verify fixture path exists
         $expectedPath = dirname($this->fixtureExtensionPath) . '/test_extension';
-        echo "\n=== Debug Info ===\n";
-        echo "Fixture extension path: {$this->fixtureExtensionPath}\n";
-        echo "Expected analysis path: {$expectedPath}\n";
-        echo "Path exists: " . (is_dir($expectedPath) ? 'YES' : 'NO') . "\n";
-        if (is_dir($expectedPath)) {
-            echo "PHP files in path: " . count(glob($expectedPath . '/Classes/*/*.php')) . "\n";
-        }
-        echo "===================\n";
         
         // Run analysis
         $result = $this->analyzer->analyze($extension, $context);
@@ -110,11 +102,7 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
         // Assertions - let's be more flexible initially to see what we get
         $this->assertTrue($result->isSuccessful(), 'Analysis should be successful');
         
-        // Debug the actual results before assertions
-        echo "\n=== Analysis Results ===\n";
-        echo "Processed files: " . $result->getMetric('processed_files') . "\n";
-        echo "Total files: " . $result->getMetric('total_files') . "\n";
-        echo "========================\n";
+        // Validate analysis results
         
         // These should pass if path resolution works
         $this->assertGreaterThan(0, $result->getMetric('processed_files'), 'Should process PHP files');
@@ -132,20 +120,6 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
         $this->assertIsArray($result->getMetric('findings_by_severity'));
         $this->assertIsInt($result->getMetric('affected_files'));
         
-        echo "\n=== Rector Analysis Results ===\n";
-        echo "Extension: {$extension->getKey()}\n";
-        echo "Processed files: " . $result->getMetric('processed_files') . "\n";
-        echo "Total files: " . $result->getMetric('total_files') . "\n";
-        echo "Total findings: " . $result->getMetric('total_findings') . "\n";
-        echo "Affected files: " . $result->getMetric('affected_files') . "\n";
-        echo "Execution time: " . $result->getMetric('execution_time') . "s\n";
-        echo "Rector version: " . $result->getMetric('rector_version') . "\n";
-        
-        if ($totalFindings > 0) {
-            echo "Findings by severity: " . json_encode($result->getMetric('findings_by_severity')) . "\n";
-            echo "Top rules triggered: " . json_encode($result->getMetric('top_rules_triggered')) . "\n";
-        }
-        echo "================================\n";
     }
     
     /**

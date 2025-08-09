@@ -88,7 +88,10 @@ class RectorRuleRegistryTest extends TestCase
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertIsArray($sets);
-        $this->assertEmpty($sets);
+        // Same version analysis should return general sets for code quality analysis
+        $this->assertNotEmpty($sets);
+        $this->assertContains(Typo3SetList::GENERAL, $sets);
+        $this->assertContains(Typo3SetList::CODE_QUALITY, $sets);
     }
 
     public function testGetSetsForDowngrade(): void

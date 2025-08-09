@@ -31,21 +31,20 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
     {
         $this->logger->info('Starting extension discovery', ['path' => $installationPath]);
 
-        // Check cache if enabled
-        if ($this->isCacheEnabled()) {
-            $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
-                'custom_paths' => $customPaths ?? [],
-            ]);
-            $cachedResult = $this->cacheService->get($cacheKey);
-
-            if (null !== $cachedResult) {
-                $this->logger->debug('Found cached extension discovery result', ['cache_key' => $cacheKey]);
-
-                return $this->deserializeResult($cachedResult);
-            }
-        }
-
         try {
+            // Check cache if enabled
+            if ($this->isCacheEnabled()) {
+                $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
+                    'custom_paths' => $customPaths ?? [],
+                ]);
+                $cachedResult = $this->cacheService->get($cacheKey);
+
+                if (null !== $cachedResult) {
+                    $this->logger->debug('Found cached extension discovery result', ['cache_key' => $cacheKey]);
+
+                    return $this->deserializeResult($cachedResult);
+                }
+            }
             // Validate installation path exists
             if (!is_dir($installationPath)) {
                 $this->logger->error('Extension discovery failed: Installation path does not exist', [

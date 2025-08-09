@@ -258,8 +258,7 @@ class GitRepositoryAnalyzerTest extends TestCase
      */
     public function testExtractRepositoryUrlFromPackagist(): void
     {
-        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
-        $extension->setComposerName('vendor/test-extension');
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');
         $targetVersion = Version::fromString('12.4.0');
 
         // Mock Packagist client to return repository URL
@@ -294,8 +293,7 @@ class GitRepositoryAnalyzerTest extends TestCase
      */
     public function testExtractRepositoryUrlFromPackagistFails(): void
     {
-        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
-        $extension->setComposerName('vendor/test-extension');
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');
         $targetVersion = Version::fromString('12.4.0');
 
         // Mock Packagist client to throw exception
@@ -481,8 +479,7 @@ class GitRepositoryAnalyzerTest extends TestCase
      */
     public function testPackagistClientReturnsNonGitUrl(): void
     {
-        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
-        $extension->setComposerName('vendor/test-extension');
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');
         $targetVersion = Version::fromString('12.4.0');
 
         $this->packagistClient->expects($this->once())

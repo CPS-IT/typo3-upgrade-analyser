@@ -147,8 +147,16 @@ class PackagistClient
             return null;
         }
 
-        // Filter out dev versions and sort
-        $stableVersions = array_filter($compatibleVersions, fn ($v) => !str_contains($v, 'dev'));
+        // Filter out pre-release versions (dev, alpha, beta, rc, etc.) and sort
+        $stableVersions = array_filter($compatibleVersions, function ($version) {
+            $preReleaseMarkers = ['dev', 'alpha', 'beta', 'rc', 'snapshot'];
+            foreach ($preReleaseMarkers as $marker) {
+                if (str_contains(strtolower($version), $marker)) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         if (!empty($stableVersions)) {
             usort($stableVersions, 'version_compare');

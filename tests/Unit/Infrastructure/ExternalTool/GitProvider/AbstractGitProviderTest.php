@@ -177,9 +177,7 @@ final class AbstractGitProviderTest extends TestCase
     public function testMakeRequestHandles4xxError(): void
     {
         $response = $this->createMock(ResponseInterface::class);
-        $response->expects($this->once())
-            ->method('getStatusCode')
-            ->willReturn(404);
+        $response->method('getStatusCode')->willReturn(404);
         $response->expects($this->once())
             ->method('getContent')
             ->with(false)
@@ -198,9 +196,7 @@ final class AbstractGitProviderTest extends TestCase
     public function testMakeRequestHandlesRateLimit(): void
     {
         $response = $this->createMock(ResponseInterface::class);
-        $response->expects($this->once())
-            ->method('getStatusCode')
-            ->willReturn(403);
+        $response->method('getStatusCode')->willReturn(403);
         $response->expects($this->once())
             ->method('getContent')
             ->with(false)
@@ -274,10 +270,12 @@ final class AbstractGitProviderTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Failed to parse composer.json', [
-                'error' => $this->stringContains('Syntax error'),
-                'provider' => 'test-provider',
-            ]);
+            ->with('Failed to parse composer.json', $this->callback(function ($context) {
+                return isset($context['error']) && 
+                       isset($context['provider']) && 
+                       $context['provider'] === 'test-provider' &&
+                       str_contains($context['error'], 'Syntax error');
+            }));
         
         $result = $this->provider->testParseComposerJson('{"invalid": json}');
         $this->assertNull($result);
@@ -315,10 +313,12 @@ final class AbstractGitProviderTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Failed to parse date', [
-                'date_string' => 'invalid-date',
-                'error' => $this->stringContains('Failed to parse'),
-            ]);
+            ->with('Failed to parse date', $this->callback(function ($context) {
+                return isset($context['date_string']) && 
+                       isset($context['error']) &&
+                       $context['date_string'] === 'invalid-date' &&
+                       str_contains($context['error'], 'Failed to parse');
+            }));
         
         $result = $this->provider->testParseDate('invalid-date');
         $this->assertNull($result);
