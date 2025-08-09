@@ -90,25 +90,25 @@ $hasLatestSupport = $terClient->hasVersionFor('news', new Version('13.0.0'));  /
 
 ```php
 // Recommended approach for comprehensive analysis
-class VersionAvailabilityAnalyzer 
+class VersionAvailabilityAnalyzer
 {
     public function analyze(Extension $extension, Version $targetVersion): AnalysisResult
     {
         $sources = [];
-        
+
         // Check TER for all TYPO3 versions (4-13)
         $sources['ter'] = $this->terClient->hasVersionFor($extension->getKey(), $targetVersion);
-        
+
         // Check Packagist for Composer-based availability
         if ($extension->hasComposerName()) {
             $sources['packagist'] = $this->packagistClient->hasVersionFor($extension->getComposerName(), $targetVersion);
         }
-        
+
         // Check Git for latest development
         if ($extension->hasGitRepository()) {
             $sources['git'] = $this->gitClient->hasVersionFor($extension->getGitUrl(), $targetVersion);
         }
-        
+
         return new AnalysisResult($extension, $sources);
     }
 }
@@ -124,7 +124,7 @@ class VersionAvailabilityAnalyzer
 **Test Strategy**:
 ```php
 // Test TER for what it actually provides
-public function testTerModernSupport(): void 
+public function testTerModernSupport(): void
 {
     // TER supports both legacy and modern TYPO3 versions
     $this->assertTrue($terClient->hasVersionFor('news', new Version('8.7.0')));
@@ -167,7 +167,7 @@ try {
         'extension' => $extensionKey,
         'error' => $e->getMessage()
     ]);
-    
+
     // Continue with Packagist/Git sources
     return $this->checkAlternativeSources($extensionKey, $typo3Version);
 }

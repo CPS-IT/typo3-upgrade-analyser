@@ -131,21 +131,21 @@
             <p><strong>Target Version:</strong> {{ target_version }}</p>
             <p><strong>Type:</strong> {{ installation.type }}</p>
         </div>
-        
+
         <div class="summary-card">
             <h3>Extensions</h3>
             <p><strong>Total:</strong> {{ statistics.total_extensions }}</p>
             <p><strong>Critical Risk:</strong> {{ statistics.critical_extensions }}</p>
             <p><strong>No Availability:</strong> {{ statistics.availability_stats.no_availability }}</p>
         </div>
-        
+
         <div class="summary-card">
             <h3>Risk Distribution</h3>
             {% for level, count in statistics.risk_distribution %}
             <p><span class="badge badge-{{ level }}">{{ level }}</span> {{ count }}</p>
             {% endfor %}
         </div>
-        
+
         <div class="summary-card">
             <h3>Availability</h3>
             <p><strong>TER:</strong> {{ statistics.availability_stats.ter_available }}</p>
@@ -179,7 +179,7 @@
     </table>
 
     <h2>Detailed Extension Analysis</h2>
-    
+
     {% for data in extension_data %}
     <div class="extension">
         <div class="extension-header">
@@ -188,7 +188,7 @@
                 {{ data.risk_summary.risk_level }} Risk ({{ "%.1f"|format(data.risk_summary.overall_risk) }})
             </span>
         </div>
-        
+
         <div class="extension-body">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
@@ -201,7 +201,7 @@
                     {% if data.extension.version %}
                     <p><strong>Version:</strong> {{ data.extension.version.toString() }}</p>
                     {% endif %}
-                    
+
                     {% if data.loc_analysis %}
                     <h4>Codebase Analysis</h4>
                     <p><strong>Total Lines:</strong> {{ data.loc_analysis.total_lines|number_format }}</p>
@@ -211,12 +211,12 @@
                     <p><strong>Average File Size:</strong> {{ data.loc_analysis.average_file_size }} lines</p>
                     <p><strong>Largest File:</strong> {{ data.loc_analysis.largest_file_lines }} lines<br>
                        <small>({{ data.loc_analysis.largest_file_path }})</small></p>
-                    <p><strong>Classes:</strong> {{ data.loc_analysis.classes }} | 
-                       <strong>Methods:</strong> {{ data.loc_analysis.methods }} | 
+                    <p><strong>Classes:</strong> {{ data.loc_analysis.classes }} |
+                       <strong>Methods:</strong> {{ data.loc_analysis.methods }} |
                        <strong>Functions:</strong> {{ data.loc_analysis.functions }}</p>
                     {% endif %}
                 </div>
-                
+
                 <div>
                     <h4>Version Availability</h4>
                     {% if data.version_analysis %}
@@ -231,9 +231,9 @@
                             Git {{ data.version_analysis.git_available ? '✓' : '✗' }}
                         </span>
                     </div>
-                    
+
                     {% if data.version_analysis.git_repository_url %}
-                    <p><strong>Git Repository:</strong> 
+                    <p><strong>Git Repository:</strong>
                         <a href="{{ data.version_analysis.git_repository_url }}" target="_blank">{{ data.version_analysis.git_repository_url }}</a>
                     </p>
                     {% if data.version_analysis.git_repository_health %}
@@ -243,7 +243,7 @@
                     <p><strong>Latest Compatible Version:</strong> {{ data.version_analysis.git_latest_version }}</p>
                     {% endif %}
                     {% endif %}
-                    
+
                     {% if data.version_analysis.recommendations %}
                     <h4>Recommendations</h4>
                     <ul>

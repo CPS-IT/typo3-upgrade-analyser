@@ -108,7 +108,7 @@ composer test:performance     # Performance benchmarks
 
 ### API Response Times
 - **GitHub API**: < 3.0 seconds
-- **TER API**: < 5.0 seconds  
+- **TER API**: < 5.0 seconds
 - **Packagist API**: < 3.0 seconds
 
 ### Analysis Times
@@ -201,7 +201,7 @@ ENABLE_REAL_API_CALLS=false composer test:integration
 
 ### Total Integration Tests: **55 Test Methods**
 - GitHub Repository Integration: 26 tests
-- TER API Integration: 12 tests  
+- TER API Integration: 12 tests
 - Version Availability Analysis: 11 tests
 - Mixed Analysis Scenarios: 9 tests
 - Performance & Reliability: 9 tests

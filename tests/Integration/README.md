@@ -74,7 +74,7 @@ vendor/bin/phpunit --filter testGitHubClientSupportsGitHubUrls
 
 Tests use real repository data defined in `Fixtures/known_extensions.json`:
 - `georgringer/news` - Active, popular TYPO3 extension
-- `dmitryd/typo3-realurl` - Archived TYPO3 extension  
+- `dmitryd/typo3-realurl` - Archived TYPO3 extension
 - `friendsoftypo3/extension-builder` - Community-maintained extension
 
 ## Troubleshooting

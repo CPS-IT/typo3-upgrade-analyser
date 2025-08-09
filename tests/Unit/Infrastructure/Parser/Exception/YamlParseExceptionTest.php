@@ -377,7 +377,7 @@ class YamlParseExceptionTest extends TestCase
               _defaults:
                 autowire: true
                 autoconfigure: true
-              
+
               App\Controller\:
                 resource: '../src/Controller'
                 tags: ['controller.service_arguments']

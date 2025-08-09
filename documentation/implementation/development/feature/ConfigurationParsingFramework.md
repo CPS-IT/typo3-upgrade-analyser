@@ -142,7 +142,7 @@ class ConfigurationParserFactory
     public function createParser(string $filePath): ConfigurationParserInterface
     {
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-        
+
         return match($extension) {
             'php' => new PhpConfigurationParser(),
             'yaml', 'yml' => new YamlConfigurationParser(),
@@ -165,14 +165,14 @@ class SafeConfigurationParser
         try {
             $parser = $this->parserFactory->createParser($filePath);
             $config = $parser->parse($filePath);
-            
+
             return ParseResult::success($config);
         } catch (ParseException $e) {
             $this->logger->warning('Configuration parse failed', [
                 'file' => $filePath,
                 'error' => $e->getMessage()
             ]);
-            
+
             // Attempt partial parsing or fallback strategies
             return $this->attemptPartialParsing($filePath, $e);
         }
@@ -195,24 +195,24 @@ class Configuration
     private array $metadata;
     private ConfigurationSchema $schema;
     private array $parseErrors;
-    
+
     public function __construct(
         string $scope,
         string $sourceFile,
         array $data,
         ConfigurationSchema $schema
     );
-    
+
     public function get(string $path, mixed $default = null): mixed;
     public function has(string $path): bool;
     public function set(string $path, mixed $value): void;
     public function merge(Configuration $other): Configuration;
-    
+
     public function getArrayPath(string $path): array;
     public function getDatabaseConfiguration(): DatabaseConfiguration;
     public function getMailConfiguration(): MailConfiguration;
     public function getCacheConfiguration(): CacheConfiguration;
-    
+
     public function isValid(): bool;
     public function getValidationErrors(): array;
     public function getParseErrors(): array;
@@ -226,13 +226,13 @@ class ExtensionConfiguration extends Configuration
     private array $tcaOverrides;
     private array $hooks;
     private array $xclasses;
-    
+
     public function getExtensionKey(): string;
     public function getServices(): array;
     public function getTcaOverrides(): array;
     public function getHooks(): array;
     public function getXclasses(): array;
-    
+
     public function hasService(string $serviceType): bool;
     public function hasTcaOverride(string $tableName): bool;
     public function usesHooks(): bool;
@@ -246,13 +246,13 @@ class SiteConfiguration extends Configuration
     private array $languages;
     private array $routes;
     private array $errorHandling;
-    
+
     public function getSiteIdentifier(): string;
     public function getLanguages(): array;
     public function getDefaultLanguage(): Language;
     public function getRoutes(): array;
     public function getErrorHandling(): array;
-    
+
     public function isMultilingual(): bool;
     public function hasCustomRouting(): bool;
 }
@@ -264,12 +264,12 @@ class SiteConfiguration extends Configuration
 class ConfigurationKey
 {
     private array $segments;
-    
+
     public function __construct(string $path)
     {
         $this->segments = explode('.', $path);
     }
-    
+
     public function getSegments(): array;
     public function toString(): string;
     public function getParent(): ?ConfigurationKey;
@@ -284,11 +284,11 @@ class ParseResult
     private array $errors;
     private array $warnings;
     private ParseMetadata $metadata;
-    
+
     public static function success(mixed $data, ParseMetadata $metadata = null): self;
     public static function failure(array $errors): self;
     public static function partial(mixed $data, array $warnings): self;
-    
+
     public function isSuccess(): bool;
     public function getData(): mixed;
     public function getErrors(): array;
@@ -303,7 +303,7 @@ class ConfigurationSchema
     private array $optionalKeys;
     private array $typeConstraints;
     private array $valueConstraints;
-    
+
     public function validate(array $data): ValidationResult;
     public function getRequiredKeys(): array;
     public function getOptionalKeys(): array;
@@ -330,33 +330,33 @@ abstract class AbstractConfigurationParser implements ConfigurationParserInterfa
 {
     protected LoggerInterface $logger;
     protected ConfigurationSchema $schema;
-    
+
     public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }
-    
+
     abstract protected function doParse(string $content): array;
-    
+
     final public function parse(string $filePath): ParseResult
     {
         if (!$this->supports($filePath)) {
             throw new UnsupportedFileException($filePath);
         }
-        
+
         try {
             $content = $this->readFile($filePath);
             $data = $this->doParse($content);
-            
+
             $metadata = new ParseMetadata($filePath, filesize($filePath));
             return ParseResult::success($data, $metadata);
-            
+
         } catch (ParseException $e) {
             $this->logParseError($filePath, $e);
             return ParseResult::failure([$e->getMessage()]);
         }
     }
-    
+
     protected function readFile(string $filePath): string;
     protected function logParseError(string $filePath, Throwable $error): void;
 }
@@ -369,7 +369,7 @@ class PhpConfigurationParser extends AbstractConfigurationParser
 {
     private Parser $phpParser;
     private ReturnArrayExtractor $arrayExtractor;
-    
+
     public function __construct(
         LoggerInterface $logger,
         Parser $phpParser,
@@ -379,23 +379,23 @@ class PhpConfigurationParser extends AbstractConfigurationParser
         $this->phpParser = $phpParser;
         $this->arrayExtractor = $arrayExtractor;
     }
-    
+
     protected function doParse(string $content): array
     {
         try {
             $ast = $this->phpParser->parse($content);
-            
+
             $traverser = new NodeTraverser();
             $traverser->addVisitor($this->arrayExtractor);
             $traverser->traverse($ast);
-            
+
             return $this->arrayExtractor->getExtractedArray();
-            
+
         } catch (Error $e) {
             throw new PhpParseException('Failed to parse PHP file: ' . $e->getMessage(), 0, $e);
         }
     }
-    
+
     public function supports(string $filePath): bool
     {
         return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
@@ -407,44 +407,44 @@ class ReturnArrayExtractor extends NodeVisitorAbstract
 {
     private array $extractedArray = [];
     private array $constants = [];
-    
+
     public function enterNode(Node $node)
     {
         // Extract return statements with arrays
         if ($node instanceof Node\Stmt\Return_ && $node->expr instanceof Node\Expr\Array_) {
             $this->extractedArray = $this->evaluateArrayNode($node->expr);
         }
-        
+
         // Track defined constants
         if ($node instanceof Node\Stmt\Const_) {
             foreach ($node->consts as $const) {
                 $this->constants[$const->name->name] = $this->evaluateNode($const->value);
             }
         }
-        
+
         return null;
     }
-    
+
     private function evaluateArrayNode(Node\Expr\Array_ $arrayNode): array
     {
         $result = [];
-        
+
         foreach ($arrayNode->items as $item) {
             if ($item === null) continue;
-            
+
             $key = $item->key ? $this->evaluateNode($item->key) : null;
             $value = $this->evaluateNode($item->value);
-            
+
             if ($key === null) {
                 $result[] = $value;
             } else {
                 $result[$key] = $value;
             }
         }
-        
+
         return $result;
     }
-    
+
     private function evaluateNode(Node $node): mixed
     {
         return match(get_class($node)) {
@@ -456,7 +456,7 @@ class ReturnArrayExtractor extends NodeVisitorAbstract
             default => null, // Unsupported node type
         };
     }
-    
+
     public function getExtractedArray(): array
     {
         return $this->extractedArray;
@@ -468,20 +468,20 @@ class LocalConfigurationParser extends PhpConfigurationParser
 {
     public function supports(string $filePath): bool
     {
-        return parent::supports($filePath) && 
+        return parent::supports($filePath) &&
                (str_contains($filePath, 'LocalConfiguration.php') ||
                 str_contains($filePath, 'settings.php'));
     }
-    
+
     protected function doParse(string $content): array
     {
         $config = parent::doParse($content);
-        
+
         // Validate TYPO3 configuration structure
         if (!isset($config['TYPO3_CONF_VARS'])) {
             throw new InvalidConfigurationException('Missing TYPO3_CONF_VARS array');
         }
-        
+
         return $config['TYPO3_CONF_VARS'];
     }
 }
@@ -491,25 +491,25 @@ class PackageStatesParser extends PhpConfigurationParser
 {
     public function supports(string $filePath): bool
     {
-        return parent::supports($filePath) && 
+        return parent::supports($filePath) &&
                str_contains($filePath, 'PackageStates.php');
     }
-    
+
     protected function doParse(string $content): array
     {
         $config = parent::doParse($content);
-        
+
         if (!isset($config['packages'])) {
             throw new InvalidConfigurationException('Missing packages array in PackageStates.php');
         }
-        
+
         return $this->normalizePackageStates($config['packages']);
     }
-    
+
     private function normalizePackageStates(array $packages): array
     {
         $normalized = [];
-        
+
         foreach ($packages as $packageKey => $packageConfig) {
             $normalized[$packageKey] = [
                 'state' => $packageConfig['state'] ?? 'inactive',
@@ -517,7 +517,7 @@ class PackageStatesParser extends PhpConfigurationParser
                 'classesPath' => $packageConfig['classesPath'] ?? 'Classes/',
             ];
         }
-        
+
         return $normalized;
     }
 }
@@ -530,7 +530,7 @@ class YamlConfigurationParser extends AbstractConfigurationParser
 {
     private YamlParser $yamlParser;
     private EnvironmentVariableResolver $envResolver;
-    
+
     public function __construct(
         LoggerInterface $logger,
         YamlParser $yamlParser,
@@ -540,26 +540,26 @@ class YamlConfigurationParser extends AbstractConfigurationParser
         $this->yamlParser = $yamlParser;
         $this->envResolver = $envResolver;
     }
-    
+
     protected function doParse(string $content): array
     {
         try {
             // Resolve environment variables first
             $resolvedContent = $this->envResolver->resolve($content);
-            
+
             $data = $this->yamlParser->parse($resolvedContent);
-            
+
             if (!is_array($data)) {
                 throw new InvalidYamlException('YAML file must contain an array/object structure');
             }
-            
+
             return $data;
-            
+
         } catch (ParseException $e) {
             throw new YamlParseException('Failed to parse YAML: ' . $e->getMessage(), 0, $e);
         }
     }
-    
+
     public function supports(string $filePath): bool
     {
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
@@ -572,17 +572,17 @@ class ServicesYamlParser extends YamlConfigurationParser
 {
     public function supports(string $filePath): bool
     {
-        return parent::supports($filePath) && 
+        return parent::supports($filePath) &&
                str_contains($filePath, 'Services.y');
     }
-    
+
     protected function doParse(string $content): array
     {
         $data = parent::doParse($content);
-        
+
         return $this->normalizeServicesConfiguration($data);
     }
-    
+
     private function normalizeServicesConfiguration(array $data): array
     {
         // Normalize Symfony DI configuration format
@@ -599,28 +599,28 @@ class SiteConfigurationParser extends YamlConfigurationParser
 {
     public function supports(string $filePath): bool
     {
-        return parent::supports($filePath) && 
+        return parent::supports($filePath) &&
                str_contains($filePath, 'config/sites/') &&
                str_contains($filePath, 'config.yaml');
     }
-    
+
     protected function doParse(string $content): array
     {
         $data = parent::doParse($content);
-        
+
         return $this->validateSiteConfiguration($data);
     }
-    
+
     private function validateSiteConfiguration(array $data): array
     {
         $required = ['rootPageId', 'base'];
-        
+
         foreach ($required as $key) {
             if (!isset($data[$key])) {
                 throw new InvalidSiteConfigurationException("Missing required key: $key");
             }
         }
-        
+
         return $data;
     }
 }
@@ -634,7 +634,7 @@ class TypoScriptParser extends AbstractConfigurationParser
     private TypoScriptLexer $lexer;
     private TypoScriptAstBuilder $astBuilder;
     private ImportResolver $importResolver;
-    
+
     public function __construct(
         LoggerInterface $logger,
         TypoScriptLexer $lexer,
@@ -646,59 +646,59 @@ class TypoScriptParser extends AbstractConfigurationParser
         $this->astBuilder = $astBuilder;
         $this->importResolver = $importResolver;
     }
-    
+
     protected function doParse(string $content): array
     {
         try {
             // Resolve imports first
             $resolvedContent = $this->importResolver->resolve($content);
-            
+
             // Tokenize TypoScript
             $tokens = $this->lexer->tokenize($resolvedContent);
-            
+
             // Build AST
             $ast = $this->astBuilder->build($tokens);
-            
+
             // Convert AST to array structure
             return $this->astToArray($ast);
-            
+
         } catch (TypoScriptException $e) {
             throw new TypoScriptParseException('TypoScript parse error: ' . $e->getMessage(), 0, $e);
         }
     }
-    
+
     public function supports(string $filePath): bool
     {
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
         return in_array($extension, ['txt', 'typoscript', 'ts'], true);
     }
-    
+
     private function astToArray(TypoScriptAstNode $ast): array
     {
         $result = [];
-        
+
         foreach ($ast->getChildren() as $child) {
             $path = $child->getPath();
             $value = $child->getValue();
-            
+
             $this->setNestedValue($result, $path, $value);
         }
-        
+
         return $result;
     }
-    
+
     private function setNestedValue(array &$array, string $path, mixed $value): void
     {
         $keys = explode('.', $path);
         $current = &$array;
-        
+
         foreach ($keys as $key) {
             if (!isset($current[$key])) {
                 $current[$key] = [];
             }
             $current = &$current[$key];
         }
-        
+
         $current = $value;
     }
 }
@@ -715,28 +715,28 @@ class TypoScriptLexer
         'COMMENT' => '/^(#|\/\/).*$/',
         'IMPORT' => '/^@import\s+[\'"]([^\'"]+)[\'"]$/',
     ];
-    
+
     public function tokenize(string $content): array
     {
         $tokens = [];
         $lines = explode("\n", $content);
-        
+
         foreach ($lines as $lineNumber => $line) {
             $line = trim($line);
-            
+
             if (empty($line)) {
                 continue;
             }
-            
+
             $token = $this->parseLineToToken($line, $lineNumber + 1);
             if ($token) {
                 $tokens[] = $token;
             }
         }
-        
+
         return $tokens;
     }
-    
+
     private function parseLineToToken(string $line, int $lineNumber): ?TypoScriptToken
     {
         foreach (self::TOKEN_PATTERNS as $type => $pattern) {
@@ -744,7 +744,7 @@ class TypoScriptLexer
                 return new TypoScriptToken($type, $matches, $lineNumber);
             }
         }
-        
+
         // Unknown line - could be multi-line value continuation
         return new TypoScriptToken('UNKNOWN', [$line], $lineNumber);
     }
@@ -758,7 +758,7 @@ class XmlConfigurationParser extends AbstractConfigurationParser
 {
     private DOMXPath $xpath;
     private XmlValidator $validator;
-    
+
     public function __construct(
         LoggerInterface $logger,
         XmlValidator $validator
@@ -766,49 +766,49 @@ class XmlConfigurationParser extends AbstractConfigurationParser
         parent::__construct($logger);
         $this->validator = $validator;
     }
-    
+
     protected function doParse(string $content): array
     {
         $dom = new DOMDocument();
-        
+
         // Disable external entity loading for security
         $dom->resolveExternals = false;
         $dom->substituteEntities = false;
-        
+
         if (!$dom->loadXML($content, LIBXML_NOCDATA | LIBXML_NONET)) {
             throw new XmlParseException('Invalid XML content');
         }
-        
+
         // Validate against schema if available
         $this->validator->validate($dom);
-        
+
         $this->xpath = new DOMXPath($dom);
-        
+
         return $this->domToArray($dom->documentElement);
     }
-    
+
     public function supports(string $filePath): bool
     {
         return pathinfo($filePath, PATHINFO_EXTENSION) === 'xml';
     }
-    
+
     private function domToArray(DOMElement $element): array
     {
         $result = [];
-        
+
         // Handle attributes
         if ($element->hasAttributes()) {
             foreach ($element->attributes as $attr) {
                 $result['@' . $attr->name] = $attr->value;
             }
         }
-        
+
         // Handle child elements
         foreach ($element->childNodes as $child) {
             if ($child instanceof DOMElement) {
                 $name = $child->nodeName;
                 $value = $this->domToArray($child);
-                
+
                 if (isset($result[$name])) {
                     if (!is_array($result[$name]) || !isset($result[$name][0])) {
                         $result[$name] = [$result[$name]];
@@ -827,7 +827,7 @@ class XmlConfigurationParser extends AbstractConfigurationParser
                 }
             }
         }
-        
+
         return $result;
     }
 }
@@ -837,18 +837,18 @@ class FlexFormParser extends XmlConfigurationParser
 {
     public function supports(string $filePath): bool
     {
-        return parent::supports($filePath) && 
-               (str_contains($filePath, 'flexform') || 
+        return parent::supports($filePath) &&
+               (str_contains($filePath, 'flexform') ||
                 str_contains($filePath, 'FlexForm'));
     }
-    
+
     protected function doParse(string $content): array
     {
         $data = parent::doParse($content);
-        
+
         return $this->normalizeFlexFormStructure($data);
     }
-    
+
     private function normalizeFlexFormStructure(array $data): array
     {
         // Extract FlexForm data structure
@@ -857,26 +857,26 @@ class FlexFormParser extends XmlConfigurationParser
             'fields' => [],
             'meta' => []
         ];
-        
+
         if (isset($data['T3DataStructure'])) {
             $structure = $data['T3DataStructure'];
-            
+
             // Process sheets
             if (isset($structure['sheets'])) {
                 foreach ($structure['sheets'] as $sheetKey => $sheet) {
                     $result['sheets'][$sheetKey] = $this->processFlexFormSheet($sheet);
                 }
             }
-            
+
             // Process root level fields
             if (isset($structure['ROOT'])) {
                 $result['fields'] = $this->processFlexFormElements($structure['ROOT']);
             }
         }
-        
+
         return $result;
     }
-    
+
     private function processFlexFormSheet(array $sheet): array
     {
         return [
@@ -884,11 +884,11 @@ class FlexFormParser extends XmlConfigurationParser
             'elements' => $this->processFlexFormElements($sheet['ROOT'] ?? [])
         ];
     }
-    
+
     private function processFlexFormElements(array $root): array
     {
         $elements = [];
-        
+
         if (isset($root['el'])) {
             foreach ($root['el'] as $fieldKey => $field) {
                 $elements[$fieldKey] = [
@@ -898,7 +898,7 @@ class FlexFormParser extends XmlConfigurationParser
                 ];
             }
         }
-        
+
         return $elements;
     }
 }
@@ -917,39 +917,39 @@ class ConfigurationService
         private readonly ConfigurationValidator $validator,
         private readonly LoggerInterface $logger
     ) {}
-    
+
     public function parseInstallationConfiguration(Installation $installation): InstallationConfiguration
     {
         $config = new InstallationConfiguration($installation);
-        
+
         // Parse main configuration
         $this->parseMainConfiguration($installation, $config);
-        
+
         // Parse extension configurations
         $this->parseExtensionConfigurations($installation, $config);
-        
+
         // Parse site configurations
         $this->parseSiteConfigurations($installation, $config);
-        
+
         // Validate complete configuration
         $this->validator->validate($config);
-        
+
         return $config;
     }
-    
+
     private function parseMainConfiguration(Installation $installation, InstallationConfiguration $config): void
     {
         $configPaths = [
             $installation->getPath() . '/typo3conf/LocalConfiguration.php',
             $installation->getPath() . '/config/system/settings.php',
         ];
-        
+
         foreach ($configPaths as $path) {
             if (file_exists($path)) {
                 try {
                     $parser = $this->parserFactory->createParser($path);
                     $result = $parser->parse($path);
-                    
+
                     if ($result->isSuccess()) {
                         $config->setMainConfiguration(new Configuration('global', $path, $result->getData()));
                         break;
@@ -963,7 +963,7 @@ class ConfigurationService
             }
         }
     }
-    
+
     private function parseExtensionConfigurations(Installation $installation, InstallationConfiguration $config): void
     {
         foreach ($installation->getExtensions() as $extension) {
@@ -973,7 +973,7 @@ class ConfigurationService
             }
         }
     }
-    
+
     private function parseExtensionConfiguration(Extension $extension): ?ExtensionConfiguration
     {
         $configFiles = [
@@ -981,15 +981,15 @@ class ConfigurationService
             $extension->getPath() . '/Configuration/Services.yaml',
             $extension->getPath() . '/Configuration/Services.php',
         ];
-        
+
         $parsedData = [];
-        
+
         foreach ($configFiles as $file) {
             if (file_exists($file)) {
                 try {
                     $parser = $this->parserFactory->createParser($file);
                     $result = $parser->parse($file);
-                    
+
                     if ($result->isSuccess()) {
                         $parsedData = array_merge($parsedData, $result->getData());
                     }
@@ -1002,7 +1002,7 @@ class ConfigurationService
                 }
             }
         }
-        
+
         return empty($parsedData) ? null : new ExtensionConfiguration($extension->getKey(), $parsedData);
     }
 }
@@ -1014,12 +1014,12 @@ class ConfigurationAnalysisService
         private readonly ConfigurationService $configService,
         private readonly ConfigurationCompatibilityChecker $compatibilityChecker
     ) {}
-    
+
     public function analyzeForUpgrade(Installation $installation, Version $targetVersion): ConfigurationAnalysisResult
     {
         $config = $this->configService->parseInstallationConfiguration($installation);
         $issues = [];
-        
+
         // Check main configuration compatibility
         $mainConfigIssues = $this->compatibilityChecker->checkMainConfiguration(
             $config->getMainConfiguration(),
@@ -1027,7 +1027,7 @@ class ConfigurationAnalysisService
             $targetVersion
         );
         $issues = array_merge($issues, $mainConfigIssues);
-        
+
         // Check extension configuration compatibility
         foreach ($config->getExtensionConfigurations() as $extConfig) {
             $extIssues = $this->compatibilityChecker->checkExtensionConfiguration(
@@ -1037,7 +1037,7 @@ class ConfigurationAnalysisService
             );
             $issues = array_merge($issues, $extIssues);
         }
-        
+
         return new ConfigurationAnalysisResult($config, $issues);
     }
 }
@@ -1052,7 +1052,7 @@ class AnalysisContext
     private Version $targetVersion;
     private InstallationConfiguration $configuration;
     private array $analysisOptions;
-    
+
     public function __construct(
         Version $currentVersion,
         Version $targetVersion,
@@ -1062,12 +1062,12 @@ class AnalysisContext
         $this->targetVersion = $targetVersion;
         $this->configuration = $configuration ?? new InstallationConfiguration();
     }
-    
+
     public function getConfiguration(): InstallationConfiguration;
     public function getDatabaseConfiguration(): DatabaseConfiguration;
     public function getCacheConfiguration(): CacheConfiguration;
     public function getExtensionConfiguration(string $extensionKey): ?ExtensionConfiguration;
-    
+
     public function hasFeatureEnabled(string $feature): bool;
     public function getConfigurationValue(string $path, mixed $default = null): mixed;
     public function isExtensionLoaded(string $extensionKey): bool;
@@ -1084,7 +1084,7 @@ class AnalysisContext
 class LocalConfigurationParserTest extends TestCase
 {
     private LocalConfigurationParser $parser;
-    
+
     protected function setUp(): void
     {
         $this->parser = new LocalConfigurationParser(
@@ -1093,7 +1093,7 @@ class LocalConfigurationParserTest extends TestCase
             new ReturnArrayExtractor()
         );
     }
-    
+
     public function testParsesValidLocalConfiguration(): void
     {
         // Arrange
@@ -1110,30 +1110,30 @@ class LocalConfigurationParserTest extends TestCase
                 ]
             ]
         ];';
-        
+
         $tempFile = $this->createTempFile($configContent);
-        
+
         // Act
         $result = $this->parser->parse($tempFile);
-        
+
         // Assert
         $this->assertTrue($result->isSuccess());
         $this->assertArrayHasKey('DB', $result->getData());
         $this->assertEquals('mysqli', $result->getData()['DB']['Connections']['Default']['driver']);
     }
-    
+
     public function testHandlesMalformedPhpConfiguration(): void
     {
         // Test error handling for syntax errors
         $configContent = '<?php return [invalid syntax;';
         $tempFile = $this->createTempFile($configContent);
-        
+
         $result = $this->parser->parse($tempFile);
-        
+
         $this->assertFalse($result->isSuccess());
         $this->assertNotEmpty($result->getErrors());
     }
-    
+
     public function testHandlesComplexPhpStructures(): void
     {
         // Test parsing of complex PHP configurations with constants, concatenation, etc.
@@ -1160,10 +1160,10 @@ services:
     arguments:
       - "@logger"
 ';
-        
+
         $tempFile = $this->createTempFile($yamlContent);
         $result = $this->parser->parse($tempFile);
-        
+
         $this->assertTrue($result->isSuccess());
         $this->assertArrayHasKey('services', $result->getData());
     }
@@ -1185,10 +1185,10 @@ class ConfigurationServiceTest extends TestCase
                 'powermail' => $this->createExtensionWithConfig(),
             ]
         ]);
-        
+
         // Act
         $config = $this->configurationService->parseInstallationConfiguration($installation);
-        
+
         // Assert
         $this->assertInstanceOf(InstallationConfiguration::class, $config);
         $this->assertNotNull($config->getMainConfiguration());
@@ -1208,14 +1208,14 @@ class ConfigurationParsingIntegrationTest extends TestCase
     {
         // Test with real TYPO3 installation fixtures
         $installationPath = $this->getTestInstallationPath('typo3-v12-composer');
-        
+
         $installation = $this->installationDiscovery->discover($installationPath);
         $config = $this->configurationService->parseInstallationConfiguration($installation);
-        
+
         $this->assertInstanceOf(InstallationConfiguration::class, $config);
         $this->assertTrue($config->isValid());
     }
-    
+
     public function testHandlesMultipleConfigurationFormats(): void
     {
         // Test installation with mixed configuration formats
@@ -1247,10 +1247,10 @@ class ConfigurationFixtureBuilder
                 ]
             ]
         ], $overrides);
-        
+
         return '<?php return ' . var_export($config, true) . ';';
     }
-    
+
     public function createServicesYaml(array $services = []): string
     {
         $config = [
@@ -1261,7 +1261,7 @@ class ConfigurationFixtureBuilder
                 ]
             ], $services)
         ];
-        
+
         return Yaml::dump($config, 4);
     }
 }
@@ -1308,13 +1308,13 @@ class InstallationConfiguration
 {
     private array $extensionConfigurations = [];
     private array $loadedExtensions = [];
-    
+
     public function getExtensionConfiguration(string $extensionKey): ?ExtensionConfiguration
     {
         if (!isset($this->loadedExtensions[$extensionKey])) {
             $this->loadedExtensions[$extensionKey] = $this->loadExtensionConfiguration($extensionKey);
         }
-        
+
         return $this->loadedExtensions[$extensionKey];
     }
 }
@@ -1327,14 +1327,14 @@ class CachingConfigurationService
     public function parseInstallationConfiguration(Installation $installation): InstallationConfiguration
     {
         $cacheKey = $this->generateCacheKey($installation);
-        
+
         if ($this->cache->has($cacheKey)) {
             return $this->cache->get($cacheKey);
         }
-        
+
         $config = $this->doParseConfiguration($installation);
         $this->cache->set($cacheKey, $config, $this->getCacheTtl());
-        
+
         return $config;
     }
 }
@@ -1359,23 +1359,23 @@ class SecureConfigurationParser
 {
     private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private const MAX_NESTING_DEPTH = 50;
-    
+
     protected function readFile(string $filePath): string
     {
         if (!is_file($filePath)) {
             throw new InvalidFileException('File does not exist or is not a regular file');
         }
-        
+
         if (filesize($filePath) > self::MAX_FILE_SIZE) {
             throw new FileTooLargeException('Configuration file exceeds maximum size limit');
         }
-        
+
         $content = file_get_contents($filePath);
-        
+
         if ($content === false) {
             throw new FileReadException('Failed to read configuration file');
         }
-        
+
         return $content;
     }
 }

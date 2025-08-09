@@ -89,7 +89,7 @@ Individual detailed reports have been generated for each extension:
 **Critical Risk Extensions** ({{ critical_extensions|length }} extensions require immediate attention):
 
 {% for data in critical_extensions %}
-- **{{ data.extension.key }}**: 
+- **{{ data.extension.key }}**:
 {% if data.version_analysis and data.version_analysis.recommendations %}
   {% for recommendation in data.version_analysis.recommendations %}
   - {{ recommendation }}

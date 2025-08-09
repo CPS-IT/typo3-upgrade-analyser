@@ -1,6 +1,6 @@
             <div class="section">
                 <h2>Recommendations</h2>
-                
+
                 {% set critical_extensions = [] %}
                 {% for data in extension_data %}
                 {% if data.risk_summary.risk_level == 'critical' %}
@@ -42,27 +42,27 @@
                     <p>No critical risk extensions found. Your upgrade path should be relatively smooth.</p>
                 </div>
                 {% endif %}
-                
+
                 <h3>Migration Planning</h3>
-                
+
                 <div class="phase">
                     <h4>Phase 1 - Low Risk Extensions ({{ statistics.risk_distribution.low }} extensions)</h4>
                     <p>Start with these extensions as they have minimal compatibility issues.</p>
                     <p><strong>Expected success rate:</strong> 95%+</p>
                 </div>
-                
+
                 <div class="phase">
                     <h4>Phase 2 - Medium Risk Extensions ({{ statistics.risk_distribution.medium }} extensions)</h4>
                     <p>Require testing and potential minor code changes.</p>
                     <p><strong>Expected success rate:</strong> 80-90%</p>
                 </div>
-                
+
                 <div class="phase">
                     <h4>Phase 3 - High Risk Extensions ({{ statistics.risk_distribution.high }} extensions)</h4>
                     <p>Require significant testing and likely code modifications.</p>
                     <p><strong>Expected success rate:</strong> 60-80%</p>
                 </div>
-                
+
                 <div class="phase">
                     <h4>Phase 4 - Critical Risk Extensions ({{ statistics.risk_distribution.critical }} extensions)</h4>
                     <p>May require complete replacement or major refactoring.</p>

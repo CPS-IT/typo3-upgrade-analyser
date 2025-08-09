@@ -12,18 +12,18 @@
                         <p><strong>Affected Files:</strong> {{ rector_analysis.affected_files }}</p>
                         <p><strong>File Impact:</strong> {{ "%.1f"|format(rector_analysis.file_impact_percentage) }}%</p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h3>Findings Summary</h3>
                         <p><strong>Total Findings:</strong> {{ rector_analysis.total_findings }}</p>
-                        <p><strong>Breaking Changes:</strong> 
+                        <p><strong>Breaking Changes:</strong>
                             {% if rector_analysis.has_breaking_changes %}
                                 <span style="color: #dc3545;">⚠️ Yes</span>
                             {% else %}
                                 <span style="color: #28a745;">✅ No</span>
                             {% endif %}
                         </p>
-                        <p><strong>Deprecated Patterns:</strong> 
+                        <p><strong>Deprecated Patterns:</strong>
                             {% if rector_analysis.has_deprecations %}
                                 <span style="color: #ffc107;">📋 Yes</span>
                             {% else %}
@@ -56,7 +56,7 @@
                         <p><strong>Complexity Score:</strong> {{ "%.1f"|format(rector_analysis.complexity_score) }}/10.0</p>
                         <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(rector_analysis.estimated_fix_time_hours) }} hours</p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h3>Analysis Details</h3>
                         <p><strong>Analysis Duration:</strong> {{ "%.2f"|format(rector_analysis.execution_time) }} seconds</p>

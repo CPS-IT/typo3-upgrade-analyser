@@ -12,7 +12,7 @@
             <h1>TYPO3 Upgrade Analysis Report</h1>
             <p>Generated: {{ generated_at.format('Y-m-d H:i:s T') }}</p>
         </div>
-        
+
         <div class="content">
             {% include 'html/partials/main-report/installation-overview.html.twig' %}
 
@@ -22,11 +22,11 @@
 
             <div class="section">
                 <h2>Analyzer Results</h2>
-                
+
                 {% include 'html/partials/main-report/version-availability-table.html.twig' %}
-                
+
                 {% include 'html/partials/main-report/lines-of-code-table.html.twig' %}
-                
+
                 {% include 'html/partials/main-report/rector-analysis-table.html.twig' %}
             </div>
 

@@ -3,7 +3,7 @@
 This analyzer examines the codebase size and complexity of extensions to estimate upgrade effort.
 
 | Extension | Total Lines | PHP Files | Code Lines | Classes | Methods | Risk Level | Effort Estimate |
-|-----------|-------------|-----------|------------|---------|---------|------------|-----------------| 
+|-----------|-------------|-----------|------------|---------|---------|------------|-----------------|
 {% for data in extension_data %}
 {% if data.loc_analysis %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#lines-of-code-analysis) | {{ data.loc_analysis.total_lines|number_format }} | {{ data.loc_analysis.php_files }} | {{ data.loc_analysis.code_lines|number_format }} | {{ data.loc_analysis.classes }} | {{ data.loc_analysis.methods }} | {{ data.risk_summary.risk_level|upper }} | {% if data.loc_analysis.total_lines > 10000 %}High{% elseif data.loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %} |

@@ -2,8 +2,8 @@
 
 ## 🎯 **IMPLEMENTATION STATUS: PLANNED** 📋
 
-**Last Updated**: August 2025  
-**Priority**: High  
+**Last Updated**: August 2025
+**Priority**: High
 **Dependencies**: AbstractCachedAnalyzer, Version compatibility system, Extension discovery
 
 ### Feature Overview
@@ -74,7 +74,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     public function supports(Extension $extension): bool;
     public function getRequiredTools(): array; // ['php', 'rector']
     public function hasRequiredTools(): bool;
-    
+
     protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult;
     protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array;
 
@@ -161,7 +161,7 @@ class RectorRuleRegistry
         ],
         '12.4' => [
             \Ssch\TYPO3Rector\Rector\v12\v4\MigrateRequiredFlagForTcaColumnsRector::class,
-            // ... more rules  
+            // ... more rules
         ],
         '13.0' => [
             \Ssch\TYPO3Rector\Rector\v13\v0\RemoveInitTemplateMethodRector::class,
@@ -174,7 +174,7 @@ class RectorRuleRegistry
     public function getAllAvailableRules(): array;
     public function getRuleDescription(string $ruleClass): string;
     public function getRuleSeverity(string $ruleClass): RectorRuleSeverity;
-    
+
     private function loadRulesFromReflection(): array;
     private function categorizeRules(array $rules): array;
     private function filterRulesByVersionRange(array $rules, Version $from, Version $to): array;
@@ -220,7 +220,7 @@ class RectorFinding
     public function getChangeType(): RectorChangeType;
     public function getSuggestedFix(): ?string;
     public function getContext(): array;
-    
+
     public function isBreakingChange(): bool;
     public function isDeprecation(): bool;
     public function isImprovement(): bool;
@@ -238,7 +238,7 @@ enum RectorRuleSeverity: string
     case WARNING = 'warning';      // Deprecations
     case INFO = 'info';           // Improvements
     case SUGGESTION = 'suggestion'; // Optional optimizations
-    
+
     public function getRiskWeight(): float;
     public function getDisplayName(): string;
     public function getDescription(): string;
@@ -286,7 +286,7 @@ class RectorAnalysisSummary
     public function getFileBreakdown(): array; // File -> count mapping
     public function getComplexityScore(): float;
     public function getEstimatedFixTime(): int; // In minutes
-    
+
     public function hasBreakingChanges(): bool;
     public function hasDeprecations(): bool;
     public function getTopIssuesByFile(int $limit = 10): array;
@@ -371,7 +371,7 @@ $metrics = [
     'total_findings' => 78,
     'findings_by_severity' => [
         'critical' => 12,   // Breaking changes
-        'warning' => 34,    // Deprecations  
+        'warning' => 34,    // Deprecations
         'info' => 28,       // Improvements
         'suggestion' => 4   // Optional optimizations
     ],
@@ -408,20 +408,20 @@ $metrics = [
 private function calculateRiskScore(RectorAnalysisSummary $summary): float
 {
     $baseRisk = 1.0;
-    
+
     // Breaking changes contribute heavily to risk
     $baseRisk += $summary->getCriticalIssues() * 0.8;
-    
+
     // Deprecations contribute moderately
     $baseRisk += $summary->getWarnings() * 0.3;
-    
+
     // File coverage impact
     $fileImpactRatio = $summary->getAffectedFiles() / max($summary->getTotalFiles(), 1);
     $baseRisk += $fileImpactRatio * 2.0;
-    
+
     // Complexity multiplier
     $baseRisk *= (1 + $summary->getComplexityScore() / 10);
-    
+
     // Estimated effort factor
     $effortHours = $summary->getEstimatedFixTime() / 60;
     if ($effortHours > 8) {
@@ -429,7 +429,7 @@ private function calculateRiskScore(RectorAnalysisSummary $summary): float
     } elseif ($effortHours > 4) {
         $baseRisk += 0.5;
     }
-    
+
     return min($baseRisk, 10.0);
 }
 ```
@@ -439,31 +439,31 @@ private function calculateRiskScore(RectorAnalysisSummary $summary): float
 private function generateRecommendations(RectorAnalysisSummary $summary, AnalysisContext $context): array
 {
     $recommendations = [];
-    
+
     if ($summary->hasBreakingChanges()) {
         $recommendations[] = 'Critical: Extension contains breaking changes that must be fixed before upgrade to TYPO3 ' . $context->getTargetVersion()->toString();
         $recommendations[] = 'Review and fix ' . $summary->getCriticalIssues() . ' critical issues identified by Rector analysis';
     }
-    
+
     if ($summary->hasDeprecations()) {
         $recommendations[] = 'Update deprecated code patterns (' . $summary->getWarnings() . ' found) to prevent issues in future TYPO3 versions';
     }
-    
+
     if ($summary->getEstimatedFixTime() > 480) { // 8 hours
         $recommendations[] = 'Large refactoring effort required (~' . round($summary->getEstimatedFixTime() / 60, 1) . ' hours). Consider staged implementation';
     }
-    
+
     if ($summary->getComplexityScore() > 7.0) {
         $recommendations[] = 'High complexity changes detected. Review Rector suggestions carefully and test thoroughly';
     }
-    
+
     // Add specific rule-based recommendations
     $topRules = $summary->getTopIssuesByRule(3);
     foreach ($topRules as $rule => $count) {
         $ruleInfo = $this->ruleRegistry->getRuleDescription($rule);
         $recommendations[] = "Focus on {$ruleInfo} ({$count} occurrences)";
     }
-    
+
     return $recommendations;
 }
 ```
@@ -479,10 +479,10 @@ The analyzer results will be integrated into the existing report templates:
 {# resources/templates/main-report.html.twig - Add to analyzer sections #}
 <div class="section">
     <h2>TYPO3 Rector Analysis</h2>
-    
+
     {% if analyzer_results.typo3_rector %}
         {% set rector_data = analyzer_results.typo3_rector %}
-        
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ rector_data.total_findings }}</div>
@@ -587,7 +587,7 @@ class Typo3RectorAnalyzerTest extends TestCase
         $this->rectorExecutor = Mockery::mock(RectorExecutor::class);
         $this->configGenerator = Mockery::mock(RectorConfigGenerator::class);
         $this->resultParser = Mockery::mock(RectorResultParser::class);
-        
+
         $this->analyzer = new Typo3RectorAnalyzer(
             Mockery::mock(CacheService::class),
             Mockery::mock(LoggerInterface::class),
@@ -601,7 +601,7 @@ class Typo3RectorAnalyzerTest extends TestCase
     public function testSupportsAllExtensionTypes(): void
     {
         $extension = $this->createMockExtension();
-        
+
         $this->assertTrue($this->analyzer->supports($extension));
     }
 
@@ -615,19 +615,19 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Test successful rector execution and result parsing
         $extension = $this->createMockExtension();
         $context = $this->createMockAnalysisContext();
-        
+
         $this->configGenerator->shouldReceive('generateConfig')
             ->with($extension, $context)
             ->andReturn('/tmp/rector.php');
-            
+
         $this->rectorExecutor->shouldReceive('execute')
             ->andReturn(new RectorExecutionResult(true, [], [], 1.5, 0, ''));
-            
+
         $this->resultParser->shouldReceive('aggregateFindings')
             ->andReturn(new RectorAnalysisSummary(0, 0, 0, 0, 0, [], [], 0.0, 0));
 
         $result = $this->analyzer->analyze($extension, $context);
-        
+
         $this->assertInstanceOf(AnalysisResult::class, $result);
         $this->assertEquals('typo3_rector', $result->getAnalyzerName());
     }
@@ -637,11 +637,11 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Test handling of rector execution failures
         $extension = $this->createMockExtension();
         $context = $this->createMockAnalysisContext();
-        
+
         $this->configGenerator->shouldReceive('generateConfig')
             ->with($extension, $context)
             ->andReturn('/tmp/rector.php');
-            
+
         $this->rectorExecutor->shouldReceive('execute')
             ->andReturn(new RectorExecutionResult(false, [], ['Error'], 0.0, 1, ''));
 
@@ -662,7 +662,7 @@ class RectorExecutorTest extends TestCase
 
         // Mock successful execution
         $result = $this->mockProcessExecution($executor, 0, $this->getSampleRectorOutput());
-        
+
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(3, $result->getFindings());
         $this->assertEquals(0, $result->getExitCode());
@@ -691,7 +691,7 @@ class Typo3RectorAnalyzerIntegrationTest extends AbstractIntegrationTest
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->requiresTool('rector');
         $this->analyzer = $this->createAnalyzer();
     }
@@ -726,7 +726,7 @@ class Typo3RectorAnalyzerIntegrationTest extends AbstractIntegrationTest
         $extensionPath = $this->createTemporaryExtension([
             'Classes/Controller/TestController.php' => '<?php
                 namespace MyVendor\\MyExt\\Controller;
-                
+
                 class TestController {
                     public function action() {
                         // Deprecated GeneralUtility usage
@@ -755,7 +755,7 @@ class RectorTestFixtures
             ],
             'deprecated_localization' => [
                 'code' => '$GLOBALS[\'TSFE\']->sL($key)',
-                'expected_rule' => 'SubstituteLocalizationServiceRector', 
+                'expected_rule' => 'SubstituteLocalizationServiceRector',
                 'severity' => 'warning'
             ],
             'breaking_interface' => [
@@ -881,7 +881,7 @@ jobs:
 - ✅ Generates actionable recommendations for developers
 - ✅ Handles extensions of varying sizes efficiently
 
-### Performance Requirements  
+### Performance Requirements
 - ✅ Analyzes typical extensions (50-200 files) in under 60 seconds
 - ✅ Memory usage remains under 512MB for large extensions
 - ✅ Supports parallel analysis of multiple extensions
@@ -895,7 +895,7 @@ jobs:
 
 ### Business Requirements
 - ✅ Reduces manual code review time by 70%+
-- ✅ Improves upgrade success rate through early issue detection  
+- ✅ Improves upgrade success rate through early issue detection
 - ✅ Provides quantifiable upgrade effort estimates
 - ✅ Supports TYPO3 versions 11.5+ through 14.x+
 

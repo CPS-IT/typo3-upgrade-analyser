@@ -9,12 +9,12 @@
 ### Core Functionality
 
 1. **Installation Discovery**
-   - use an existing configuration file to read  
+   - use an existing configuration file to read
      - installation path
      - target version
-   - recognize the extension installation path 
+   - recognize the extension installation path
 
-2. **Version Detection**  
+2. **Version Detection**
    - determine current version of each extension
    - Handle both legacy and composer-based extensions
 
@@ -47,8 +47,8 @@ Found 4 extensions (3 active, 1 inactive)
 
 ### Core Components
 1. **ExtensionDiscovery** - Find extensions in directories `vendor` or `typo3conf/ext`
-2. **ExtensionMetadataReader**: read the installation status from PackageStates.php or `vendor/composer/installed.json` 
-3. **ListExtensionsCommand** - single input option: `c`/`config` - Path to custom configuration file 
+2. **ExtensionMetadataReader**: read the installation status from PackageStates.php or `vendor/composer/installed.json`
+3. **ListExtensionsCommand** - single input option: `c`/`config` - Path to custom configuration file
 4. **TableFormatter** - Terminal output
 
 ## Success Criteria
@@ -63,7 +63,7 @@ A developer can:
 ## Technical Constraints
 
 - Read-only analysis (no installation modifications)
-- Handle both legacy and composer installations  
+- Handle both legacy and composer installations
 - Memory efficient for large extension lists
 
 ## Out of Scope
