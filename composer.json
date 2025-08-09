@@ -62,105 +62,61 @@
     }
   },
   "scripts": {
-    "fix:composer": {
-      "description": "Fix Composer configuration format and sorting",
-      "script": "@composer normalize"
-    },
-    "fix:editorconfig": {
-      "description": "Fix EditorConfig violations (whitespace, line endings)",
-      "script": "ec --fix"
-    },
-    "fix:fractor": {
-      "description": "Apply automated fractor refactoring rules",
-      "script": "fractor process"
-    },
-    "fix:php": {
-      "description": "Fix PHP coding style violations using PHP CS Fixer",
-      "script": "php-cs-fixer fix"
-    },
-    "fix:rector": {
-      "description": "Apply automated Rector refactoring rules",
-      "script": "rector process"
-    },
-    "lint": {
-      "description": "Run all linting checks (composer, editorconfig, php, rector, fractor)",
-      "script": [
-        "@lint:composer",
-        "@lint:editorconfig",
-        "@lint:php",
-        "@lint:rector",
-        "@lint:fractor"
-      ]
-    },
-    "lint:composer": {
-      "description": "Check Composer configuration format without modifying files",
-      "script": "@composer normalize --dry-run"
-    },
-    "lint:editorconfig": {
-      "description": "Check EditorConfig compliance without modifying files",
-      "script": "ec"
-    },
-    "lint:fractor": {
-      "description": "Check fractor rules without applying changes",
-      "script": "fractor process --dry-run"
-    },
-    "lint:php": {
-      "description": "Check PHP coding style without modifying files",
-      "script": "php-cs-fixer fix --dry-run"
-    },
-    "lint:rector": {
-      "description": "Check Rector rules without applying changes",
-      "script": "rector process --dry-run"
-    },
-    "sca": {
-      "description": "Run static code analysis (PHPStan)",
-      "script": [
-        "@sca:php"
-      ]
-    },
-    "sca:php": {
-      "description": "Run PHPStan static analysis with 2GB memory limit",
-      "script": "phpstan analyse --memory-limit=2G"
-    },
-    "test": {
-      "description": "Run unit tests only (excludes integration, real-world, API, and performance tests)",
-      "script": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance"
-    },
-    "test:all-integration": {
-      "description": "Run all integration tests including real-world and API tests (no coverage)",
-      "script": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage"
-    },
-    "test:coverage": {
-      "description": "Generate test coverage report (HTML, Clover XML, and text formats)",
-      "script": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional"
-    },
-    "test:functional": {
-      "description": "Run functional tests only",
-      "script": "phpunit --testsuite=Functional"
-    },
-    "test:github-api": {
-      "description": "Run GitHub API integration tests (requires network, stops on first failure)",
-      "script": "phpunit --group=github-api --no-coverage --stop-on-failure"
-    },
-    "test:integration": {
-      "description": "Run integration tests without external API calls (no coverage)",
-      "script": "phpunit --testsuite=Integration --no-coverage"
-    },
-    "test:performance": {
-      "description": "Run performance benchmark tests (no coverage)",
-      "script": "phpunit --group=performance --no-coverage"
-    },
-    "test:real-world": {
-      "description": "Run real-world scenario tests (requires network, stops on first failure)",
-      "script": "phpunit --group=real-world --no-coverage --stop-on-failure"
-    },
-    "test:ter-api": {
-      "description": "Run TYPO3 Extension Repository API tests (requires network, stops on first failure)",
-      "script": "phpunit --group=ter-api --no-coverage --stop-on-failure"
-    },
-    "test:unit": {
-      "description": "Run unit tests only (fast, isolated tests)",
-      "script": "phpunit --testsuite=Unit"
-    }
+    "fix:composer": "@composer normalize",
+    "fix:editorconfig": "ec --fix",
+    "fix:fractor": "fractor process",
+    "fix:php": "php-cs-fixer fix",
+    "fix:rector": "rector process",
+    "lint": [
+      "@lint:composer",
+      "@lint:editorconfig",
+      "@lint:php",
+      "@lint:rector",
+      "@lint:fractor"
+    ],
+    "lint:composer": "@composer normalize --dry-run",
+    "lint:editorconfig": "ec",
+    "lint:fractor": "fractor process --dry-run",
+    "lint:php": "php-cs-fixer fix --dry-run",
+    "lint:rector": "rector process --dry-run",
+    "sca": [
+      "@sca:php"
+    ],
+    "sca:php": "phpstan analyse --memory-limit=2G",
+    "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
+    "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
+    "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional",
+    "test:functional": "phpunit --testsuite=Functional",
+    "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
+    "test:integration": "phpunit --testsuite=Integration --no-coverage",
+    "test:performance": "phpunit --group=performance --no-coverage",
+    "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
+    "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
+    "test:unit": "phpunit --testsuite=Unit"
+  },
+  "scripts-descriptions": {
+    "fix:composer": "Fix Composer configuration format and sorting",
+    "fix:editorconfig": "Fix EditorConfig violations (whitespace, line endings)",
+    "fix:fractor": "Apply automated fractor refactoring rules",
+    "fix:php": "Fix PHP coding style violations using PHP CS Fixer",
+    "fix:rector": "Apply automated Rector refactoring rules",
+    "lint": "Run all linting checks (composer, editorconfig, php, rector, fractor)",
+    "lint:composer": "Check Composer configuration format without modifying files",
+    "lint:editorconfig": "Check EditorConfig compliance without modifying files",
+    "lint:fractor": "Check fractor rules without applying changes",
+    "lint:php": "Check PHP coding style without modifying files",
+    "lint:rector": "Check Rector rules without applying changes",
+    "sca": "Run static code analysis (PHPStan)",
+    "sca:php": "Run PHPStan static analysis with 2GB memory limit",
+    "test": "Run unit tests only (excludes integration, real-world, API, and performance tests)",
+    "test:all-integration": "Run all integration tests including real-world and API tests (no coverage)",
+    "test:coverage": "Generate test coverage report (HTML, Clover XML, and text formats)",
+    "test:functional": "Run functional tests only",
+    "test:github-api": "Run GitHub API integration tests (requires network, stops on first failure)",
+    "test:integration": "Run integration tests without external API calls (no coverage)",
+    "test:performance": "Run performance benchmark tests (no coverage)",
+    "test:real-world": "Run real-world scenario tests (requires network, stops on first failure)",
+    "test:ter-api": "Run TYPO3 Extension Repository API tests (requires network, stops on first failure)",
+    "test:unit": "Run unit tests only (fast, isolated tests)"
   }
 }
