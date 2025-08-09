@@ -479,7 +479,9 @@ class CacheIntegrationTest extends AbstractIntegrationTest
 
         // Generate cache key and verify cache remains empty
         $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, ['custom_paths' => []]);
-        $this->assertFalse($this->cacheService->has($cacheKey),
-            'Cache should remain empty when caching is disabled');
+        $this->assertFalse(
+            $this->cacheService->has($cacheKey),
+            'Cache should remain empty when caching is disabled',
+        );
     }
 }

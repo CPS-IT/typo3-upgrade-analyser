@@ -516,7 +516,7 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     private function checkForEmptySections(array $data, array &$warnings): void
     {
         foreach ($data as $key => $value) {
-            if ($value === [] && \is_string($key)) {
+            if ([] === $value && \is_string($key)) {
                 $warnings[] = "Empty configuration section found: {$key}";
             }
         }

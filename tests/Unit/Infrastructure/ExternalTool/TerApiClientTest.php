@@ -254,7 +254,7 @@ class TerApiClientTest extends TestCase
             ->expects(self::exactly(2))
             ->method('request')
             ->willReturnCallback(
-                fn (string $method, string $url): \PHPUnit\Framework\MockObject\MockObject => match ($url) {
+                fn (string $method, string $url): MockObject => match ($url) {
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
                     default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
@@ -288,7 +288,7 @@ class TerApiClientTest extends TestCase
             ->expects(self::exactly(2))
             ->method('request')
             ->willReturnCallback(
-                fn (string $method, string $url): \PHPUnit\Framework\MockObject\MockObject => match ($url) {
+                fn (string $method, string $url): MockObject => match ($url) {
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}" => $extensionResponse,
                     "https://extensions.typo3.org/api/v1/extension/{$extensionKey}/versions" => $versionsResponse,
                     default => throw new \InvalidArgumentException('Unexpected URL: ' . $url)
