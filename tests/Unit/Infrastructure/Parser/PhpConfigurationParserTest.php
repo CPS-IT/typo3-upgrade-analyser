@@ -603,7 +603,7 @@ class PhpConfigurationParserTest extends TestCase
         }
 
         $actualMaintainers = $data['SYS']['systemMaintainers'];
-        if (empty($actualMaintainers) && \is_array($actualMaintainers)) {
+        if ($actualMaintainers === []) {
             // Empty array - check if this is expected based on parser behavior
             self::markTestSkipped('Array parsing returns empty array - need to investigate AST extraction');
         }

@@ -313,7 +313,7 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
                     continue;
                 }
 
-                if (\is_array($value) && empty($value)) {
+                if ($value === []) {
                     $warnings[] = "Empty configuration array found: {$key}";
                 }
             }
