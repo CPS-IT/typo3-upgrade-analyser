@@ -64,19 +64,16 @@
   "scripts": {
     "fix:composer": "@composer normalize",
     "fix:editorconfig": "ec --fix",
-    "fix:fractor": "fractor process",
     "fix:php": "php-cs-fixer fix",
     "fix:rector": "rector process",
     "lint": [
       "@lint:composer",
       "@lint:editorconfig",
       "@lint:php",
-      "@lint:rector",
-      "@lint:fractor"
+      "@lint:rector"
     ],
     "lint:composer": "@composer normalize --dry-run",
     "lint:editorconfig": "ec",
-    "lint:fractor": "fractor process --dry-run",
     "lint:php": "php-cs-fixer fix --dry-run",
     "lint:rector": "rector process --dry-run",
     "sca": [
@@ -97,13 +94,11 @@
   "scripts-descriptions": {
     "fix:composer": "Fix Composer configuration format and sorting",
     "fix:editorconfig": "Fix EditorConfig violations (whitespace, line endings)",
-    "fix:fractor": "Apply automated fractor refactoring rules",
     "fix:php": "Fix PHP coding style violations using PHP CS Fixer",
     "fix:rector": "Apply automated Rector refactoring rules",
-    "lint": "Run all linting checks (composer, editorconfig, php, rector, fractor)",
+    "lint": "Run all linting checks (composer, editorconfig, php, rector)",
     "lint:composer": "Check Composer configuration format without modifying files",
     "lint:editorconfig": "Check EditorConfig compliance without modifying files",
-    "lint:fractor": "Check fractor rules without applying changes",
     "lint:php": "Check PHP coding style without modifying files",
     "lint:rector": "Check Rector rules without applying changes",
     "sca": "Run static code analysis (PHPStan)",
