@@ -643,4 +643,287 @@ class PackagistClientTest extends TestCase
         // Assert
         self::assertNull($result);
     }
+
+    public function testGetRepositoryUrlWithNonStringRepository(): void
+    {
+        // Arrange
+        $packageName = 'vendor/invalid-repo-type';
+
+        $responseData = [
+            'package' => [
+                'repository' => ['type' => 'git'], // Array instead of string
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->getRepositoryUrl($packageName);
+
+        // Assert
+        self::assertNull($result);
+    }
+
+    public function testGetRepositoryUrlWith404Response(): void
+    {
+        // Arrange
+        $packageName = 'vendor/non-existent';
+
+        $this->response->method('getStatusCode')->willReturn(404);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->getRepositoryUrl($packageName);
+
+        // Assert
+        self::assertNull($result);
+    }
+
+    public function testGetRepositoryUrlWithHttpClientException(): void
+    {
+        // Arrange
+        $packageName = 'vendor/error-package';
+
+        $this->httpClient->method('get')
+            ->willThrowException(new HttpClientException('Connection timeout'));
+
+        $this->logger->expects(self::once())
+            ->method('debug')
+            ->with('Failed to get repository URL from Packagist', [
+                'package_name' => $packageName,
+                'error' => 'Connection timeout',
+            ]);
+
+        // Act
+        $result = $this->client->getRepositoryUrl($packageName);
+
+        // Assert
+        self::assertNull($result);
+    }
+
+    public function testGetLatestVersionWithHttpClientException(): void
+    {
+        // Arrange
+        $packageName = 'vendor/network-error';
+        $typo3Version = new Version('12.4.0');
+
+        $this->httpClient->method('get')
+            ->willThrowException(new HttpClientException('DNS resolution failed'));
+
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('Packagist API request failed', [
+                'package_name' => $packageName,
+                'error' => 'DNS resolution failed',
+            ]);
+
+        $this->expectException(ExternalToolException::class);
+        $this->expectExceptionMessage('Failed to get latest version from Packagist for package "vendor/network-error": DNS resolution failed');
+
+        // Act
+        $this->client->getLatestVersion($packageName, $typo3Version);
+    }
+
+    public function testIsVersionCompatibleWithTypo3CorePackage(): void
+    {
+        // Test TYPO3 core package version compatibility
+        $packageName = 'typo3/cms-core';
+        $typo3Version = new Version('12.4.5');
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '12.4.0' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '12.4.0',
+                        'require' => [],
+                    ],
+                    '12.4.5' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '12.4.5',
+                        'require' => [],
+                    ],
+                    '12.4.10' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '12.4.10',
+                        'require' => [],
+                    ],
+                    '11.5.0' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '11.5.0',
+                        'require' => [],
+                    ],
+                    'v12.4.0-dev' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => 'v12.4.0-dev',
+                        'require' => [],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->hasVersionFor($packageName, $typo3Version);
+
+        // Assert
+        self::assertTrue($result);
+
+        // Test getting latest version
+        $latestVersion = $this->client->getLatestVersion($packageName, $typo3Version);
+        self::assertEquals('12.4.10', $latestVersion);
+    }
+
+    public function testIsVersionCompatibleWithTypo3CorePackageIncompatible(): void
+    {
+        // Test TYPO3 core package with incompatible versions
+        $packageName = 'typo3/cms-core';
+        $typo3Version = new Version('12.4.5');
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '11.5.0' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '11.5.0',
+                        'require' => [],
+                    ],
+                    '13.0.0' => [
+                        'name' => 'typo3/cms-core',
+                        'version' => '13.0.0',
+                        'require' => [],
+                    ],
+                    '12.3.0' => [ // Lower patch version
+                        'name' => 'typo3/cms-core',
+                        'version' => '12.3.0',
+                        'require' => [],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->hasVersionFor($packageName, $typo3Version);
+
+        // Assert
+        self::assertFalse($result);
+    }
+
+    public function testIsVersionCompatibleWithVersionsWithoutRequirements(): void
+    {
+        // Arrange
+        $packageName = 'vendor/no-require';
+        $typo3Version = new Version('12.4.0');
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '1.0.0' => [
+                        // No 'require' key
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->hasVersionFor($packageName, $typo3Version);
+
+        // Assert
+        self::assertFalse($result);
+    }
+
+    public function testVersionSortingInFindLatestCompatibleVersion(): void
+    {
+        // Test that versions are properly sorted
+        $packageName = 'vendor/version-sorting';
+        $typo3Version = new Version('12.4.0');
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '1.0.0' => [
+                        'require' => ['typo3/cms-core' => '^12.0'],
+                    ],
+                    '1.10.0' => [ // Should be higher than 1.2.0 numerically
+                        'require' => ['typo3/cms-core' => '^12.0'],
+                    ],
+                    '1.2.0' => [
+                        'require' => ['typo3/cms-core' => '^12.0'],
+                    ],
+                    '2.0.0-beta1' => [ // Dev version, should be excluded from stable
+                        'require' => ['typo3/cms-core' => '^12.0'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $this->constraintChecker->method('findTypo3Requirements')
+            ->willReturn(['typo3/cms-core' => '^12.0']);
+
+        $this->constraintChecker->method('isConstraintCompatible')
+            ->with('^12.0', $typo3Version)
+            ->willReturn(true);
+
+        // Act
+        $result = $this->client->getLatestVersion($packageName, $typo3Version);
+
+        // Assert
+        self::assertEquals('1.10.0', $result);
+    }
+
+    public function testIsCoreVersionCompatibleWithEdgeCases(): void
+    {
+        // Test edge cases for core version compatibility through integration
+        $packageName = 'typo3/cms-core';
+        $typo3Version = new Version('12.4.0');
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '12' => [ // Missing minor version
+                        'name' => 'typo3/cms-core',
+                        'version' => '12',
+                        'require' => [],
+                    ],
+                    '' => [ // Empty version
+                        'name' => 'typo3/cms-core',
+                        'version' => '',
+                        'require' => [],
+                    ],
+                    'v12.4.0' => [ // With 'v' prefix
+                        'name' => 'typo3/cms-core',
+                        'version' => 'v12.4.0',
+                        'require' => [],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        // Act
+        $result = $this->client->hasVersionFor($packageName, $typo3Version);
+
+        // Assert
+        self::assertTrue($result); // Should find v12.4.0 as compatible
+    }
 }

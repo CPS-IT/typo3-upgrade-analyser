@@ -221,7 +221,7 @@ class AnalyzeCommand extends Command
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
         
         $context = new AnalysisContext(
-            Version::fromString('12.4'), // Current version placeholder
+            $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
             [], // phpVersions
             [

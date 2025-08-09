@@ -1,0 +1,26 @@
+            <div class="section">
+                <h2>Extension Overview</h2>
+                <div class="overview-grid">
+                    <div class="info-card">
+                        <h3>Basic Information</h3>
+                        <p><strong>Extension Key:</strong> {{ extension.key }}</p>
+                        <p><strong>Current Version:</strong> {{ extension.version ? extension.version.toString() : 'N/A' }}</p>
+                        <p><strong>Composer Name:</strong> {{ extension.composerName ?: 'N/A' }}</p>
+                        <p><strong>Type:</strong> {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}</p>
+                        <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Risk Assessment</h3>
+                        {% set risk_data = extension_data.risk_summary %}
+                        <p><strong>Overall Risk Level:</strong> <span class="risk-indicator risk-{{ risk_data.risk_level }}">{{ risk_data.risk_level|upper }}</span></p>
+                        <p><strong>Risk Score:</strong> {{ "%.1f"|format(risk_data.overall_risk) }}/10.0</p>
+                        {% if risk_data.max_risk %}
+                        <p><strong>Maximum Risk Score:</strong> {{ "%.1f"|format(risk_data.max_risk) }}/10.0</p>
+                        {% endif %}
+                        {% if risk_data.has_errors %}
+                        <p><strong>⚠️ Analysis Errors:</strong> Some analyzers failed</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>

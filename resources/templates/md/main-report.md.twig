@@ -56,33 +56,11 @@
 
 ## Analyzer Results
 
-### Version Availability Analysis
+{% include 'md/partials/main-report/version-availability-table.md.twig' %}
 
-This analyzer checks if extensions are available in TYPO3 Extension Repository (TER), Packagist, and Git repositories for the target TYPO3 version.
+{% include 'md/partials/main-report/lines-of-code-table.md.twig' %}
 
-| Extension | Current Version | TER | Packagist | Git | Risk Level | Latest Version |
-|-----------|----------------|-----|-----------|-----|------------|----------------|
-{% for data in extension_data %}
-{% if data.version_analysis %}
-| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.version_analysis.ter_available ? '✅' : '❌' }} | {{ data.version_analysis.packagist_available ? '✅' : '❌' }} | {{ data.version_analysis.git_available ? '✅' : '❌' }} | {{ data.version_analysis.risk_level|upper }} | {{ data.version_analysis.git_latest_version ?: 'N/A' }} |
-{% else %}
-| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | ❓ | ❓ | ❓ | UNKNOWN | N/A |
-{% endif %}
-{% endfor %}
-
-### Lines of Code Analysis
-
-This analyzer examines the codebase size and complexity of extensions to estimate upgrade effort.
-
-| Extension | Total Lines | PHP Files | Code Lines | Classes | Methods | Risk Level | Effort Estimate |
-|-----------|-------------|-----------|------------|---------|---------|------------|-----------------|
-{% for data in extension_data %}
-{% if data.loc_analysis %}
-| {{ data.extension.key }} | {{ data.loc_analysis.total_lines|number_format }} | {{ data.loc_analysis.php_files }} | {{ data.loc_analysis.code_lines|number_format }} | {{ data.loc_analysis.classes }} | {{ data.loc_analysis.methods }} | {{ data.risk_summary.risk_level|upper }} | {% if data.loc_analysis.total_lines > 10000 %}High{% elseif data.loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %} |
-{% else %}
-| {{ data.extension.key }} | N/A | N/A | N/A | N/A | N/A | UNKNOWN | N/A |
-{% endif %}
-{% endfor %}
+{% include 'md/partials/main-report/rector-analysis-table.md.twig' %}
 
 ---
 
@@ -119,6 +97,11 @@ Individual detailed reports have been generated for each extension:
 {% endif %}
 {% if data.loc_analysis and data.loc_analysis.recommendations %}
   {% for recommendation in data.loc_analysis.recommendations %}
+  - {{ recommendation }}
+  {% endfor %}
+{% endif %}
+{% if data.rector_analysis and data.rector_analysis.recommendations %}
+  {% for recommendation in data.rector_analysis.recommendations %}
   - {{ recommendation }}
   {% endfor %}
 {% endif %}

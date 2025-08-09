@@ -1,0 +1,21 @@
+## Extension Overview
+
+- **Extension Key:** {{ extension.key }}
+- **Current Version:** {{ extension.version ? extension.version.toString() : 'N/A' }}
+- **Composer Name:** {{ extension.composerName ?: 'N/A' }}
+- **Type:** {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}
+- **Target TYPO3 Version:** {{ target_version }}
+
+---
+
+## Risk Assessment
+
+{% set risk_data = extension_data.risk_summary %}
+- **Overall Risk Level:** {{ risk_data.risk_level|upper }}
+- **Risk Score:** {{ "%.1f"|format(risk_data.overall_risk) }}/10.0
+{% if risk_data.max_risk %}
+- **Maximum Risk Score:** {{ "%.1f"|format(risk_data.max_risk) }}/10.0
+{% endif %}
+{% if risk_data.has_errors %}
+- **⚠️  Analysis Errors:** Some analyzers failed for this extension
+{% endif %}

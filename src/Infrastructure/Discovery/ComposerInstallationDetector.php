@@ -77,7 +77,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             }
 
             // Create installation metadata
-            $metadata = $this->createInstallationMetadata($path);
+            $metadata = $this->createInstallationMetadata($path, $version);
 
             // Create installation entity
             $installation = new Installation($path, $version);
@@ -123,13 +123,14 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             return false;
         }
 
-        // Detect custom paths from composer.json
+        // Detect custom paths from composer.json (version-agnostic for supports check)
         $customPaths = $this->detectCustomPaths($path);
         $webDir = $customPaths['web-dir'];
 
-        // Check for TYPO3 indicators using custom paths
+        // Check for TYPO3 indicators using custom paths (both v11 and v12+ locations)
         $typo3Indicators = [
-            $webDir . '/typo3conf',
+            'typo3conf', // TYPO3 v11 and earlier
+            $webDir . '/typo3conf', // TYPO3 v12+
             $webDir . '/typo3',
             'config/system',
             'var/log',
@@ -218,12 +219,12 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
      *
      * @return InstallationMetadata Metadata object
      */
-    private function createInstallationMetadata(string $path): InstallationMetadata
+    private function createInstallationMetadata(string $path, Version $version): InstallationMetadata
     {
         $phpVersions = $this->detectPhpVersions($path);
         $databaseConfig = $this->detectDatabaseConfig($path);
         $enabledFeatures = $this->detectEnabledFeatures($path);
-        $customPaths = $this->detectCustomPaths($path);
+        $customPaths = $this->detectCustomPaths($path, $version);
         $lastModified = $this->getLastModifiedTime($path);
 
         return new InstallationMetadata(
@@ -325,10 +326,11 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
      * Detect custom paths in TYPO3 installation.
      *
      * @param string $path Installation path
+     * @param Version|null $version TYPO3 version (optional, for version-specific path detection)
      *
      * @return array<string, string> Custom paths
      */
-    private function detectCustomPaths(string $path): array
+    private function detectCustomPaths(string $path, ?Version $version = null): array
     {
         $paths = [
             'vendor-dir' => 'vendor',
@@ -371,11 +373,32 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
                 }
             }
 
-            // Update typo3conf-dir based on web-dir
-            $paths['typo3conf-dir'] = $paths['web-dir'] . '/typo3conf';
+            // Update typo3conf-dir based on web-dir and TYPO3 version
+            // TYPO3 v12+ uses web-dir/typo3conf, TYPO3 v11 and earlier uses typo3conf
+            if ($version && $version->getMajor() >= 12) {
+                $paths['typo3conf-dir'] = $paths['web-dir'] . '/typo3conf';
+            } else {
+                // For TYPO3 v11 and earlier, typo3conf is in the root directory
+                $paths['typo3conf-dir'] = 'typo3conf';
+                
+                // Verify the path exists, otherwise try common alternatives
+                $possiblePaths = [
+                    'typo3conf',
+                    $paths['web-dir'] . '/typo3conf', // fallback for misconfigured v11 installations
+                ];
+                
+                foreach ($possiblePaths as $possiblePath) {
+                    if (is_dir($path . '/' . $possiblePath)) {
+                        $paths['typo3conf-dir'] = $possiblePath;
+                        break;
+                    }
+                }
+            }
 
             $this->logger->debug('Custom paths detected from composer.json', [
                 'paths' => $paths,
+                'typo3_version' => $version?->toString() ?? 'unknown',
+                'version_aware_typo3conf_path' => $version ? ($version->getMajor() >= 12 ? 'v12+ mode' : 'v11 mode') : 'fallback mode',
             ]);
 
             return $paths;

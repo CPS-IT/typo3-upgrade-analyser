@@ -1,0 +1,72 @@
+            <div class="section" id="lines-of-code-analysis">
+                <h2>Lines of Code Analysis</h2>
+
+                {% if extension_data.loc_analysis %}
+                {% set loc_analysis = extension_data.loc_analysis %}
+
+                <h3>Codebase Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.total_lines|number_format }}</div>
+                        <div class="metric-label">Total Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.code_lines|number_format }}</div>
+                        <div class="metric-label">Code Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.comment_lines|number_format }}</div>
+                        <div class="metric-label">Comments</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.php_files }}</div>
+                        <div class="metric-label">PHP Files</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.classes }}</div>
+                        <div class="metric-label">Classes</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{{ loc_analysis.methods }}</div>
+                        <div class="metric-label">Methods</div>
+                    </div>
+                </div>
+
+                <h3>File Statistics</h3>
+                <div class="info-card">
+                    <p><strong>Average File Size:</strong> {{ loc_analysis.average_file_size }} lines</p>
+                    <p><strong>Largest File:</strong> {{ loc_analysis.largest_file_lines }} lines{% if loc_analysis.largest_file_path %} ({{ loc_analysis.largest_file_path }}){% endif %}</p>
+                </div>
+
+                <h3>Complexity Assessment</h3>
+                {% set complexity_score = (loc_analysis.methods + loc_analysis.functions) / (loc_analysis.php_files > 0 ? loc_analysis.php_files : 1) %}
+                <div class="info-card">
+                    <p><strong>Complexity Score:</strong> {{ "%.1f"|format(complexity_score) }} (methods+functions per file)</p>
+                    <p><strong>Complexity Level:</strong> {% if complexity_score > 20 %}High{% elseif complexity_score > 10 %}Medium{% else %}Low{% endif %}</p>
+                    <p><strong>Risk Score:</strong> {{ "%.1f"|format(loc_analysis.risk_score) }}/10.0</p>
+                    <p><strong>Estimated Effort:</strong> {% if loc_analysis.total_lines > 10000 %}High{% elseif loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %}</p>
+                </div>
+
+                {% if loc_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Recommendations</h3>
+                    <ul>
+                    {% for recommendation in loc_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-message">
+                    <strong>❌ Lines of code analysis was not performed for this extension.</strong>
+                    <p>This typically occurs when:</p>
+                    <ul>
+                        <li>The extension files could not be located</li>
+                        <li>The extension is a system extension (analysis skipped)</li>
+                        <li>File access permissions prevented scanning</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>

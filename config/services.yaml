@@ -1,3 +1,8 @@
+parameters:
+  # Rector configuration parameters
+  rector.binary_path: '%app.root_dir%/vendor/bin/rector'  # Default path, should be configurable
+  rector.timeout_seconds: 300
+
 services:
   _defaults:
     autowire: true
@@ -75,6 +80,38 @@ services:
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@logger'
+    tags: ['analyzer']
+
+  # TYPO3 Rector Analyzer and supporting services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry:
+    arguments:
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor:
+    arguments:
+      - '%rector.binary_path%'
+      - '@logger'
+      - '%rector.timeout_seconds%'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '%app.root_dir%/var/temp'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Typo3RectorAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
     tags: ['analyzer']
 
   # Shared services

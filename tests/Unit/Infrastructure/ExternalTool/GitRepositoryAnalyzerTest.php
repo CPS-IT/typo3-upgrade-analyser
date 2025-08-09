@@ -22,6 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -37,6 +38,7 @@ class GitRepositoryAnalyzerTest extends TestCase
     private GitProviderFactory&MockObject $providerFactory;
     private GitVersionParser&MockObject $versionParser;
     private LoggerInterface&MockObject $logger;
+    private PackagistClient&MockObject $packagistClient;
 
     protected function setUp(): void
     {
@@ -44,10 +46,13 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->versionParser = $this->createMock(GitVersionParser::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
+        $this->packagistClient = $this->createMock(PackagistClient::class);
+
         $this->analyzer = new GitRepositoryAnalyzer(
             $this->providerFactory,
             $this->versionParser,
             $this->logger,
+            $this->packagistClient,
         );
     }
 
@@ -246,5 +251,248 @@ class GitRepositoryAnalyzerTest extends TestCase
         $result = $this->analyzer->analyzeExtension($extension, $targetVersion);
 
         $this->assertEquals('https://github.com/user/test-ext.git', $result->getRepositoryUrl());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testExtractRepositoryUrlFromPackagist(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setComposerName('vendor/test-extension');
+        $targetVersion = Version::fromString('12.4.0');
+
+        // Mock Packagist client to return repository URL
+        $this->packagistClient->expects($this->once())
+            ->method('getRepositoryUrl')
+            ->with('vendor/test-extension')
+            ->willReturn('https://github.com/vendor/test-extension');
+
+        $provider = $this->createMock(GitProviderInterface::class);
+        $this->providerFactory->expects($this->once())
+            ->method('createProvider')
+            ->with('https://github.com/vendor/test-extension')
+            ->willReturn($provider);
+
+        // Mock successful analysis
+        $provider->method('getRepositoryInfo')->willReturn(
+            new GitRepositoryMetadata('test-extension', '', false, false, 0, 0, new \DateTimeImmutable(), 'main'),
+        );
+        $provider->method('getRepositoryHealth')->willReturn(
+            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0),
+        );
+        $provider->method('getTags')->willReturn([]);
+        $this->versionParser->method('findCompatibleVersions')->willReturn([]);
+
+        $result = $this->analyzer->analyzeExtension($extension, $targetVersion);
+
+        $this->assertEquals('https://github.com/vendor/test-extension', $result->getRepositoryUrl());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testExtractRepositoryUrlFromPackagistFails(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setComposerName('vendor/test-extension');
+        $targetVersion = Version::fromString('12.4.0');
+
+        // Mock Packagist client to throw exception
+        $this->packagistClient->expects($this->once())
+            ->method('getRepositoryUrl')
+            ->with('vendor/test-extension')
+            ->willThrowException(new \RuntimeException('Package not found'));
+
+        $this->logger->expects($this->once())
+            ->method('debug')
+            ->with('Failed to get repository URL from Packagist', [
+                'extension' => 'test_ext',
+                'composer_name' => 'vendor/test-extension',
+                'error' => 'Package not found',
+            ]);
+
+        $this->expectException(GitAnalysisException::class);
+        $this->expectExceptionMessage('No Git repository URL found for extension: test_ext');
+
+        $this->analyzer->analyzeExtension($extension, $targetVersion);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testAnalyzeExtensionWithComposerJson(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setRepositoryUrl('https://github.com/user/test-ext');
+        $targetVersion = Version::fromString('12.4.0');
+
+        $provider = $this->createMock(GitProviderInterface::class);
+        $this->providerFactory->expects($this->once())
+            ->method('createProvider')
+            ->willReturn($provider);
+
+        $composerJson = [
+            'name' => 'user/test-ext',
+            'require' => [
+                'typo3/cms-core' => '^12.4',
+            ],
+        ];
+
+        $provider->method('getRepositoryInfo')->willReturn(
+            new GitRepositoryMetadata('test-ext', '', false, false, 0, 0, new \DateTimeImmutable(), 'main'),
+        );
+        $provider->method('getRepositoryHealth')->willReturn(
+            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0),
+        );
+        $provider->method('getTags')->willReturn([]);
+        $provider->method('getComposerJson')->willReturn($composerJson);
+        
+        $this->versionParser->expects($this->once())
+            ->method('findCompatibleVersions')
+            ->with([], $targetVersion, $composerJson)
+            ->willReturn([]);
+
+        $result = $this->analyzer->analyzeExtension($extension, $targetVersion);
+
+        $this->assertEquals($composerJson, $result->getComposerJson());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testAnalyzeExtensionWithComposerJsonError(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setRepositoryUrl('https://github.com/user/test-ext');
+        $targetVersion = Version::fromString('12.4.0');
+
+        $provider = $this->createMock(GitProviderInterface::class);
+        $this->providerFactory->expects($this->once())
+            ->method('createProvider')
+            ->willReturn($provider);
+
+        $provider->method('getRepositoryInfo')->willReturn(
+            new GitRepositoryMetadata('test-ext', '', false, false, 0, 0, new \DateTimeImmutable(), 'main'),
+        );
+        $provider->method('getRepositoryHealth')->willReturn(
+            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0),
+        );
+        $provider->method('getTags')->willReturn([]);
+        $provider->method('getComposerJson')->willThrowException(new \RuntimeException('File not found'));
+        
+        $this->logger->expects($this->once())
+            ->method('debug')
+            ->with('Could not retrieve composer.json from repository', [
+                'repository_url' => 'https://github.com/user/test-ext',
+                'error' => 'File not found',
+            ]);
+
+        $this->versionParser->expects($this->once())
+            ->method('findCompatibleVersions')
+            ->with([], $targetVersion, null)
+            ->willReturn([]);
+
+        $result = $this->analyzer->analyzeExtension($extension, $targetVersion);
+
+        $this->assertNull($result->getComposerJson());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testIsGitRepositoryWithVariousUrls(): void
+    {
+        // Test with direct Git URL
+        $extension1 = new Extension('ext1', 'Extension 1', Version::fromString('1.0.0'));
+        $extension1->setRepositoryUrl('https://example.com/repo.git');
+        $targetVersion = Version::fromString('12.4.0');
+
+        $provider = $this->createMock(GitProviderInterface::class);
+        $this->providerFactory->method('createProvider')->willReturn($provider);
+        $provider->method('getRepositoryInfo')->willReturn(
+            new GitRepositoryMetadata('repo', '', false, false, 0, 0, new \DateTimeImmutable(), 'main'),
+        );
+        $provider->method('getRepositoryHealth')->willReturn(
+            new GitRepositoryHealth(new \DateTimeImmutable(), 0, 0, 0, 0, false, false, false, 0),
+        );
+        $provider->method('getTags')->willReturn([]);
+        $this->versionParser->method('findCompatibleVersions')->willReturn([]);
+
+        $result = $this->analyzer->analyzeExtension($extension1, $targetVersion);
+        $this->assertEquals('https://example.com/repo.git', $result->getRepositoryUrl());
+
+        // Test with GitHub URL
+        $extension2 = new Extension('ext2', 'Extension 2', Version::fromString('1.0.0'));
+        $extension2->setRepositoryUrl('https://github.com/user/repo');
+        
+        $result2 = $this->analyzer->analyzeExtension($extension2, $targetVersion);
+        $this->assertEquals('https://github.com/user/repo', $result2->getRepositoryUrl());
+
+        // Test with GitLab URL
+        $extension3 = new Extension('ext3', 'Extension 3', Version::fromString('1.0.0'));
+        $extension3->setRepositoryUrl('https://gitlab.com/user/repo');
+        
+        $result3 = $this->analyzer->analyzeExtension($extension3, $targetVersion);
+        $this->assertEquals('https://gitlab.com/user/repo', $result3->getRepositoryUrl());
+
+        // Test with Bitbucket URL
+        $extension4 = new Extension('ext4', 'Extension 4', Version::fromString('1.0.0'));
+        $extension4->setRepositoryUrl('https://bitbucket.org/user/repo');
+        
+        $result4 = $this->analyzer->analyzeExtension($extension4, $targetVersion);
+        $this->assertEquals('https://bitbucket.org/user/repo', $result4->getRepositoryUrl());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testExtractRepositoryUrlWithNonGitUrl(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setRepositoryUrl('https://example.com/not-a-git-repo');
+        $targetVersion = Version::fromString('12.4.0');
+
+        $this->expectException(GitAnalysisException::class);
+        $this->expectExceptionMessage('No Git repository URL found for extension: test_ext');
+
+        $this->analyzer->analyzeExtension($extension, $targetVersion);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testExtractRepositoryUrlFromEmConfWithInvalidUrl(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setEmConfiguration([
+            'git_repository_url' => 'https://example.com/not-a-git-repo',
+        ]);
+        $targetVersion = Version::fromString('12.4.0');
+
+        $this->expectException(GitAnalysisException::class);
+        $this->expectExceptionMessage('No Git repository URL found for extension: test_ext');
+
+        $this->analyzer->analyzeExtension($extension, $targetVersion);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
+     */
+    public function testPackagistClientReturnsNonGitUrl(): void
+    {
+        $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
+        $extension->setComposerName('vendor/test-extension');
+        $targetVersion = Version::fromString('12.4.0');
+
+        $this->packagistClient->expects($this->once())
+            ->method('getRepositoryUrl')
+            ->with('vendor/test-extension')
+            ->willReturn('https://example.com/not-a-git-repo');
+
+        $this->expectException(GitAnalysisException::class);
+        $this->expectExceptionMessage('No Git repository URL found for extension: test_ext');
+
+        $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 }

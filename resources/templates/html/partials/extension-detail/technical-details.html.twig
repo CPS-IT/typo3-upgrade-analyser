@@ -1,0 +1,15 @@
+            <div class="section">
+                <h2>Technical Details</h2>
+                <div class="info-card">
+                    <h3>Extension Files</h3>
+                    {% if extension_data.loc_analysis %}
+                    <p><strong>Total Files Analyzed:</strong> {{ extension_data.loc_analysis.php_files }}</p>
+                    <p><strong>Extension Size:</strong> {{ extension_data.loc_analysis.total_lines|number_format }} lines</p>
+                    {% endif %}
+
+                    <h3>Analysis Metadata</h3>
+                    <p><strong>Analysis Date:</strong> {{ generated_at.format('Y-m-d H:i:s T') }}</p>
+                    <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
+                    <p><strong>Current Installation:</strong> {{ installation.path }}</p>
+                </div>
+            </div>

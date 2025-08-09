@@ -1,0 +1,13 @@
+            <div class="section">
+                <h2>Detailed Extension Reports</h2>
+                <p>Individual detailed reports have been generated for each extension:</p>
+                
+                <div class="extension-links">
+                    {% for data in extension_data %}
+                    <a href="extensions/{{ data.extension.key }}.html" class="extension-link">
+                        <strong>{{ data.extension.key }}</strong><br>
+                        <span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>

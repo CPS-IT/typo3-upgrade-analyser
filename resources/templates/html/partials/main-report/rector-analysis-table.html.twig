@@ -1,0 +1,38 @@
+                <h3>TYPO3 Rector Analysis</h3>
+                <p>This analyzer uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Processed Files</th>
+                            <th>Total Findings</th>
+                            <th>Breaking Changes</th>
+                            <th>Deprecations</th>
+                            <th>Upgrade Readiness</th>
+                            <th>Fix Time (hrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in extension_data %}
+                        <tr>
+                            <td><strong><a href="extensions/{{ data.extension.key }}.html#typo3-rector-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+                            {% if data.rector_analysis %}
+                            <td>{{ data.rector_analysis.processed_files }}</td>
+                            <td>{{ data.rector_analysis.total_findings }}</td>
+                            <td>{{ data.rector_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }}</td>
+                            <td>{{ data.rector_analysis.has_deprecations ? '📋 Yes' : '✅ No' }}</td>
+                            <td>{{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10</td>
+                            <td>{{ "%.1f"|format(data.rector_analysis.estimated_fix_time_hours) }}</td>
+                            {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>❓</td>
+                            <td>❓</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>

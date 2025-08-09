@@ -89,6 +89,16 @@ class Version
         return 0 === $this->compare($other);
     }
 
+    public function isLessThanOrEqualTo(Version $other): bool
+    {
+        return $this->compare($other) <= 0;
+    }
+
+    public function isGreaterThanOrEqualTo(Version $other): bool
+    {
+        return $this->compare($other) >= 0;
+    }
+
     public function isCompatibleWith(Version $other): bool
     {
         return $this->major === $other->major;

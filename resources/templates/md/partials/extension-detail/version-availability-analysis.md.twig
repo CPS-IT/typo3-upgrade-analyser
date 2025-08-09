@@ -1,0 +1,37 @@
+## Version Availability Analysis {#version-availability-analysis}
+
+{% if extension_data.version_analysis %}
+{% set version_analysis = extension_data.version_analysis %}
+
+### Availability Status
+- **TYPO3 Extension Repository (TER):** {{ version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
+- **Packagist (Composer):** {{ version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
+- **Git Repository:** {{ version_analysis.git_available ? '✅ Available' : '❌ Not Available' }}
+
+### Repository Information
+{% if version_analysis.git_repository_url %}
+- **Repository URL:** {{ version_analysis.git_repository_url }}
+{% endif %}
+{% if version_analysis.git_repository_health %}
+- **Repository Health:** {{ "%.0f"|format(version_analysis.git_repository_health * 100) }}%
+{% endif %}
+{% if version_analysis.git_latest_version %}
+- **Latest Compatible Version:** {{ version_analysis.git_latest_version }}
+{% endif %}
+
+### Risk Analysis
+- **Risk Score:** {{ "%.1f"|format(version_analysis.risk_score) }}/10.0
+- **Risk Level:** {{ version_analysis.risk_level|upper }}
+
+### Recommendations
+{% if version_analysis.recommendations %}
+{% for recommendation in version_analysis.recommendations %}
+- {{ recommendation }}
+{% endfor %}
+{% else %}
+No specific recommendations available.
+{% endif %}
+
+{% else %}
+❌ **Version availability analysis was not performed or failed for this extension.**
+{% endif %}

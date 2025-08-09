@@ -1,0 +1,45 @@
+## Lines of Code Analysis {#lines-of-code-analysis}
+
+{% if extension_data.loc_analysis %}
+{% set loc_analysis = extension_data.loc_analysis %}
+
+### Codebase Metrics
+- **Total Lines of Code:** {{ loc_analysis.total_lines|number_format }}
+- **Code Lines:** {{ loc_analysis.code_lines|number_format }}
+- **Comment Lines:** {{ loc_analysis.comment_lines|number_format }}
+- **Blank Lines:** {{ loc_analysis.blank_lines|number_format }}
+
+### File Statistics
+- **PHP Files:** {{ loc_analysis.php_files }}
+- **Average File Size:** {{ loc_analysis.average_file_size }} lines
+- **Largest File:** {{ loc_analysis.largest_file_lines }} lines{% if loc_analysis.largest_file_path %} ({{ loc_analysis.largest_file_path }}){% endif %}
+
+### Code Structure
+- **Classes/Interfaces:** {{ loc_analysis.classes }}
+- **Methods:** {{ loc_analysis.methods }}
+- **Functions:** {{ loc_analysis.functions }}
+
+### Complexity Assessment
+{% set complexity_score = (loc_analysis.methods + loc_analysis.functions) / (loc_analysis.php_files > 0 ? loc_analysis.php_files : 1) %}
+- **Complexity Score:** {{ "%.1f"|format(complexity_score) }} (methods+functions per file)
+- **Complexity Level:** {% if complexity_score > 20 %}High{% elseif complexity_score > 10 %}Medium{% else %}Low{% endif %}
+
+### Risk Analysis
+- **Risk Score:** {{ "%.1f"|format(loc_analysis.risk_score) }}/10.0
+- **Estimated Effort:** {% if loc_analysis.total_lines > 10000 %}High{% elseif loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %}
+
+### Recommendations
+{% if loc_analysis.recommendations %}
+{% for recommendation in loc_analysis.recommendations %}
+- {{ recommendation }}
+{% endfor %}
+{% else %}
+No specific recommendations available.
+{% endif %}
+
+{% else %}
+❌ **Lines of code analysis was not performed for this extension.** This typically occurs when:
+- The extension files could not be located
+- The extension is a system extension (analysis skipped)
+- File access permissions prevented scanning
+{% endif %}

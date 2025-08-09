@@ -73,10 +73,10 @@ class ReportServiceTest extends TestCase
         $this->twig->expects(self::exactly(2))
             ->method('render')
             ->willReturnCallback(function($template, $context) {
-                if ($template === 'main-report.md.twig') {
+                if ($template === 'md/main-report.md.twig') {
                     return '# Main Report';
                 }
-                if ($template === 'extension-detail.md.twig') {
+                if ($template === 'md/extension-detail.md.twig') {
                     return '# Extension Detail';
                 }
                 return '';
@@ -116,7 +116,7 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::once())
             ->method('render')
-            ->with('main-report.html.twig', self::isType('array'))
+            ->with('html/main-report.html.twig', self::isType('array'))
             ->willReturn('<html><body>Test Report</body></html>');
 
         $reportResults = $this->subject->generateReport(
@@ -266,12 +266,12 @@ class ReportServiceTest extends TestCase
         $this->twig->expects(self::exactly(3))
             ->method('render')
             ->willReturnCallback(function($template, $context) {
-                if ($template === 'main-report.md.twig') {
+                if ($template === 'md/main-report.md.twig') {
                     self::assertCount(2, $context['extensions']);
                     self::assertCount(2, $context['extension_data']);
                     return '# Main Report';
                 }
-                if ($template === 'extension-detail.md.twig') {
+                if ($template === 'md/extension-detail.md.twig') {
                     return '# Extension Detail';
                 }
                 return '';
@@ -309,7 +309,7 @@ class ReportServiceTest extends TestCase
         $this->twig->expects(self::exactly(2))
             ->method('render')
             ->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-                if ($template === 'main-report.md.twig') {
+                if ($template === 'md/main-report.md.twig') {
                     $capturedContext = $context;
                 }
                 return '# Test';
@@ -407,7 +407,7 @@ class ReportServiceTest extends TestCase
 
         $capturedContext = null;
         $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-            if ($template === 'main-report.md.twig') {
+            if ($template === 'md/main-report.md.twig') {
                 $capturedContext = $context;
             }
             return '# Test';

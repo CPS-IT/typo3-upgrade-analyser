@@ -1,0 +1,67 @@
+            <div class="section" id="version-availability-analysis">
+                <h2>Version Availability Analysis</h2>
+
+                {% if extension_data.version_analysis %}
+                {% set version_analysis = extension_data.version_analysis %}
+
+                <h3>Availability Status</h3>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.ter_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>TER</strong><br>
+                        <small>TYPO3 Extension Repository</small>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Packagist</strong><br>
+                        <small>Composer Repository</small>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.git_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Git Repository</strong><br>
+                        <small>Source Code</small>
+                    </div>
+                </div>
+
+                {% if version_analysis.git_repository_url or version_analysis.git_repository_health or version_analysis.git_latest_version %}
+                <h3>Repository Information</h3>
+                <div class="info-card">
+                    {% if version_analysis.git_repository_url %}
+                    <p><strong>Repository URL:</strong> <a href="{{ version_analysis.git_repository_url }}" target="_blank">{{ version_analysis.git_repository_url }}</a></p>
+                    {% endif %}
+                    {% if version_analysis.git_repository_health %}
+                    <p><strong>Repository Health:</strong> {{ "%.0f"|format(version_analysis.git_repository_health * 100) }}%</p>
+                    {% endif %}
+                    {% if version_analysis.git_latest_version %}
+                    <p><strong>Latest Compatible Version:</strong> {{ version_analysis.git_latest_version }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <h3>Risk Analysis</h3>
+                <p><strong>Risk Score:</strong> {{ "%.1f"|format(version_analysis.risk_score) }}/10.0</p>
+                <p><strong>Risk Level:</strong> <span class="risk-indicator risk-{{ version_analysis.risk_level }}">{{ version_analysis.risk_level|upper }}</span></p>
+
+                {% if version_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Recommendations</h3>
+                    <ul>
+                    {% for recommendation in version_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-message">
+                    <strong>❌ Version availability analysis was not performed or failed for this extension.</strong>
+                </div>
+                {% endif %}
+            </div>

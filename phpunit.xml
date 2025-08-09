@@ -32,10 +32,10 @@
         <env name="INTEGRATION_TEST_CACHE_DIR" value="var/integration-test-cache"/>
 
         <!-- Enable/disable real API calls (set to false to use mocked responses where available) -->
-        <env name="ENABLE_REAL_API_CALLS" value="false"/>
+        <env name="ENABLE_REAL_API_CALLS" value="true"/>
 
         <!-- Rate limiting configuration -->
-        <env name="API_RATE_LIMIT_DELAY" value="0"/>
+        <env name="API_RATE_LIMIT_DELAY" value="1"/>
     </php>
 
 

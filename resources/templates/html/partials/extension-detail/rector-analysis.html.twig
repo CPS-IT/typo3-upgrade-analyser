@@ -1,0 +1,119 @@
+            <div class="section" id="typo3-rector-analysis">
+                <h2>TYPO3 Rector Analysis</h2>
+
+                {% if extension_data.rector_analysis %}
+                {% set rector_analysis = extension_data.rector_analysis %}
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Code Quality Assessment</h3>
+                        <p><strong>Processed Files:</strong> {{ rector_analysis.processed_files }}</p>
+                        <p><strong>Total Files Analyzed:</strong> {{ rector_analysis.total_files }}</p>
+                        <p><strong>Affected Files:</strong> {{ rector_analysis.affected_files }}</p>
+                        <p><strong>File Impact:</strong> {{ "%.1f"|format(rector_analysis.file_impact_percentage) }}%</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Findings Summary</h3>
+                        <p><strong>Total Findings:</strong> {{ rector_analysis.total_findings }}</p>
+                        <p><strong>Breaking Changes:</strong> 
+                            {% if rector_analysis.has_breaking_changes %}
+                                <span style="color: #dc3545;">⚠️ Yes</span>
+                            {% else %}
+                                <span style="color: #28a745;">✅ No</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Deprecated Patterns:</strong> 
+                            {% if rector_analysis.has_deprecations %}
+                                <span style="color: #ffc107;">📋 Yes</span>
+                            {% else %}
+                                <span style="color: #28a745;">✅ No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if rector_analysis.findings_by_severity %}
+                <div class="info-card">
+                    <h3>Findings by Severity</h3>
+                    <div class="severity-grid">
+                        {% for severity, count in rector_analysis.findings_by_severity %}
+                        {% if count > 0 %}
+                        <div class="severity-item">
+                            <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
+                            <span class="count">{{ count }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Upgrade Assessment</h3>
+                        <p><strong>Upgrade Readiness:</strong> {{ "%.1f"|format(rector_analysis.upgrade_readiness_score) }}/10.0</p>
+                        <p><strong>Complexity Score:</strong> {{ "%.1f"|format(rector_analysis.complexity_score) }}/10.0</p>
+                        <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(rector_analysis.estimated_fix_time_hours) }} hours</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Analysis Details</h3>
+                        <p><strong>Analysis Duration:</strong> {{ "%.2f"|format(rector_analysis.execution_time) }} seconds</p>
+                        <p><strong>Rector Version:</strong> {{ rector_analysis.rector_version }}</p>
+                    </div>
+                </div>
+
+                {% if rector_analysis.top_affected_files %}
+                <div class="info-card">
+                    <h3>Most Affected Files</h3>
+                    <ul>
+                        {% for file, count in rector_analysis.top_affected_files %}
+                        <li><strong>{{ file }}:</strong> {{ count }} findings</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if rector_analysis.top_rules_triggered %}
+                <div class="info-card">
+                    <h3>Most Triggered Rules</h3>
+                    <ul>
+                        {% for rule, count in rector_analysis.top_rules_triggered %}
+                        <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if rector_analysis.summary_text %}
+                <div class="info-card">
+                    <h3>Summary</h3>
+                    <p>{{ rector_analysis.summary_text }}</p>
+                </div>
+                {% endif %}
+
+                {% if rector_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Rector Recommendations</h3>
+                    <ul>
+                        {% for recommendation in rector_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-card">
+                    <h3>❌ Analysis Not Available</h3>
+                    <p>TYPO3 Rector analysis was not performed for this extension. This may occur when:</p>
+                    <ul>
+                        <li>Rector binary is not available</li>
+                        <li>No PHP files were found to analyze</li>
+                        <li>The extension path could not be resolved</li>
+                        <li>Analysis failed due to configuration issues</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>

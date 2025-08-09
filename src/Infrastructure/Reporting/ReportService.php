@@ -152,6 +152,7 @@ class ReportService
                 'results' => $extensionResults,
                 'version_analysis' => $this->extractVersionAnalysis($extensionResults),
                 'loc_analysis' => $this->extractLinesOfCodeAnalysis($extensionResults),
+                'rector_analysis' => $this->extractRectorAnalysis($extensionResults),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
             ];
         }
@@ -243,6 +244,47 @@ class ReportService
     /**
      * @param array<ResultInterface> $results
      */
+    private function extractRectorAnalysis(array $results): ?array
+    {
+        $rectorResult = array_filter(
+            $results,
+            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'typo3_rector'
+        );
+
+        if (empty($rectorResult)) {
+            return null;
+        }
+
+        /** @var AnalysisResult $result */
+        $result = reset($rectorResult);
+
+        return [
+            'total_findings' => $result->getMetric('total_findings'),
+            'affected_files' => $result->getMetric('affected_files'),
+            'total_files' => $result->getMetric('total_files'),
+            'processed_files' => $result->getMetric('processed_files'),
+            'execution_time' => $result->getMetric('execution_time'),
+            'findings_by_severity' => $result->getMetric('findings_by_severity'),
+            'findings_by_type' => $result->getMetric('findings_by_type'),
+            'top_affected_files' => $result->getMetric('top_affected_files'),
+            'top_rules_triggered' => $result->getMetric('top_rules_triggered'),
+            'estimated_fix_time' => $result->getMetric('estimated_fix_time'),
+            'estimated_fix_time_hours' => $result->getMetric('estimated_fix_time_hours'),
+            'complexity_score' => $result->getMetric('complexity_score'),
+            'upgrade_readiness_score' => $result->getMetric('upgrade_readiness_score'),
+            'has_breaking_changes' => $result->getMetric('has_breaking_changes'),
+            'has_deprecations' => $result->getMetric('has_deprecations'),
+            'file_impact_percentage' => $result->getMetric('file_impact_percentage'),
+            'summary_text' => $result->getMetric('summary_text'),
+            'rector_version' => $result->getMetric('rector_version'),
+            'risk_score' => $result->getRiskScore(),
+            'recommendations' => $result->getRecommendations(),
+        ];
+    }
+
+    /**
+     * @param array<ResultInterface> $results
+     */
     private function calculateExtensionRiskSummary(array $results): array
     {
         $riskScores = [];
@@ -283,7 +325,7 @@ class ReportService
     private function calculateOverallStatistics(array $extensionData): array
     {
         $total = count($extensionData);
-        $riskLevels = ['low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0];
+        $riskLevels = ['low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0, 'unknown' => 0];
         $availabilityStats = [
             'ter_available' => 0,
             'packagist_available' => 0,
@@ -359,12 +401,12 @@ class ReportService
         switch ($format) {
             case 'markdown':
                 $filename = $outputPath . 'analysis-report.md';
-                $content = $this->twig->render('main-report.md.twig', $context);
+                $content = $this->twig->render('md/main-report.md.twig', $context);
                 break;
 
             case 'html':
                 $filename = $outputPath . 'analysis-report.html';
-                $content = $this->twig->render('main-report.html.twig', $context);
+                $content = $this->twig->render('html/main-report.html.twig', $context);
                 break;
 
             case 'json':
@@ -414,12 +456,12 @@ class ReportService
             switch ($format) {
                 case 'markdown':
                     $filename = $extensionsPath . $extensionKey . '.md';
-                    $content = $this->twig->render('extension-detail.md.twig', $extensionContext);
+                    $content = $this->twig->render('md/extension-detail.md.twig', $extensionContext);
                     break;
 
                 case 'html':
                     $filename = $extensionsPath . $extensionKey . '.html';
-                    $content = $this->twig->render('extension-detail.html.twig', $extensionContext);
+                    $content = $this->twig->render('html/extension-detail.html.twig', $extensionContext);
                     break;
 
                 case 'json':

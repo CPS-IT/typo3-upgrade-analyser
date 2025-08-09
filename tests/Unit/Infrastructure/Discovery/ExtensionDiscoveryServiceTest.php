@@ -744,4 +744,310 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testDiscoverExtensionsWithInvalidInstallationPath(): void
+    {
+        $invalidPath = '/non/existent/path';
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Extension discovery failed: Installation path does not exist', [
+                'path' => $invalidPath,
+            ]);
+
+        $result = $this->service->discoverExtensions($invalidPath);
+
+        $this->assertFalse($result->isSuccessful());
+        $this->assertStringContainsString('Installation path does not exist:', $result->getErrorMessage());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testDiscoverExtensionsWithPackageStatesUnbalancedBrackets(): void
+    {
+        // Create PackageStates.php with unbalanced brackets
+        $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
+        mkdir(dirname($packageStatesPath), 0o755, true);
+        file_put_contents($packageStatesPath, '<?php return ["packages" => ["news" => ["state" => "active"]];');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Failed to parse PackageStates.php', $this->callback(function ($context) {
+                return isset($context['error']) && str_contains($context['error'], 'unbalanced brackets');
+            }));
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testDiscoverExtensionsWithPackageStatesNoPhpTag(): void
+    {
+        // Create PackageStates.php without PHP opening tag
+        $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
+        mkdir(dirname($packageStatesPath), 0o755, true);
+        file_put_contents($packageStatesPath, 'return ["packages" => []];');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Failed to parse PackageStates.php', $this->callback(function ($context) {
+                return isset($context['error']) && str_contains($context['error'], 'does not start with PHP opening tag');
+            }));
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testDiscoverExtensionsWithUnreadablePackageStatesFile(): void
+    {
+        // Create PackageStates.php that cannot be read
+        $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
+        mkdir(dirname($packageStatesPath), 0o755, true);
+        touch($packageStatesPath);
+        // Note: Cannot actually make file unreadable in test environment reliably
+        // So we'll simulate by creating a valid structure but with file_get_contents failure
+        
+        // Instead, test with a file that has proper structure but returns false for file_get_contents
+        // by creating a directory with the same name
+        unlink($packageStatesPath);
+        mkdir($packageStatesPath, 0o755, true);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testCreateExtensionFromPackageDataWithDifferentPathTypes(): void
+    {
+        $packages = [
+            'system_ext' => [
+                'packagePath' => 'typo3/sysext/system_ext/',
+                'state' => 'active',
+            ],
+            'vendor_ext' => [
+                'packagePath' => 'vendor/vendor/extension/',
+                'state' => 'active',
+            ],
+            'unknown_path' => [
+                'packagePath' => 'some/unknown/path/',
+                'state' => 'active',
+            ],
+        ];
+
+        $this->createPackageStatesFile($packages);
+
+        // Create ext_emconf.php files for all extensions
+        $this->createExtEmconfFile('system_ext', $this->tempDir . '/typo3/sysext/system_ext', [
+            'title' => 'System Extension',
+            'version' => '12.0.0',
+        ]);
+        $this->createExtEmconfFile('vendor_ext', $this->tempDir . '/vendor/vendor/extension', [
+            'title' => 'Vendor Extension',
+            'version' => '1.0.0',
+        ]);
+        $this->createExtEmconfFile('unknown_path', $this->tempDir . '/some/unknown/path', [
+            'title' => 'Unknown Path Extension',
+            'version' => '2.0.0',
+        ]);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(3, $result->getExtensions());
+
+        $extensionsByKey = [];
+        foreach ($result->getExtensions() as $extension) {
+            $extensionsByKey[$extension->getKey()] = $extension;
+        }
+
+        $this->assertSame('system', $extensionsByKey['system_ext']->getType());
+        $this->assertSame('composer', $extensionsByKey['vendor_ext']->getType());
+        $this->assertSame('local', $extensionsByKey['unknown_path']->getType());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testCreateExtensionFromComposerDataWithComplexExtensionKey(): void
+    {
+        $packages = [
+            [
+                'name' => 'vendor/complex-extension-name',
+                'type' => 'typo3-cms-extension',
+                'version' => '1.0.0',
+                'description' => 'Complex extension',
+            ],
+            [
+                'name' => 'single-name-package',
+                'type' => 'typo3-cms-extension',
+                'version' => '2.0.0',
+                'description' => 'Single name package',
+            ],
+            [
+                'name' => 'vendor/extension-with/multiple/slashes',
+                'type' => 'typo3-cms-extension',
+                'version' => '3.0.0',
+                'description' => 'Multiple slashes',
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(3, $result->getExtensions());
+
+        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $result->getExtensions());
+        $this->assertContains('complex_extension_name', $extensionKeys);
+        $this->assertContains('single_name_package', $extensionKeys);
+        $this->assertContains('vendor_extension_with_multiple_slashes', $extensionKeys);
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testCreateExtensionFromComposerDataMissingName(): void
+    {
+        $packages = [
+            [
+                // Missing 'name' field
+                'type' => 'typo3-cms-extension',
+                'version' => '1.0.0',
+                'description' => 'Extension without name',
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(0, $result->getExtensions()); // Should be ignored
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testCreateExtensionFromComposerDataWithException(): void
+    {
+        $packages = [
+            [
+                'name' => 'vendor/problematic-extension',
+                'type' => 'typo3-cms-extension',
+                'version' => 'invalid-version-format',
+                'description' => 'Extension that causes error',
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with('Failed to create extension from composer data', $this->callback(function ($context) {
+                return $context['package_name'] === 'vendor/problematic-extension'
+                    && is_string($context['error'])
+                    && str_contains($context['error'], 'Invalid version format');
+            }));
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testDiscoverExtensionsWithMainDiscoveryException(): void
+    {
+        // Mock the configService to throw an exception during discovery
+        $this->configService->expects($this->once())
+            ->method('isResultCacheEnabled')
+            ->willThrowException(new \RuntimeException('Configuration error'));
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Extension discovery failed', [
+                'error' => 'Configuration error',
+            ]);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertFalse($result->isSuccessful());
+        $this->assertStringContainsString('Configuration error', $result->getErrorMessage());
+        $this->assertCount(0, $result->getExtensions());
+    }
+
+    /**
+     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
+     */
+    public function testTypo3CoreExtensionsAreFilteredOut(): void
+    {
+        $packages = [
+            'news' => [
+                'packagePath' => 'typo3conf/ext/news/',
+                'state' => 'active',
+            ],
+            'typo3/cms-backend' => [
+                'packagePath' => 'typo3/sysext/backend/',
+                'state' => 'active',
+            ],
+            'typo3/cms-core' => [
+                'packagePath' => 'typo3/sysext/core/',
+                'state' => 'active',
+            ],
+        ];
+
+        $this->createPackageStatesFile($packages);
+        $this->createExtEmconfFile('news', $this->tempDir . '/public/typo3conf/ext/news', [
+            'title' => 'News System',
+            'version' => '10.0.0',
+        ]);
+
+        // Also test composer packages filtering
+        $composerPackages = [
+            [
+                'name' => 'georgringer/news',
+                'type' => 'typo3-cms-extension',
+                'version' => '10.0.0',
+                'extra' => [
+                    'typo3/cms' => [
+                        'extension-key' => 'news',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'typo3/cms-frontend',
+                'type' => 'typo3-cms-framework',
+                'version' => '12.4.0',
+            ],
+        ];
+
+        $this->createComposerInstalledFile($composerPackages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(1, $result->getExtensions()); // Only 'news' should be included
+        $this->assertSame('news', $result->getExtensions()[0]->getKey());
+    }
 }
