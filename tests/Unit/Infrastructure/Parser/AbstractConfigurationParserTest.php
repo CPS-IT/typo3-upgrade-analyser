@@ -406,7 +406,7 @@ class AbstractConfigurationParserTest extends TestCase
         // Expect debug log for start
         $this->logger->expects(self::exactly(2))
             ->method('debug')
-            ->willReturnCallback(function ($message, $context) {
+            ->willReturnCallback(function ($message, $context): void {
                 static $callCount = 0;
                 ++$callCount;
 

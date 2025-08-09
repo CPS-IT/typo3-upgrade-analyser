@@ -78,7 +78,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
         $extensions = $testData['extensions'];
         $this->assertNotEmpty($extensions);
 
-        foreach ($extensions as $key => $extension) {
+        foreach ($extensions as $extension) {
             $this->assertArrayHasKey('extension_key', $extension);
             $this->assertArrayHasKey('description', $extension);
             $this->assertArrayHasKey('is_active', $extension);

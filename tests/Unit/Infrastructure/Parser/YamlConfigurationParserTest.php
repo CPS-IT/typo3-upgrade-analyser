@@ -571,7 +571,7 @@ class YamlConfigurationParserTest extends TestCase
         $debugCalls = [];
         $this->logger->expects(self::atLeast(2))
             ->method('debug')
-            ->willReturnCallback(function ($message, $context) use (&$debugCalls) {
+            ->willReturnCallback(function ($message, $context) use (&$debugCalls): void {
                 $debugCalls[] = ['message' => $message, 'context' => $context];
             });
 

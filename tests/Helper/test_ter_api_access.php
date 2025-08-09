@@ -140,7 +140,7 @@ function testTerApiEndpoint(string $url, string $description, string $terToken =
                     $typo3Compatibility = [];
                     $recentVersions = \array_slice($result['data']['versions'], 0, 10, true);
 
-                    foreach ($recentVersions as $version => $versionData) {
+                    foreach ($recentVersions as $versionData) {
                         if (isset($versionData['typo3_versions']) && \is_array($versionData['typo3_versions'])) {
                             foreach ($versionData['typo3_versions'] as $typo3Version) {
                                 if (!\in_array($typo3Version, $typo3Compatibility, true)) {

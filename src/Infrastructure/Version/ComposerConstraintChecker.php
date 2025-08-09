@@ -73,7 +73,7 @@ class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
         }
 
         // Check if any TYPO3 requirement is compatible with target version
-        foreach ($typo3Requirements as $package => $constraint) {
+        foreach ($typo3Requirements as $constraint) {
             if ($this->isConstraintCompatible($constraint, $targetVersion)) {
                 return true;
             }

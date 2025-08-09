@@ -413,7 +413,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest
         $firstInstallationVersion = $results[0]['installation']->getInstallation()->getVersion()->toString();
         $firstExtensionCount = \count($results[0]['extension']->getExtensions());
 
-        foreach ($results as $index => $result) {
+        foreach ($results as $result) {
             $this->assertEquals(
                 $firstInstallationVersion,
                 $result['installation']->getInstallation()->getVersion()->toString(),

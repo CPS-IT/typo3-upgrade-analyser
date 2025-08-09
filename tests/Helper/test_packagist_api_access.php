@@ -199,7 +199,7 @@ foreach ($results as $result) {
             $typo3Versions = [];
             $latestVersions = \array_slice($package['versions'], 0, 10, true);
 
-            foreach ($latestVersions as $version => $data) {
+            foreach ($latestVersions as $data) {
                 if (isset($data['require']) && \is_array($data['require'])) {
                     foreach ($data['require'] as $req => $constraint) {
                         if (preg_match('/typo3\/cms(-core)?/', $req)) {
