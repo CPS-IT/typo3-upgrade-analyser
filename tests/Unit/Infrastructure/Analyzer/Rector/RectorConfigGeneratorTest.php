@@ -19,7 +19,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -37,11 +36,11 @@ class RectorConfigGeneratorTest extends TestCase
         $this->tempDirectory = sys_get_temp_dir() . '/rector_test_' . uniqid();
         $this->filesystem = new Filesystem();
         $this->ruleRegistry = $this->createMock(RectorRuleRegistry::class);
-        
+
         $this->generator = new RectorConfigGenerator(
             $this->ruleRegistry,
             $this->tempDirectory,
-            $this->filesystem
+            $this->filesystem,
         );
     }
 
@@ -62,7 +61,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
         $extensionPath = '/path/to/extension';
 
@@ -106,7 +105,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -129,7 +128,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -150,7 +149,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -177,7 +176,7 @@ class RectorConfigGeneratorTest extends TestCase
         // Test TYPO3 13+
         $context13 = new AnalysisContext(
             new Version('12.4.0'),
-            new Version('13.0.0')
+            new Version('13.0.0'),
         );
 
         $this->ruleRegistry
@@ -191,7 +190,7 @@ class RectorConfigGeneratorTest extends TestCase
         // Test TYPO3 12
         $context12 = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $configPath = $this->generator->generateConfig($extension, $context12, '/path/to/extension');
@@ -201,7 +200,7 @@ class RectorConfigGeneratorTest extends TestCase
         // Test TYPO3 11
         $context11 = new AnalysisContext(
             new Version('10.4.0'),
-            new Version('11.5.0')
+            new Version('11.5.0'),
         );
 
         $configPath = $this->generator->generateConfig($extension, $context11, '/path/to/extension');
@@ -214,7 +213,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('my_extension', 'My Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -235,7 +234,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -254,10 +253,10 @@ class RectorConfigGeneratorTest extends TestCase
     public function testGetSkipPatternsForSystemExtension(): void
     {
         $extension = new Extension('core', 'Core', new Version('1.0.0'), 'system', 'typo3/cms-core');
-        
+
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -273,10 +272,10 @@ class RectorConfigGeneratorTest extends TestCase
     public function testGetExtensionPathForSystemExtension(): void
     {
         $extension = new Extension('core', 'Core', new Version('1.0.0'), 'system', 'typo3/cms-core');
-        
+
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -295,7 +294,7 @@ class RectorConfigGeneratorTest extends TestCase
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
         $context = new AnalysisContext(
             new Version('11.5.0'),
-            new Version('12.4.0')
+            new Version('12.4.0'),
         );
 
         $this->ruleRegistry
@@ -352,7 +351,7 @@ class RectorConfigGeneratorTest extends TestCase
         $this->assertEquals('PhpVersion::PHP_81', $method->invoke($this->generator, '8.1'));
         $this->assertEquals('PhpVersion::PHP_82', $method->invoke($this->generator, '8.2'));
         $this->assertEquals('PhpVersion::PHP_83', $method->invoke($this->generator, '8.3'));
-        
+
         // Test default fallback
         $this->assertEquals('PhpVersion::PHP_81', $method->invoke($this->generator, '9.0'));
     }

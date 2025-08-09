@@ -23,7 +23,7 @@ class AnalyzerExceptionTest extends TestCase
     public function testExceptionExtendsBaseException(): void
     {
         $exception = new AnalyzerException('Test message', 'test_analyzer');
-        
+
         self::assertInstanceOf(\Exception::class, $exception);
     }
 
@@ -31,9 +31,9 @@ class AnalyzerExceptionTest extends TestCase
     {
         $message = 'Analysis failed';
         $analyzerName = 'version_availability';
-        
+
         $exception = new AnalyzerException($message, $analyzerName);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($analyzerName, $exception->getAnalyzerName());
         self::assertSame(0, $exception->getCode());
@@ -45,9 +45,9 @@ class AnalyzerExceptionTest extends TestCase
         $message = 'Analysis failed';
         $analyzerName = 'test_analyzer';
         $previous = new \RuntimeException('Previous error');
-        
+
         $exception = new AnalyzerException($message, $analyzerName, $previous);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($analyzerName, $exception->getAnalyzerName());
         self::assertSame($previous, $exception->getPrevious());
@@ -57,14 +57,14 @@ class AnalyzerExceptionTest extends TestCase
     {
         $analyzerName = 'lines_of_code';
         $exception = new AnalyzerException('Test', $analyzerName);
-        
+
         self::assertSame($analyzerName, $exception->getAnalyzerName());
     }
 
     public function testExceptionWithEmptyAnalyzerName(): void
     {
         $exception = new AnalyzerException('Test message', '');
-        
+
         self::assertSame('', $exception->getAnalyzerName());
     }
 
@@ -72,7 +72,7 @@ class AnalyzerExceptionTest extends TestCase
     {
         $this->expectException(AnalyzerException::class);
         $this->expectExceptionMessage('Test error message');
-        
+
         throw new AnalyzerException('Test error message', 'test_analyzer');
     }
 
@@ -80,7 +80,7 @@ class AnalyzerExceptionTest extends TestCase
     {
         $rootCause = new \InvalidArgumentException('Invalid input');
         $analyzerException = new AnalyzerException('Processing failed', 'test_analyzer', $rootCause);
-        
+
         try {
             throw $analyzerException;
         } catch (AnalyzerException $e) {

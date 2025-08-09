@@ -13,15 +13,14 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Analyzer;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
 
 /**

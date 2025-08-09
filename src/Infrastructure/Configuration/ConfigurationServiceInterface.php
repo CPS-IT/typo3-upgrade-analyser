@@ -76,8 +76,8 @@ interface ConfigurationServiceInterface
     /**
      * Gets a configuration value by key with optional default value.
      *
-     * @param string $key Configuration key (supports dot notation)
-     * @param mixed $default Default value if key is not found
+     * @param string $key     Configuration key (supports dot notation)
+     * @param mixed  $default Default value if key is not found
      *
      * @return mixed Configuration value or default
      */

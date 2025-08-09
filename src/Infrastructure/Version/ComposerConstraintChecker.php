@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Version;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Composer\Semver\Constraint\Constraint;
 use Composer\Semver\VersionParser;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
  * Unified service for checking Composer version constraints against TYPO3 versions.
@@ -33,23 +33,22 @@ class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
         try {
             // Parse the constraint using Composer's parser
             $parsedConstraint = $this->versionParser->parseConstraints($constraint);
-            
+
             // Create normalized version string for target version
             $targetVersionString = $targetVersion->toString();
-            
+
             // If target version doesn't have patch version, add .0
-            if (substr_count($targetVersionString, '.') === 1) {
+            if (1 === substr_count($targetVersionString, '.')) {
                 $targetVersionString .= '.0';
             }
-            
+
             // Normalize the version for comparison
             $normalizedVersion = $this->versionParser->normalize($targetVersionString);
-            
+
             // Check if target version satisfies the constraint
             return $parsedConstraint->matches(
-                new Constraint('=', $normalizedVersion)
+                new Constraint('=', $normalizedVersion),
             );
-            
         } catch (\Exception $e) {
             // If parsing fails, fall back to simple major version matching
             return str_contains($constraint, (string) $targetVersion->getMajor());
@@ -113,12 +112,12 @@ class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
     public function normalizeVersion(Version $version): string
     {
         $versionString = $version->toString();
-        
+
         // If version doesn't have patch version, add .0
-        if (substr_count($versionString, '.') === 1) {
+        if (1 === substr_count($versionString, '.')) {
             $versionString .= '.0';
         }
-        
+
         return $this->versionParser->normalize($versionString);
     }
 }

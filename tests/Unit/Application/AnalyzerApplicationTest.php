@@ -48,7 +48,7 @@ class AnalyzerApplicationTest extends TestCase
     public function testGetContainerReturnsContainerInterface(): void
     {
         $container = $this->subject->getContainer();
-        
+
         self::assertInstanceOf(ContainerInterface::class, $container);
     }
 
@@ -65,7 +65,7 @@ class AnalyzerApplicationTest extends TestCase
         foreach ($expectedCommands as $commandName) {
             self::assertTrue(
                 $this->subject->has($commandName),
-                sprintf('Command "%s" is not registered', $commandName)
+                \sprintf('Command "%s" is not registered', $commandName),
             );
         }
     }
@@ -73,35 +73,35 @@ class AnalyzerApplicationTest extends TestCase
     public function testAnalyzeCommandIsRegistered(): void
     {
         $command = $this->subject->find('analyze');
-        
+
         self::assertInstanceOf(AnalyzeCommand::class, $command);
     }
 
     public function testInitConfigCommandIsRegistered(): void
     {
         $command = $this->subject->find('init-config');
-        
+
         self::assertInstanceOf(InitConfigCommand::class, $command);
     }
 
     public function testListAnalyzersCommandIsRegistered(): void
     {
         $command = $this->subject->find('list-analyzers');
-        
+
         self::assertInstanceOf(ListAnalyzersCommand::class, $command);
     }
 
     public function testListExtensionsCommandIsRegistered(): void
     {
         $command = $this->subject->find('list-extensions');
-        
+
         self::assertInstanceOf(ListExtensionsCommand::class, $command);
     }
 
     public function testValidateCommandIsRegistered(): void
     {
         $command = $this->subject->find('validate');
-        
+
         self::assertInstanceOf(ValidateCommand::class, $command);
     }
 
@@ -109,7 +109,7 @@ class AnalyzerApplicationTest extends TestCase
     {
         $container1 = $this->subject->getContainer();
         $container2 = $this->subject->getContainer();
-        
+
         self::assertSame($container1, $container2);
     }
 }

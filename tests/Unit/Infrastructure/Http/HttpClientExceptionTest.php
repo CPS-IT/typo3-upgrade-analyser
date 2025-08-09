@@ -23,7 +23,7 @@ class HttpClientExceptionTest extends TestCase
     public function testExceptionExtendsBaseException(): void
     {
         $exception = new HttpClientException('Test message');
-        
+
         self::assertInstanceOf(\Exception::class, $exception);
     }
 
@@ -31,7 +31,7 @@ class HttpClientExceptionTest extends TestCase
     {
         $message = 'HTTP request failed';
         $exception = new HttpClientException($message);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame(0, $exception->getCode());
         self::assertNull($exception->getPrevious());
@@ -42,7 +42,7 @@ class HttpClientExceptionTest extends TestCase
         $message = 'HTTP 404 error';
         $code = 404;
         $exception = new HttpClientException($message, $code);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($code, $exception->getCode());
     }
@@ -52,9 +52,9 @@ class HttpClientExceptionTest extends TestCase
         $message = 'HTTP client error';
         $code = 500;
         $previous = new \RuntimeException('Connection failed');
-        
+
         $exception = new HttpClientException($message, $code, $previous);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($code, $exception->getCode());
         self::assertSame($previous, $exception->getPrevious());
@@ -65,7 +65,7 @@ class HttpClientExceptionTest extends TestCase
         $this->expectException(HttpClientException::class);
         $this->expectExceptionMessage('Test HTTP error');
         $this->expectExceptionCode(503);
-        
+
         throw new HttpClientException('Test HTTP error', 503);
     }
 
@@ -73,7 +73,7 @@ class HttpClientExceptionTest extends TestCase
     {
         $rootCause = new \InvalidArgumentException('Invalid URL');
         $httpException = new HttpClientException('Request failed', 400, $rootCause);
-        
+
         try {
             throw $httpException;
         } catch (HttpClientException $e) {
@@ -87,14 +87,14 @@ class HttpClientExceptionTest extends TestCase
     public function testEmptyMessage(): void
     {
         $exception = new HttpClientException('');
-        
+
         self::assertSame('', $exception->getMessage());
     }
 
     public function testNegativeCode(): void
     {
         $exception = new HttpClientException('Error', -1);
-        
+
         self::assertSame(-1, $exception->getCode());
     }
 }

@@ -19,7 +19,7 @@ class RectorExecutionResult
 {
     /**
      * @param array<RectorFinding> $findings
-     * @param array<string> $errors
+     * @param array<string>        $errors
      */
     public function __construct(
         private readonly bool $successful,
@@ -28,8 +28,9 @@ class RectorExecutionResult
         private readonly float $executionTime,
         private readonly int $exitCode,
         private readonly string $rawOutput,
-        private readonly int $processedFileCount = 0
-    ) {}
+        private readonly int $processedFileCount = 0,
+    ) {
+    }
 
     public function isSuccessful(): bool
     {
@@ -79,7 +80,7 @@ class RectorExecutionResult
 
     public function getTotalIssueCount(): int
     {
-        return count($this->findings);
+        return \count($this->findings);
     }
 
     /**
@@ -99,7 +100,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding) => $finding->getSeverity() === $severity
+            fn (RectorFinding $finding) => $finding->getSeverity() === $severity,
         ));
     }
 
@@ -112,7 +113,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding) => $finding->getChangeType() === $changeType
+            fn (RectorFinding $finding) => $finding->getChangeType() === $changeType,
         ));
     }
 
@@ -134,19 +135,19 @@ class RectorExecutionResult
         $fileCounts = [];
 
         foreach ($this->findings as $finding) {
-            $severityCounts[$finding->getSeverity()->value]++;
-            
+            ++$severityCounts[$finding->getSeverity()->value];
+
             $type = $finding->getChangeType()->value;
             $typeCounts[$type] = ($typeCounts[$type] ?? 0) + 1;
-            
+
             $file = $finding->getFile();
             $fileCounts[$file] = ($fileCounts[$file] ?? 0) + 1;
         }
 
         return [
-            'total_findings' => count($this->findings),
+            'total_findings' => \count($this->findings),
             'processed_files' => $this->processedFileCount,
-            'affected_files' => count($fileCounts),
+            'affected_files' => \count($fileCounts),
             'execution_time' => $this->executionTime,
             'severity_counts' => $severityCounts,
             'type_counts' => $typeCounts,

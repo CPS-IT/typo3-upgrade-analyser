@@ -23,7 +23,7 @@ class RectorChangeTypeTest extends TestCase
     public function testBreakingChangeProperties(): void
     {
         $changeType = RectorChangeType::BREAKING_CHANGE;
-        
+
         $this->assertEquals('breaking_change', $changeType->value);
         $this->assertEquals('Breaking Changes', $changeType->getCategory());
         $this->assertEquals(60, $changeType->getEstimatedEffort());
@@ -34,7 +34,7 @@ class RectorChangeTypeTest extends TestCase
     public function testDeprecationProperties(): void
     {
         $changeType = RectorChangeType::DEPRECATION;
-        
+
         $this->assertEquals('deprecation', $changeType->value);
         $this->assertEquals('Deprecations', $changeType->getCategory());
         $this->assertEquals(10, $changeType->getEstimatedEffort());
@@ -45,7 +45,7 @@ class RectorChangeTypeTest extends TestCase
     public function testMethodSignatureProperties(): void
     {
         $changeType = RectorChangeType::METHOD_SIGNATURE;
-        
+
         $this->assertEquals('method_signature', $changeType->value);
         $this->assertEquals('API Changes', $changeType->getCategory());
         $this->assertEquals(20, $changeType->getEstimatedEffort());
@@ -56,7 +56,7 @@ class RectorChangeTypeTest extends TestCase
     public function testClassRemovalProperties(): void
     {
         $changeType = RectorChangeType::CLASS_REMOVAL;
-        
+
         $this->assertEquals('class_removal', $changeType->value);
         $this->assertEquals('Breaking Changes', $changeType->getCategory());
         $this->assertEquals(45, $changeType->getEstimatedEffort());
@@ -67,7 +67,7 @@ class RectorChangeTypeTest extends TestCase
     public function testInterfaceChangeProperties(): void
     {
         $changeType = RectorChangeType::INTERFACE_CHANGE;
-        
+
         $this->assertEquals('interface_change', $changeType->value);
         $this->assertEquals('API Changes', $changeType->getCategory());
         $this->assertEquals(30, $changeType->getEstimatedEffort());
@@ -78,7 +78,7 @@ class RectorChangeTypeTest extends TestCase
     public function testConfigurationChangeProperties(): void
     {
         $changeType = RectorChangeType::CONFIGURATION_CHANGE;
-        
+
         $this->assertEquals('configuration_change', $changeType->value);
         $this->assertEquals('Configuration', $changeType->getCategory());
         $this->assertEquals(15, $changeType->getEstimatedEffort());
@@ -89,7 +89,7 @@ class RectorChangeTypeTest extends TestCase
     public function testBestPracticeProperties(): void
     {
         $changeType = RectorChangeType::BEST_PRACTICE;
-        
+
         $this->assertEquals('best_practice', $changeType->value);
         $this->assertEquals('Code Quality', $changeType->getCategory());
         $this->assertEquals(8, $changeType->getEstimatedEffort());
@@ -112,12 +112,12 @@ class RectorChangeTypeTest extends TestCase
         foreach (RectorChangeType::cases() as $changeType) {
             $this->assertIsString($changeType->getCategory());
             $this->assertNotEmpty($changeType->getCategory());
-            
+
             $this->assertIsInt($changeType->getEstimatedEffort());
             $this->assertGreaterThan(0, $changeType->getEstimatedEffort());
-            
+
             $this->assertIsBool($changeType->requiresManualIntervention());
-            
+
             $this->assertIsString($changeType->getDisplayName());
             $this->assertNotEmpty($changeType->getDisplayName());
         }

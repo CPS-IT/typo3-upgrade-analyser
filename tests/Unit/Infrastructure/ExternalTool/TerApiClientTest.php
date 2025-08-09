@@ -19,7 +19,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**

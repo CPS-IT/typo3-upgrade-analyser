@@ -61,7 +61,7 @@ final class ListExtensionsCommandTest extends TestCase
         if (file_exists($this->tempConfigFile)) {
             unlink($this->tempConfigFile);
         }
-        
+
         // Clean up any temporary default config file created during tests
         $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
         if (file_exists($defaultConfigPath)) {
@@ -125,10 +125,10 @@ final class ListExtensionsCommandTest extends TestCase
         // Create a temporary config file at the default path for this test
         $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
         $configContent = "installation_path: /tmp/test\n";
-        
+
         // Create the config file temporarily
         file_put_contents($defaultConfigPath, $configContent);
-        
+
         // Create a real directory for the installation path
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
         mkdir($tempDir, 0o755, true);
@@ -309,7 +309,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock successful installation discovery
             $customPaths = ['vendor-dir' => 'custom-vendor', 'web-dir' => 'web'];
             $metadata = new InstallationMetadata(
@@ -370,7 +369,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock failed installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation files not found');
             $this->installationDiscovery->expects($this->once())
@@ -420,7 +418,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects($this->once())
@@ -466,7 +463,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects($this->once())
@@ -511,7 +507,6 @@ final class ListExtensionsCommandTest extends TestCase
             $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
-
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -611,7 +606,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects($this->once())
@@ -660,7 +654,6 @@ final class ListExtensionsCommandTest extends TestCase
             $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
-
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
@@ -713,7 +706,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock installation discovery with installation but no metadata
             $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
             $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
@@ -764,7 +756,6 @@ final class ListExtensionsCommandTest extends TestCase
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-
             // Mock installation discovery with unknown version - create minimal installation
             $installation = new Installation($tempDir, Version::fromString('0.0.0'), 'unknown');
             $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
@@ -814,7 +805,6 @@ final class ListExtensionsCommandTest extends TestCase
             $customConfigService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
-
 
             // Mock installation discovery
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');

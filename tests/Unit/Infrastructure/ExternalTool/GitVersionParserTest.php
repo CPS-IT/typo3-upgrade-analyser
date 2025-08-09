@@ -59,12 +59,12 @@ class GitVersionParserTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
         $this->assertCount(4, $compatibleVersions); // All tags are stable versions
 
@@ -103,12 +103,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertTrue($isCompatible);
@@ -126,12 +126,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertTrue($isCompatible);
@@ -149,12 +149,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(false);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertFalse($isCompatible);
@@ -172,12 +172,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(false);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertFalse($isCompatible);
@@ -189,12 +189,12 @@ class GitVersionParserTest extends TestCase
     public function testIsComposerCompatibleWithNullInput(): void
     {
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with(null, $targetVersion)
             ->willReturn(false);
-        
+
         $isCompatible = $this->parser->isComposerCompatible(null, $targetVersion);
 
         $this->assertFalse($isCompatible);
@@ -274,12 +274,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertTrue($isCompatible);
@@ -297,12 +297,12 @@ class GitVersionParserTest extends TestCase
         ];
 
         $targetVersion = Version::fromString('12.4.0');
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $isCompatible = $this->parser->isComposerCompatible($composerJson, $targetVersion);
 
         $this->assertTrue($isCompatible);
@@ -327,12 +327,12 @@ class GitVersionParserTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
 
         $this->assertCount(3, $compatibleVersions);
@@ -361,12 +361,12 @@ class GitVersionParserTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        
+
         $this->constraintChecker->expects(self::once())
             ->method('isComposerJsonCompatible')
             ->with($composerJson, $targetVersion)
             ->willReturn(true);
-        
+
         $compatibleVersions = $this->parser->findCompatibleVersions($tags, $targetVersion, $composerJson);
 
         // Pre-release versions should be excluded

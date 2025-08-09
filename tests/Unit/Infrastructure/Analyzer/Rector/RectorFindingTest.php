@@ -34,7 +34,7 @@ class RectorFindingTest extends TestCase
             suggestedFix: 'Replace with new method',
             oldCode: '$template->getTypoScriptConstants()',
             newCode: '$template->getConstants()',
-            context: ['rector_version' => '0.15.25']
+            context: ['rector_version' => '0.15.25'],
         );
 
         $this->assertEquals('src/Controller/TestController.php', $finding->getFile());
@@ -57,7 +57,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertNull($finding->getSuggestedFix());
@@ -74,7 +74,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveTypoScriptConstantsFromTemplateServiceRector',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertEquals('RemoveTypoScriptConstantsFromTemplateServiceRector', $finding->getRuleName());
@@ -88,7 +88,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'SimpleRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertEquals('SimpleRule', $finding->getRuleName());
@@ -102,7 +102,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::CRITICAL,
-            changeType: RectorChangeType::BREAKING_CHANGE
+            changeType: RectorChangeType::BREAKING_CHANGE,
         );
 
         $this->assertEquals(60, $finding->getEstimatedEffort());
@@ -116,7 +116,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::CRITICAL,
-            changeType: RectorChangeType::BREAKING_CHANGE
+            changeType: RectorChangeType::BREAKING_CHANGE,
         );
 
         $infoFinding = new RectorFinding(
@@ -125,7 +125,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertGreaterThan($infoFinding->getPriorityScore(), $criticalFinding->getPriorityScore());
@@ -139,7 +139,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::CRITICAL,
-            changeType: RectorChangeType::BREAKING_CHANGE
+            changeType: RectorChangeType::BREAKING_CHANGE,
         );
 
         $deprecationFinding = new RectorFinding(
@@ -148,7 +148,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::WARNING,
-            changeType: RectorChangeType::DEPRECATION
+            changeType: RectorChangeType::DEPRECATION,
         );
 
         $this->assertTrue($breakingFinding->isBreakingChange());
@@ -163,7 +163,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::WARNING,
-            changeType: RectorChangeType::DEPRECATION
+            changeType: RectorChangeType::DEPRECATION,
         );
 
         $breakingFinding = new RectorFinding(
@@ -172,7 +172,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::CRITICAL,
-            changeType: RectorChangeType::BREAKING_CHANGE
+            changeType: RectorChangeType::BREAKING_CHANGE,
         );
 
         $this->assertTrue($deprecationFinding->isDeprecation());
@@ -187,7 +187,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::CRITICAL,
-            changeType: RectorChangeType::METHOD_SIGNATURE
+            changeType: RectorChangeType::METHOD_SIGNATURE,
         );
 
         $automaticFinding = new RectorFinding(
@@ -196,7 +196,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertTrue($manualFinding->requiresManualIntervention());
@@ -212,7 +212,7 @@ class RectorFindingTest extends TestCase
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
             changeType: RectorChangeType::BEST_PRACTICE,
-            suggestedFix: 'Use new method'
+            suggestedFix: 'Use new method',
         );
 
         $withoutFix = new RectorFinding(
@@ -221,7 +221,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertTrue($withFix->hasSuggestedFix());
@@ -238,7 +238,7 @@ class RectorFindingTest extends TestCase
             severity: RectorRuleSeverity::INFO,
             changeType: RectorChangeType::BEST_PRACTICE,
             oldCode: 'old code',
-            newCode: 'new code'
+            newCode: 'new code',
         );
 
         $withoutCodeChange = new RectorFinding(
@@ -247,7 +247,7 @@ class RectorFindingTest extends TestCase
             ruleClass: 'TestRule',
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
-            changeType: RectorChangeType::BEST_PRACTICE
+            changeType: RectorChangeType::BEST_PRACTICE,
         );
 
         $this->assertTrue($withCodeChange->hasCodeChange());
@@ -266,7 +266,7 @@ class RectorFindingTest extends TestCase
             suggestedFix: 'Replace with new method',
             oldCode: '$template->getTypoScriptConstants()',
             newCode: '$template->getConstants()',
-            context: ['rector_version' => '0.15.25']
+            context: ['rector_version' => '0.15.25'],
         );
 
         $array = $finding->toArray();

@@ -23,7 +23,7 @@ class RepositoryUrlExceptionTest extends TestCase
     public function testExceptionExtendsBaseException(): void
     {
         $exception = new RepositoryUrlException('Test message');
-        
+
         self::assertInstanceOf(\Exception::class, $exception);
     }
 
@@ -31,7 +31,7 @@ class RepositoryUrlExceptionTest extends TestCase
     {
         $message = 'Invalid repository URL';
         $exception = new RepositoryUrlException($message);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame(0, $exception->getCode());
         self::assertNull($exception->getPrevious());
@@ -42,7 +42,7 @@ class RepositoryUrlExceptionTest extends TestCase
         $message = 'Repository not found';
         $code = 404;
         $exception = new RepositoryUrlException($message, $code);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($code, $exception->getCode());
     }
@@ -52,9 +52,9 @@ class RepositoryUrlExceptionTest extends TestCase
         $message = 'Repository processing failed';
         $code = 500;
         $previous = new \RuntimeException('Network error');
-        
+
         $exception = new RepositoryUrlException($message, $code, $previous);
-        
+
         self::assertSame($message, $exception->getMessage());
         self::assertSame($code, $exception->getCode());
         self::assertSame($previous, $exception->getPrevious());
@@ -65,7 +65,7 @@ class RepositoryUrlExceptionTest extends TestCase
         $this->expectException(RepositoryUrlException::class);
         $this->expectExceptionMessage('Test repository error');
         $this->expectExceptionCode(400);
-        
+
         throw new RepositoryUrlException('Test repository error', 400);
     }
 
@@ -73,7 +73,7 @@ class RepositoryUrlExceptionTest extends TestCase
     {
         $rootCause = new \InvalidArgumentException('Invalid URL format');
         $repositoryException = new RepositoryUrlException('URL processing failed', 400, $rootCause);
-        
+
         try {
             throw $repositoryException;
         } catch (RepositoryUrlException $e) {
@@ -87,14 +87,14 @@ class RepositoryUrlExceptionTest extends TestCase
     public function testEmptyMessage(): void
     {
         $exception = new RepositoryUrlException('');
-        
+
         self::assertSame('', $exception->getMessage());
     }
 
     public function testNegativeCode(): void
     {
         $exception = new RepositoryUrlException('Error', -1);
-        
+
         self::assertSame(-1, $exception->getCode());
     }
 }

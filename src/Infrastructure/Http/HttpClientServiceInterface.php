@@ -41,7 +41,7 @@ interface HttpClientServiceInterface
         string $method,
         string $url,
         ?string $token = null,
-        array $options = []
+        array $options = [],
     ): ResponseInterface;
 
     /**
@@ -52,6 +52,6 @@ interface HttpClientServiceInterface
         string $url,
         array $options = [],
         int $maxRetries = 3,
-        int $retryDelay = 1
+        int $retryDelay = 1,
     ): ResponseInterface;
 }

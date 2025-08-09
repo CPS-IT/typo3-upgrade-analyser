@@ -32,8 +32,8 @@ class RectorExecutionResultTest extends TestCase
                 'TestRule',
                 'Test message',
                 RectorRuleSeverity::WARNING,
-                RectorChangeType::DEPRECATION
-            )
+                RectorChangeType::DEPRECATION,
+            ),
         ];
         $errors = ['Error 1', 'Error 2'];
 
@@ -44,7 +44,7 @@ class RectorExecutionResultTest extends TestCase
             executionTime: 2.5,
             exitCode: 0,
             rawOutput: 'raw output',
-            processedFileCount: 5
+            processedFileCount: 5,
         );
 
         $this->assertTrue($result->isSuccessful());
@@ -64,7 +64,7 @@ class RectorExecutionResultTest extends TestCase
             errors: ['Error message'],
             executionTime: 1.0,
             exitCode: 1,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $resultWithoutErrors = new RectorExecutionResult(
@@ -73,7 +73,7 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $this->assertTrue($resultWithErrors->hasErrors());
@@ -93,7 +93,7 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $this->assertEquals(2, $result->getTotalIssueCount());
@@ -104,12 +104,12 @@ class RectorExecutionResultTest extends TestCase
         $resultWithFindings = new RectorExecutionResult(
             successful: true,
             findings: [
-                new RectorFinding('src/Test.php', 10, 'Rule', 'Message', RectorRuleSeverity::INFO, RectorChangeType::BEST_PRACTICE)
+                new RectorFinding('src/Test.php', 10, 'Rule', 'Message', RectorRuleSeverity::INFO, RectorChangeType::BEST_PRACTICE),
             ],
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $resultWithoutFindings = new RectorExecutionResult(
@@ -118,18 +118,18 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $failedResultWithFindings = new RectorExecutionResult(
             successful: false,
             findings: [
-                new RectorFinding('src/Test.php', 10, 'Rule', 'Message', RectorRuleSeverity::INFO, RectorChangeType::BEST_PRACTICE)
+                new RectorFinding('src/Test.php', 10, 'Rule', 'Message', RectorRuleSeverity::INFO, RectorChangeType::BEST_PRACTICE),
             ],
             errors: [],
             executionTime: 1.0,
             exitCode: 1,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $this->assertTrue($resultWithFindings->hasFindings());
@@ -149,7 +149,7 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $criticalFindings = $result->getFindingsBySeverity(RectorRuleSeverity::CRITICAL);
@@ -181,7 +181,7 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
         );
 
         $breakingFindings = $result->getFindingsByChangeType(RectorChangeType::BREAKING_CHANGE);
@@ -216,7 +216,7 @@ class RectorExecutionResultTest extends TestCase
             executionTime: 2.5,
             exitCode: 0,
             rawOutput: '',
-            processedFileCount: 5
+            processedFileCount: 5,
         );
 
         $stats = $result->getSummaryStats();
@@ -255,7 +255,7 @@ class RectorExecutionResultTest extends TestCase
             errors: [],
             executionTime: 1.0,
             exitCode: 0,
-            rawOutput: ''
+            rawOutput: '',
             // processedFileCount defaults to 0
         );
 

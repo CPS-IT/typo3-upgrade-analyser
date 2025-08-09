@@ -102,11 +102,11 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
     {
         // Include composer name if available since it affects Packagist checks
         $components = [];
-        
+
         if ($extension->hasComposerName()) {
             $components['composer_name'] = $extension->getComposerName();
         }
-        
+
         return $components;
     }
 

@@ -114,24 +114,25 @@ class RectorRuleRegistry
         $sets = [];
 
         // For same version analysis, provide general best practice sets
-        if ($fromVersion->compare($toVersion) === 0) {
+        if (0 === $fromVersion->compare($toVersion)) {
             $this->logger->info('Same version analysis - applying general best practice sets', [
                 'version' => $fromVersion->toString(),
             ]);
-            
+
             // Apply general sets for code quality analysis
             $sets = array_merge($sets, self::GENERAL_SETS['general']);
             $sets = array_merge($sets, self::GENERAL_SETS['code_quality']);
-            
+
             return array_unique($sets);
         }
-        
+
         // Return empty for downgrades
         if ($fromVersion->isGreaterThan($toVersion)) {
             $this->logger->warning('Downgrade scenario detected - no sets applied', [
                 'from_version' => $fromVersion->toString(),
                 'to_version' => $toVersion->toString(),
             ]);
+
             return $sets;
         }
 

@@ -345,7 +345,7 @@ class GitRepositoryAnalyzerTest extends TestCase
         );
         $provider->method('getTags')->willReturn([]);
         $provider->method('getComposerJson')->willReturn($composerJson);
-        
+
         $this->versionParser->expects($this->once())
             ->method('findCompatibleVersions')
             ->with([], $targetVersion, $composerJson)
@@ -378,7 +378,7 @@ class GitRepositoryAnalyzerTest extends TestCase
         );
         $provider->method('getTags')->willReturn([]);
         $provider->method('getComposerJson')->willThrowException(new \RuntimeException('File not found'));
-        
+
         $this->logger->expects($this->once())
             ->method('debug')
             ->with('Could not retrieve composer.json from repository', [
@@ -423,21 +423,21 @@ class GitRepositoryAnalyzerTest extends TestCase
         // Test with GitHub URL
         $extension2 = new Extension('ext2', 'Extension 2', Version::fromString('1.0.0'));
         $extension2->setRepositoryUrl('https://github.com/user/repo');
-        
+
         $result2 = $this->analyzer->analyzeExtension($extension2, $targetVersion);
         $this->assertEquals('https://github.com/user/repo', $result2->getRepositoryUrl());
 
         // Test with GitLab URL
         $extension3 = new Extension('ext3', 'Extension 3', Version::fromString('1.0.0'));
         $extension3->setRepositoryUrl('https://gitlab.com/user/repo');
-        
+
         $result3 = $this->analyzer->analyzeExtension($extension3, $targetVersion);
         $this->assertEquals('https://gitlab.com/user/repo', $result3->getRepositoryUrl());
 
         // Test with Bitbucket URL
         $extension4 = new Extension('ext4', 'Extension 4', Version::fromString('1.0.0'));
         $extension4->setRepositoryUrl('https://bitbucket.org/user/repo');
-        
+
         $result4 = $this->analyzer->analyzeExtension($extension4, $targetVersion);
         $this->assertEquals('https://bitbucket.org/user/repo', $result4->getRepositoryUrl());
     }

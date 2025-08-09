@@ -27,8 +27,9 @@ class RectorFinding
         private readonly ?string $suggestedFix = null,
         private readonly ?string $oldCode = null,
         private readonly ?string $newCode = null,
-        private readonly array $context = []
-    ) {}
+        private readonly array $context = [],
+    ) {
+    }
 
     public function getFile(): string
     {
@@ -91,8 +92,8 @@ class RectorFinding
      */
     public function isBreakingChange(): bool
     {
-        return $this->severity === RectorRuleSeverity::CRITICAL ||
-               $this->changeType === RectorChangeType::BREAKING_CHANGE;
+        return RectorRuleSeverity::CRITICAL === $this->severity
+               || RectorChangeType::BREAKING_CHANGE === $this->changeType;
     }
 
     /**
@@ -100,8 +101,8 @@ class RectorFinding
      */
     public function isDeprecation(): bool
     {
-        return $this->changeType === RectorChangeType::DEPRECATION ||
-               $this->severity === RectorRuleSeverity::WARNING;
+        return RectorChangeType::DEPRECATION === $this->changeType
+               || RectorRuleSeverity::WARNING === $this->severity;
     }
 
     /**
@@ -109,8 +110,8 @@ class RectorFinding
      */
     public function isImprovement(): bool
     {
-        return $this->severity === RectorRuleSeverity::INFO ||
-               $this->severity === RectorRuleSeverity::SUGGESTION;
+        return RectorRuleSeverity::INFO === $this->severity
+               || RectorRuleSeverity::SUGGESTION === $this->severity;
     }
 
     /**
@@ -142,7 +143,7 @@ class RectorFinding
      */
     public function hasDiff(): bool
     {
-        return $this->oldCode !== null && $this->newCode !== null;
+        return null !== $this->oldCode && null !== $this->newCode;
     }
 
     /**
@@ -152,7 +153,7 @@ class RectorFinding
     {
         $severityWeight = $this->severity->getRiskWeight();
         $effortPenalty = $this->getEstimatedEffort() / 60; // Convert to hours
-        
+
         // Critical issues get highest priority, but extremely time-consuming ones get lower priority
         return $severityWeight * (1 / (1 + ($effortPenalty / 2)));
     }

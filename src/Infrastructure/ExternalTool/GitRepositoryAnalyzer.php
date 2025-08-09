@@ -118,7 +118,7 @@ class GitRepositoryAnalyzer
         // Try to extract from composer package via Packagist
         if ($extension->hasComposerName() && $this->packagistClient) {
             $composerName = $extension->getComposerName();
-            
+
             try {
                 $repositoryUrl = $this->packagistClient->getRepositoryUrl($composerName);
                 if ($repositoryUrl && $this->isGitRepository($repositoryUrl)) {
@@ -127,6 +127,7 @@ class GitRepositoryAnalyzer
                         'composer_name' => $composerName,
                         'repository_url' => $repositoryUrl,
                     ]);
+
                     return $repositoryUrl;
                 }
             } catch (\Throwable $e) {

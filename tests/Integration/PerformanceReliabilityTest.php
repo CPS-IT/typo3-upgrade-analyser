@@ -435,17 +435,17 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
             $httpClientService = new \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService($client, $this->createLogger());
             $terClient = new TerApiClient($httpClientService, $this->createLogger());
 
-            $gitHubClient = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient(
+            $gitHubClient = new GitHubClient(
                 $httpClientService,
                 $this->createLogger(),
                 new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
                 $this->getGitHubToken(),
             );
 
-            $providerFactory = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory([$gitHubClient], $this->createLogger());
-            $gitAnalyzer = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer(
+            $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
+            $gitAnalyzer = new GitRepositoryAnalyzer(
                 $providerFactory,
-                new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
+                new GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
                 $this->createLogger(),
             );
 

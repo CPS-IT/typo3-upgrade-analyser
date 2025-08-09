@@ -23,7 +23,7 @@ class RectorRuleSeverityTest extends TestCase
     public function testCriticalSeverityProperties(): void
     {
         $severity = RectorRuleSeverity::CRITICAL;
-        
+
         $this->assertEquals('critical', $severity->value);
         $this->assertEquals(1.0, $severity->getRiskWeight());
         $this->assertEquals('Critical', $severity->getDisplayName());
@@ -33,7 +33,7 @@ class RectorRuleSeverityTest extends TestCase
     public function testWarningSeverityProperties(): void
     {
         $severity = RectorRuleSeverity::WARNING;
-        
+
         $this->assertEquals('warning', $severity->value);
         $this->assertEquals(0.6, $severity->getRiskWeight());
         $this->assertEquals('Warning', $severity->getDisplayName());
@@ -43,7 +43,7 @@ class RectorRuleSeverityTest extends TestCase
     public function testInfoSeverityProperties(): void
     {
         $severity = RectorRuleSeverity::INFO;
-        
+
         $this->assertEquals('info', $severity->value);
         $this->assertEquals(0.2, $severity->getRiskWeight());
         $this->assertEquals('Info', $severity->getDisplayName());
@@ -53,7 +53,7 @@ class RectorRuleSeverityTest extends TestCase
     public function testSuggestionSeverityProperties(): void
     {
         $severity = RectorRuleSeverity::SUGGESTION;
-        
+
         $this->assertEquals('suggestion', $severity->value);
         $this->assertEquals(0.1, $severity->getRiskWeight());
         $this->assertEquals('Suggestion', $severity->getDisplayName());
@@ -69,7 +69,7 @@ class RectorRuleSeverityTest extends TestCase
             RectorRuleSeverity::SUGGESTION,
         ];
 
-        $weights = array_map(fn($s) => $s->getRiskWeight(), $severities);
+        $weights = array_map(fn ($s) => $s->getRiskWeight(), $severities);
         $sortedWeights = $weights;
         rsort($sortedWeights);
 
@@ -82,10 +82,10 @@ class RectorRuleSeverityTest extends TestCase
             $this->assertIsFloat($severity->getRiskWeight());
             $this->assertGreaterThan(0, $severity->getRiskWeight());
             $this->assertLessThanOrEqual(1.0, $severity->getRiskWeight());
-            
+
             $this->assertIsString($severity->getDisplayName());
             $this->assertNotEmpty($severity->getDisplayName());
-            
+
             $this->assertIsString($severity->getDescription());
             $this->assertNotEmpty($severity->getDescription());
         }

@@ -26,8 +26,9 @@ class RectorExecutor
     public function __construct(
         private readonly string $rectorBinaryPath,
         private readonly LoggerInterface $logger,
-        private readonly int $timeoutSeconds = 300
-    ) {}
+        private readonly int $timeoutSeconds = 300,
+    ) {
+    }
 
     /**
      * Execute Rector with configuration file.
@@ -41,7 +42,7 @@ class RectorExecutor
         }
 
         $command = $this->buildCommand($configPath, $targetPath, $options);
-        
+
         $this->logger->info('Executing Rector analysis', [
             'command' => implode(' ', $command),
             'target_path' => $targetPath,
@@ -49,57 +50,52 @@ class RectorExecutor
         ]);
 
         $startTime = microtime(true);
-        
+
         try {
             $process = new Process($command);
             $process->setTimeout($this->timeoutSeconds);
             $process->run();
-            
+
             $executionTime = microtime(true) - $startTime;
             $exitCode = $process->getExitCode();
             $stdout = $process->getOutput();
             $stderr = $process->getErrorOutput();
-            
+
             $this->logger->info('Rector execution completed', [
                 'exit_code' => $exitCode,
                 'execution_time' => $executionTime,
-                'stdout_length' => strlen($stdout),
-                'stderr_length' => strlen($stderr),
+                'stdout_length' => \strlen($stdout),
+                'stderr_length' => \strlen($stderr),
                 'stdout_preview' => substr($stdout, 0, 500),
                 'stderr_preview' => substr($stderr, 0, 500),
             ]);
 
             // Parse the output
             $parseResult = $this->parseOutput($stdout);
-            
+
             return new RectorExecutionResult(
-                successful: $exitCode === 0,
+                successful: 0 === $exitCode,
                 findings: $parseResult['findings'],
                 errors: $parseResult['errors'],
                 executionTime: $executionTime,
                 exitCode: $exitCode,
                 rawOutput: $stdout,
-                processedFileCount: $parseResult['processed_files']
+                processedFileCount: $parseResult['processed_files'],
             );
-            
         } catch (ProcessTimedOutException $e) {
             $executionTime = microtime(true) - $startTime;
-            
+
             $this->logger->error('Rector execution timed out', [
                 'timeout_seconds' => $this->timeoutSeconds,
                 'execution_time' => $executionTime,
             ]);
-            
-            throw new AnalyzerException(
-                'Rector analysis timed out after ' . $this->timeoutSeconds . ' seconds',
-                'RectorExecutor',
-                $e
-            );
+
+            throw new AnalyzerException('Rector analysis timed out after ' . $this->timeoutSeconds . ' seconds', 'RectorExecutor', $e);
         } catch (ProcessFailedException $e) {
             $this->logger->error('Rector execution failed', [
                 'error' => $e->getMessage(),
             ]);
-            
+
             throw new AnalyzerException('Rector analysis failed: ' . $e->getMessage(), 'RectorExecutor', $e);
         }
     }
@@ -113,7 +109,7 @@ class RectorExecutor
     {
         // Create temporary config with only specified rules
         $tempConfig = $this->createTempConfigWithRules($ruleNames, $targetPath);
-        
+
         try {
             return $this->execute($tempConfig, $targetPath);
         } finally {
@@ -145,13 +141,14 @@ class RectorExecutor
             $process = new Process([$this->rectorBinaryPath, '--version']);
             $process->setTimeout(10);
             $process->run();
-            
+
             if ($process->isSuccessful()) {
                 $output = trim($process->getOutput());
                 // Extract version number from output like "Rector 0.15.25"
                 if (preg_match('/Rector (\d+\.\d+\.\d+)/', $output, $matches)) {
                     return $matches[1];
                 }
+
                 return $output;
             }
         } catch (\Exception $e) {
@@ -167,6 +164,7 @@ class RectorExecutor
      * Build command array for Process execution.
      *
      * @param array<string, mixed> $options
+     *
      * @return array<string>
      */
     private function buildCommand(string $configPath, string $targetPath, array $options): array
@@ -223,34 +221,34 @@ class RectorExecutor
 
         try {
             $data = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
-            
+
             if (isset($data['totals']['changed_files'])) {
                 $processedFiles = (int) $data['totals']['changed_files'];
             }
 
             // Handle different JSON structures from different Rector versions
-            if (isset($data['file_diffs']) && is_array($data['file_diffs'])) {
+            if (isset($data['file_diffs']) && \is_array($data['file_diffs'])) {
                 // Newer Rector versions with file_diffs structure
                 foreach ($data['file_diffs'] as $fileDiff) {
                     $file = $fileDiff['file'] ?? '';
-                    
-                    if (isset($fileDiff['applied_rectors']) && is_array($fileDiff['applied_rectors'])) {
+
+                    if (isset($fileDiff['applied_rectors']) && \is_array($fileDiff['applied_rectors'])) {
                         foreach ($fileDiff['applied_rectors'] as $rectorClass) {
                             $findings[] = $this->createFindingFromRectorClass($file, $rectorClass, $fileDiff);
                         }
                     }
                 }
-            } elseif (isset($data['changed_files']) && is_array($data['changed_files'])) {
+            } elseif (isset($data['changed_files']) && \is_array($data['changed_files'])) {
                 // Older Rector versions or different structure
                 foreach ($data['changed_files'] as $fileData) {
-                    if (is_string($fileData)) {
+                    if (\is_string($fileData)) {
                         // Simple array of file paths
                         $findings[] = $this->createFindingFromFilePath($fileData);
-                    } elseif (is_array($fileData)) {
+                    } elseif (\is_array($fileData)) {
                         // Object with file and applied_rectors
                         $file = $fileData['file'] ?? '';
-                        
-                        if (isset($fileData['applied_rectors']) && is_array($fileData['applied_rectors'])) {
+
+                        if (isset($fileData['applied_rectors']) && \is_array($fileData['applied_rectors'])) {
                             foreach ($fileData['applied_rectors'] as $rectorData) {
                                 $findings[] = $this->createFindingFromRectorData($file, $rectorData);
                             }
@@ -260,16 +258,15 @@ class RectorExecutor
             }
 
             // Handle error cases
-            if (isset($data['errors']) && is_array($data['errors'])) {
-                $errors = array_map(fn($error) => (string) $error, $data['errors']);
+            if (isset($data['errors']) && \is_array($data['errors'])) {
+                $errors = array_map(fn ($error) => (string) $error, $data['errors']);
             }
-
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse Rector JSON output', [
                 'error' => $e->getMessage(),
                 'output_preview' => substr($output, 0, 200),
             ]);
-            
+
             $errors[] = 'Failed to parse Rector output: ' . $e->getMessage();
         }
 
@@ -290,11 +287,11 @@ class RectorExecutor
         $line = (int) ($rectorData['line'] ?? 0);
         $oldCode = $rectorData['old'] ?? null;
         $newCode = $rectorData['new'] ?? null;
-        
+
         // Determine severity and change type from rule class
         $severity = $this->determineSeverityFromRule($ruleClass);
         $changeType = $this->determineChangeTypeFromRule($ruleClass);
-        
+
         $suggestedFix = null;
         if ($oldCode && $newCode) {
             $suggestedFix = "Replace '{$oldCode}' with '{$newCode}'";
@@ -310,7 +307,7 @@ class RectorExecutor
             suggestedFix: $suggestedFix,
             oldCode: $oldCode,
             newCode: $newCode,
-            context: $rectorData
+            context: $rectorData,
         );
     }
 
@@ -359,17 +356,17 @@ class RectorExecutor
         $line = 0; // Line number not available in this format
         $oldCode = null;
         $newCode = null;
-        
+
         // Try to extract code changes from diff if available
         if (isset($fileDiff['diff'])) {
             $this->extractCodeFromDiff($fileDiff['diff'], $oldCode, $newCode);
         }
-        
+
         // Determine severity and change type from rule class
         $severity = $this->determineSeverityFromRule($rectorClass);
         $changeType = $this->determineChangeTypeFromRule($rectorClass);
-        
-        $suggestedFix = $newCode ? "Update code according to diff" : null;
+
+        $suggestedFix = $newCode ? 'Update code according to diff' : null;
 
         return new RectorFinding(
             file: $file,
@@ -381,7 +378,7 @@ class RectorExecutor
             suggestedFix: $suggestedFix,
             oldCode: $oldCode,
             newCode: $newCode,
-            context: $fileDiff
+            context: $fileDiff,
         );
     }
 
@@ -400,7 +397,7 @@ class RectorExecutor
             suggestedFix: 'Review changes in file',
             oldCode: null,
             newCode: null,
-            context: ['file' => $file]
+            context: ['file' => $file],
         );
     }
 
@@ -412,7 +409,7 @@ class RectorExecutor
         $lines = explode("\n", $diff);
         $oldLines = [];
         $newLines = [];
-        
+
         foreach ($lines as $line) {
             if (str_starts_with($line, '-') && !str_starts_with($line, '---')) {
                 $oldLines[] = substr($line, 1);
@@ -420,7 +417,7 @@ class RectorExecutor
                 $newLines[] = substr($line, 1);
             }
         }
-        
+
         $oldCode = !empty($oldLines) ? implode("\n", $oldLines) : null;
         $newCode = !empty($newLines) ? implode("\n", $newLines) : null;
     }
@@ -435,11 +432,11 @@ class RectorExecutor
         $configContent = "<?php\n\nuse Rector\\Config\\RectorConfig;\n\nreturn static function (RectorConfig \$rectorConfig): void {\n";
         $configContent .= "    \$rectorConfig->paths(['{$targetPath}']);\n";
         $configContent .= "    \$rectorConfig->rules([\n";
-        
+
         foreach ($ruleNames as $ruleName) {
             $configContent .= "        {$ruleName}::class,\n";
         }
-        
+
         $configContent .= "    ]);\n";
         $configContent .= "};\n";
 
@@ -447,9 +444,9 @@ class RectorExecutor
         if (!$tempFile) {
             throw new AnalyzerException('Failed to create temporary Rector config file', 'RectorExecutor');
         }
-        
+
         file_put_contents($tempFile, $configContent);
-        
+
         return $tempFile;
     }
 }

@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
-use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
@@ -24,7 +24,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -135,7 +134,7 @@ class AnalyzeCommand extends Command
             $io->progressFinish();
 
             $io->success('Analysis completed successfully!');
-            
+
             $outputDir = $configService->get('reporting.output_directory', 'var/reports/');
             $io->note(\sprintf('Reports generated in: %s', $outputDir));
 
@@ -183,7 +182,7 @@ class AnalyzeCommand extends Command
         $io->text(\sprintf('Discovered %d extensions', \count($extensions)));
 
         $this->logger->info('Discovery phase completed', [
-            'installation_discovered' => $installation !== null,
+            'installation_discovered' => null !== $installation,
             'extensions_count' => \count($extensions),
             'successful_methods' => $extensionResult->getSuccessfulMethods(),
         ]);
@@ -195,7 +194,7 @@ class AnalyzeCommand extends Command
      * Phase 2: Run analyzers on discovered extensions.
      *
      * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension> $extensions
-     * @param array<string>|null $requestedAnalyzers
+     * @param array<string>|null                                    $requestedAnalyzers
      *
      * @return array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>>
      */
@@ -212,22 +211,22 @@ class AnalyzeCommand extends Command
 
         if (empty($analyzersToRun)) {
             $io->warning('No analyzers available to run');
-            $io->text(sprintf('Total analyzers configured: %d', count(iterator_to_array($this->analyzers))));
+            $io->text(\sprintf('Total analyzers configured: %d', \count(iterator_to_array($this->analyzers))));
 
             return [];
         }
 
         // Get custom paths from installation metadata
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
-        
+
         $context = new AnalysisContext(
             $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
             [], // phpVersions
             [
-                'installation_path' => $installation?->getPath() ?? '', 
-                'custom_paths' => $customPaths
-            ]
+                'installation_path' => $installation?->getPath() ?? '',
+                'custom_paths' => $customPaths,
+            ],
         );
         $results = [];
 
@@ -284,7 +283,7 @@ class AnalyzeCommand extends Command
         array $extensions,
         mixed $extensionResult,
         array $analysisResults,
-        SymfonyStyle $io
+        SymfonyStyle $io,
     ): void {
         $outputDir = $configService->get('reporting.output_directory', 'var/reports/');
         $formats = $configService->get('reporting.formats', ['markdown']);
@@ -292,6 +291,7 @@ class AnalyzeCommand extends Command
         if (!$installation) {
             $io->warning('No installation data available - generating basic report');
             $this->generateSummaryReport($outputDir, null, $extensions, null, $analysisResults);
+
             return;
         }
 
@@ -313,16 +313,16 @@ class AnalyzeCommand extends Command
                     'version' => $installation->getVersion()->toString(),
                     'type' => $installation->getType(),
                     'path' => $installation->getPath(),
-                ]
+                ],
             ),
             new DiscoveryResult(
                 'discovery',
-                'extensions', 
+                'extensions',
                 'Extension Discovery',
                 [
-                    'count' => count($extensions),
+                    'count' => \count($extensions),
                     'successful_methods' => $extensionResult->getSuccessfulMethods(),
-                ]
+                ],
             ),
         ];
 
@@ -337,7 +337,7 @@ class AnalyzeCommand extends Command
                 $combinedResults,
                 $formats,
                 $outputDir,
-                $configService->getTargetVersion()
+                $configService->getTargetVersion(),
             );
 
             // Log report generation results
@@ -358,7 +358,6 @@ class AnalyzeCommand extends Command
 
             // Also generate a simple summary for backwards compatibility
             $this->generateSummaryReport($outputDir, $installation, $extensions, $extensionResult, $analysisResults);
-
         } catch (\Exception $e) {
             $io->warning('Detailed report generation failed, falling back to summary report');
             $this->logger->error('Report service failed', ['error' => $e->getMessage()]);
@@ -401,7 +400,7 @@ class AnalyzeCommand extends Command
     /**
      * Generate a simple summary report.
      *
-     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension> $extensions
+     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>                     $extensions
      * @param array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>> $analysisResults
      */
     private function generateSummaryReport(
@@ -409,31 +408,31 @@ class AnalyzeCommand extends Command
         ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
         array $extensions,
         mixed $extensionResult,
-        array $analysisResults
+        array $analysisResults,
     ): void {
         $reportPath = $outputDir . '/analysis-summary.md';
-        
+
         $content = "# TYPO3 Upgrade Analysis Report\n\n";
-        $content .= "Generated on: " . date('Y-m-d H:i:s') . "\n\n";
-        
+        $content .= 'Generated on: ' . date('Y-m-d H:i:s') . "\n\n";
+
         if ($installation) {
             $content .= "## Installation Information\n\n";
-            $content .= "- **Path**: " . $installation->getPath() . "\n";
-            $content .= "- **TYPO3 Version**: " . $installation->getVersion()->toString() . "\n";
-            $content .= "- **Installation Type**: " . $installation->getType() . "\n\n";
+            $content .= '- **Path**: ' . $installation->getPath() . "\n";
+            $content .= '- **TYPO3 Version**: ' . $installation->getVersion()->toString() . "\n";
+            $content .= '- **Installation Type**: ' . $installation->getType() . "\n\n";
         }
-        
+
         $content .= "## Extensions Overview\n\n";
-        $content .= "Total extensions found: " . \count($extensions) . "\n\n";
-        
+        $content .= 'Total extensions found: ' . \count($extensions) . "\n\n";
+
         if (!empty($analysisResults)) {
             $content .= "## Analysis Results\n\n";
             foreach ($analysisResults as $analyzerName => $results) {
-                $content .= "### " . ucfirst(str_replace('_', ' ', $analyzerName)) . "\n\n";
-                $content .= "Analyzed extensions: " . \count($results) . "\n\n";
+                $content .= '### ' . ucfirst(str_replace('_', ' ', $analyzerName)) . "\n\n";
+                $content .= 'Analyzed extensions: ' . \count($results) . "\n\n";
             }
         }
-        
+
         file_put_contents($reportPath, $content);
     }
 }

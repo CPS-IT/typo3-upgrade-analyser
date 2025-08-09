@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Domain\Contract;
 
 /**
  * Common interface for all results in the TYPO3 Upgrade Analyzer.
- * 
+ *
  * This interface provides a unified structure for discovery results,
  * analysis results, and reporting results, allowing the report service
  * to handle different types of results consistently.
@@ -48,7 +48,7 @@ interface ResultInterface
 
     /**
      * Get all data associated with this result.
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getData(): array;
@@ -75,7 +75,7 @@ interface ResultInterface
 
     /**
      * Convert result to array format for templates.
-     * 
+     *
      * @return array<string, mixed>
      */
     public function toArray(): array;

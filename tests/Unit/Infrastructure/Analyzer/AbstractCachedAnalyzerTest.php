@@ -164,10 +164,10 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->logger->expects($this->once())
             ->method('debug')
             ->with('Cached result expired', $this->callback(function ($context) {
-                return $context['analyzer'] === 'test_cached_analyzer' &&
-                       $context['extension'] === 'test_extension' &&
-                       isset($context['age']) &&
-                       $context['age'] > 3600;
+                return 'test_cached_analyzer' === $context['analyzer']
+                       && 'test_extension' === $context['extension']
+                       && isset($context['age'])
+                       && $context['age'] > 3600;
             }));
 
         // Should perform fresh analysis
@@ -212,24 +212,24 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->cacheService->expects($this->once())
             ->method('set')
             ->with($this->isType('string'), $this->callback(function ($data) {
-                return $data['analyzer_name'] === 'test_cached_analyzer' &&
-                       $data['extension_key'] === 'test_extension' &&
-                       $data['metrics']['test_metric'] === 'test_value' &&
-                       $data['risk_score'] === 3.5 &&
-                       $data['recommendations'] === ['Test recommendation'] &&
-                       $data['successful'] === true &&
-                       $data['error'] === null &&
-                       isset($data['cached_at']) &&
-                       $data['cache_ttl'] === 3600;
+                return 'test_cached_analyzer' === $data['analyzer_name']
+                       && 'test_extension' === $data['extension_key']
+                       && 'test_value' === $data['metrics']['test_metric']
+                       && 3.5 === $data['risk_score']
+                       && $data['recommendations'] === ['Test recommendation']
+                       && true === $data['successful']
+                       && null === $data['error']
+                       && isset($data['cached_at'])
+                       && 3600 === $data['cache_ttl'];
             }))
             ->willReturn(true);
 
         $this->logger->expects($this->once())
             ->method('debug')
             ->with('Analysis result cached', $this->callback(function ($context) {
-                return $context['analyzer'] === 'test_cached_analyzer' &&
-                       $context['extension'] === 'test_extension' &&
-                       isset($context['cache_key']);
+                return 'test_cached_analyzer' === $context['analyzer']
+                       && 'test_extension' === $context['extension']
+                       && isset($context['cache_key']);
             }));
 
         $result = $this->analyzer->analyze($this->extension, $this->context);
@@ -324,7 +324,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $analyzer->setAnalyzerSpecificComponents(['custom_param' => 'custom_value']);
 
         $key1 = $analyzer->generateCacheKeyPublic($this->extension, $this->context);
-        
+
         $analyzer->setAnalyzerSpecificComponents(['custom_param' => 'different_value']);
         $key2 = $analyzer->generateCacheKeyPublic($this->extension, $this->context);
 
@@ -349,7 +349,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['enabled' => true]]
+            ['resultCache' => ['enabled' => true]],
         );
         $this->assertTrue($this->analyzer->isCacheEnabledPublic($contextEnabled));
 
@@ -357,7 +357,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['enabled' => false]]
+            ['resultCache' => ['enabled' => false]],
         );
         $this->assertFalse($this->analyzer->isCacheEnabledPublic($contextDisabled));
     }
@@ -376,7 +376,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['ttl' => 7200]]
+            ['resultCache' => ['ttl' => 7200]],
         );
         $this->assertEquals(7200, $this->analyzer->getCacheTtlPublic($customContext));
     }
@@ -501,14 +501,14 @@ class AbstractCachedAnalyzerTest extends TestCase
         try {
             $phpFile = $tempDir . '/test.php';
             file_put_contents($phpFile, '<?php echo "test"; ?>');
-            
+
             sleep(1); // Ensure different modification time
-            
+
             $txtFile = $tempDir . '/test.txt';
             file_put_contents($txtFile, 'text content');
 
             $mtime = $this->analyzer->getDirectoryModificationTimePublic($tempDir);
-            
+
             $this->assertGreaterThan(0, $mtime);
             $this->assertGreaterThanOrEqual(filemtime($phpFile), $mtime);
         } finally {
@@ -549,9 +549,9 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->logger->expects($this->once())
             ->method('debug')
             ->with('Cached result expired', $this->callback(function ($context) {
-                return $context['analyzer'] === 'test_cached_analyzer' &&
-                       $context['extension'] === 'test_extension' &&
-                       isset($context['age']) && $context['age'] > 3600;
+                return 'test_cached_analyzer' === $context['analyzer']
+                       && 'test_extension' === $context['extension']
+                       && isset($context['age']) && $context['age'] > 3600;
             }));
 
         $isValid = $this->analyzer->isValidCachedResultPublic($cachedData, $this->extension, $this->context);
@@ -618,7 +618,7 @@ class TestCachedAnalyzer extends AbstractCachedAnalyzer
     {
         $this->doAnalyzeCalled = true;
 
-        if ($this->exceptionToThrow !== null) {
+        if (null !== $this->exceptionToThrow) {
             throw $this->exceptionToThrow;
         }
 

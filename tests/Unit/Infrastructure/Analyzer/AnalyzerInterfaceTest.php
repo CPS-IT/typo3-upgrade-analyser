@@ -15,7 +15,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -27,22 +26,22 @@ class AnalyzerInterfaceTest extends TestCase
     public function testInterfaceDefinesRequiredMethods(): void
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
-        
+
         self::assertTrue($reflection->isInterface());
-        
+
         $expectedMethods = [
             'getName',
-            'getDescription', 
+            'getDescription',
             'supports',
             'analyze',
             'getRequiredTools',
-            'hasRequiredTools'
+            'hasRequiredTools',
         ];
-        
+
         foreach ($expectedMethods as $methodName) {
             self::assertTrue(
                 $reflection->hasMethod($methodName),
-                sprintf('Method %s should be defined in AnalyzerInterface', $methodName)
+                \sprintf('Method %s should be defined in AnalyzerInterface', $methodName),
             );
         }
     }
@@ -51,7 +50,7 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('getName');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('string', $method->getReturnType()?->getName());
         self::assertCount(0, $method->getParameters());
@@ -61,7 +60,7 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('getDescription');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('string', $method->getReturnType()?->getName());
         self::assertCount(0, $method->getParameters());
@@ -71,11 +70,11 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('supports');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('bool', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('extension', $parameter->getName());
         self::assertSame(Extension::class, $parameter->getType()?->getName());
@@ -85,15 +84,15 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('analyze');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame(AnalysisResult::class, $method->getReturnType()?->getName());
         self::assertCount(2, $method->getParameters());
-        
+
         $extensionParam = $method->getParameters()[0];
         self::assertSame('extension', $extensionParam->getName());
         self::assertSame(Extension::class, $extensionParam->getType()?->getName());
-        
+
         $contextParam = $method->getParameters()[1];
         self::assertSame('context', $contextParam->getName());
         self::assertSame(AnalysisContext::class, $contextParam->getType()?->getName());
@@ -103,7 +102,7 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('getRequiredTools');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('array', $method->getReturnType()?->getName());
         self::assertCount(0, $method->getParameters());
@@ -113,7 +112,7 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('hasRequiredTools');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('bool', $method->getReturnType()?->getName());
         self::assertCount(0, $method->getParameters());
@@ -124,7 +123,7 @@ class AnalyzerInterfaceTest extends TestCase
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('analyze');
         $docComment = $method->getDocComment();
-        
+
         self::assertIsString($docComment);
         self::assertStringContainsString('@throws', $docComment);
         self::assertStringContainsString('AnalyzerException', $docComment);
@@ -135,7 +134,7 @@ class AnalyzerInterfaceTest extends TestCase
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $method = $reflection->getMethod('getRequiredTools');
         $docComment = $method->getDocComment();
-        
+
         self::assertIsString($docComment);
         self::assertStringContainsString('@return', $docComment);
         self::assertStringContainsString('array<string>', $docComment);
@@ -145,7 +144,7 @@ class AnalyzerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(AnalyzerInterface::class);
         $docComment = $reflection->getDocComment();
-        
+
         self::assertIsString($docComment);
         self::assertStringContainsString('Interface for all analyzers', $docComment);
     }
@@ -153,7 +152,7 @@ class AnalyzerInterfaceTest extends TestCase
     public function testCanCreateMockImplementation(): void
     {
         $mock = $this->createMock(AnalyzerInterface::class);
-        
+
         self::assertInstanceOf(AnalyzerInterface::class, $mock);
     }
 }

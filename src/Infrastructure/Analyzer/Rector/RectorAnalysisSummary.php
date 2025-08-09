@@ -29,8 +29,9 @@ class RectorAnalysisSummary
         private readonly array $fileBreakdown,
         private readonly array $typeBreakdown,
         private readonly float $complexityScore,
-        private readonly int $estimatedFixTime
-    ) {}
+        private readonly int $estimatedFixTime,
+    ) {
+    }
 
     public function getTotalFindings(): int
     {
@@ -147,7 +148,7 @@ class RectorAnalysisSummary
      */
     public function getFileImpactPercentage(): float
     {
-        if ($this->totalFiles === 0) {
+        if (0 === $this->totalFiles) {
             return 0.0;
         }
 
@@ -163,7 +164,8 @@ class RectorAnalysisSummary
     {
         $breakdown = $this->fileBreakdown;
         arsort($breakdown);
-        return array_slice($breakdown, 0, $limit, true);
+
+        return \array_slice($breakdown, 0, $limit, true);
     }
 
     /**
@@ -175,7 +177,8 @@ class RectorAnalysisSummary
     {
         $breakdown = $this->ruleBreakdown;
         arsort($breakdown);
-        return array_slice($breakdown, 0, $limit, true);
+
+        return \array_slice($breakdown, 0, $limit, true);
     }
 
     /**
@@ -238,7 +241,7 @@ class RectorAnalysisSummary
      */
     public function getSummaryText(): string
     {
-        if ($this->totalFindings === 0) {
+        if (0 === $this->totalFindings) {
             return 'No issues found - extension appears ready for upgrade';
         }
 

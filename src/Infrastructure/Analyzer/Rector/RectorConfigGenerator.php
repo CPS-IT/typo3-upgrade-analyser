@@ -25,7 +25,7 @@ class RectorConfigGenerator
     public function __construct(
         private readonly RectorRuleRegistry $ruleRegistry,
         private readonly string $tempDirectory,
-        private readonly Filesystem $filesystem = new Filesystem()
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
         $this->ensureTempDirectoryExists();
     }
@@ -37,7 +37,7 @@ class RectorConfigGenerator
     {
         $sets = $this->selectSetsForVersion(
             $context->getCurrentVersion(),
-            $context->getTargetVersion()
+            $context->getTargetVersion(),
         );
 
         $configArray = $this->buildConfigArray(
@@ -48,7 +48,7 @@ class RectorConfigGenerator
                 'skip_files' => $this->getSkipPatterns($extension),
                 'parallel' => true,
                 'cache_directory' => $this->tempDirectory . '/cache',
-            ]
+            ],
         );
 
         return $this->writeConfigFile($configArray, $extension->getKey());
@@ -64,7 +64,7 @@ class RectorConfigGenerator
         $configArray = $this->buildConfigArray(
             $setNames,
             $targetPath,
-            ['php_version' => '8.1']
+            ['php_version' => '8.1'],
         );
 
         return $this->writeConfigFile($configArray, 'minimal_' . md5($targetPath));
@@ -87,7 +87,7 @@ class RectorConfigGenerator
             [
                 'php_version' => $this->getPhpVersion($context),
                 'skip_files' => $this->getSkipPatterns($extension),
-            ]
+            ],
         );
 
         return $this->writeConfigFile($configArray, $extension->getKey() . '_' . $category);
@@ -120,8 +120,9 @@ class RectorConfigGenerator
     /**
      * Build configuration array for Rector.
      *
-     * @param array<string> $sets
+     * @param array<string>        $sets
      * @param array<string, mixed> $options
+     *
      * @return array<string, mixed>
      */
     private function buildConfigArray(array $sets, string $targetPath, array $options): array
@@ -165,11 +166,7 @@ class RectorConfigGenerator
         try {
             $this->filesystem->dumpFile($filePath, $configContent);
         } catch (\Exception $e) {
-            throw new AnalyzerException(
-                "Failed to write Rector config file: {$e->getMessage()}",
-                'RectorConfigGenerator',
-                $e
-            );
+            throw new AnalyzerException("Failed to write Rector config file: {$e->getMessage()}", 'RectorConfigGenerator', $e);
         }
 
         return $filePath;
@@ -255,7 +252,7 @@ class RectorConfigGenerator
     {
         // Default PHP version mappings for TYPO3 versions
         $targetVersion = $context->getTargetVersion();
-        
+
         if ($targetVersion->getMajor() >= 13) {
             return '8.2'; // TYPO3 13+ requires PHP 8.2+
         } elseif ($targetVersion->getMajor() >= 12) {
@@ -279,18 +276,18 @@ class RectorConfigGenerator
             '*/var/*',
             '*/public/*',
             '*/.Build/*',
-            
+
             // Documentation
             '*/Documentation/*',
             '*/doc/*',
-            
+
             // Configuration files that might contain legacy patterns intentionally
             '*/Configuration/TCA/Overrides/*',
         ];
 
         // Only skip test directories for non-test extensions
         // This allows test fixtures to be processed
-        if ($extension->getKey() !== 'test_extension') {
+        if ('test_extension' !== $extension->getKey()) {
             $skipPatterns[] = '*/Tests/*';
             $skipPatterns[] = '*/tests/*';
         }
@@ -312,7 +309,7 @@ class RectorConfigGenerator
     {
         // For system extensions, we want to analyze the actual extension path
         // For third-party extensions, use the extension directory
-        
+
         if ($extension->hasComposerName() && str_contains($extension->getComposerName(), 'typo3/cms-')) {
             // System extension - analyze vendor path
             return 'vendor/' . $extension->getComposerName();
@@ -329,13 +326,9 @@ class RectorConfigGenerator
     {
         if (!$this->filesystem->exists($this->tempDirectory)) {
             try {
-                $this->filesystem->mkdir($this->tempDirectory, 0755);
+                $this->filesystem->mkdir($this->tempDirectory, 0o755);
             } catch (\Exception $e) {
-                throw new AnalyzerException(
-                    "Failed to create temp directory: {$this->tempDirectory}",
-                    'RectorConfigGenerator',
-                    $e
-                );
+                throw new AnalyzerException("Failed to create temp directory: {$this->tempDirectory}", 'RectorConfigGenerator', $e);
             }
         }
     }

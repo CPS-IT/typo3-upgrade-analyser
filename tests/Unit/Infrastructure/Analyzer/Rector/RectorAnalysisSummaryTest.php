@@ -38,7 +38,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: $fileBreakdown,
             typeBreakdown: $typeBreakdown,
             complexityScore: 6.5,
-            estimatedFixTime: 240
+            estimatedFixTime: 240,
         );
 
         $this->assertEquals(8, $summary->getTotalFindings());
@@ -69,7 +69,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 4.0,
-            estimatedFixTime: 180 // 3 hours in minutes
+            estimatedFixTime: 180, // 3 hours in minutes
         );
 
         $this->assertEquals(3.0, $summary->getEstimatedFixTimeHours());
@@ -89,7 +89,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 5.0,
-            estimatedFixTime: 120
+            estimatedFixTime: 120,
         );
 
         $withoutBreaking = new RectorAnalysisSummary(
@@ -104,7 +104,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 3.0,
-            estimatedFixTime: 60
+            estimatedFixTime: 60,
         );
 
         $this->assertTrue($withBreaking->hasBreakingChanges());
@@ -125,7 +125,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 4.0,
-            estimatedFixTime: 90
+            estimatedFixTime: 90,
         );
 
         $withoutDeprecations = new RectorAnalysisSummary(
@@ -140,7 +140,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 2.0,
-            estimatedFixTime: 30
+            estimatedFixTime: 30,
         );
 
         $this->assertTrue($withDeprecations->hasDeprecations());
@@ -161,7 +161,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 5.5,
-            estimatedFixTime: 150
+            estimatedFixTime: 150,
         );
 
         $this->assertEquals(30.0, $summary->getFileImpactPercentage());
@@ -181,7 +181,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 0.0,
-            estimatedFixTime: 0
+            estimatedFixTime: 0,
         );
 
         $this->assertEquals(0.0, $summary->getFileImpactPercentage());
@@ -201,11 +201,11 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 6.0,
-            estimatedFixTime: 200
+            estimatedFixTime: 200,
         );
 
         $distribution = $summary->getSeverityDistribution();
-        
+
         $expected = [
             'critical' => 2,
             'warning' => 4,
@@ -231,7 +231,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 0.0,
-            estimatedFixTime: 0
+            estimatedFixTime: 0,
         );
 
         $this->assertEquals(10.0, $noIssues->getUpgradeReadinessScore());
@@ -249,7 +249,7 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 8.0,
-            estimatedFixTime: 600
+            estimatedFixTime: 600,
         );
 
         $score = $manyCritical->getUpgradeReadinessScore();
@@ -278,11 +278,11 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: $fileBreakdown,
             typeBreakdown: [],
             complexityScore: 7.0,
-            estimatedFixTime: 300
+            estimatedFixTime: 300,
         );
 
         $top2 = $summary->getTopIssuesByFile(2);
-        
+
         $this->assertEquals(['File1.php' => 8, 'File2.php' => 5], $top2);
     }
 
@@ -307,11 +307,11 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 6.5,
-            estimatedFixTime: 400
+            estimatedFixTime: 400,
         );
 
         $top3 = $summary->getTopIssuesByRule(3);
-        
+
         $this->assertEquals(['Rule1' => 10, 'Rule2' => 7, 'Rule3' => 2], $top3);
     }
 
@@ -329,11 +329,11 @@ class RectorAnalysisSummaryTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 5.5,
-            estimatedFixTime: 180
+            estimatedFixTime: 180,
         );
 
         $summaryText = $summary->getSummaryText();
-        
+
         $this->assertStringContainsString('2 critical issues', $summaryText);
         $this->assertStringContainsString('4 deprecations', $summaryText);
         $this->assertStringContainsString('2 improvements', $summaryText);

@@ -45,13 +45,13 @@ class AnalyzeCommandTest extends TestCase
         $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
         $this->configService = $this->createMock(ConfigurationServiceInterface::class);
         $this->reportService = $this->createMock(ReportService::class);
-        
+
         $this->command = new AnalyzeCommand(
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
             $this->configService,
-            $this->reportService
+            $this->reportService,
         );
 
         $application = new Application();
@@ -66,7 +66,7 @@ class AnalyzeCommandTest extends TestCase
         self::assertEquals('Analyze a TYPO3 installation for upgrade readiness', $this->command->getDescription());
 
         $definition = $this->command->getDefinition();
-        
+
         self::assertTrue($definition->hasOption('config'));
         self::assertTrue($definition->hasOption('analyzers'));
     }
@@ -101,7 +101,7 @@ class AnalyzeCommandTest extends TestCase
 
     public function testExecuteWithValidConfiguration(): void
     {
-        // Create a temporary directory with TYPO3 indicators  
+        // Create a temporary directory with TYPO3 indicators
         $tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($tempDir);
         mkdir($tempDir . '/typo3conf');
@@ -116,15 +116,15 @@ class AnalyzeCommandTest extends TestCase
             $this->configService->expects(self::any())
                 ->method('withConfigPath')
                 ->willReturn($this->configService);
-                
+
             $this->configService->expects(self::any())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
-            
+
             $this->configService->expects(self::any())
                 ->method('getTargetVersion')
                 ->willReturn('12.4');
-                
+
             $this->configService->expects(self::any())
                 ->method('get')
                 ->willReturnMap([
@@ -166,7 +166,7 @@ class AnalyzeCommandTest extends TestCase
 
         // Check default config path
         self::assertEquals('typo3-analyzer.yaml', $definition->getOption('config')->getDefault());
-        
+
         // Check that analyzers option has no default (empty array)
         self::assertEquals([], $definition->getOption('analyzers')->getDefault());
     }

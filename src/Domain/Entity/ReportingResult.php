@@ -50,7 +50,7 @@ class ReportingResult implements ResultInterface
 
     public function isSuccessful(): bool
     {
-        return $this->error === null;
+        return null === $this->error;
     }
 
     public function getError(): ?string
@@ -75,7 +75,7 @@ class ReportingResult implements ResultInterface
 
     public function hasValue(string $key): bool
     {
-        return array_key_exists($key, $this->data);
+        return \array_key_exists($key, $this->data);
     }
 
     public function setValue(string $key, mixed $value): void

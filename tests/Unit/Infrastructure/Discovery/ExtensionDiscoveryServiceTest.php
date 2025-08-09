@@ -772,7 +772,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     {
         // Create PackageStates.php with unbalanced brackets
         $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
-        mkdir(dirname($packageStatesPath), 0o755, true);
+        mkdir(\dirname($packageStatesPath), 0o755, true);
         file_put_contents($packageStatesPath, '<?php return ["packages" => ["news" => ["state" => "active"]];');
 
         $this->logger->expects($this->once())
@@ -794,7 +794,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     {
         // Create PackageStates.php without PHP opening tag
         $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
-        mkdir(dirname($packageStatesPath), 0o755, true);
+        mkdir(\dirname($packageStatesPath), 0o755, true);
         file_put_contents($packageStatesPath, 'return ["packages" => []];');
 
         $this->logger->expects($this->once())
@@ -816,11 +816,11 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     {
         // Create PackageStates.php that cannot be read
         $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
-        mkdir(dirname($packageStatesPath), 0o755, true);
+        mkdir(\dirname($packageStatesPath), 0o755, true);
         touch($packageStatesPath);
         // Note: Cannot actually make file unreadable in test environment reliably
         // So we'll simulate by creating a valid structure but with file_get_contents failure
-        
+
         // Instead, test with a file that has proper structure but returns false for file_get_contents
         // by creating a directory with the same name
         unlink($packageStatesPath);
@@ -963,8 +963,8 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->logger->expects($this->once())
             ->method('warning')
             ->with('Failed to create extension from composer data', $this->callback(function ($context) {
-                return $context['package_name'] === 'vendor/problematic-extension'
-                    && is_string($context['error'])
+                return 'vendor/problematic-extension' === $context['package_name']
+                    && \is_string($context['error'])
                     && str_contains($context['error'], 'Invalid version format');
             }));
 

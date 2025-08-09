@@ -52,11 +52,7 @@ class HttpClientService implements HttpClientServiceInterface
                 'error' => $e->getMessage(),
             ]);
 
-            throw new HttpClientException(
-                sprintf('HTTP %s request to %s failed: %s', $method, $url, $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new HttpClientException(\sprintf('HTTP %s request to %s failed: %s', $method, $url, $e->getMessage()), $e->getCode(), $e);
         }
     }
 
@@ -74,7 +70,7 @@ class HttpClientService implements HttpClientServiceInterface
         string $method,
         string $url,
         ?string $token = null,
-        array $options = []
+        array $options = [],
     ): ResponseInterface {
         if ($token) {
             $options['headers'] = array_merge($options['headers'] ?? [], [
@@ -90,7 +86,7 @@ class HttpClientService implements HttpClientServiceInterface
         string $url,
         array $options = [],
         int $maxRetries = 3,
-        int $retryDelay = 1
+        int $retryDelay = 1,
     ): ResponseInterface {
         $attempt = 0;
         $lastException = null;
@@ -98,10 +94,10 @@ class HttpClientService implements HttpClientServiceInterface
         while ($attempt <= $maxRetries) {
             try {
                 $response = $this->request($method, $url, $options);
-                
+
                 // Check for rate limiting
-                if ($response->getStatusCode() === 429) {
-                    $attempt++;
+                if (429 === $response->getStatusCode()) {
+                    ++$attempt;
                     if ($attempt <= $maxRetries) {
                         $this->logger->warning('Rate limited, retrying', [
                             'attempt' => $attempt,
@@ -116,10 +112,10 @@ class HttpClientService implements HttpClientServiceInterface
                 return $response;
             } catch (HttpClientException $e) {
                 $lastException = $e;
-                
+
                 // Only retry on certain HTTP errors
                 if (str_contains($e->getMessage(), '429') || str_contains($e->getMessage(), '503')) {
-                    $attempt++;
+                    ++$attempt;
                     if ($attempt <= $maxRetries) {
                         $this->logger->warning('HTTP error, retrying', [
                             'attempt' => $attempt,
@@ -131,7 +127,7 @@ class HttpClientService implements HttpClientServiceInterface
                         continue;
                     }
                 }
-                
+
                 throw $e;
             }
         }
@@ -149,7 +145,7 @@ class HttpClientService implements HttpClientServiceInterface
         // Remove sensitive headers
         if (isset($sanitized['headers'])) {
             foreach ($sanitized['headers'] as $key => $value) {
-                if (stripos($key, 'authorization') !== false || stripos($key, 'token') !== false) {
+                if (false !== stripos($key, 'authorization') || false !== stripos($key, 'token')) {
                     $sanitized['headers'][$key] = '***';
                 }
             }

@@ -50,7 +50,7 @@ class PackagistClientTest extends TestCase
             $this->httpClient,
             $this->logger,
             $this->constraintChecker,
-            $this->urlHandler
+            $this->urlHandler,
         );
     }
 
@@ -91,14 +91,14 @@ class PackagistClientTest extends TestCase
             ->willReturn($this->response);
 
         $this->constraintChecker->method('findTypo3Requirements')
-            ->willReturnCallback(function(array $requirements) {
+            ->willReturnCallback(function (array $requirements) {
                 return $requirements; // Return the requirements as-is for this test
             });
 
         $this->constraintChecker->method('isConstraintCompatible')
-            ->willReturnCallback(function(string $constraint, Version $targetVersion) {
-                // Mock logic: ^12.0 is compatible with 12.4.0, ^11.0 is not  
-                return $constraint === '^12.0';
+            ->willReturnCallback(function (string $constraint, Version $targetVersion) {
+                // Mock logic: ^12.0 is compatible with 12.4.0, ^11.0 is not
+                return '^12.0' === $constraint;
             });
 
         // Act
@@ -138,7 +138,7 @@ class PackagistClientTest extends TestCase
         $this->constraintChecker->method('findTypo3Requirements')
             ->willReturnOnConsecutiveCalls(
                 ['typo3/cms-core' => '^12.0'],
-                ['typo3/cms-core' => '^11.0']
+                ['typo3/cms-core' => '^11.0'],
             );
 
         $this->constraintChecker->method('isConstraintCompatible')
@@ -557,7 +557,7 @@ class PackagistClientTest extends TestCase
 
             $constraintChecker->method('findTypo3Requirements')
                 ->willReturn(['typo3/cms-core' => $constraint]);
-            
+
             $constraintChecker->method('isConstraintCompatible')
                 ->with($constraint, $targetVersion)
                 ->willReturn($expected);

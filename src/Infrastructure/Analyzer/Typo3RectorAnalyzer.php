@@ -15,7 +15,6 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
@@ -34,7 +33,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         private readonly RectorExecutor $rectorExecutor,
         private readonly RectorConfigGenerator $configGenerator,
         private readonly RectorResultParser $resultParser,
-        private readonly RectorRuleRegistry $ruleRegistry
+        private readonly RectorRuleRegistry $ruleRegistry,
     ) {
         parent::__construct($cacheService, $logger);
     }
@@ -67,11 +66,12 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             $this->logger->warning('Rector binary not available', [
                 'analyzer' => $this->getName(),
             ]);
+
             return false;
         }
 
         // Check if PHP is available (should always be true since we're running in PHP)
-        return function_exists('exec');
+        return \function_exists('exec');
     }
 
     protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
@@ -87,47 +87,42 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         try {
             // Get extension path for analysis
             $extensionPath = $this->getExtensionPath($extension, $context);
-            
+
             // Generate Rector configuration
             $configPath = $this->generateRectorConfig($extension, $context, $extensionPath);
-            
+
             // Execute Rector analysis
             $executionResult = $this->executeRectorAnalysis($configPath, $extensionPath);
-            
+
             // Parse results into structured data
             $summary = $this->resultParser->aggregateFindings($executionResult->getFindings());
-            
+
             // Add metrics to result
             $this->addMetricsToResult($result, $summary, $executionResult);
-            
+
             // Calculate risk score
             $riskScore = $this->calculateRiskScore($summary);
             $result->setRiskScore($riskScore);
-            
+
             // Generate recommendations
             $recommendations = $this->generateRecommendations($summary, $context);
             foreach ($recommendations as $recommendation) {
                 $result->addRecommendation($recommendation);
             }
-            
+
             $this->logger->info('TYPO3 Rector analysis completed', [
                 'extension' => $extension->getKey(),
                 'findings_count' => $summary->getTotalFindings(),
                 'risk_score' => $riskScore,
                 'execution_time' => $executionResult->getExecutionTime(),
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('TYPO3 Rector analysis failed', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
 
-            throw new AnalyzerException(
-                "TYPO3 Rector analysis failed for extension {$extension->getKey()}: {$e->getMessage()}",
-                $this->getName(),
-                $e
-            );
+            throw new AnalyzerException("TYPO3 Rector analysis failed for extension {$extension->getKey()}: {$e->getMessage()}", $this->getName(), $e);
         } finally {
             // Clean up generated configuration files
             $this->configGenerator->cleanup();
@@ -139,24 +134,24 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array
     {
         $components = [];
-        
+
         // Include version information in cache key
         $components['current_version'] = $context->getCurrentVersion()->toString();
         $components['target_version'] = $context->getTargetVersion()->toString();
-        
+
         // Include Rector version if available
         $rectorVersion = $this->rectorExecutor->getVersion();
         if ($rectorVersion) {
             $components['rector_version'] = $rectorVersion;
         }
-        
+
         // Include set count to invalidate cache when sets change
         $sets = $this->ruleRegistry->getSetsForVersionUpgrade(
             $context->getCurrentVersion(),
-            $context->getTargetVersion()
+            $context->getTargetVersion(),
         );
-        $components['set_count'] = count($sets);
-        
+        $components['set_count'] = \count($sets);
+
         return $components;
     }
 
@@ -171,7 +166,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     /**
      * Execute Rector analysis with configuration.
      */
-    private function executeRectorAnalysis(string $configPath, string $extensionPath): \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutionResult
+    private function executeRectorAnalysis(string $configPath, string $extensionPath): Rector\RectorExecutionResult
     {
         $options = [
             'memory_limit' => '1G',
@@ -188,14 +183,15 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     {
         $installationPath = $context->getConfigurationValue('installation_path', '');
         $customPaths = $context->getConfigurationValue('custom_paths', []);
-        
+
         if (empty($installationPath)) {
             $this->logger->warning('No installation path available - using fallback paths', [
-                'extension' => $extension->getKey()
+                'extension' => $extension->getKey(),
             ]);
+
             return 'typo3conf/ext/' . $extension->getKey();
         }
-        
+
         // Convert relative path to absolute path
         if (!str_starts_with($installationPath, '/') && !str_starts_with($installationPath, getcwd())) {
             $resolvedPath = realpath(getcwd() . '/' . $installationPath);
@@ -203,11 +199,11 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
                 $installationPath = $resolvedPath;
             }
         }
-        
+
         // All discovered extensions are custom extensions (core extensions are filtered out during discovery)
         // Custom extensions always go to typo3conf/ext/ in TYPO3 11+ regardless of composer management
         $typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';
-        
+
         // Handle direct extension path (for test fixtures)
         if ($typo3confDir === $extension->getKey()) {
             $extensionPath = $installationPath . '/' . $typo3confDir;
@@ -215,7 +211,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             // Standard typo3conf/ext structure for all custom extensions
             $extensionPath = $installationPath . '/' . $typo3confDir . '/ext/' . $extension->getKey();
         }
-        
+
         $this->logger->info('Rector analyzer resolved extension path', [
             'extension' => $extension->getKey(),
             'extension_type' => $extension->getType(),
@@ -225,7 +221,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             'resolved_path' => $extensionPath,
             'path_exists' => is_dir($extensionPath),
         ]);
-        
+
         return $extensionPath;
     }
 
@@ -234,8 +230,8 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
      */
     private function addMetricsToResult(
         AnalysisResult $result,
-        \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary $summary,
-        \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutionResult $executionResult
+        Rector\RectorAnalysisSummary $summary,
+        Rector\RectorExecutionResult $executionResult,
     ): void {
         // Core metrics
         $result->addMetric('total_findings', $summary->getTotalFindings());
@@ -280,12 +276,12 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     /**
      * Calculate risk score based on analysis summary.
      */
-    private function calculateRiskScore(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary $summary): float
+    private function calculateRiskScore(Rector\RectorAnalysisSummary $summary): float
     {
         $baseRisk = 1.0;
 
         // If no findings, return low risk
-        if ($summary->getTotalFindings() === 0) {
+        if (0 === $summary->getTotalFindings()) {
             return $baseRisk;
         }
 
@@ -326,49 +322,50 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
      * @return array<string>
      */
     private function generateRecommendations(
-        \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary $summary,
-        AnalysisContext $context
+        Rector\RectorAnalysisSummary $summary,
+        AnalysisContext $context,
     ): array {
         $recommendations = [];
 
-        if ($summary->getTotalFindings() === 0) {
+        if (0 === $summary->getTotalFindings()) {
             $recommendations[] = 'No deprecated code patterns detected - extension appears ready for TYPO3 ' . $context->getTargetVersion()->toString();
+
             return $recommendations;
         }
 
         // Critical issues recommendations
         if ($summary->hasBreakingChanges()) {
-            $recommendations[] = sprintf(
+            $recommendations[] = \sprintf(
                 'Critical: %d breaking changes must be fixed before upgrading to TYPO3 %s',
                 $summary->getCriticalIssues(),
-                $context->getTargetVersion()->toString()
+                $context->getTargetVersion()->toString(),
             );
         }
 
         // Deprecation recommendations
         if ($summary->hasDeprecations()) {
-            $recommendations[] = sprintf(
+            $recommendations[] = \sprintf(
                 'Update %d deprecated code patterns to ensure compatibility with future TYPO3 versions',
-                $summary->getWarnings()
+                $summary->getWarnings(),
             );
         }
 
         // Effort-based recommendations
         $effortHours = $summary->getEstimatedFixTimeHours();
         if ($effortHours > 16) {
-            $recommendations[] = sprintf(
+            $recommendations[] = \sprintf(
                 'Large refactoring effort required (~%.1f hours). Consider staged implementation over multiple releases',
-                $effortHours
+                $effortHours,
             );
         } elseif ($effortHours > 8) {
-            $recommendations[] = sprintf(
+            $recommendations[] = \sprintf(
                 'Significant refactoring needed (~%.1f hours). Plan dedicated development time for upgrade',
-                $effortHours
+                $effortHours,
             );
         } elseif ($effortHours > 2) {
-            $recommendations[] = sprintf(
+            $recommendations[] = \sprintf(
                 'Moderate changes required (~%.1f hours). Review and test thoroughly',
-                $effortHours
+                $effortHours,
             );
         }
 
@@ -392,11 +389,11 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             if ($count > 5) { // Only mention rules with significant occurrences
                 // For individual rules found in findings, we can still provide basic description
                 $ruleDescription = $this->getBasicRuleDescription($rule);
-                $recommendations[] = sprintf(
+                $recommendations[] = \sprintf(
                     'Focus on %s (%d occurrences): %s',
                     $rule,
                     $count,
-                    $ruleDescription
+                    $ruleDescription,
                 );
             }
         }

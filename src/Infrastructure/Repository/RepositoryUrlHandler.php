@@ -24,17 +24,17 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
     {
         // Convert GitHub URLs to HTTPS format
         if (preg_match('#github\.com[:/]([^/]+)/([^/\.]+)#', $url, $matches)) {
-            return sprintf('https://github.com/%s/%s', $matches[1], $matches[2]);
+            return \sprintf('https://github.com/%s/%s', $matches[1], $matches[2]);
         }
 
         // Convert GitLab URLs to HTTPS format
         if (preg_match('#gitlab\.com[:/]([^/]+)/([^/\.]+)#', $url, $matches)) {
-            return sprintf('https://gitlab.com/%s/%s', $matches[1], $matches[2]);
+            return \sprintf('https://gitlab.com/%s/%s', $matches[1], $matches[2]);
         }
 
         // Convert Bitbucket URLs to HTTPS format
         if (preg_match('#bitbucket\.org[:/]([^/]+)/([^/\.]+)#', $url, $matches)) {
-            return sprintf('https://bitbucket.org/%s/%s', $matches[1], $matches[2]);
+            return \sprintf('https://bitbucket.org/%s/%s', $matches[1], $matches[2]);
         }
 
         // Remove .git suffix if present
@@ -51,25 +51,25 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
     public function isGitRepository(string $url): bool
     {
         // URLs ending with .git are definitely Git repositories
-        if (preg_match('/\.git$/', $url) === 1) {
+        if (1 === preg_match('/\.git$/', $url)) {
             return true;
         }
-        
+
         // Check for repository URLs with owner/repo pattern
         if (preg_match('#(github\.com|gitlab\.com|bitbucket\.org)[:/]([^/]+)/([^/\.]+)#', $url)) {
             return true;
         }
-        
+
         // Check for Git protocol URLs
-        if (preg_match('#^(git|ssh)://#', $url) === 1) {
+        if (1 === preg_match('#^(git|ssh)://#', $url)) {
             return true;
         }
-        
+
         // Check for URLs with git subdomain or containing 'git' in domain
-        if (preg_match('#^https?://git\.#', $url) === 1 || preg_match('#^https?://[^/]*\.git\.[^/]*/#', $url) === 1 || preg_match('#^https?://[^/]*git[^/]*\.com/#', $url) === 1) {
+        if (1 === preg_match('#^https?://git\.#', $url) || 1 === preg_match('#^https?://[^/]*\.git\.[^/]*/#', $url) || 1 === preg_match('#^https?://[^/]*git[^/]*\.com/#', $url)) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -88,8 +88,8 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
         }
 
         $pathParts = explode('/', trim($parsed['path'], '/'));
-        
-        if (count($pathParts) < 2) {
+
+        if (\count($pathParts) < 2) {
             throw new RepositoryUrlException('Repository URL must contain owner and name: ' . $url);
         }
 
@@ -133,7 +133,7 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
 
             // Try to extract path components
             $this->extractRepositoryPath($url);
-            
+
             return true;
         } catch (RepositoryUrlException $e) {
             return false;
@@ -152,21 +152,23 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
             case 'github':
                 return match ($apiType) {
                     'graphql' => 'https://api.github.com/graphql',
-                    'rest' => sprintf('https://api.github.com/repos/%s/%s', $path['owner'], $path['name']),
+                    'rest' => \sprintf('https://api.github.com/repos/%s/%s', $path['owner'], $path['name']),
                     default => throw new RepositoryUrlException('Unsupported API type: ' . $apiType),
                 };
 
             case 'gitlab':
                 // GitLab uses project ID or namespace/project format
-                return sprintf('https://gitlab.com/api/v4/projects/%s%%2F%s', 
-                    urlencode($path['owner']), 
-                    urlencode($path['name'])
+                return \sprintf(
+                    'https://gitlab.com/api/v4/projects/%s%%2F%s',
+                    urlencode($path['owner']),
+                    urlencode($path['name']),
                 );
 
             case 'bitbucket':
-                return sprintf('https://api.bitbucket.org/2.0/repositories/%s/%s', 
-                    $path['owner'], 
-                    $path['name']
+                return \sprintf(
+                    'https://api.bitbucket.org/2.0/repositories/%s/%s',
+                    $path['owner'],
+                    $path['name'],
                 );
 
             default:

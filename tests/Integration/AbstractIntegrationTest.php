@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 
 /**
  * Base class for integration tests with real API access.
@@ -45,11 +45,11 @@ abstract class AbstractIntegrationTest extends TestCase
         // Load environment configuration - try both $_ENV and getenv() for PHPUnit compatibility
         $enableRealApiCallsValue = $_ENV['ENABLE_REAL_API_CALLS'] ?? getenv('ENABLE_REAL_API_CALLS') ?: 'false';
         $this->enableRealApiCalls = \in_array(strtolower($enableRealApiCallsValue), ['true', '1', 'yes', 'on'], true);
-        
+
         // Try both naming conventions for API tokens
         $this->githubToken = $_ENV['GITHUB_API_TOKEN'] ?? $_ENV['GITHUB_TOKEN'] ?? getenv('GITHUB_API_TOKEN') ?: getenv('GITHUB_TOKEN') ?: '';
         $this->terToken = $_ENV['TER_ACCESS_TOKEN'] ?? $_ENV['TER_TOKEN'] ?? getenv('TER_ACCESS_TOKEN') ?: getenv('TER_TOKEN') ?: '';
-        
+
         $this->apiRequestTimeout = (int) (($_ENV['API_REQUEST_TIMEOUT'] ?? getenv('API_REQUEST_TIMEOUT')) ?: 10);
         $this->rateLimitDelay = (int) (($_ENV['API_RATE_LIMIT_DELAY'] ?? getenv('API_RATE_LIMIT_DELAY')) ?: 1);
         $this->cacheDir = $_ENV['INTEGRATION_TEST_CACHE_DIR'] ?? getenv('INTEGRATION_TEST_CACHE_DIR') ?: 'var/integration-test-cache';
@@ -83,33 +83,33 @@ abstract class AbstractIntegrationTest extends TestCase
     private function loadDotEnvFile(): void
     {
         $envFile = __DIR__ . '/../../.env.local';
-        
+
         if (!file_exists($envFile)) {
             return;
         }
-        
+
         $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        
+
         foreach ($lines as $line) {
             $line = trim($line);
-            
+
             // Skip comments and empty lines
             if (empty($line) || str_starts_with($line, '#')) {
                 continue;
             }
-            
+
             // Parse KEY=VALUE format
             if (str_contains($line, '=')) {
                 [$key, $value] = explode('=', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
-                
+
                 // Remove quotes if present
-                if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-                    (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+                if ((str_starts_with($value, '"') && str_ends_with($value, '"'))
+                    || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
                     $value = substr($value, 1, -1);
                 }
-                
+
                 // Always set the environment variable (override existing values)
                 $_ENV[$key] = $value;
                 putenv("$key=$value");
@@ -239,7 +239,7 @@ abstract class AbstractIntegrationTest extends TestCase
     {
         return new \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService(
             $this->createLogger(),
-            $this->cacheDir
+            $this->cacheDir,
         );
     }
 

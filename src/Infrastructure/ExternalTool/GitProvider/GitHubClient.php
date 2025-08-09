@@ -40,10 +40,10 @@ class GitHubClient extends AbstractGitProvider
         if (!$accessToken) {
             $accessToken = EnvironmentLoader::get('GITHUB_API_TOKEN');
         }
-        
+
         parent::__construct($httpClient, $logger, $accessToken);
         $this->urlHandler = $urlHandler;
-        
+
         if (!$accessToken) {
             $this->logger->warning('GITHUB_API_TOKEN not found in environment variables. GitHub API requests may be rate-limited. Set GITHUB_API_TOKEN in .env.local for better performance.');
         } else {
@@ -200,7 +200,7 @@ class GitHubClient extends AbstractGitProvider
 
         // Try multiple default branch names
         $branches = ['main', 'master'];
-        
+
         foreach ($branches as $branch) {
             try {
                 // Use GitHub's REST API to get file content
@@ -237,7 +237,7 @@ class GitHubClient extends AbstractGitProvider
                 throw $e;
             }
         }
-        
+
         // composer.json not found in any default branch - this is normal for many repositories
         return null;
     }

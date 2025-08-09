@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Reporting;
 
 use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
-use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\ReportingResult;
@@ -36,7 +35,7 @@ class ReportService
      * Generate comprehensive report from all phases.
      *
      * @param array<ResultInterface> $results
-     * @param array<string> $formats
+     * @param array<string>          $formats
      */
     public function generateReport(
         Installation $installation,
@@ -44,11 +43,11 @@ class ReportService
         array $results,
         array $formats = ['markdown'],
         string $outputDirectory = 'var/reports/',
-        ?string $targetVersion = null
+        ?string $targetVersion = null,
     ): array {
         $this->logger->info('Starting report generation', [
-            'extensions_count' => count($extensions),
-            'results_count' => count($results),
+            'extensions_count' => \count($extensions),
+            'results_count' => \count($results),
             'formats' => $formats,
         ]);
 
@@ -73,7 +72,7 @@ class ReportService
             } catch (\Throwable $e) {
                 $errorResult = new ReportingResult(
                     "report_{$format}",
-                    "Report generation ({$format})"
+                    "Report generation ({$format})",
                 );
                 $errorResult->setError($e->getMessage());
                 $reportResults[] = $errorResult;
@@ -90,6 +89,7 @@ class ReportService
 
     /**
      * @param array<ResultInterface> $results
+     *
      * @return array<string, array<ResultInterface>>
      */
     private function groupResultsByType(array $results): array
@@ -108,35 +108,35 @@ class ReportService
     }
 
     /**
-     * @param array<Extension> $extensions
+     * @param array<Extension>                      $extensions
      * @param array<string, array<ResultInterface>> $groupedResults
      */
     private function buildReportContext(
         Installation $installation,
         array $extensions,
         array $groupedResults,
-        ?string $targetVersion = null
+        ?string $targetVersion = null,
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
             $discoveryResults,
-            fn(ResultInterface $r) => $r->getId() === 'installation'
+            fn (ResultInterface $r) => 'installation' === $r->getId(),
         );
         $extensionDiscovery = array_filter(
             $discoveryResults,
-            fn(ResultInterface $r) => $r->getId() === 'extensions'
+            fn (ResultInterface $r) => 'extensions' === $r->getId(),
         );
 
         // Analysis results
         $analysisResults = $groupedResults['analysis'];
         $versionAnalysis = array_filter(
             $analysisResults,
-            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'version_availability'
+            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
         $locAnalysis = array_filter(
             $analysisResults,
-            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'lines_of_code'
+            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
         );
 
         // Build detailed extension data with analysis results
@@ -144,7 +144,7 @@ class ReportService
         foreach ($extensions as $extension) {
             $extensionResults = array_filter(
                 $analysisResults,
-                fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey()
+                fn (ResultInterface $r) => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
             );
 
             $extensionData[] = [
@@ -184,7 +184,7 @@ class ReportService
     {
         $versionResult = array_filter(
             $results,
-            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'version_availability'
+            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
 
         if (empty($versionResult)) {
@@ -214,7 +214,7 @@ class ReportService
     {
         $locResult = array_filter(
             $results,
-            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'lines_of_code'
+            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
         );
 
         if (empty($locResult)) {
@@ -248,7 +248,7 @@ class ReportService
     {
         $rectorResult = array_filter(
             $results,
-            fn(ResultInterface $r) => $r instanceof AnalysisResult && $r->getAnalyzerName() === 'typo3_rector'
+            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'typo3_rector' === $r->getAnalyzerName(),
         );
 
         if (empty($rectorResult)) {
@@ -308,7 +308,7 @@ class ReportService
             ];
         }
 
-        $avgRisk = array_sum($riskScores) / count($riskScores);
+        $avgRisk = array_sum($riskScores) / \count($riskScores);
         $maxRisk = max($riskScores);
 
         return [
@@ -324,7 +324,7 @@ class ReportService
      */
     private function calculateOverallStatistics(array $extensionData): array
     {
-        $total = count($extensionData);
+        $total = \count($extensionData);
         $riskLevels = ['low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0, 'unknown' => 0];
         $availabilityStats = [
             'ter_available' => 0,
@@ -335,21 +335,21 @@ class ReportService
 
         foreach ($extensionData as $data) {
             $riskSummary = $data['risk_summary'];
-            $riskLevels[$riskSummary['risk_level']]++;
+            ++$riskLevels[$riskSummary['risk_level']];
 
             $versionAnalysis = $data['version_analysis'];
             if ($versionAnalysis) {
                 if ($versionAnalysis['ter_available']) {
-                    $availabilityStats['ter_available']++;
+                    ++$availabilityStats['ter_available'];
                 }
                 if ($versionAnalysis['packagist_available']) {
-                    $availabilityStats['packagist_available']++;
+                    ++$availabilityStats['packagist_available'];
                 }
                 if ($versionAnalysis['git_available']) {
-                    $availabilityStats['git_available']++;
+                    ++$availabilityStats['git_available'];
                 }
                 if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && !$versionAnalysis['git_available']) {
-                    $availabilityStats['no_availability']++;
+                    ++$availabilityStats['no_availability'];
                 }
             }
         }
@@ -368,28 +368,28 @@ class ReportService
 
         // Ensure output directory exists
         if (!is_dir($outputPath)) {
-            mkdir($outputPath, 0755, true);
+            mkdir($outputPath, 0o755, true);
         }
 
         $result = new ReportingResult(
             "report_{$format}",
-            "Detailed report ({$format})"
+            "Detailed report ({$format})",
         );
 
         $result->setValue('format', $format);
 
         // Generate main report
         $mainReportFiles = $this->generateMainReport($format, $context, $outputPath);
-        
+
         // Generate individual extension reports
         $extensionReportFiles = $this->generateExtensionReports($format, $context, $outputPath);
-        
+
         // Combine all generated files
         $allFiles = array_merge($mainReportFiles, $extensionReportFiles);
-        
+
         $result->setValue('output_files', $allFiles);
         $result->setValue('main_report', $mainReportFiles[0] ?? null);
-        $result->setValue('extension_reports_count', count($extensionReportFiles));
+        $result->setValue('extension_reports_count', \count($extensionReportFiles));
 
         return $result;
     }
@@ -397,7 +397,7 @@ class ReportService
     private function generateMainReport(string $format, array $context, string $outputPath): array
     {
         $files = [];
-        
+
         switch ($format) {
             case 'markdown':
                 $filename = $outputPath . 'analysis-report.md';
@@ -425,7 +425,7 @@ class ReportService
         $files[] = [
             'type' => 'main_report',
             'path' => $filename,
-            'size' => filesize($filename)
+            'size' => filesize($filename),
         ];
 
         return $files;
@@ -434,16 +434,16 @@ class ReportService
     private function generateExtensionReports(string $format, array $context, string $outputPath): array
     {
         $files = [];
-        
+
         // Create extensions subdirectory
         $extensionsPath = $outputPath . 'extensions/';
         if (!is_dir($extensionsPath)) {
-            mkdir($extensionsPath, 0755, true);
+            mkdir($extensionsPath, 0o755, true);
         }
 
         foreach ($context['extension_data'] as $extensionData) {
             $extensionKey = $extensionData['extension']->getKey();
-            
+
             // Create context for individual extension
             $extensionContext = [
                 'installation' => $context['installation'],
@@ -478,7 +478,7 @@ class ReportService
                 'type' => 'extension_report',
                 'extension' => $extensionKey,
                 'path' => $filename,
-                'size' => filesize($filename)
+                'size' => filesize($filename),
             ];
         }
 

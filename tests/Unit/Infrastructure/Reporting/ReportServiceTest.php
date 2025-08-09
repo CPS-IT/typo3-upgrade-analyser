@@ -17,8 +17,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\ReportingResult;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\TestCase;
@@ -40,10 +38,10 @@ class ReportServiceTest extends TestCase
         $this->twig = $this->createMock(TwigEnvironment::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->subject = new ReportService($this->twig, $this->logger);
-        
+
         // Create temporary directory for test outputs
         $this->tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
-        mkdir($this->tempDir, 0755, true);
+        mkdir($this->tempDir, 0o755, true);
     }
 
     protected function tearDown(): void
@@ -72,13 +70,14 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $context) {
-                if ($template === 'md/main-report.md.twig') {
+            ->willReturnCallback(function ($template, $context) {
+                if ('md/main-report.md.twig' === $template) {
                     return '# Main Report';
                 }
-                if ($template === 'md/extension-detail.md.twig') {
+                if ('md/extension-detail.md.twig' === $template) {
                     return '# Extension Detail';
                 }
+
                 return '';
             });
 
@@ -90,20 +89,20 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['markdown'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(1, $reportResults);
         self::assertInstanceOf(ReportingResult::class, $reportResults[0]);
         self::assertSame('report_markdown', $reportResults[0]->getId());
         self::assertSame('markdown', $reportResults[0]->getValue('format'));
-        
+
         // Test multi-file structure
         $mainReport = $reportResults[0]->getValue('main_report');
         self::assertIsArray($mainReport);
         self::assertStringEndsWith('.md', $mainReport['path']);
         self::assertFileExists($mainReport['path']);
-        
+
         // Test extension reports count
         self::assertSame(1, $reportResults[0]->getValue('extension_reports_count'));
     }
@@ -124,7 +123,7 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['html'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(1, $reportResults);
@@ -148,7 +147,7 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['json'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(1, $reportResults);
@@ -156,7 +155,7 @@ class ReportServiceTest extends TestCase
         self::assertIsArray($mainReport);
         self::assertStringEndsWith('.json', $mainReport['path']);
         self::assertFileExists($mainReport['path']);
-        
+
         $jsonContent = file_get_contents($mainReport['path']);
         $decoded = json_decode($jsonContent, true);
         self::assertIsArray($decoded);
@@ -181,12 +180,12 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['markdown', 'html', 'json'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(3, $reportResults);
-        
-        $formats = array_map(fn($r) => $r->getValue('format'), $reportResults);
+
+        $formats = array_map(fn ($r) => $r->getValue('format'), $reportResults);
         self::assertContains('markdown', $formats);
         self::assertContains('html', $formats);
         self::assertContains('json', $formats);
@@ -201,8 +200,8 @@ class ReportServiceTest extends TestCase
         $this->logger->expects(self::once())
             ->method('error')
             ->with('Report generation failed', self::callback(function ($context) {
-                return $context['format'] === 'unsupported' && 
-                       str_contains($context['error'], 'Unsupported report format');
+                return 'unsupported' === $context['format']
+                       && str_contains($context['error'], 'Unsupported report format');
             }));
 
         $reportResults = $this->subject->generateReport(
@@ -210,7 +209,7 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['unsupported'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(1, $reportResults);
@@ -223,7 +222,7 @@ class ReportServiceTest extends TestCase
         $installation = new Installation('/test/path', new Version('12.0.0'), 'composer');
         $extensions = [];
         $results = [];
-        
+
         $nonExistentDir = $this->tempDir . '/subdir/reports';
 
         $this->twig->method('render')->willReturn('# Test');
@@ -233,7 +232,7 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['markdown'],
-            $nonExistentDir
+            $nonExistentDir,
         );
 
         self::assertDirectoryExists($nonExistentDir);
@@ -244,7 +243,7 @@ class ReportServiceTest extends TestCase
     public function testGenerateReportWithExtensionsAndResults(): void
     {
         $installation = new Installation('/test/path', new Version('12.0.0'), 'composer');
-        
+
         $extension1 = new Extension('ext1', 'Extension 1', new Version('1.0.0'), 'local');
         $extension2 = new Extension('ext2', 'Extension 2', new Version('2.0.0'), 'third_party');
         $extensions = [$extension1, $extension2];
@@ -255,7 +254,7 @@ class ReportServiceTest extends TestCase
         $analysisResult1->addMetric('ter_available', true);
         $analysisResult1->addMetric('packagist_available', false);
         $analysisResult1->setRiskScore(3.5);
-        
+
         $analysisResult2 = new AnalysisResult('lines_of_code', $extension1);
         $analysisResult2->addMetric('total_lines', 1500);
         $analysisResult2->addMetric('php_files', 12);
@@ -265,15 +264,17 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::exactly(3))
             ->method('render')
-            ->willReturnCallback(function($template, $context) {
-                if ($template === 'md/main-report.md.twig') {
+            ->willReturnCallback(function ($template, $context) {
+                if ('md/main-report.md.twig' === $template) {
                     self::assertCount(2, $context['extensions']);
                     self::assertCount(2, $context['extension_data']);
+
                     return '# Main Report';
                 }
-                if ($template === 'md/extension-detail.md.twig') {
+                if ('md/extension-detail.md.twig' === $template) {
                     return '# Extension Detail';
                 }
+
                 return '';
             });
 
@@ -283,7 +284,7 @@ class ReportServiceTest extends TestCase
             $results,
             ['markdown'],
             $this->tempDir,
-            '13.4'
+            '13.4',
         );
 
         self::assertCount(1, $reportResults);
@@ -309,9 +310,10 @@ class ReportServiceTest extends TestCase
         $this->twig->expects(self::exactly(2))
             ->method('render')
             ->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-                if ($template === 'md/main-report.md.twig') {
+                if ('md/main-report.md.twig' === $template) {
                     $capturedContext = $context;
                 }
+
                 return '# Test';
             });
 
@@ -321,7 +323,7 @@ class ReportServiceTest extends TestCase
             $results,
             ['markdown'],
             $this->tempDir,
-            '13.4'
+            '13.4',
         );
 
         self::assertNotNull($capturedContext);
@@ -329,7 +331,7 @@ class ReportServiceTest extends TestCase
         self::assertSame($extensions, $capturedContext['extensions']);
         self::assertSame('13.4', $capturedContext['target_version']);
         self::assertInstanceOf(\DateTimeImmutable::class, $capturedContext['generated_at']);
-        
+
         // Check extension data structure
         self::assertCount(1, $capturedContext['extension_data']);
         $extensionData = $capturedContext['extension_data'][0];
@@ -337,14 +339,14 @@ class ReportServiceTest extends TestCase
         self::assertIsArray($extensionData['results']);
         self::assertIsArray($extensionData['version_analysis']);
         self::assertIsArray($extensionData['risk_summary']);
-        
+
         // Check version analysis
         $versionAnalysis = $extensionData['version_analysis'];
         self::assertTrue($versionAnalysis['ter_available']);
         self::assertFalse($versionAnalysis['git_available']);
         self::assertSame(4.0, $versionAnalysis['risk_score']);
         self::assertContains('Test recommendation', $versionAnalysis['recommendations']);
-        
+
         // Check statistics
         self::assertIsArray($capturedContext['statistics']);
         self::assertArrayHasKey('total_extensions', $capturedContext['statistics']);
@@ -365,8 +367,8 @@ class ReportServiceTest extends TestCase
         $this->logger->expects(self::once())
             ->method('error')
             ->with('Report generation failed', self::callback(function ($context) {
-                return $context['format'] === 'markdown' && 
-                       $context['error'] === 'Template error';
+                return 'markdown' === $context['format']
+                       && 'Template error' === $context['error'];
             }));
 
         $reportResults = $this->subject->generateReport(
@@ -374,7 +376,7 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['markdown'],
-            $this->tempDir
+            $this->tempDir,
         );
 
         self::assertCount(1, $reportResults);
@@ -385,7 +387,7 @@ class ReportServiceTest extends TestCase
     public function testGenerateReportCalculatesStatisticsCorrectly(): void
     {
         $installation = new Installation('/test/path', new Version('12.0.0'), 'composer');
-        
+
         $ext1 = new Extension('low_risk', 'Low Risk Extension', new Version('1.0.0'), 'local');
         $ext2 = new Extension('high_risk', 'High Risk Extension', new Version('1.0.0'), 'local');
         $extensions = [$ext1, $ext2];
@@ -395,7 +397,7 @@ class ReportServiceTest extends TestCase
         $result1->addMetric('ter_available', true);
         $result1->addMetric('packagist_available', true);
         $result1->setRiskScore(1.5); // Low risk
-        
+
         // High risk extension
         $result2 = new AnalysisResult('version_availability', $ext2);
         $result2->addMetric('ter_available', false);
@@ -407,9 +409,10 @@ class ReportServiceTest extends TestCase
 
         $capturedContext = null;
         $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
-            if ($template === 'md/main-report.md.twig') {
+            if ('md/main-report.md.twig' === $template) {
                 $capturedContext = $context;
             }
+
             return '# Test';
         });
 
@@ -433,6 +436,7 @@ class ReportServiceTest extends TestCase
         $capturedContext = null;
         $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
             $capturedContext = $context;
+
             return '# Test';
         });
 
@@ -455,10 +459,10 @@ class ReportServiceTest extends TestCase
             $extensions,
             $results,
             ['markdown'],
-            $this->tempDir
+            $this->tempDir,
         );
 
-        $expectedSize = strlen($content);
+        $expectedSize = \strlen($content);
         $mainReport = $reportResults[0]->getValue('main_report');
         self::assertSame($expectedSize, $mainReport['size']);
     }

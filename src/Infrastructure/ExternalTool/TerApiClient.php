@@ -32,7 +32,7 @@ class TerApiClient
     ) {
         // Load TER token from environment
         $terToken = EnvironmentLoader::get('TER_ACCESS_TOKEN');
-        
+
         if (!$terToken) {
             $this->logger->warning('TER_ACCESS_TOKEN not found in environment variables. TER API requests may be rate-limited. Set TER_ACCESS_TOKEN in .env.local for better performance.');
         } else {

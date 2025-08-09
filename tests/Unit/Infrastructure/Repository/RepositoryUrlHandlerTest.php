@@ -40,7 +40,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testNormalizeUrl(string $input, string $expected): void
     {
         $result = $this->subject->normalizeUrl($input);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -52,21 +52,21 @@ class RepositoryUrlHandlerTest extends TestCase
             ['https://github.com/user/repo.git', 'https://github.com/user/repo'],
             ['http://github.com/user/repo', 'https://github.com/user/repo'],
             ['github.com/user/repo', 'https://github.com/user/repo'],
-            
+
             // GitLab URLs
             ['git@gitlab.com:user/repo.git', 'https://gitlab.com/user/repo'],
             ['https://gitlab.com/user/repo.git', 'https://gitlab.com/user/repo'],
             ['gitlab.com/user/repo', 'https://gitlab.com/user/repo'],
-            
+
             // Bitbucket URLs
             ['git@bitbucket.org:user/repo.git', 'https://bitbucket.org/user/repo'],
             ['https://bitbucket.org/user/repo.git', 'https://bitbucket.org/user/repo'],
             ['bitbucket.org/user/repo', 'https://bitbucket.org/user/repo'],
-            
+
             // .git suffix removal
             ['https://example.com/repo.git', 'https://example.com/repo'],
             ['https://custom-git.com/path/to/repo.git', 'https://custom-git.com/path/to/repo'],
-            
+
             // URLs without changes needed
             ['https://example.com/repo', 'https://example.com/repo'],
             ['https://custom.domain.com/user/project', 'https://custom.domain.com/user/project'],
@@ -79,7 +79,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testIsGitRepository(string $url, bool $expected): void
     {
         $result = $this->subject->isGitRepository($url);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -95,7 +95,7 @@ class RepositoryUrlHandlerTest extends TestCase
             ['git://example.com/repo', true],
             ['ssh://git@example.com/repo', true],
             ['https://git.example.com/repo', true],
-            
+
             // Non-Git URLs
             ['https://example.com/page', false],
             ['https://docs.example.com', false],
@@ -109,7 +109,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testExtractRepositoryPath(string $url, array $expected): void
     {
         $result = $this->subject->extractRepositoryPath($url);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -118,19 +118,19 @@ class RepositoryUrlHandlerTest extends TestCase
         return [
             [
                 'https://github.com/user/repo',
-                ['owner' => 'user', 'name' => 'repo', 'host' => 'github.com']
+                ['owner' => 'user', 'name' => 'repo', 'host' => 'github.com'],
             ],
             [
                 'git@gitlab.com:organization/project.git',
-                ['owner' => 'organization', 'name' => 'project', 'host' => 'gitlab.com']
+                ['owner' => 'organization', 'name' => 'project', 'host' => 'gitlab.com'],
             ],
             [
                 'https://bitbucket.org/team/repository',
-                ['owner' => 'team', 'name' => 'repository', 'host' => 'bitbucket.org']
+                ['owner' => 'team', 'name' => 'repository', 'host' => 'bitbucket.org'],
             ],
             [
                 'https://custom.domain.com/user/project',
-                ['owner' => 'user', 'name' => 'project', 'host' => 'custom.domain.com']
+                ['owner' => 'user', 'name' => 'project', 'host' => 'custom.domain.com'],
             ],
         ];
     }
@@ -139,7 +139,7 @@ class RepositoryUrlHandlerTest extends TestCase
     {
         $this->expectException(RepositoryUrlException::class);
         $this->expectExceptionMessage('Repository URL must contain owner and name');
-        
+
         $this->subject->extractRepositoryPath('invalid-url');
     }
 
@@ -147,7 +147,7 @@ class RepositoryUrlHandlerTest extends TestCase
     {
         $this->expectException(RepositoryUrlException::class);
         $this->expectExceptionMessage('Repository URL must contain owner and name');
-        
+
         $this->subject->extractRepositoryPath('https://github.com/user');
     }
 
@@ -157,7 +157,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testGetProviderType(string $url, string $expected): void
     {
         $result = $this->subject->getProviderType($url);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -181,7 +181,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testIsValidRepositoryUrl(string $url, bool $expected): void
     {
         $result = $this->subject->isValidRepositoryUrl($url);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -194,7 +194,7 @@ class RepositoryUrlHandlerTest extends TestCase
             ['https://gitlab.com/user/repo', true],
             ['https://bitbucket.org/user/repo', true],
             ['https://example.com/user/repo.git', true],
-            
+
             // Invalid URLs
             ['https://example.com/page', false],
             ['invalid-url', false],
@@ -209,7 +209,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testConvertToApiUrl(string $url, string $apiType, string $expected): void
     {
         $result = $this->subject->convertToApiUrl($url, $apiType);
-        
+
         self::assertSame($expected, $result);
     }
 
@@ -220,25 +220,25 @@ class RepositoryUrlHandlerTest extends TestCase
             [
                 'https://github.com/user/repo',
                 'rest',
-                'https://api.github.com/repos/user/repo'
+                'https://api.github.com/repos/user/repo',
             ],
             // GitHub GraphQL API
             [
                 'https://github.com/user/repo',
                 'graphql',
-                'https://api.github.com/graphql'
+                'https://api.github.com/graphql',
             ],
             // GitLab API
             [
                 'https://gitlab.com/user/repo',
                 'rest',
-                'https://gitlab.com/api/v4/projects/user%2Frepo'
+                'https://gitlab.com/api/v4/projects/user%2Frepo',
             ],
             // Bitbucket API
             [
                 'https://bitbucket.org/user/repo',
                 'rest',
-                'https://api.bitbucket.org/2.0/repositories/user/repo'
+                'https://api.bitbucket.org/2.0/repositories/user/repo',
             ],
         ];
     }
@@ -246,7 +246,7 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testConvertToApiUrlWithDefaultApiType(): void
     {
         $result = $this->subject->convertToApiUrl('https://github.com/user/repo');
-        
+
         self::assertSame('https://api.github.com/repos/user/repo', $result);
     }
 
@@ -254,7 +254,7 @@ class RepositoryUrlHandlerTest extends TestCase
     {
         $this->expectException(RepositoryUrlException::class);
         $this->expectExceptionMessage('Unsupported API type: unsupported');
-        
+
         $this->subject->convertToApiUrl('https://github.com/user/repo', 'unsupported');
     }
 
@@ -262,14 +262,14 @@ class RepositoryUrlHandlerTest extends TestCase
     {
         $this->expectException(RepositoryUrlException::class);
         $this->expectExceptionMessage('Unsupported repository provider: unknown');
-        
+
         $this->subject->convertToApiUrl('https://custom.example.com/user/repo');
     }
 
     public function testConvertToApiUrlWithSpecialCharactersInGitLab(): void
     {
         $result = $this->subject->convertToApiUrl('https://gitlab.com/my-org/my-project');
-        
+
         self::assertSame('https://gitlab.com/api/v4/projects/my-org%2Fmy-project', $result);
     }
 
@@ -280,9 +280,9 @@ class RepositoryUrlHandlerTest extends TestCase
             'https://github.com/user/repo.git',
             'http://github.com/user/repo',
             'github.com:user/repo',
-            'github.com/user/repo'
+            'github.com/user/repo',
         ];
-        
+
         foreach ($formats as $format) {
             $result = $this->subject->normalizeUrl($format);
             self::assertSame('https://github.com/user/repo', $result);
@@ -292,11 +292,11 @@ class RepositoryUrlHandlerTest extends TestCase
     public function testExtractRepositoryPathHandlesComplexPaths(): void
     {
         $result = $this->subject->extractRepositoryPath('https://github.com/org/repo-name-with-dashes');
-        
+
         self::assertSame([
             'owner' => 'org',
             'name' => 'repo-name-with-dashes',
-            'host' => 'github.com'
+            'host' => 'github.com',
         ], $result);
     }
 
@@ -307,7 +307,7 @@ class RepositoryUrlHandlerTest extends TestCase
             ['https://example.git.com/repo', true], // Domain contains 'git'
             ['git://git.example.com/repo.git', true], // Multiple git indicators
         ];
-        
+
         foreach ($testCases as [$url, $expected]) {
             $result = $this->subject->isGitRepository($url);
             self::assertSame($expected, $result, "Failed for URL: $url");

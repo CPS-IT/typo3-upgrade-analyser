@@ -27,9 +27,9 @@ class EnvironmentLoader
             return;
         }
 
-        $rootDir = dirname(__DIR__, 3);
+        $rootDir = \dirname(__DIR__, 3);
         $dotenv = new Dotenv();
-        
+
         // Check for .env.local file first (higher priority)
         $envLocalFile = $rootDir . '/.env.local';
         if (file_exists($envLocalFile)) {
@@ -48,12 +48,14 @@ class EnvironmentLoader
     public static function get(string $key, ?string $default = null): ?string
     {
         self::load();
+
         return $_ENV[$key] ?? $default;
     }
 
     public static function has(string $key): bool
     {
         self::load();
-        return isset($_ENV[$key]) && $_ENV[$key] !== '';
+
+        return isset($_ENV[$key]) && '' !== $_ENV[$key];
     }
 }

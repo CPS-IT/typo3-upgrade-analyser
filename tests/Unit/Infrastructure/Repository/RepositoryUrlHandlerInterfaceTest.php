@@ -23,22 +23,22 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     public function testInterfaceDefinesRequiredMethods(): void
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
-        
+
         self::assertTrue($reflection->isInterface());
-        
+
         $expectedMethods = [
             'normalizeUrl',
             'isGitRepository',
             'extractRepositoryPath',
             'getProviderType',
             'isValidRepositoryUrl',
-            'convertToApiUrl'
+            'convertToApiUrl',
         ];
-        
+
         foreach ($expectedMethods as $methodName) {
             self::assertTrue(
                 $reflection->hasMethod($methodName),
-                sprintf('Method %s should be defined in RepositoryUrlHandlerInterface', $methodName)
+                \sprintf('Method %s should be defined in RepositoryUrlHandlerInterface', $methodName),
             );
         }
     }
@@ -47,11 +47,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('normalizeUrl');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('string', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
         self::assertSame('string', $parameter->getType()?->getName());
@@ -61,11 +61,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('isGitRepository');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('bool', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
         self::assertSame('string', $parameter->getType()?->getName());
@@ -75,11 +75,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('extractRepositoryPath');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('array', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
         self::assertSame('string', $parameter->getType()?->getName());
@@ -89,11 +89,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('getProviderType');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('string', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
         self::assertSame('string', $parameter->getType()?->getName());
@@ -103,11 +103,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('isValidRepositoryUrl');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('bool', $method->getReturnType()?->getName());
         self::assertCount(1, $method->getParameters());
-        
+
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
         self::assertSame('string', $parameter->getType()?->getName());
@@ -117,17 +117,17 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $method = $reflection->getMethod('convertToApiUrl');
-        
+
         self::assertTrue($method->isPublic());
         self::assertSame('string', $method->getReturnType()?->getName());
         self::assertCount(2, $method->getParameters());
-        
+
         $parameters = $method->getParameters();
-        
+
         $urlParam = $parameters[0];
         self::assertSame('url', $urlParam->getName());
         self::assertSame('string', $urlParam->getType()?->getName());
-        
+
         $apiTypeParam = $parameters[1];
         self::assertSame('apiType', $apiTypeParam->getName());
         self::assertSame('string', $apiTypeParam->getType()?->getName());
@@ -138,22 +138,22 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     public function testMethodsAreDocumented(): void
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
-        
+
         $methods = [
             'normalizeUrl',
-            'isGitRepository', 
+            'isGitRepository',
             'extractRepositoryPath',
             'getProviderType',
             'isValidRepositoryUrl',
-            'convertToApiUrl'
+            'convertToApiUrl',
         ];
-        
+
         foreach ($methods as $methodName) {
             $method = $reflection->getMethod($methodName);
             $docComment = $method->getDocComment();
-            
-            self::assertIsString($docComment, sprintf('Method %s should have documentation', $methodName));
-            self::assertNotEmpty(trim($docComment), sprintf('Method %s documentation should not be empty', $methodName));
+
+            self::assertIsString($docComment, \sprintf('Method %s should have documentation', $methodName));
+            self::assertNotEmpty(trim($docComment), \sprintf('Method %s documentation should not be empty', $methodName));
         }
     }
 
@@ -161,7 +161,7 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $docComment = $reflection->getDocComment();
-        
+
         self::assertIsString($docComment);
         self::assertStringContainsString('Interface for handling repository URLs', $docComment);
     }
@@ -169,17 +169,17 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     public function testCanCreateMockImplementation(): void
     {
         $mock = $this->createMock(RepositoryUrlHandlerInterface::class);
-        
+
         self::assertInstanceOf(RepositoryUrlHandlerInterface::class, $mock);
     }
 
     public function testInterfaceNamespaceIsCorrect(): void
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
-        
+
         self::assertSame(
             'CPSIT\UpgradeAnalyzer\Infrastructure\Repository',
-            $reflection->getNamespaceName()
+            $reflection->getNamespaceName(),
         );
     }
 
@@ -187,11 +187,11 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $methods = $reflection->getMethods();
-        
+
         foreach ($methods as $method) {
             self::assertTrue(
                 $method->isPublic(),
-                sprintf('Method %s should be public', $method->getName())
+                \sprintf('Method %s should be public', $method->getName()),
             );
         }
     }
@@ -200,7 +200,7 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
         $constants = $reflection->getConstants();
-        
+
         self::assertEmpty($constants, 'Interface should not define constants');
     }
 }

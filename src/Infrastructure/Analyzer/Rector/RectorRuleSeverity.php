@@ -66,7 +66,7 @@ enum RectorRuleSeverity: string
      */
     public function requiresImmediateAction(): bool
     {
-        return $this === self::CRITICAL;
+        return self::CRITICAL === $this;
     }
 
     /**
@@ -74,6 +74,6 @@ enum RectorRuleSeverity: string
      */
     public function isDeprecation(): bool
     {
-        return $this === self::WARNING;
+        return self::WARNING === $this;
     }
 }

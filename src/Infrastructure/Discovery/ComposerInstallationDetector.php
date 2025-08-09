@@ -325,7 +325,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     /**
      * Detect custom paths in TYPO3 installation.
      *
-     * @param string $path Installation path
+     * @param string       $path    Installation path
      * @param Version|null $version TYPO3 version (optional, for version-specific path detection)
      *
      * @return array<string, string> Custom paths
@@ -380,13 +380,13 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             } else {
                 // For TYPO3 v11 and earlier, typo3conf is in the root directory
                 $paths['typo3conf-dir'] = 'typo3conf';
-                
+
                 // Verify the path exists, otherwise try common alternatives
                 $possiblePaths = [
                     'typo3conf',
                     $paths['web-dir'] . '/typo3conf', // fallback for misconfigured v11 installations
                 ];
-                
+
                 foreach ($possiblePaths as $possiblePath) {
                     if (is_dir($path . '/' . $possiblePath)) {
                         $paths['typo3conf-dir'] = $possiblePath;

@@ -145,11 +145,14 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         if (\count($availableSources) > 1) {
             // Log available sources and recommendations for debugging
             $this->assertNotEmpty($recommendations, 'Should have recommendations when multiple sources available. Available sources: ' . implode(', ', $availableSources));
-            
+
             // Check for "multiple" specifically when Git + (TER or Packagist) are available
             if ($metrics['git_available'] && ($metrics['ter_available'] || $metrics['packagist_available'])) {
-                $this->assertStringContainsString('multiple', strtolower($recommendations), 
-                    'Should mention multiple sources. Available: ' . implode(', ', $availableSources) . '. Recommendations: ' . $recommendations);
+                $this->assertStringContainsString(
+                    'multiple',
+                    strtolower($recommendations),
+                    'Should mention multiple sources. Available: ' . implode(', ', $availableSources) . '. Recommendations: ' . $recommendations,
+                );
             }
         }
     }
@@ -397,7 +400,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
             new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
         );
 
-        $gitHubClient = new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient(
+        $gitHubClient = new GitHubClient(
             $this->createHttpClientService(),
             $this->createLogger(),
             new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),

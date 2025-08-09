@@ -40,7 +40,7 @@ class RectorResultParserTest extends TestCase
     public function testParseRectorOutputWithEmptyInput(): void
     {
         $findings = $this->parser->parseRectorOutput('');
-        
+
         $this->assertIsArray($findings);
         $this->assertEmpty($findings);
     }
@@ -48,7 +48,7 @@ class RectorResultParserTest extends TestCase
     public function testParseRectorOutputWithWhitespaceOnly(): void
     {
         $findings = $this->parser->parseRectorOutput("   \n\t  ");
-        
+
         $this->assertIsArray($findings);
         $this->assertEmpty($findings);
     }
@@ -56,10 +56,10 @@ class RectorResultParserTest extends TestCase
     public function testParseRectorOutputWithInvalidJson(): void
     {
         $findings = $this->parser->parseRectorOutput('invalid json');
-        
+
         $this->assertIsArray($findings);
         $this->assertEmpty($findings);
-        
+
         // NullLogger doesn't track records, so we just verify the method handled the error
         $this->assertTrue(true); // Test passes if we reach this point without exception
     }
@@ -76,16 +76,16 @@ class RectorResultParserTest extends TestCase
                             'message' => 'Replace deprecated method call',
                             'line' => 42,
                             'old' => '$template->getConstants()',
-                            'new' => '$template->getTypoScriptConstants()'
+                            'new' => '$template->getTypoScriptConstants()',
                         ],
                         [
                             'class' => 'Ssch\\TYPO3Rector\\Rector\\v12\\v0\\MigrateExtbaseControllerRector',
                             'message' => 'Migrate controller method',
                             'line' => 24,
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         // No need to mock registry methods as parser now infers severity/type from rule class names
@@ -121,7 +121,7 @@ class RectorResultParserTest extends TestCase
                 'Rule1',
                 'Message 1',
                 RectorRuleSeverity::CRITICAL,
-                RectorChangeType::BREAKING_CHANGE
+                RectorChangeType::BREAKING_CHANGE,
             ),
             new RectorFinding(
                 'src/Test1.php',
@@ -129,7 +129,7 @@ class RectorResultParserTest extends TestCase
                 'Rule2',
                 'Message 2',
                 RectorRuleSeverity::WARNING,
-                RectorChangeType::DEPRECATION
+                RectorChangeType::DEPRECATION,
             ),
             new RectorFinding(
                 'src/Test2.php',
@@ -137,7 +137,7 @@ class RectorResultParserTest extends TestCase
                 'Rule1',
                 'Message 3',
                 RectorRuleSeverity::INFO,
-                RectorChangeType::BEST_PRACTICE
+                RectorChangeType::BEST_PRACTICE,
             ),
         ];
 
@@ -174,7 +174,7 @@ class RectorResultParserTest extends TestCase
                 'Rule1',
                 'Message 1',
                 RectorRuleSeverity::CRITICAL,
-                RectorChangeType::BREAKING_CHANGE
+                RectorChangeType::BREAKING_CHANGE,
             ),
             new RectorFinding(
                 'src/Test2.php',
@@ -182,7 +182,7 @@ class RectorResultParserTest extends TestCase
                 'Rule2',
                 'Message 2',
                 RectorRuleSeverity::WARNING,
-                RectorChangeType::DEPRECATION
+                RectorChangeType::DEPRECATION,
             ),
             new RectorFinding(
                 'src/Test3.php',
@@ -190,7 +190,7 @@ class RectorResultParserTest extends TestCase
                 'Rule3',
                 'Message 3',
                 RectorRuleSeverity::INFO,
-                RectorChangeType::BEST_PRACTICE
+                RectorChangeType::BEST_PRACTICE,
             ),
         ];
 
@@ -223,7 +223,7 @@ class RectorResultParserTest extends TestCase
     public function testCalculateComplexityScoreWithEmptyFindings(): void
     {
         $score = $this->parser->calculateComplexityScore([]);
-        
+
         $this->assertEquals(0.0, $score);
     }
 
@@ -236,7 +236,7 @@ class RectorResultParserTest extends TestCase
                 'Rule1',
                 'Message 1',
                 RectorRuleSeverity::CRITICAL,
-                RectorChangeType::BREAKING_CHANGE
+                RectorChangeType::BREAKING_CHANGE,
             ),
             new RectorFinding(
                 'src/Test1.php',
@@ -244,7 +244,7 @@ class RectorResultParserTest extends TestCase
                 'Rule2',
                 'Message 2',
                 RectorRuleSeverity::WARNING,
-                RectorChangeType::DEPRECATION
+                RectorChangeType::DEPRECATION,
             ),
             new RectorFinding(
                 'src/Test2.php',
@@ -252,7 +252,7 @@ class RectorResultParserTest extends TestCase
                 'Rule3',
                 'Message 3',
                 RectorRuleSeverity::INFO,
-                RectorChangeType::BEST_PRACTICE
+                RectorChangeType::BEST_PRACTICE,
             ),
         ];
 

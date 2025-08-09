@@ -65,11 +65,11 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
 
         // Get installation path from context
         $installationPath = $context->getConfigurationValue('installation_path', '');
-        
+
         if (empty($installationPath)) {
             throw new \RuntimeException('No installation path available in context');
         }
-        
+
         // Convert relative path to absolute path
         if (!str_starts_with($installationPath, '/')) {
             $installationPath = realpath(getcwd() . '/' . $installationPath);
@@ -77,25 +77,25 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
                 throw new \RuntimeException('Invalid installation path - could not resolve to absolute path');
             }
         }
-        
+
         // Build extension path - assume typical TYPO3 structure
         $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
-        
+
         $this->logger->debug('LOC analyzer path discovery', [
             'extension' => $extension->getKey(),
             'installation_path' => $installationPath,
             'found_path' => $extensionPath,
             'path_exists' => $extensionPath ? is_dir($extensionPath) : false,
         ]);
-        
+
         if (!$extensionPath || !is_dir($extensionPath)) {
-            // Extension path not found, return zero metrics  
+            // Extension path not found, return zero metrics
             $this->logger->warning('Extension path not found for LOC analysis', [
                 'extension' => $extension->getKey(),
                 'installation_path' => $installationPath,
                 'attempted_path' => $extensionPath,
             ]);
-            
+
             $metrics = [
                 'total_lines' => 0,
                 'code_lines' => 0,
@@ -112,7 +112,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
         } else {
             $metrics = $this->scanExtensionDirectory($extensionPath);
         }
-        
+
         // Store metrics
         foreach ($metrics as $key => $value) {
             $result->addMetric($key, $value);
@@ -144,13 +144,13 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
         $components = [
             'installation_path' => $context->getConfigurationValue('installation_path', ''),
         ];
-        
+
         // Include custom paths if available
         $customPaths = $context->getConfigurationValue('custom_paths', []);
         if (!empty($customPaths)) {
             $components['custom_paths'] = $customPaths;
         }
-        
+
         return $components;
     }
 
@@ -179,7 +179,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             }
 
             $fileMetrics = $this->analyzeFileByPath($filePath);
-            
+
             $metrics['total_lines'] += $fileMetrics['total_lines'];
             $metrics['code_lines'] += $fileMetrics['code_lines'];
             $metrics['comment_lines'] += $fileMetrics['comment_lines'];
@@ -187,7 +187,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             $metrics['classes'] += $fileMetrics['classes'];
             $metrics['methods'] += $fileMetrics['methods'];
             $metrics['functions'] += $fileMetrics['functions'];
-            $metrics['php_files']++;
+            ++$metrics['php_files'];
 
             if ($fileMetrics['total_lines'] > $metrics['largest_file_lines']) {
                 $metrics['largest_file_lines'] = $fileMetrics['total_lines'];
@@ -209,7 +209,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     {
         $content = file_get_contents($filePath);
         $lines = explode("\n", $content);
-        
+
         return $this->analyzeFileContent($content, $lines);
     }
 
@@ -220,7 +220,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     {
         $content = $file->getContents();
         $lines = explode("\n", $content);
-        
+
         return $this->analyzeFileContent($content, $lines);
     }
 
@@ -229,9 +229,8 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
      */
     private function analyzeFileContent(string $content, array $lines): array
     {
-        
         $metrics = [
-            'total_lines' => count($lines),
+            'total_lines' => \count($lines),
             'code_lines' => 0,
             'comment_lines' => 0,
             'blank_lines' => 0,
@@ -244,15 +243,15 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
 
         foreach ($lines as $line) {
             $trimmedLine = trim($line);
-            
+
             if (empty($trimmedLine)) {
-                $metrics['blank_lines']++;
+                ++$metrics['blank_lines'];
                 continue;
             }
 
             // Handle multi-line comments
             if ($inMultiLineComment) {
-                $metrics['comment_lines']++;
+                ++$metrics['comment_lines'];
                 if (str_contains($trimmedLine, '*/')) {
                     $inMultiLineComment = false;
                 }
@@ -260,7 +259,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             }
 
             if (str_starts_with($trimmedLine, '/*')) {
-                $metrics['comment_lines']++;
+                ++$metrics['comment_lines'];
                 if (!str_contains($trimmedLine, '*/')) {
                     $inMultiLineComment = true;
                 }
@@ -268,27 +267,27 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             }
 
             if (str_starts_with($trimmedLine, '//') || str_starts_with($trimmedLine, '#')) {
-                $metrics['comment_lines']++;
+                ++$metrics['comment_lines'];
                 continue;
             }
 
             // Count code constructs
             if (preg_match('/^(class|interface|trait|enum)\s+\w+/', $trimmedLine)) {
-                $metrics['classes']++;
+                ++$metrics['classes'];
             }
 
             if (preg_match('/^\s*(public|private|protected|static)?\s*(function)\s+\w+/', $trimmedLine)) {
                 if (str_contains($trimmedLine, 'function __')) {
                     // Count constructors/destructors as methods
-                    $metrics['methods']++;
+                    ++$metrics['methods'];
                 } elseif (preg_match('/class\s+\w+.*{/', $content) && !str_starts_with($trimmedLine, 'function ')) {
-                    $metrics['methods']++;
+                    ++$metrics['methods'];
                 } else {
-                    $metrics['functions']++;
+                    ++$metrics['functions'];
                 }
             }
 
-            $metrics['code_lines']++;
+            ++$metrics['code_lines'];
         }
 
         return $metrics;
@@ -381,7 +380,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     {
         // Use the same path resolution logic as ExtensionDiscoveryService
         $customPaths = $this->getCustomPathsFromContext($context);
-        
+
         $this->logger->debug('LOC analyzer starting path resolution', [
             'extension' => $extensionKey,
             'composer_name' => $extension->getComposerName(),
@@ -389,18 +388,18 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             'installation_path' => $installationPath,
             'custom_paths' => $customPaths,
         ]);
-        
+
         $paths = $this->resolvePaths($installationPath, $customPaths);
-        
+
         // Build possible extension locations based on extension type
         $possiblePaths = [];
-        
+
         if ($extension->getComposerName()) {
             // For Composer-managed extensions, use the composer name for vendor directory
             $composerName = $extension->getComposerName();
             $possiblePaths[] = $paths['vendor_dir'] . '/' . $composerName;
         }
-        
+
         // Add traditional TYPO3 extension paths
         $possiblePaths = array_merge($possiblePaths, [
             // Local extensions (using resolved typo3conf path)
@@ -436,6 +435,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
                     'extension' => $extensionKey,
                     'path' => $path,
                 ]);
+
                 return $path;
             }
         }
@@ -500,7 +500,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
             $fileMetrics = $this->analyzeFile($file);
-            
+
             $metrics['total_lines'] += $fileMetrics['total_lines'];
             $metrics['code_lines'] += $fileMetrics['code_lines'];
             $metrics['comment_lines'] += $fileMetrics['comment_lines'];
@@ -508,7 +508,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             $metrics['classes'] += $fileMetrics['classes'];
             $metrics['methods'] += $fileMetrics['methods'];
             $metrics['functions'] += $fileMetrics['functions'];
-            $metrics['php_files']++;
+            ++$metrics['php_files'];
 
             if ($fileMetrics['total_lines'] > $metrics['largest_file_lines']) {
                 $metrics['largest_file_lines'] = $fileMetrics['total_lines'];

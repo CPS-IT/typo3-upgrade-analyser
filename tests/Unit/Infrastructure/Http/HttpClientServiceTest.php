@@ -46,7 +46,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -58,7 +58,7 @@ class HttpClientServiceTest extends TestCase
             ->method('debug');
 
         $result = $this->subject->request('GET', 'https://example.com', ['timeout' => 30]);
-        
+
         self::assertSame($response, $result);
     }
 
@@ -66,7 +66,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient->method('request')->willReturn($response);
 
         $this->logger
@@ -74,7 +74,7 @@ class HttpClientServiceTest extends TestCase
             ->method('debug');
 
         $this->subject->request('POST', 'https://api.example.com', [
-            'headers' => ['Content-Type' => 'application/json']
+            'headers' => ['Content-Type' => 'application/json'],
         ]);
     }
 
@@ -82,7 +82,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(201);
-        
+
         $this->httpClient->method('request')->willReturn($response);
 
         $this->logger
@@ -95,7 +95,7 @@ class HttpClientServiceTest extends TestCase
     public function testRequestThrowsHttpClientExceptionOnFailure(): void
     {
         $transportException = new class('Network error') extends \Exception implements TransportExceptionInterface {};
-        
+
         $this->httpClient
             ->method('request')
             ->willThrowException($transportException);
@@ -106,7 +106,7 @@ class HttpClientServiceTest extends TestCase
             ->with('HTTP request failed', [
                 'method' => 'GET',
                 'url' => 'https://example.com',
-                'error' => 'Network error'
+                'error' => 'Network error',
             ]);
 
         $this->expectException(HttpClientException::class);
@@ -119,7 +119,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -127,7 +127,7 @@ class HttpClientServiceTest extends TestCase
             ->willReturn($response);
 
         $result = $this->subject->get('https://example.com', ['timeout' => 10]);
-        
+
         self::assertSame($response, $result);
     }
 
@@ -135,7 +135,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(201);
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -143,7 +143,7 @@ class HttpClientServiceTest extends TestCase
             ->willReturn($response);
 
         $result = $this->subject->post('https://api.example.com', ['body' => 'data']);
-        
+
         self::assertSame($response, $result);
     }
 
@@ -151,14 +151,14 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $expectedOptions = [
             'headers' => [
                 'Authorization' => 'Bearer test-token',
-                'Content-Type' => 'application/json'
-            ]
+                'Content-Type' => 'application/json',
+            ],
         ];
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -169,9 +169,9 @@ class HttpClientServiceTest extends TestCase
             'GET',
             'https://api.example.com',
             'test-token',
-            ['headers' => ['Content-Type' => 'application/json']]
+            ['headers' => ['Content-Type' => 'application/json']],
         );
-        
+
         self::assertSame($response, $result);
     }
 
@@ -179,9 +179,9 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $originalOptions = ['headers' => ['Content-Type' => 'application/json']];
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
@@ -192,9 +192,9 @@ class HttpClientServiceTest extends TestCase
             'GET',
             'https://api.example.com',
             null,
-            $originalOptions
+            $originalOptions,
         );
-        
+
         self::assertSame($response, $result);
     }
 
@@ -202,14 +202,14 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::once())
             ->method('request')
             ->willReturn($response);
 
         $result = $this->subject->makeRateLimitedRequest('GET', 'https://api.example.com');
-        
+
         self::assertSame($response, $result);
     }
 
@@ -217,10 +217,10 @@ class HttpClientServiceTest extends TestCase
     {
         $rateLimitResponse = $this->createMock(ResponseInterface::class);
         $rateLimitResponse->method('getStatusCode')->willReturn(429);
-        
+
         $successResponse = $this->createMock(ResponseInterface::class);
         $successResponse->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
@@ -230,11 +230,11 @@ class HttpClientServiceTest extends TestCase
             ->expects(self::once())
             ->method('warning')
             ->with('Rate limited, retrying', self::callback(function ($context) {
-                return $context['attempt'] === 1 && $context['delay'] === 1;
+                return 1 === $context['attempt'] && 1 === $context['delay'];
             }));
 
         $result = $this->subject->makeRateLimitedRequest('GET', 'https://api.example.com', [], 2, 1);
-        
+
         self::assertSame($successResponse, $result);
     }
 
@@ -242,7 +242,7 @@ class HttpClientServiceTest extends TestCase
     {
         $rateLimitResponse = $this->createMock(ResponseInterface::class);
         $rateLimitResponse->method('getStatusCode')->willReturn(429);
-        
+
         $this->httpClient
             ->method('request')
             ->willReturn($rateLimitResponse);
@@ -252,7 +252,7 @@ class HttpClientServiceTest extends TestCase
             ->method('warning');
 
         $result = $this->subject->makeRateLimitedRequest('GET', 'https://api.example.com', [], 2, 1);
-        
+
         // Should return the last rate-limited response
         self::assertSame($rateLimitResponse, $result);
     }
@@ -262,7 +262,7 @@ class HttpClientServiceTest extends TestCase
         $exception = new HttpClientException('HTTP 429 Too Many Requests', 429);
         $successResponse = $this->createMock(ResponseInterface::class);
         $successResponse->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
@@ -272,6 +272,7 @@ class HttpClientServiceTest extends TestCase
                     $exception = null;
                     throw $temp;
                 }
+
                 return $successResponse;
             });
 
@@ -281,14 +282,14 @@ class HttpClientServiceTest extends TestCase
             ->with('HTTP error, retrying', self::isType('array'));
 
         $result = $this->subject->makeRateLimitedRequest('GET', 'https://api.example.com', [], 2, 1);
-        
+
         self::assertSame($successResponse, $result);
     }
 
     public function testMakeRateLimitedRequestThrowsOnNonRetriableException(): void
     {
         $exception = new HttpClientException('HTTP 404 Not Found', 404);
-        
+
         $this->httpClient
             ->method('request')
             ->willThrowException($exception);
@@ -303,7 +304,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient->method('request')->willReturn($response);
 
         $this->logger
@@ -314,8 +315,8 @@ class HttpClientServiceTest extends TestCase
             'headers' => [
                 'Authorization' => 'Bearer secret-token',
                 'X-API-Token' => 'secret-key',
-                'Content-Type' => 'application/json'
-            ]
+                'Content-Type' => 'application/json',
+            ],
         ]);
     }
 
@@ -323,7 +324,7 @@ class HttpClientServiceTest extends TestCase
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient->method('request')->willReturn($response);
 
         $this->logger
@@ -332,7 +333,7 @@ class HttpClientServiceTest extends TestCase
 
         $this->subject->request('POST', 'https://api.example.com', [
             'body' => 'sensitive data',
-            'json' => ['password' => 'secret']
+            'json' => ['password' => 'secret'],
         ]);
     }
 
@@ -340,17 +341,17 @@ class HttpClientServiceTest extends TestCase
     {
         $rateLimitResponse = $this->createMock(ResponseInterface::class);
         $rateLimitResponse->method('getStatusCode')->willReturn(429);
-        
+
         $successResponse = $this->createMock(ResponseInterface::class);
         $successResponse->method('getStatusCode')->willReturn(200);
-        
+
         $this->httpClient
             ->expects(self::exactly(3))
             ->method('request')
             ->willReturnOnConsecutiveCalls(
                 $rateLimitResponse,
-                $rateLimitResponse, 
-                $successResponse
+                $rateLimitResponse,
+                $successResponse,
             );
 
         $this->logger
@@ -358,7 +359,7 @@ class HttpClientServiceTest extends TestCase
             ->method('warning');
 
         $result = $this->subject->makeRateLimitedRequest('GET', 'https://api.example.com', [], 3, 2);
-        
+
         self::assertSame($successResponse, $result);
     }
 }

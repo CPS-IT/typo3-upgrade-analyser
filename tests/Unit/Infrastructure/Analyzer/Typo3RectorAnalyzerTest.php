@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator;
@@ -59,7 +58,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             $this->rectorExecutor,
             $this->configGenerator,
             $this->resultParser,
-            $this->ruleRegistry
+            $this->ruleRegistry,
         );
     }
 
@@ -71,7 +70,7 @@ class Typo3RectorAnalyzerTest extends TestCase
     public function testGetDescription(): void
     {
         $description = $this->analyzer->getDescription();
-        
+
         $this->assertIsString($description);
         $this->assertStringContainsString('TYPO3 Rector', $description);
         $this->assertStringContainsString('deprecated code patterns', $description);
@@ -80,7 +79,7 @@ class Typo3RectorAnalyzerTest extends TestCase
     public function testSupports(): void
     {
         $extension = new Extension('test_extension', 'Test Extension', new Version('1.0.0'));
-        
+
         // Should support all extensions
         $this->assertTrue($this->analyzer->supports($extension));
     }
@@ -88,7 +87,7 @@ class Typo3RectorAnalyzerTest extends TestCase
     public function testGetRequiredTools(): void
     {
         $tools = $this->analyzer->getRequiredTools();
-        
+
         $this->assertContains('php', $tools);
         $this->assertContains('rector', $tools);
     }
@@ -134,8 +133,8 @@ class Typo3RectorAnalyzerTest extends TestCase
                 'TestRule',
                 'Test message',
                 RectorRuleSeverity::WARNING,
-                RectorChangeType::DEPRECATION
-            )
+                RectorChangeType::DEPRECATION,
+            ),
         ];
 
         $executionResult = new RectorExecutionResult(
@@ -145,7 +144,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             executionTime: 2.5,
             exitCode: 0,
             rawOutput: 'output',
-            processedFileCount: 5
+            processedFileCount: 5,
         );
 
         $summary = new RectorAnalysisSummary(
@@ -160,7 +159,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             fileBreakdown: ['src/Test.php' => 1],
             typeBreakdown: ['deprecation' => 1],
             complexityScore: 3.0,
-            estimatedFixTime: 30
+            estimatedFixTime: 30,
         );
 
         // Set up mocks
@@ -252,8 +251,8 @@ class Typo3RectorAnalyzerTest extends TestCase
             [],
             [
                 'installation_path' => '/test/path',
-                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf']
-            ]
+                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf'],
+            ],
         );
 
         // Use reflection to test private method
@@ -275,8 +274,8 @@ class Typo3RectorAnalyzerTest extends TestCase
             [],
             [
                 'installation_path' => '/test/path',
-                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf']
-            ]
+                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf'],
+            ],
         );
 
         // Use reflection to test private method
@@ -298,8 +297,8 @@ class Typo3RectorAnalyzerTest extends TestCase
             [],
             [
                 'installation_path' => '/test/path',
-                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf']
-            ]
+                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf'],
+            ],
         );
 
         // Use reflection to test private method
@@ -326,7 +325,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 0.0,
-            estimatedFixTime: 0
+            estimatedFixTime: 0,
         );
 
         // Use reflection to test private method
@@ -353,7 +352,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 8.0,
-            estimatedFixTime: 1200 // 20 hours
+            estimatedFixTime: 1200, // 20 hours
         );
 
         // Use reflection to test private method
@@ -381,7 +380,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 0.0,
-            estimatedFixTime: 0
+            estimatedFixTime: 0,
         );
 
         $context = new AnalysisContext(new Version('11.5.0'), new Version('12.4.0'));
@@ -412,7 +411,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             fileBreakdown: [],
             typeBreakdown: [],
             complexityScore: 7.5,
-            estimatedFixTime: 600 // 10 hours
+            estimatedFixTime: 600, // 10 hours
         );
 
         // The getRuleDescription method doesn't exist in the registry, so we remove this mock
@@ -427,8 +426,8 @@ class Typo3RectorAnalyzerTest extends TestCase
         $recommendations = $method->invoke($this->analyzer, $summary, $context);
 
         $this->assertIsArray($recommendations);
-        $this->assertGreaterThan(3, count($recommendations));
-        
+        $this->assertGreaterThan(3, \count($recommendations));
+
         // Should contain breaking changes recommendation
         $hasBreakingRecommendation = false;
         foreach ($recommendations as $recommendation) {

@@ -17,8 +17,8 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
 
 /**

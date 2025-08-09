@@ -21,8 +21,9 @@ class RectorResultParser
 {
     public function __construct(
         private readonly RectorRuleRegistry $ruleRegistry,
-        private readonly LoggerInterface $logger
-    ) {}
+        private readonly LoggerInterface $logger,
+    ) {
+    }
 
     /**
      * Parse Rector JSON output into structured findings.
@@ -37,12 +38,14 @@ class RectorResultParser
 
         try {
             $data = json_decode($jsonOutput, true, 512, JSON_THROW_ON_ERROR);
+
             return $this->extractFindingsFromData($data);
         } catch (\JsonException $e) {
             $this->logger->error('Failed to parse Rector JSON output', [
                 'error' => $e->getMessage(),
                 'output_preview' => substr($jsonOutput, 0, 200),
             ]);
+
             return [];
         }
     }
@@ -53,8 +56,8 @@ class RectorResultParser
     public function aggregateFindings(array $findings): RectorAnalysisSummary
     {
         $totalFiles = $this->countUniqueFiles($findings);
-        $affectedFiles = count($this->groupFindingsByFile($findings));
-        
+        $affectedFiles = \count($this->groupFindingsByFile($findings));
+
         $severityCounts = $this->countBySeverity($findings);
         $typeCounts = $this->countByType($findings);
         $fileCounts = $this->groupFindingsByFile($findings);
@@ -64,7 +67,7 @@ class RectorResultParser
         $estimatedFixTime = $this->calculateEstimatedFixTime($findings);
 
         return new RectorAnalysisSummary(
-            totalFindings: count($findings),
+            totalFindings: \count($findings),
             criticalIssues: $severityCounts['critical'],
             warnings: $severityCounts['warning'],
             infoIssues: $severityCounts['info'],
@@ -75,7 +78,7 @@ class RectorResultParser
             fileBreakdown: $fileCounts,
             typeBreakdown: $typeCounts,
             complexityScore: $complexityScore,
-            estimatedFixTime: $estimatedFixTime
+            estimatedFixTime: $estimatedFixTime,
         );
     }
 
@@ -83,6 +86,7 @@ class RectorResultParser
      * Categorize findings by various criteria.
      *
      * @param array<RectorFinding> $findings
+     *
      * @return array<string, array<RectorFinding>>
      */
     public function categorizeFindings(array $findings): array
@@ -151,12 +155,12 @@ class RectorResultParser
         ];
 
         // Rule diversity factor
-        $uniqueRules = count(array_unique(array_map(fn($f) => $f->getRuleClass(), $findings)));
+        $uniqueRules = \count(array_unique(array_map(fn ($f) => $f->getRuleClass(), $findings)));
         $ruleDiversity = min($uniqueRules / 10, 1.0); // Normalize to 0-1
         $totalComplexity += $ruleDiversity * $weights['rule_diversity'];
 
         // File spread factor
-        $uniqueFiles = count(array_unique(array_map(fn($f) => $f->getFile(), $findings)));
+        $uniqueFiles = \count(array_unique(array_map(fn ($f) => $f->getFile(), $findings)));
         $fileSpread = min($uniqueFiles / 20, 1.0); // Normalize to 0-1
         $totalComplexity += $fileSpread * $weights['file_spread'];
 
@@ -166,8 +170,8 @@ class RectorResultParser
         $totalComplexity += $severityEntropy * $weights['severity_mix'];
 
         // Manual intervention factor
-        $manualCount = count(array_filter($findings, fn($f) => $f->requiresManualIntervention()));
-        $manualRatio = $manualCount / count($findings);
+        $manualCount = \count(array_filter($findings, fn ($f) => $f->requiresManualIntervention()));
+        $manualRatio = $manualCount / \count($findings);
         $totalComplexity += $manualRatio * $weights['manual_intervention'];
 
         return round($totalComplexity * 10, 1); // Scale to 0-10
@@ -182,14 +186,14 @@ class RectorResultParser
     {
         $findings = [];
 
-        if (!isset($data['changed_files']) || !is_array($data['changed_files'])) {
+        if (!isset($data['changed_files']) || !\is_array($data['changed_files'])) {
             return $findings;
         }
 
         foreach ($data['changed_files'] as $fileData) {
             $file = $fileData['file'] ?? '';
-            
-            if (!isset($fileData['applied_rectors']) || !is_array($fileData['applied_rectors'])) {
+
+            if (!isset($fileData['applied_rectors']) || !\is_array($fileData['applied_rectors'])) {
                 continue;
             }
 
@@ -199,8 +203,8 @@ class RectorResultParser
         }
 
         $this->logger->info('Parsed Rector findings', [
-            'total_findings' => count($findings),
-            'affected_files' => count($data['changed_files']),
+            'total_findings' => \count($findings),
+            'affected_files' => \count($data['changed_files']),
         ]);
 
         return $findings;
@@ -220,7 +224,7 @@ class RectorResultParser
         // Determine severity and change type based on rule class name patterns
         $severity = $this->inferSeverityFromRuleClass($ruleClass);
         $changeType = $this->inferChangeTypeFromRuleClass($ruleClass);
-        
+
         $suggestedFix = null;
         if ($oldCode && $newCode && $oldCode !== $newCode) {
             $suggestedFix = "Replace '{$oldCode}' with '{$newCode}'";
@@ -240,7 +244,7 @@ class RectorResultParser
             suggestedFix: $suggestedFix,
             oldCode: $oldCode,
             newCode: $newCode,
-            context: $rectorData
+            context: $rectorData,
         );
     }
 
@@ -248,6 +252,7 @@ class RectorResultParser
      * Count findings by severity.
      *
      * @param array<RectorFinding> $findings
+     *
      * @return array<string, int>
      */
     private function countBySeverity(array $findings): array
@@ -260,7 +265,7 @@ class RectorResultParser
         ];
 
         foreach ($findings as $finding) {
-            $counts[$finding->getSeverity()->value]++;
+            ++$counts[$finding->getSeverity()->value];
         }
 
         return $counts;
@@ -270,6 +275,7 @@ class RectorResultParser
      * Count findings by change type.
      *
      * @param array<RectorFinding> $findings
+     *
      * @return array<string, int>
      */
     private function countByType(array $findings): array
@@ -288,6 +294,7 @@ class RectorResultParser
      * Group findings by file.
      *
      * @param array<RectorFinding> $findings
+     *
      * @return array<string, int>
      */
     private function groupFindingsByFile(array $findings): array
@@ -306,6 +313,7 @@ class RectorResultParser
      * Group findings by rule.
      *
      * @param array<RectorFinding> $findings
+     *
      * @return array<string, int>
      */
     private function groupFindingsByRule(array $findings): array
@@ -327,8 +335,9 @@ class RectorResultParser
      */
     private function countUniqueFiles(array $findings): int
     {
-        $files = array_unique(array_map(fn($f) => $f->getFile(), $findings));
-        return count($files);
+        $files = array_unique(array_map(fn ($f) => $f->getFile(), $findings));
+
+        return \count($files);
     }
 
     /**
@@ -355,13 +364,13 @@ class RectorResultParser
     private function calculateEntropy(array $values): float
     {
         $total = array_sum($values);
-        
-        if ($total === 0) {
+
+        if (0 === $total) {
             return 0.0;
         }
 
         $entropy = 0.0;
-        
+
         foreach ($values as $value) {
             if ($value > 0) {
                 $probability = $value / $total;
@@ -382,17 +391,17 @@ class RectorResultParser
         if (str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
             return RectorRuleSeverity::CRITICAL;
         }
-        
+
         // Deprecations in older versions
         if (str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
             return RectorRuleSeverity::WARNING;
         }
-        
+
         // Code quality improvements
         if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
             return RectorRuleSeverity::INFO;
         }
-        
+
         // Default for unknown patterns
         return RectorRuleSeverity::WARNING;
     }
@@ -406,17 +415,17 @@ class RectorResultParser
         if (str_contains($ruleClass, 'Remove') || str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
             return RectorChangeType::BREAKING_CHANGE;
         }
-        
+
         // Deprecations
         if (str_contains($ruleClass, 'Deprecat') || str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
             return RectorChangeType::DEPRECATION;
         }
-        
+
         // Code quality improvements
         if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
             return RectorChangeType::BEST_PRACTICE;
         }
-        
+
         // Default for unknown patterns
         return RectorChangeType::DEPRECATION;
     }

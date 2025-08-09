@@ -24,6 +24,7 @@ class GitVersionParser
         private readonly ComposerConstraintCheckerInterface $constraintChecker,
     ) {
     }
+
     /**
      * Find Git tags that are compatible with the target TYPO3 version.
      *
