@@ -148,7 +148,7 @@ class PackagistClient
         }
 
         // Filter out pre-release versions (dev, alpha, beta, rc, etc.) and sort
-        $stableVersions = array_filter($compatibleVersions, function ($version) {
+        $stableVersions = array_filter($compatibleVersions, function ($version): bool {
             $preReleaseMarkers = ['dev', 'alpha', 'beta', 'rc', 'snapshot'];
             foreach ($preReleaseMarkers as $marker) {
                 if (str_contains(strtolower($version), $marker)) {

@@ -270,7 +270,7 @@ final class AbstractGitProviderTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Failed to parse composer.json', $this->callback(function ($context) {
+            ->with('Failed to parse composer.json', $this->callback(function ($context): bool {
                 return isset($context['error'])
                        && isset($context['provider'])
                        && 'test-provider' === $context['provider']
@@ -313,7 +313,7 @@ final class AbstractGitProviderTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Failed to parse date', $this->callback(function ($context) {
+            ->with('Failed to parse date', $this->callback(function ($context): bool {
                 return isset($context['date_string'])
                        && isset($context['error'])
                        && 'invalid-date' === $context['date_string']

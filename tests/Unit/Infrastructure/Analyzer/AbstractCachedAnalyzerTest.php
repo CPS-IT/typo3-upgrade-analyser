@@ -163,7 +163,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Cached result expired', $this->callback(function ($context) {
+            ->with('Cached result expired', $this->callback(function ($context): bool {
                 return 'test_cached_analyzer' === $context['analyzer']
                        && 'test_extension' === $context['extension']
                        && isset($context['age'])
@@ -211,7 +211,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->cacheService->expects($this->once())
             ->method('set')
-            ->with($this->isType('string'), $this->callback(function ($data) {
+            ->with($this->isType('string'), $this->callback(function ($data): bool {
                 return 'test_cached_analyzer' === $data['analyzer_name']
                        && 'test_extension' === $data['extension_key']
                        && 'test_value' === $data['metrics']['test_metric']
@@ -226,7 +226,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Analysis result cached', $this->callback(function ($context) {
+            ->with('Analysis result cached', $this->callback(function ($context): bool {
                 return 'test_cached_analyzer' === $context['analyzer']
                        && 'test_extension' === $context['extension']
                        && isset($context['cache_key']);
@@ -548,7 +548,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('debug')
-            ->with('Cached result expired', $this->callback(function ($context) {
+            ->with('Cached result expired', $this->callback(function ($context): bool {
                 return 'test_cached_analyzer' === $context['analyzer']
                        && 'test_extension' === $context['extension']
                        && isset($context['age']) && $context['age'] > 3600;

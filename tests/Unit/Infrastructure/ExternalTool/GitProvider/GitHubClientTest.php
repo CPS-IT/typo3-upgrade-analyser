@@ -108,7 +108,7 @@ class GitHubClientTest extends TestCase
             ->with(
                 'POST',
                 'https://api.github.com/graphql',
-                $this->callback(function ($options) {
+                $this->callback(function ($options): bool {
                     return isset($options['headers']['Authorization'])
                            && 'Bearer test-token' === $options['headers']['Authorization']
                            && isset($options['json']['query'])

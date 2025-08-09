@@ -120,7 +120,7 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to load configuration file', $this->callback(function ($context) {
+            ->with('Failed to load configuration file', $this->callback(function ($context): bool {
                 return isset($context['path']) && isset($context['error']);
             }));
 

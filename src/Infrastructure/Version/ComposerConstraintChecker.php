@@ -64,7 +64,7 @@ class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
         $requirements = $composerJson['require'];
 
         // Check for TYPO3 core requirements
-        $typo3Requirements = array_filter($requirements, function ($constraint, $package) {
+        $typo3Requirements = array_filter($requirements, function ($constraint, $package): bool {
             return str_starts_with($package, 'typo3/cms-');
         }, ARRAY_FILTER_USE_BOTH);
 

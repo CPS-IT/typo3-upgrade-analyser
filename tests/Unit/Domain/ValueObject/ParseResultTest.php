@@ -442,7 +442,7 @@ class ParseResultTest extends TestCase
     /**
      * @dataProvider specialKeyPathProvider
      */
-    public function testGetValueWithSpecialKeyPaths(string $keyPath, $expectedValue, bool $shouldExist): void
+    public function testGetValueWithSpecialKeyPaths(string $keyPath, ?string $expectedValue, bool $shouldExist): void
     {
         $data = [
             '' => 'empty_key_value',

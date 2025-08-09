@@ -70,7 +70,7 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::exactly(2))
             ->method('render')
-            ->willReturnCallback(function ($template, $context) {
+            ->willReturnCallback(function ($template, $context): string {
                 if ('md/main-report.md.twig' === $template) {
                     return '# Main Report';
                 }
@@ -171,7 +171,7 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::exactly(2))
             ->method('render')
-            ->willReturnCallback(function ($template) {
+            ->willReturnCallback(function ($template): string {
                 return str_contains($template, '.md.') ? '# Markdown' : '<html>HTML</html>';
             });
 
@@ -199,7 +199,7 @@ class ReportServiceTest extends TestCase
 
         $this->logger->expects(self::once())
             ->method('error')
-            ->with('Report generation failed', self::callback(function ($context) {
+            ->with('Report generation failed', self::callback(function ($context): bool {
                 return 'unsupported' === $context['format']
                        && str_contains($context['error'], 'Unsupported report format');
             }));
@@ -264,7 +264,7 @@ class ReportServiceTest extends TestCase
 
         $this->twig->expects(self::exactly(3))
             ->method('render')
-            ->willReturnCallback(function ($template, $context) {
+            ->willReturnCallback(function ($template, $context): string {
                 if ('md/main-report.md.twig' === $template) {
                     self::assertCount(2, $context['extensions']);
                     self::assertCount(2, $context['extension_data']);
@@ -309,7 +309,7 @@ class ReportServiceTest extends TestCase
         $capturedContext = null;
         $this->twig->expects(self::exactly(2))
             ->method('render')
-            ->willReturnCallback(function ($template, $context) use (&$capturedContext) {
+            ->willReturnCallback(function ($template, $context) use (&$capturedContext): string {
                 if ('md/main-report.md.twig' === $template) {
                     $capturedContext = $context;
                 }
@@ -366,7 +366,7 @@ class ReportServiceTest extends TestCase
 
         $this->logger->expects(self::once())
             ->method('error')
-            ->with('Report generation failed', self::callback(function ($context) {
+            ->with('Report generation failed', self::callback(function ($context): bool {
                 return 'markdown' === $context['format']
                        && 'Template error' === $context['error'];
             }));
@@ -408,7 +408,7 @@ class ReportServiceTest extends TestCase
         $results = [$result1, $result2];
 
         $capturedContext = null;
-        $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
+        $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext): string {
             if ('md/main-report.md.twig' === $template) {
                 $capturedContext = $context;
             }
@@ -434,7 +434,7 @@ class ReportServiceTest extends TestCase
         $results = [];
 
         $capturedContext = null;
-        $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext) {
+        $this->twig->method('render')->willReturnCallback(function ($template, $context) use (&$capturedContext): string {
             $capturedContext = $context;
 
             return '# Test';

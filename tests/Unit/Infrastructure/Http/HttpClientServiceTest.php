@@ -229,7 +229,7 @@ class HttpClientServiceTest extends TestCase
         $this->logger
             ->expects(self::once())
             ->method('warning')
-            ->with('Rate limited, retrying', self::callback(function ($context) {
+            ->with('Rate limited, retrying', self::callback(function ($context): bool {
                 return 1 === $context['attempt'] && 1 === $context['delay'];
             }));
 
@@ -266,7 +266,7 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
-            ->willReturnCallback(function () use (&$exception, $successResponse) {
+            ->willReturnCallback(function () use (&$exception, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
                 if ($exception) {
                     $temp = $exception;
                     $exception = null;

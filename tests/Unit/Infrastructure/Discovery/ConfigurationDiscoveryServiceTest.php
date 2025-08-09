@@ -237,7 +237,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
             ->method('error')
             ->with(
                 'Configuration file parsing failed',
-                self::callback(function (array $context) {
+                self::callback(function (array $context): bool {
                     return isset($context['errors'])
                            && \in_array('Syntax error in configuration file', $context['errors'], true)
                            && \in_array('Missing required configuration', $context['errors'], true);
@@ -268,7 +268,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
             ->method('error')
             ->with(
                 'Exception during configuration file parsing',
-                self::callback(function (array $context) {
+                self::callback(function (array $context): bool {
                     return 'Parser crashed' === $context['exception']
                            && \RuntimeException::class === $context['exception_class'];
                 }),

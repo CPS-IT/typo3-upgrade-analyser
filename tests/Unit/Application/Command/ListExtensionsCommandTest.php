@@ -159,7 +159,7 @@ final class ListExtensionsCommandTest extends TestCase
 
             $this->logger->expects($this->once())
                 ->method('info')
-                ->with('Extension list generated', $this->callback(function ($context) {
+                ->with('Extension list generated', $this->callback(function ($context): bool {
                     return isset($context['installation_path'])
                         && isset($context['discovery_result']);
                 }));
@@ -572,7 +572,7 @@ final class ListExtensionsCommandTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('List extensions failed', $this->callback(function ($context) {
+            ->with('List extensions failed', $this->callback(function ($context): bool {
                 return isset($context['exception']) && $context['exception'] instanceof \RuntimeException;
             }));
 

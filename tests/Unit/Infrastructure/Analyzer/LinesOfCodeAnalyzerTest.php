@@ -145,7 +145,7 @@ class LinesOfCodeAnalyzerTest extends TestCase
             ->method('warning')
             ->with(
                 'Extension path not found for LOC analysis',
-                self::callback(function ($context) {
+                self::callback(function ($context): bool {
                     return isset($context['extension']) && 'non_existent_ext' === $context['extension'];
                 }),
             );

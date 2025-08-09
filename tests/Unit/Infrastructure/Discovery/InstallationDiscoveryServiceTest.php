@@ -434,7 +434,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
             ->method('warning')
             ->with(
                 'Configuration discovery failed during installation discovery',
-                self::callback(function (array $context) {
+                self::callback(function (array $context): bool {
                     return 'Configuration discovery failed' === $context['exception_message'];
                 }),
             );
@@ -471,7 +471,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
         // Mock configuration discovery service to verify it's called with correct installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
-            ->with(self::callback(function ($arg) use ($installation) {
+            ->with(self::callback(function ($arg) use ($installation): bool {
                 return $arg === $installation
                        && $arg->getPath() === $installation->getPath()
                        && $arg->getVersion()->toString() === $installation->getVersion()->toString();

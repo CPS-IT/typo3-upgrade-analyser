@@ -157,7 +157,7 @@ final class CacheServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to retrieve from cache', $this->callback(function ($context) use ($key) {
+            ->with('Failed to retrieve from cache', $this->callback(function ($context) use ($key): bool {
                 return isset($context['key']) && $context['key'] === $key && isset($context['error']);
             }));
 
@@ -254,7 +254,7 @@ final class CacheServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to delete cache entry', $this->callback(function ($context) use ($key) {
+            ->with('Failed to delete cache entry', $this->callback(function ($context) use ($key): bool {
                 return isset($context['key']) && $context['key'] === $key && isset($context['error']);
             }));
 
@@ -472,7 +472,7 @@ final class CacheServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to write to cache file', $this->callback(function ($context) use ($key) {
+            ->with('Failed to write to cache file', $this->callback(function ($context) use ($key): bool {
                 return isset($context['key']) && $context['key'] === $key && isset($context['path']);
             }));
 
@@ -495,7 +495,7 @@ final class CacheServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to store in cache', $this->callback(function ($context) {
+            ->with('Failed to store in cache', $this->callback(function ($context): bool {
                 return isset($context['key']) && isset($context['error']);
             }));
 

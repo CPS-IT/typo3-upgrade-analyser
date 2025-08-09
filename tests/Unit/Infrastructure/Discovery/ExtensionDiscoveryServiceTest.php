@@ -364,7 +364,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->cacheService->expects($this->once())
             ->method('set')
-            ->with('cache_key_123', $this->callback(function ($data) {
+            ->with('cache_key_123', $this->callback(function ($data): bool {
                 return \is_array($data) && isset($data['cached_at']);
             }))
             ->willReturn(true);
@@ -529,7 +529,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to parse composer installed.json', $this->callback(function ($context) {
+            ->with('Failed to parse composer installed.json', $this->callback(function ($context): bool {
                 return isset($context['error']);
             }));
 
@@ -687,7 +687,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('warning')
-            ->with('Failed to create extension from package data', $this->callback(function ($context) {
+            ->with('Failed to create extension from package data', $this->callback(function ($context): bool {
                 return 'corrupted_emconf' === $context['package_key'] && isset($context['error']);
             }));
 
@@ -777,7 +777,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to parse PackageStates.php', $this->callback(function ($context) {
+            ->with('Failed to parse PackageStates.php', $this->callback(function ($context): bool {
                 return isset($context['error']) && str_contains($context['error'], 'unbalanced brackets');
             }));
 
@@ -799,7 +799,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Failed to parse PackageStates.php', $this->callback(function ($context) {
+            ->with('Failed to parse PackageStates.php', $this->callback(function ($context): bool {
                 return isset($context['error']) && str_contains($context['error'], 'does not start with PHP opening tag');
             }));
 
@@ -962,7 +962,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('warning')
-            ->with('Failed to create extension from composer data', $this->callback(function ($context) {
+            ->with('Failed to create extension from composer data', $this->callback(function ($context): bool {
                 return 'vendor/problematic-extension' === $context['package_name']
                     && \is_string($context['error'])
                     && str_contains($context['error'], 'Invalid version format');

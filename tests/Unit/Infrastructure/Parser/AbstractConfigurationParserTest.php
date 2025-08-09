@@ -115,7 +115,7 @@ class AbstractConfigurationParserTest extends TestCase
             ->method('error')
             ->with(
                 'Configuration parsing failed',
-                self::callback(function ($context) {
+                self::callback(function ($context): bool {
                     return isset($context['error'], $context['line'], $context['column']);
                 }),
             );
@@ -139,7 +139,7 @@ class AbstractConfigurationParserTest extends TestCase
             ->method('error')
             ->with(
                 'Configuration parsing failed',
-                self::callback(function ($context) {
+                self::callback(function ($context): bool {
                     return isset($context['error'], $context['file_path'], $context['parser']);
                 }),
             );
@@ -430,7 +430,7 @@ class AbstractConfigurationParserTest extends TestCase
             ->method('info')
             ->with(
                 'Configuration file parsed successfully',
-                self::callback(function ($context) {
+                self::callback(function ($context): bool {
                     return isset($context['file_path'], $context['parser'], $context['data_keys'], $context['warnings']);
                 }),
             );

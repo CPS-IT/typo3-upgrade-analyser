@@ -91,12 +91,12 @@ class PackagistClientTest extends TestCase
             ->willReturn($this->response);
 
         $this->constraintChecker->method('findTypo3Requirements')
-            ->willReturnCallback(function (array $requirements) {
+            ->willReturnCallback(function (array $requirements): array {
                 return $requirements; // Return the requirements as-is for this test
             });
 
         $this->constraintChecker->method('isConstraintCompatible')
-            ->willReturnCallback(function (string $constraint, Version $targetVersion) {
+            ->willReturnCallback(function (string $constraint, Version $targetVersion): bool {
                 // Mock logic: ^12.0 is compatible with 12.4.0, ^11.0 is not
                 return '^12.0' === $constraint;
             });

@@ -429,7 +429,7 @@ class ConfigurationExtractor extends NodeVisitorAbstract
      *
      * @return mixed Extracted value
      */
-    private function extractValue(?Node $node)
+    private function extractValue(?Node $node): null|string|int|float|bool|array
     {
         if (null === $node) {
             return null;
