@@ -27,7 +27,7 @@ use Psr\Log\NullLogger;
 class RectorResultParserTest extends TestCase
 {
     private RectorResultParser $parser;
-    private RectorRuleRegistry $ruleRegistry;
+    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
     private NullLogger $logger;
 
     protected function setUp(): void

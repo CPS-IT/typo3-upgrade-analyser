@@ -84,7 +84,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
 
         // Strategies should be sortable by priority
         $strategies = [$lowPriorityStrategy, $highPriorityStrategy];
-        usort($strategies, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategies, fn ($a, $b): int => $b->getPriority() <=> $a->getPriority());
 
         self::assertSame($highPriorityStrategy, $strategies[0]);
         self::assertSame($lowPriorityStrategy, $strategies[1]);

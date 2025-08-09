@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 final class InstallationDiscoveryResultTest extends TestCase
 {
     private Installation $installation;
-    private DetectionStrategyInterface $strategy;
+    private \PHPUnit\Framework\MockObject\MockObject $strategy;
     private array $attemptedStrategies;
 
     protected function setUp(): void

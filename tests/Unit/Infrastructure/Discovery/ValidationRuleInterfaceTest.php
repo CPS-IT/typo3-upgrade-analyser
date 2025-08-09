@@ -129,7 +129,7 @@ final class ValidationRuleInterfaceTest extends TestCase
         }
 
         // Rules can be sorted by severity
-        usort($rules, fn ($a, $b) => $b->getSeverity()->getNumericValue() <=> $a->getSeverity()->getNumericValue());
+        usort($rules, fn ($a, $b): int => $b->getSeverity()->getNumericValue() <=> $a->getSeverity()->getNumericValue());
 
         self::assertSame(ValidationSeverity::CRITICAL, $rules[0]->getSeverity());
         self::assertSame(ValidationSeverity::ERROR, $rules[1]->getSeverity());

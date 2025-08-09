@@ -94,17 +94,17 @@ class Extension
 
     public function getPhpFiles(): array
     {
-        return array_filter($this->files, fn ($file) => str_ends_with($file, '.php'));
+        return array_filter($this->files, fn ($file): bool => str_ends_with($file, '.php'));
     }
 
     public function getTcaFiles(): array
     {
-        return array_filter($this->files, fn ($file) => str_contains($file, '/TCA/') && str_ends_with($file, '.php'));
+        return array_filter($this->files, fn ($file): bool => str_contains($file, '/TCA/') && str_ends_with($file, '.php'));
     }
 
     public function getTemplateFiles(): array
     {
-        return array_filter($this->files, fn ($file) => str_ends_with($file, '.html') || str_ends_with($file, '.fluid'));
+        return array_filter($this->files, fn ($file): bool => str_ends_with($file, '.html') || str_ends_with($file, '.fluid'));
     }
 
     public function isSystemExtension(): bool

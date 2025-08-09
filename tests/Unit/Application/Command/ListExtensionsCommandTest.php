@@ -30,10 +30,10 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class ListExtensionsCommandTest extends TestCase
 {
-    private LoggerInterface $logger;
-    private ExtensionDiscoveryServiceInterface $extensionDiscovery;
-    private InstallationDiscoveryServiceInterface $installationDiscovery;
-    private ConfigurationServiceInterface $configService;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $extensionDiscovery;
+    private \PHPUnit\Framework\MockObject\MockObject $installationDiscovery;
+    private \PHPUnit\Framework\MockObject\MockObject $configService;
     private ListExtensionsCommand $command;
     private CommandTester $commandTester;
     private string $tempConfigFile;

@@ -23,8 +23,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class TerApiHttpClientTest extends TestCase
 {
-    private HttpClientServiceInterface $mockHttpClient;
-    private LoggerInterface $mockLogger;
+    private \PHPUnit\Framework\MockObject\MockObject $mockHttpClient;
+    private \PHPUnit\Framework\MockObject\MockObject $mockLogger;
     private TerApiHttpClient $httpClient;
 
     protected function setUp(): void

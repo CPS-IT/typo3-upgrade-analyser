@@ -153,11 +153,11 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
         $testData = ['test' => 'data', 'timestamp' => time()];
 
         // First call should execute the callable
-        $result1 = $this->cacheApiResponse($cacheKey, fn () => $testData);
+        $result1 = $this->cacheApiResponse($cacheKey, fn (): array => $testData);
         $this->assertEquals($testData, $result1);
 
         // Second call should return cached data
-        $result2 = $this->cacheApiResponse($cacheKey, fn () => ['different' => 'data']);
+        $result2 = $this->cacheApiResponse($cacheKey, fn (): array => ['different' => 'data']);
         $this->assertEquals($testData, $result2); // Should be same as first call
     }
 

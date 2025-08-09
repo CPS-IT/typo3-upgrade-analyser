@@ -34,14 +34,14 @@ class GitProviderFactory
      */
     public function createProvider(string $repositoryUrl): GitProviderInterface
     {
-        $availableProviders = array_filter($this->providers, fn ($provider) => $provider->isAvailable());
+        $availableProviders = array_filter($this->providers, fn ($provider): bool => $provider->isAvailable());
 
         if (empty($availableProviders)) {
             throw new GitAnalysisException(\sprintf('No suitable Git provider found for repository: %s', $repositoryUrl));
         }
 
         // Sort by priority (highest first)
-        usort($availableProviders, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($availableProviders, fn ($a, $b): int => $b->getPriority() <=> $a->getPriority());
 
         // Find the first provider that supports this repository URL
         foreach ($availableProviders as $provider) {
@@ -65,7 +65,7 @@ class GitProviderFactory
      */
     public function getAvailableProviders(): array
     {
-        return array_filter($this->providers, fn ($provider) => $provider->isAvailable());
+        return array_filter($this->providers, fn ($provider): bool => $provider->isAvailable());
     }
 
     /**

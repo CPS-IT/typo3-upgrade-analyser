@@ -206,7 +206,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
 
         $branches = $this->cacheApiResponse(
             'github_branches_' . md5($repositoryUrl),
-            fn () => $this->gitHubClient->getBranches($repositoryUrl),
+            fn (): array => $this->gitHubClient->getBranches($repositoryUrl),
         );
 
         $this->assertIsArray($branches);
@@ -225,7 +225,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
 
         $composerJson = $this->cacheApiResponse(
             'github_composer_' . md5($repositoryUrl),
-            fn () => $this->gitHubClient->getComposerJson($repositoryUrl),
+            fn (): ?array => $this->gitHubClient->getComposerJson($repositoryUrl),
         );
 
         $this->assertIsArray($composerJson);

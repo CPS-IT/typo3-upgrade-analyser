@@ -289,7 +289,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         }
 
         foreach ($extensionResults as $extension => $iterationResults) {
-            $riskScores = array_map(fn ($r) => $r['result']->getRiskScore(), $iterationResults);
+            $riskScores = array_map(fn ($r): float => $r['result']->getRiskScore(), $iterationResults);
             $avgRisk = array_sum($riskScores) / \count($riskScores);
 
             // Risk scores should be consistent across iterations
@@ -485,7 +485,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         }
 
         // At least one condition should succeed
-        $successCount = \count(array_filter($results, fn ($r) => $r['success']));
+        $successCount = \count(array_filter($results, fn ($r): bool => $r['success']));
         $this->assertGreaterThan(0, $successCount, 'Should succeed under at least one network condition');
     }
 

@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 
 final class CacheServiceTest extends TestCase
 {
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private string $tempDir;
     private CacheService $cacheService;
 

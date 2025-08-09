@@ -337,7 +337,7 @@ class GitVersionParserTest extends TestCase
 
         $this->assertCount(3, $compatibleVersions);
         // Verify the returned tags (order depends on array_filter implementation)
-        $tagNames = array_map(fn ($tag) => $tag->getName(), $compatibleVersions);
+        $tagNames = array_map(fn ($tag): string => $tag->getName(), $compatibleVersions);
         $this->assertContains('v12.4.0', $tagNames);
         $this->assertContains('v12.4.1', $tagNames);
         $this->assertContains('v12.4.2', $tagNames);

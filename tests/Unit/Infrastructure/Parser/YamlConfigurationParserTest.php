@@ -352,8 +352,8 @@ class YamlConfigurationParserTest extends TestCase
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $argumentErrors = array_filter($errors, fn ($error) => str_contains($error, 'arguments must be an array'));
-            $tagErrors = array_filter($errors, fn ($error) => str_contains($error, 'tags must be an array'));
+            $argumentErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'arguments must be an array'));
+            $tagErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'tags must be an array'));
 
             self::assertNotEmpty($argumentErrors);
             self::assertNotEmpty($tagErrors);
@@ -391,8 +391,8 @@ class YamlConfigurationParserTest extends TestCase
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $missingRootPageIdErrors = array_filter($errors, fn ($error) => str_contains($error, 'rootPageId'));
-            $missingBaseErrors = array_filter($errors, fn ($error) => str_contains($error, 'base'));
+            $missingRootPageIdErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'rootPageId'));
+            $missingBaseErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'base'));
 
             self::assertNotEmpty($missingRootPageIdErrors);
             self::assertNotEmpty($missingBaseErrors);
@@ -421,9 +421,9 @@ class YamlConfigurationParserTest extends TestCase
             $errors = $result->getErrors();
             self::assertCount(3, $errors);
 
-            $rootPageIdErrors = array_filter($errors, fn ($error) => str_contains($error, 'rootPageId must be a positive integer'));
-            $baseErrors = array_filter($errors, fn ($error) => str_contains($error, 'base must be a valid URL'));
-            $languagesErrors = array_filter($errors, fn ($error) => str_contains($error, 'languages must be an array'));
+            $rootPageIdErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'rootPageId must be a positive integer'));
+            $baseErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'base must be a valid URL'));
+            $languagesErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'languages must be an array'));
 
             self::assertNotEmpty($rootPageIdErrors);
             self::assertNotEmpty($baseErrors);
@@ -529,7 +529,7 @@ class YamlConfigurationParserTest extends TestCase
         self::assertTrue($result->hasWarnings());
 
         $warnings = $result->getWarnings();
-        $emptySectionWarnings = array_filter($warnings, fn ($warning) => str_contains($warning, 'Empty configuration section'));
+        $emptySectionWarnings = array_filter($warnings, fn ($warning): bool => str_contains($warning, 'Empty configuration section'));
         self::assertCount(2, $emptySectionWarnings);
     }
 
@@ -547,7 +547,7 @@ class YamlConfigurationParserTest extends TestCase
         self::assertTrue($result->hasWarnings());
 
         $warnings = $result->getWarnings();
-        $circularWarnings = array_filter($warnings, fn ($warning) => str_contains($warning, 'circular reference'));
+        $circularWarnings = array_filter($warnings, fn ($warning): bool => str_contains($warning, 'circular reference'));
         self::assertCount(2, $circularWarnings);
     }
 

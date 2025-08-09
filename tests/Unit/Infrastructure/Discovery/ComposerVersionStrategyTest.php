@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
  */
 final class ComposerVersionStrategyTest extends TestCase
 {
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private ComposerVersionStrategy $strategy;
     private string $testDir;
 

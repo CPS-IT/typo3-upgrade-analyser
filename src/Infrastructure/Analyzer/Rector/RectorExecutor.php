@@ -259,7 +259,7 @@ class RectorExecutor
 
             // Handle error cases
             if (isset($data['errors']) && \is_array($data['errors'])) {
-                $errors = array_map(fn ($error) => (string) $error, $data['errors']);
+                $errors = array_map(fn ($error): string => (string) $error, $data['errors']);
             }
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse Rector JSON output', [

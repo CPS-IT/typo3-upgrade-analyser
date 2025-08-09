@@ -13,6 +13,6 @@ return RectorConfig::configure()
     ->withSkipPath('tests/Fixtures/Configuration/InvalidSyntax.php')
     // uncomment to reach your current PHP version
     // ->withPhpSets()
-    ->withTypeCoverageLevel(0)
-    ->withDeadCodeLevel(0)
+    ->withTypeCoverageLevel(10)
+    ->withDeadCodeLevel(4)
     ->withCodeQualityLevel(1);

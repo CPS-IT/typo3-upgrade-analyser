@@ -69,7 +69,7 @@ class RectorRuleSeverityTest extends TestCase
             RectorRuleSeverity::SUGGESTION,
         ];
 
-        $weights = array_map(fn ($s) => $s->getRiskWeight(), $severities);
+        $weights = array_map(fn ($s): float => $s->getRiskWeight(), $severities);
         $sortedWeights = $weights;
         rsort($sortedWeights);
 

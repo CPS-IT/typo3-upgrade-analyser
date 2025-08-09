@@ -30,11 +30,11 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 class AnalyzeCommandTest extends TestCase
 {
-    private LoggerInterface $logger;
-    private ExtensionDiscoveryServiceInterface $extensionDiscovery;
-    private InstallationDiscoveryServiceInterface $installationDiscovery;
-    private ConfigurationServiceInterface $configService;
-    private ReportService $reportService;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $extensionDiscovery;
+    private \PHPUnit\Framework\MockObject\MockObject $installationDiscovery;
+    private \PHPUnit\Framework\MockObject\MockObject $configService;
+    private \PHPUnit\Framework\MockObject\MockObject $reportService;
     private AnalyzeCommand $command;
     private CommandTester $commandTester;
 

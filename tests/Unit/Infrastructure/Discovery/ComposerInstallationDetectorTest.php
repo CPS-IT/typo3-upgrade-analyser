@@ -26,7 +26,7 @@ use Psr\Log\LoggerInterface;
  */
 final class ComposerInstallationDetectorTest extends TestCase
 {
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private VersionExtractor $versionExtractor;
     private ComposerInstallationDetector $detector;
     private string $testDir;
@@ -145,7 +145,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             ->with(
                 'Failed to parse composer.json for TYPO3 package check',
                 self::callback(
-                    fn ($context) => isset($context['path'])
+                    fn ($context): bool => isset($context['path'])
                     && str_contains($context['path'], 'composer.json')
                     && isset($context['error']),
                 ),

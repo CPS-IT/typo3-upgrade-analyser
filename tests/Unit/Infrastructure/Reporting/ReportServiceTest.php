@@ -29,8 +29,8 @@ use Twig\Environment as TwigEnvironment;
 class ReportServiceTest extends TestCase
 {
     private ReportService $subject;
-    private TwigEnvironment $twig;
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $twig;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private string $tempDir;
 
     protected function setUp(): void

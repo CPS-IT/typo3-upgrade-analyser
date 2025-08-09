@@ -147,8 +147,8 @@ class CacheIntegrationTest extends AbstractIntegrationTest
         // Results should be identical
         $this->assertCount(\count($extensions1), $extensions2);
 
-        $keys1 = array_map(fn ($ext) => $ext->getKey(), $extensions1);
-        $keys2 = array_map(fn ($ext) => $ext->getKey(), $extensions2);
+        $keys1 = array_map(fn ($ext): string => $ext->getKey(), $extensions1);
+        $keys2 = array_map(fn ($ext): string => $ext->getKey(), $extensions2);
         sort($keys1);
         sort($keys2);
         $this->assertEquals($keys1, $keys2);
@@ -442,8 +442,8 @@ class CacheIntegrationTest extends AbstractIntegrationTest
         // Results should be consistent
         $this->assertCount(\count($result1->getExtensions()), $result2->getExtensions());
 
-        $keys1 = array_map(fn ($ext) => $ext->getKey(), $result1->getExtensions());
-        $keys2 = array_map(fn ($ext) => $ext->getKey(), $result2->getExtensions());
+        $keys1 = array_map(fn ($ext): string => $ext->getKey(), $result1->getExtensions());
+        $keys2 = array_map(fn ($ext): string => $ext->getKey(), $result2->getExtensions());
         sort($keys1);
         sort($keys2);
         $this->assertEquals($keys1, $keys2);

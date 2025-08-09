@@ -22,9 +22,9 @@ use Psr\Log\LoggerInterface;
 
 final class ExtensionDiscoveryServiceTest extends TestCase
 {
-    private LoggerInterface $logger;
-    private ConfigurationService $configService;
-    private CacheService $cacheService;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $configService;
+    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
     private ExtensionDiscoveryService $service;
     private string $tempDir;
 
@@ -301,7 +301,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('PackageStates.php', $result->getSuccessfulMethods());
         $this->assertContains('composer installed.json', $result->getSuccessfulMethods());
 
-        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $result->getExtensions());
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $result->getExtensions());
         $this->assertContains('local_extension', $extensionKeys);
         $this->assertContains('news', $extensionKeys);
         $this->assertContains('composer_only', $extensionKeys);
@@ -569,7 +569,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(2, $result->getExtensions());
 
-        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $result->getExtensions());
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $result->getExtensions());
         $this->assertContains('extension_name', $extensionKeys);
         $this->assertContains('my_awesome_ext', $extensionKeys);
     }
@@ -916,7 +916,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(3, $result->getExtensions());
 
-        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $result->getExtensions());
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $result->getExtensions());
         $this->assertContains('complex_extension_name', $extensionKeys);
         $this->assertContains('single_name_package', $extensionKeys);
         $this->assertContains('vendor_extension_with_multiple_slashes', $extensionKeys);

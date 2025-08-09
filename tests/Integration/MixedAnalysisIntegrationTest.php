@@ -277,7 +277,7 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         // Test analyzing multiple extensions efficiently
         $extensionKeys = ['news', 'extension_builder'];
         $extensions = array_map(
-            fn ($key) => $this->createTestExtension(
+            fn ($key): \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension => $this->createTestExtension(
                 $key,
                 $this->testExtensions['extensions'][$this->getFullKey($key)]['composer_name'] ?? null,
             ),

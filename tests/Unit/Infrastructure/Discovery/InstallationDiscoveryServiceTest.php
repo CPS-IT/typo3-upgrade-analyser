@@ -30,8 +30,8 @@ use Psr\Log\LoggerInterface;
  */
 final class InstallationDiscoveryServiceTest extends TestCase
 {
-    private LoggerInterface $logger;
-    private ConfigurationDiscoveryService $configurationDiscoveryService;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $configurationDiscoveryService;
     private InstallationDiscoveryService $service;
     private string $testDir;
 

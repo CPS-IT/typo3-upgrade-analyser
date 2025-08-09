@@ -48,13 +48,13 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         // Configure PHP parser mock
         $this->phpParser->method('getFormat')->willReturn('php');
         $this->phpParser->method('supports')->willReturnCallback(
-            fn (string $path) => str_ends_with($path, '.php'),
+            fn (string $path): bool => str_ends_with($path, '.php'),
         );
 
         // Configure YAML parser mock
         $this->yamlParser->method('getFormat')->willReturn('yaml');
         $this->yamlParser->method('supports')->willReturnCallback(
-            fn (string $path) => str_ends_with($path, '.yaml'),
+            fn (string $path): bool => str_ends_with($path, '.yaml'),
         );
 
         $this->service = new ConfigurationDiscoveryService(

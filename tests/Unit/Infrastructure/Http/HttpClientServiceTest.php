@@ -27,8 +27,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class HttpClientServiceTest extends TestCase
 {
     private HttpClientService $subject;
-    private HttpClientInterface $httpClient;
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $httpClient;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
 
     protected function setUp(): void
     {

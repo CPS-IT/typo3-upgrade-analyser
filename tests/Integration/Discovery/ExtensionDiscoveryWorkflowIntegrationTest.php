@@ -102,7 +102,7 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
         $this->assertNotEmpty($extensions, 'Should have found extensions');
 
         // Verify expected extensions are found
-        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $extensions);
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $extensions);
 
         // Should find extensions from PackageStates.php
         $this->assertContains('news', $extensionKeys);
@@ -160,7 +160,7 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
         $this->assertTrue($extensionResult->hasExtensions(), 'Should find extensions');
 
         $extensions = $extensionResult->getExtensions();
-        $extensionKeys = array_map(fn ($ext) => $ext->getKey(), $extensions);
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $extensions);
 
         // Should find legacy extensions
         $this->assertContains('legacy_news', $extensionKeys);
@@ -187,7 +187,7 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
         $extensions = $extensionResult->getExtensions();
 
         // Check that we have different extension types
-        $extensionTypes = array_unique(array_map(fn ($ext) => $ext->getType(), $extensions));
+        $extensionTypes = array_unique(array_map(fn ($ext): string => $ext->getType(), $extensions));
 
         // Should have local extensions (from PackageStates.php)
         $this->assertContains('local', $extensionTypes);
@@ -295,8 +295,8 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
         // Results should be identical
         $this->assertCount(\count($extensions1), $extensions2);
 
-        $keys1 = array_map(fn ($ext) => $ext->getKey(), $extensions1);
-        $keys2 = array_map(fn ($ext) => $ext->getKey(), $extensions2);
+        $keys1 = array_map(fn ($ext): string => $ext->getKey(), $extensions1);
+        $keys2 = array_map(fn ($ext): string => $ext->getKey(), $extensions2);
         sort($keys1);
         sort($keys2);
         $this->assertEquals($keys1, $keys2);
@@ -396,7 +396,7 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
             $this->assertNotEmpty($metadata);
 
             // Should indicate which methods failed
-            $failedMethods = array_filter($metadata, fn ($m) => !$m['successful']);
+            $failedMethods = array_filter($metadata, fn ($m): bool => !$m['successful']);
             $this->assertNotEmpty($failedMethods, 'Should report failed discovery methods');
         } else {
             // If failed, should provide clear error message

@@ -87,7 +87,7 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // Strategies should be sortable by priority
         $strategies = [$lowPriorityStrategy, $highPriorityStrategy];
-        usort($strategies, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategies, fn ($a, $b): int => $b->getPriority() <=> $a->getPriority());
 
         self::assertSame($highPriorityStrategy, $strategies[0]);
         self::assertSame($lowPriorityStrategy, $strategies[1]);
@@ -143,7 +143,7 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // Sort by priority (descending)
         $byPriority = [...$strategies];
-        usort($byPriority, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($byPriority, fn ($a, $b): int => $b->getPriority() <=> $a->getPriority());
 
         self::assertSame('High Priority Low Reliability', $byPriority[0]->getName());
         self::assertSame('Medium Priority Medium Reliability', $byPriority[1]->getName());
@@ -151,7 +151,7 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // Sort by reliability (descending)
         $byReliability = [...$strategies];
-        usort($byReliability, fn ($a, $b) => $b->getReliabilityScore() <=> $a->getReliabilityScore());
+        usort($byReliability, fn ($a, $b): int => $b->getReliabilityScore() <=> $a->getReliabilityScore());
 
         self::assertSame('Low Priority High Reliability', $byReliability[0]->getName());
         self::assertSame('Medium Priority Medium Reliability', $byReliability[1]->getName());

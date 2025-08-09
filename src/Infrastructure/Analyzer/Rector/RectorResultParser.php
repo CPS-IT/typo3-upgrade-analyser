@@ -335,7 +335,7 @@ class RectorResultParser
      */
     private function countUniqueFiles(array $findings): int
     {
-        $files = array_unique(array_map(fn ($f) => $f->getFile(), $findings));
+        $files = array_unique(array_map(fn ($f): string => $f->getFile(), $findings));
 
         return \count($files);
     }

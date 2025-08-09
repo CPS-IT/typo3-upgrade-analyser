@@ -121,22 +121,22 @@ class ReportService
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
             $discoveryResults,
-            fn (ResultInterface $r) => 'installation' === $r->getId(),
+            fn (ResultInterface $r): bool => 'installation' === $r->getId(),
         );
         $extensionDiscovery = array_filter(
             $discoveryResults,
-            fn (ResultInterface $r) => 'extensions' === $r->getId(),
+            fn (ResultInterface $r): bool => 'extensions' === $r->getId(),
         );
 
         // Analysis results
         $analysisResults = $groupedResults['analysis'];
         $versionAnalysis = array_filter(
             $analysisResults,
-            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
         $locAnalysis = array_filter(
             $analysisResults,
-            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
         );
 
         // Build detailed extension data with analysis results
@@ -144,7 +144,7 @@ class ReportService
         foreach ($extensions as $extension) {
             $extensionResults = array_filter(
                 $analysisResults,
-                fn (ResultInterface $r) => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
+                fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
             );
 
             $extensionData[] = [
@@ -184,7 +184,7 @@ class ReportService
     {
         $versionResult = array_filter(
             $results,
-            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
 
         if (empty($versionResult)) {
@@ -214,7 +214,7 @@ class ReportService
     {
         $locResult = array_filter(
             $results,
-            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
         );
 
         if (empty($locResult)) {
@@ -248,7 +248,7 @@ class ReportService
     {
         $rectorResult = array_filter(
             $results,
-            fn (ResultInterface $r) => $r instanceof AnalysisResult && 'typo3_rector' === $r->getAnalyzerName(),
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'typo3_rector' === $r->getAnalyzerName(),
         );
 
         if (empty($rectorResult)) {

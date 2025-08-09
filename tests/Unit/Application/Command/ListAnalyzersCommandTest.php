@@ -188,7 +188,7 @@ class ListAnalyzersCommandTest extends TestCase
 
         // Check that the output is properly formatted as a table
         $lines = explode("\n", $display);
-        $contentLines = array_filter($lines, fn ($line) => !empty(trim($line)));
+        $contentLines = array_filter($lines, fn ($line): bool => !empty(trim($line)));
 
         // Should have multiple lines of content (title, headers, analyzers, etc.)
         self::assertGreaterThanOrEqual(15, \count($contentLines));

@@ -27,7 +27,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class RectorConfigGeneratorTest extends TestCase
 {
     private RectorConfigGenerator $generator;
-    private RectorRuleRegistry $ruleRegistry;
+    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
     private string $tempDirectory;
     private Filesystem $filesystem;
 

@@ -27,8 +27,8 @@ use Psr\Log\LoggerInterface;
 class LinesOfCodeAnalyzerTest extends TestCase
 {
     private LinesOfCodeAnalyzer $subject;
-    private LoggerInterface $logger;
-    private CacheService $cacheService;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
 
     protected function setUp(): void
     {

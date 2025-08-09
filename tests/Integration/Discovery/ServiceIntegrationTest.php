@@ -309,8 +309,8 @@ class ServiceIntegrationTest extends AbstractIntegrationTest
         }
 
         if ($extensionResult2->isSuccessful()) {
-            $extensions1 = array_map(fn ($ext) => $ext->getKey(), $extensionResult1->getExtensions());
-            $extensions2 = array_map(fn ($ext) => $ext->getKey(), $extensionResult2->getExtensions());
+            $extensions1 = array_map(fn ($ext): string => $ext->getKey(), $extensionResult1->getExtensions());
+            $extensions2 = array_map(fn ($ext): string => $ext->getKey(), $extensionResult2->getExtensions());
 
             // Should have different extension sets
             $this->assertNotEquals(

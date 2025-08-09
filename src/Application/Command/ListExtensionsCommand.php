@@ -129,7 +129,7 @@ class ListExtensionsCommand extends Command
             // Display table
             $io->table(
                 ['Extension', 'Version', 'Type', 'Active'],
-                array_map(fn ($ext) => [
+                array_map(fn ($ext): array => [
                     $ext->getKey(),
                     $ext->getVersion()->toString(),
                     $ext->getType(),
@@ -138,7 +138,7 @@ class ListExtensionsCommand extends Command
             );
 
             // Summary
-            $activeCount = array_reduce($extensions, fn ($count, $ext) => $count + ($ext->isActive() ? 1 : 0), 0);
+            $activeCount = array_reduce($extensions, fn ($count, $ext): float|int => $count + ($ext->isActive() ? 1 : 0), 0);
             $inactiveCount = \count($extensions) - $activeCount;
 
             $io->writeln('');

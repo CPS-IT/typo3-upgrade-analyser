@@ -39,7 +39,7 @@ final class VersionExtractor
     ) {
         // Convert iterable to array and sort strategies by priority (highest first)
         $strategiesArray = iterator_to_array($strategies);
-        usort($strategiesArray, fn (VersionStrategyInterface $a, VersionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, fn (VersionStrategyInterface $a, VersionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
         $this->strategies = $strategiesArray;
     }
 
@@ -158,7 +158,7 @@ final class VersionExtractor
     {
         return array_filter(
             $this->strategies,
-            fn (VersionStrategyInterface $strategy) => $strategy->supports($installationPath),
+            fn (VersionStrategyInterface $strategy): bool => $strategy->supports($installationPath),
         );
     }
 

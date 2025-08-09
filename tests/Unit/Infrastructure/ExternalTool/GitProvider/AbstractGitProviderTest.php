@@ -26,8 +26,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class AbstractGitProviderTest extends TestCase
 {
-    private HttpClientServiceInterface $httpClient;
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $httpClient;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private TestableGitProvider $provider;
 
     protected function setUp(): void

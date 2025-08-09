@@ -49,7 +49,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);
-        usort($strategiesArray, fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b) => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
         $this->detectionStrategies = $strategiesArray;
     }
 
@@ -196,7 +196,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false);
+        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt): bool => $attempt['supported'] ?? false);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
             : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
@@ -233,7 +233,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
     {
         return array_filter(
             $this->detectionStrategies,
-            fn (DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy),
+            fn (DetectionStrategyInterface $strategy): bool => $this->hasRequiredIndicators($path, $strategy),
         );
     }
 
@@ -250,7 +250,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
     {
         return array_filter(
             $this->detectionStrategies,
-            fn (DetectionStrategyInterface $strategy) => $this->hasRequiredIndicators($path, $strategy) && $strategy->supports($path),
+            fn (DetectionStrategyInterface $strategy): bool => $this->hasRequiredIndicators($path, $strategy) && $strategy->supports($path),
         );
     }
 
@@ -336,7 +336,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
         $this->logger->info('Installation validation completed', [
             'installation' => $installation->getPath(),
             'total_issues' => \count($allIssues),
-            'blocking_issues' => \count(array_filter($allIssues, fn (ValidationIssue $issue) => $issue->isBlockingAnalysis())),
+            'blocking_issues' => \count(array_filter($allIssues, fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis())),
         ]);
 
         return $allIssues;

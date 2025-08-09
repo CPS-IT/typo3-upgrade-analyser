@@ -155,7 +155,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         return array_filter(
             $this->validationIssues,
-            fn (ValidationIssue $issue) => $issue->getSeverity() === $severity,
+            fn (ValidationIssue $issue): bool => $issue->getSeverity() === $severity,
         );
     }
 
@@ -168,7 +168,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         return !empty(array_filter(
             $this->validationIssues,
-            fn (ValidationIssue $issue) => $issue->isBlockingAnalysis(),
+            fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis(),
         ));
     }
 
@@ -201,7 +201,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         if (!$this->isSuccessful) {
             $attemptedCount = \count($this->attemptedStrategies);
-            $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false));
+            $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt): mixed => $attempt['supported'] ?? false));
 
             return \sprintf(
                 'Installation discovery failed: %s (attempted %d strategies, %d supported)',
@@ -224,7 +224,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
 
         if ($this->hasValidationIssues()) {
             $issueCount = \count($this->validationIssues);
-            $blockingCount = \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis()));
+            $blockingCount = \count(array_filter($this->validationIssues, fn ($issue): bool => $issue->isBlockingAnalysis()));
 
             $summary .= \sprintf(
                 ' - %d validation issue%s found%s',
@@ -247,9 +247,9 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         $stats = [
             'successful' => $this->isSuccessful,
             'attempted_strategies' => \count($this->attemptedStrategies),
-            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn ($attempt) => $attempt['supported'] ?? false)),
+            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn ($attempt): mixed => $attempt['supported'] ?? false)),
             'validation_issues' => \count($this->validationIssues),
-            'blocking_issues' => \count(array_filter($this->validationIssues, fn ($issue) => $issue->isBlockingAnalysis())),
+            'blocking_issues' => \count(array_filter($this->validationIssues, fn ($issue): bool => $issue->isBlockingAnalysis())),
         ];
 
         if ($this->isSuccessful) {
@@ -274,7 +274,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
             'error_message' => $this->errorMessage,
             'installation' => $this->installation?->toArray(false), // Exclude extensions in discovery context
             'successful_strategy' => $this->successfulStrategy?->getName(),
-            'validation_issues' => array_map(fn (ValidationIssue $issue) => $issue->toArray(), $this->validationIssues),
+            'validation_issues' => array_map(fn (ValidationIssue $issue): array => $issue->toArray(), $this->validationIssues),
             'validation_summary' => [
                 'total_issues' => \count($this->validationIssues),
                 'by_severity' => $this->getValidationIssueCountsBySeverity(),

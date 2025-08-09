@@ -149,7 +149,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      */
     public function getExtensionsByType(string $type): array
     {
-        return array_filter($this->extensions, fn (Extension $ext) => $ext->getType() === $type);
+        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->getType() === $type);
     }
 
     /**
@@ -161,7 +161,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      */
     public function getExtensionsByActiveStatus(bool $active = true): array
     {
-        return array_filter($this->extensions, fn (Extension $ext) => $ext->isActive() === $active);
+        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->isActive() === $active);
     }
 
     /**
@@ -295,7 +295,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
         return [
             'successful' => $this->isSuccessful,
             'error_message' => $this->errorMessage,
-            'extensions' => array_map(fn (Extension $ext) => $ext->toArray(), $this->extensions),
+            'extensions' => array_map(fn (Extension $ext): array => $ext->toArray(), $this->extensions),
             'successful_methods' => $this->successfulMethods,
             'discovery_metadata' => $this->discoveryMetadata,
             'statistics' => $this->getStatistics(),

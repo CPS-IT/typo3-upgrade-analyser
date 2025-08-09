@@ -60,7 +60,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_12.4.0",
-            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+            fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $responseTime = microtime(true) - $startTime;
@@ -81,7 +81,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_11.5.0",
-            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+            fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertTrue($hasVersion, 'News extension should have TYPO3 11.5 compatible version in TER');
@@ -99,7 +99,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_12.4.0",
-            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+            fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertFalse($hasVersion, 'RealURL extension should not have TYPO3 12.4 compatible version in TER');
@@ -117,7 +117,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $hasVersion = $this->cacheApiResponse(
             "ter_has_version_{$extensionKey}_8.7.0",
-            fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+            fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
         );
 
         $this->assertTrue($hasVersion, 'RealURL extension should have TYPO3 8.7 compatible version in TER');
@@ -154,7 +154,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_12.4.0",
-            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
+            fn (): ?string => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $responseTime = microtime(true) - $startTime;
@@ -181,7 +181,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_12.4.0",
-            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
+            fn (): ?string => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $this->assertNull($latestVersion, 'Archived extension should not have TYPO3 12.4 compatible version');
@@ -199,7 +199,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $latestVersion = $this->cacheApiResponse(
             "ter_latest_version_{$extensionKey}_8.7.0",
-            fn () => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
+            fn (): ?string => $this->terApiClient->getLatestVersion($extensionKey, $typo3Version),
         );
 
         $this->assertNotNull($latestVersion, 'Archived extension should have older TYPO3 compatible version');
@@ -245,7 +245,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
             try {
                 $hasVersion = $this->cacheApiResponse(
                     "ter_multi_test_{$extensionKey}_12.4.0",
-                    fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+                    fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
                 );
 
                 $responseTime = microtime(true) - $startTime;
@@ -300,7 +300,7 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
             $hasVersion = $this->cacheApiResponse(
                 "ter_version_logic_{$extensionKey}_{$versionString}",
-                fn () => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+                fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
             );
 
             if (null !== $expectedResult) {

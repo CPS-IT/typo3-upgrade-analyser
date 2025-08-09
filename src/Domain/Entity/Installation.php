@@ -145,17 +145,17 @@ class Installation implements SerializableInterface
 
     public function getSystemExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext) => 'system' === $ext->getType());
+        return array_filter($this->extensions, fn (Extension $ext): bool => 'system' === $ext->getType());
     }
 
     public function getLocalExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext) => 'local' === $ext->getType());
+        return array_filter($this->extensions, fn (Extension $ext): bool => 'local' === $ext->getType());
     }
 
     public function getComposerExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext) => $ext->hasComposerName());
+        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->hasComposerName());
     }
 
     public function isMixedMode(): bool
@@ -451,15 +451,15 @@ class Installation implements SerializableInterface
             'configurations' => array_keys($this->configurationData),
             'has_errors' => $this->hasConfigurationErrors(),
             'error_count' => array_sum(array_map(
-                fn (ConfigurationData $config) => \count($config->getValidationErrors()),
+                fn (ConfigurationData $config): int => \count($config->getValidationErrors()),
                 $this->configurationData,
             )),
             'file_sizes' => array_map(
-                fn (ConfigurationMetadata $meta) => $meta->getFileSize(),
+                fn (ConfigurationMetadata $meta): int => $meta->getFileSize(),
                 $this->configurationMetadata,
             ),
             'last_modified' => array_map(
-                fn (ConfigurationMetadata $meta) => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
+                fn (ConfigurationMetadata $meta): string => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
                 $this->configurationMetadata,
             ),
         ];

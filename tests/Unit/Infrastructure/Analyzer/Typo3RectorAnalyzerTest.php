@@ -36,12 +36,12 @@ use Psr\Log\NullLogger;
 class Typo3RectorAnalyzerTest extends TestCase
 {
     private Typo3RectorAnalyzer $analyzer;
-    private CacheService $cacheService;
+    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
     private NullLogger $logger;
-    private RectorExecutor $rectorExecutor;
-    private RectorConfigGenerator $configGenerator;
-    private RectorResultParser $resultParser;
-    private RectorRuleRegistry $ruleRegistry;
+    private \PHPUnit\Framework\MockObject\MockObject $rectorExecutor;
+    private \PHPUnit\Framework\MockObject\MockObject $configGenerator;
+    private \PHPUnit\Framework\MockObject\MockObject $resultParser;
+    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
 
     protected function setUp(): void
     {

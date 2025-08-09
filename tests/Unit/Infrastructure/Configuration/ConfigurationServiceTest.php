@@ -19,7 +19,7 @@ use Symfony\Component\Yaml\Yaml;
 
 final class ConfigurationServiceTest extends TestCase
 {
-    private LoggerInterface $logger;
+    private \PHPUnit\Framework\MockObject\MockObject $logger;
     private string $tempConfigFile;
 
     protected function setUp(): void

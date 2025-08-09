@@ -332,7 +332,7 @@ class PhpConfigurationParserTest extends TestCase
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $dbErrors = array_filter($errors, fn ($error) => str_contains($error, 'database configuration'));
+            $dbErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'database configuration'));
             self::assertNotEmpty($dbErrors);
         } finally {
             unlink($tempFile);
@@ -399,7 +399,7 @@ class PhpConfigurationParserTest extends TestCase
             self::assertTrue($result->hasErrors());
 
             $errors = $result->getErrors();
-            $missingExtensionErrors = array_filter($errors, fn ($error) => str_contains($error, 'Missing required system extension'));
+            $missingExtensionErrors = array_filter($errors, fn ($error): bool => str_contains($error, 'Missing required system extension'));
             self::assertCount(4, $missingExtensionErrors); // backend, frontend, extbase, fluid
         } finally {
             unlink($tempFile);
