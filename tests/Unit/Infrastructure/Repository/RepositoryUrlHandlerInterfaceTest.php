@@ -16,7 +16,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterfac
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface
+ * Test interface definition and contract validation.
  */
 class RepositoryUrlHandlerInterfaceTest extends TestCase
 {

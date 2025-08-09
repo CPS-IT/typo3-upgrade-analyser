@@ -20,7 +20,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface
+ * Test interface definition and contract validation.
  */
 class AnalyzerInterfaceTest extends TestCase
 {

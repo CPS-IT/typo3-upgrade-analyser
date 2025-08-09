@@ -16,24 +16,15 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test for SerializableInterface contract.
- *
- * This test verifies that the interface exists and has the expected method signatures.
- * Actual implementation testing is done in the concrete class tests.
+ * Test interface definition and contract validation.
  */
 final class SerializableInterfaceTest extends TestCase
 {
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface
-     */
     public function testInterfaceExists(): void
     {
         $this->assertTrue(interface_exists(SerializableInterface::class));
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::toArray
-     */
     public function testInterfaceHasToArrayMethod(): void
     {
         $reflection = new \ReflectionClass(SerializableInterface::class);
@@ -46,9 +37,6 @@ final class SerializableInterfaceTest extends TestCase
         $this->assertSame('array', $method->getReturnType()?->getName());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::fromArray
-     */
     public function testInterfaceHasFromArrayMethod(): void
     {
         $reflection = new \ReflectionClass(SerializableInterface::class);
@@ -71,10 +59,6 @@ final class SerializableInterfaceTest extends TestCase
         $this->assertSame('static', $returnType->getName());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::toArray
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::fromArray
-     */
     public function testInterfaceMethodDocumentation(): void
     {
         $reflection = new \ReflectionClass(SerializableInterface::class);
@@ -95,10 +79,6 @@ final class SerializableInterfaceTest extends TestCase
         $this->assertStringContainsString('@return static', $docComment);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::toArray
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::fromArray
-     */
     public function testInterfaceCanBeImplemented(): void
     {
         // Create an anonymous class implementing the interface to test it's properly defined
@@ -140,10 +120,6 @@ final class SerializableInterfaceTest extends TestCase
         $this->assertSame('recreated', $recreated->getValue());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::toArray
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface::fromArray
-     */
     public function testSerializationRoundTrip(): void
     {
         // Test complete serialization/deserialization cycle

@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface
+ * Test interface definition and contract validation.
  */
 class HttpClientServiceInterfaceTest extends TestCase
 {
