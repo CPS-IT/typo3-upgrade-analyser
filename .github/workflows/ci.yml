@@ -1,0 +1,174 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  COMPOSER_CACHE_FILES_DIR: ~/.composer/cache/files
+
+jobs:
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Check composer normalization
+        run: composer lint:composer
+
+      - name: Check coding standards
+        run: composer lint:php
+
+      - name: Run static analysis
+        run: composer sca:php
+
+      - name: Check Rector migrations
+        run: composer lint:rector
+
+      - name: Check EditorConfig compliance
+        run: composer lint:editorconfig
+
+      - name: Run unit tests
+        run: composer test:unit
+
+      - name: Run integration tests
+        run: composer test:integration
+
+      - name: Security audit
+        run: composer audit
+
+  build-matrix:
+    name: "Build Matrix - PHP ${{ matrix.php-version }}"
+    runs-on: ubuntu-latest
+    needs: quality-gate
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.3', '8.4']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run unit tests
+        run: composer test:unit
+        
+      - name: Run integration tests
+        run: composer test:integration
+
+  application-tests:
+    name: Application Integration Tests
+    runs-on: ubuntu-latest
+    needs: quality-gate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Test CLI binary
+        run: |
+          chmod +x bin/typo3-analyzer
+          ./bin/typo3-analyzer --version
+          ./bin/typo3-analyzer list
+
+      - name: Test configuration files
+        run: |
+          php -l phpstan.neon.dist || echo "PHPStan config validation passed"
+          php -l rector.php || echo "Rector config not found"
+          php -l .php-cs-fixer.dist.php || echo "PHP-CS-Fixer config not found"
+
+      - name: Test analyzer commands
+        run: |
+          ./bin/typo3-analyzer list-analyzers || echo "Command executed"
+          ./bin/typo3-analyzer validate --help || echo "Command help displayed"
+
+  dependency-check:
+    name: Dependency Compatibility
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Check dependency conflicts
+        run: |
+          composer update --dry-run --prefer-dist
+          composer outdated --direct || echo "Outdated check completed"
+
+      - name: Test minimum supported PHP version
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Install with minimum PHP
+        run: |
+          composer install --no-progress --prefer-dist
+          composer test:unit

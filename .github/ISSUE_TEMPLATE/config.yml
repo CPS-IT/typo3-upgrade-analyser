@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/cpsit/typo3-upgrade-analyser/blob/main/README.md
+    about: Read the documentation to understand how to use the analyzer
+  - name: 🔍 Search Issues
+    url: https://github.com/cpsit/typo3-upgrade-analyser/issues
+    about: Search existing issues before creating a new one
+  - name: 💡 General Questions
+    url: https://github.com/cpsit/typo3-upgrade-analyser/issues/new/choose
+    about: For general questions, please create a regular issue
