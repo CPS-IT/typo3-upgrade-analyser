@@ -61,6 +61,12 @@ final class ListExtensionsCommandTest extends TestCase
         if (file_exists($this->tempConfigFile)) {
             unlink($this->tempConfigFile);
         }
+        
+        // Clean up any temporary default config file created during tests
+        $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
+        if (file_exists($defaultConfigPath)) {
+            unlink($defaultConfigPath);
+        }
     }
 
     private function createTestExtension(string $key, string $version = '1.0.0', string $type = 'local', bool $active = true): Extension
@@ -116,16 +122,19 @@ final class ListExtensionsCommandTest extends TestCase
      */
     public function testExecuteWithDefaultConfigPath(): void
     {
-        // Create a test config file at a different path to avoid affecting the real config
-        $testConfigPath = $this->tempConfigFile;
-        file_put_contents($testConfigPath, '');
-
+        // Create a temporary config file at the default path for this test
+        $defaultConfigPath = ConfigurationService::DEFAULT_CONFIG_PATH;
+        $configContent = "installation_path: /tmp/test\n";
+        
+        // Create the config file temporarily
+        file_put_contents($defaultConfigPath, $configContent);
+        
         // Create a real directory for the installation path
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
         mkdir($tempDir, 0o755, true);
 
         try {
-            // Since we're testing the default behavior, we'll use the same config service
+            // Since we're using the default config path, withConfigPath should never be called
             $this->configService->expects($this->never())
                 ->method('withConfigPath');
 
@@ -164,6 +173,10 @@ final class ListExtensionsCommandTest extends TestCase
             $this->assertStringContainsString('news', $output);
             $this->assertStringContainsString('10.0.0', $output);
         } finally {
+            // Clean up
+            if (file_exists($defaultConfigPath)) {
+                unlink($defaultConfigPath);
+            }
             if (is_dir($tempDir)) {
                 rmdir($tempDir);
             }
