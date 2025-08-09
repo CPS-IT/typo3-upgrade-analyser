@@ -25,8 +25,10 @@ return $config
         PhpCsFixer\Finder::create()
             ->in(__DIR__ . '/src')
             ->in(__DIR__ . '/tests')
-            ->exclude('tests/Fixtures')
-            ->exclude('tests/IntegrationFixtures')
+            ->exclude('Fixtures')
+            ->exclude('Helper')
+            ->notPath('*/Fixtures/*')
+            ->notPath('*/Helper/*')
             ->name('typo3-analyzer')
             ->append([__FILE__]),
     );
