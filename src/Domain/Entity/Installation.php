@@ -63,7 +63,7 @@ final class Installation implements SerializableInterface
     {
         $this->extensions[$extension->getKey()] = $extension;
     }
-    
+
     public function getExtension(string $key): ?Extension
     {
         return $this->extensions[$key] ?? null;
