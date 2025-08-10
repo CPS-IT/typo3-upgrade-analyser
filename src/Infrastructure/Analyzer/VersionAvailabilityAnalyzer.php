@@ -147,13 +147,14 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
     private function checkPackagistAvailability(Extension $extension, AnalysisContext $context): bool
     {
-        if (!$extension->hasComposerName()) {
+        $composerName = $extension->getComposerName();
+        if (!$composerName) {
             return false;
         }
 
         try {
             return $this->packagistClient->hasVersionFor(
-                $extension->getComposerName(),
+                $composerName,
                 $context->getTargetVersion(),
             );
         } catch (\Throwable $e) {

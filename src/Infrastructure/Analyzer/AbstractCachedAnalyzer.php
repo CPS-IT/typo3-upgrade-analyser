@@ -121,7 +121,12 @@ abstract class AbstractCachedAnalyzer implements AnalyzerInterface
         $analyzerSpecific = $this->getAnalyzerSpecificCacheKeyComponents($extension, $context);
         $keyData = array_merge($keyData, $analyzerSpecific);
 
-        return 'analysis_' . $this->getName() . '_' . hash('sha256', json_encode($keyData));
+        $jsonData = json_encode($keyData);
+        if (false === $jsonData) {
+            throw new AnalyzerException('Failed to encode cache key data', $this->getName());
+        }
+        
+        return 'analysis_' . $this->getName() . '_' . hash('sha256', $jsonData);
     }
 
     /**

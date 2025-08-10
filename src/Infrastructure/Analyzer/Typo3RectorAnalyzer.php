@@ -193,8 +193,9 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         }
 
         // Convert relative path to absolute path
-        if (!str_starts_with($installationPath, '/') && !str_starts_with($installationPath, getcwd())) {
-            $resolvedPath = realpath(getcwd() . '/' . $installationPath);
+        $currentDir = getcwd();
+        if (!str_starts_with($installationPath, '/') && $currentDir !== false && !str_starts_with($installationPath, $currentDir)) {
+            $resolvedPath = realpath($currentDir . '/' . $installationPath);
             if ($resolvedPath) {
                 $installationPath = $resolvedPath;
             }
