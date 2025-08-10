@@ -78,7 +78,7 @@ class RectorExecutor
                 findings: $parseResult['findings'],
                 errors: $parseResult['errors'],
                 executionTime: $executionTime,
-                exitCode: $exitCode,
+                exitCode: $exitCode ?? -1,
                 rawOutput: $stdout,
                 processedFileCount: $parseResult['processed_files'],
             );

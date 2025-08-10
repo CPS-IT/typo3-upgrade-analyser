@@ -101,7 +101,11 @@ class RectorConfigGenerator
         if ($this->filesystem->exists($this->tempDirectory)) {
             // Remove only config files, keep cache directory
             $pattern = $this->tempDirectory . '/rector_*.php';
-            foreach (glob($pattern) as $file) {
+            $files = glob($pattern);
+            if ($files === false) {
+                return;
+            }
+            foreach ($files as $file) {
                 $this->filesystem->remove($file);
             }
         }
@@ -310,13 +314,14 @@ class RectorConfigGenerator
         // For system extensions, we want to analyze the actual extension path
         // For third-party extensions, use the extension directory
 
-        if ($extension->hasComposerName() && str_contains($extension->getComposerName(), 'typo3/cms-')) {
+        $composerName = $extension->getComposerName();
+        if ($composerName && str_contains($composerName, 'typo3/cms-')) {
             // System extension - analyze vendor path
-            return 'vendor/' . $extension->getComposerName();
-        } else {
-            // Regular extension - use extension key path
-            return 'extensions/' . $extension->getKey();
+            return 'vendor/' . $composerName;
         }
+
+        // Regular extension - use extension key path
+        return 'extensions/' . $extension->getKey();
     }
 
     /**
