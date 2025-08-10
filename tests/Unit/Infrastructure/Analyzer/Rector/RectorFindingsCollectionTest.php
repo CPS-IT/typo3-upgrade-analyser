@@ -315,6 +315,27 @@ class RectorFindingsCollectionTest extends TestCase
     }
 
 
+    public function testGetTypeCounts(): void
+    {
+        $typeCounts = $this->collection->getTypeCounts();
+
+        $expected = [
+            'breaking_change' => 1,
+            'deprecation' => 1,
+            'best_practice' => 2,
+        ];
+
+        $this->assertEquals($expected, $typeCounts);
+    }
+
+    public function testGetTypeCountsWithEmptyCollection(): void
+    {
+        $emptyCollection = new RectorFindingsCollection([], [], [], [], [], []);
+        $typeCounts = $emptyCollection->getTypeCounts();
+
+        $this->assertEmpty($typeCounts);
+    }
+
     public function testEmptyCollectionMethods(): void
     {
         $emptyCollection = new RectorFindingsCollection([], [], [], [], [], []);
@@ -336,5 +357,6 @@ class RectorFindingsCollectionTest extends TestCase
 
         $this->assertEmpty($emptyCollection->getTopAffectedFiles());
         $this->assertEmpty($emptyCollection->getTopTriggeredRules());
+        $this->assertEmpty($emptyCollection->getTypeCounts());
     }
 }

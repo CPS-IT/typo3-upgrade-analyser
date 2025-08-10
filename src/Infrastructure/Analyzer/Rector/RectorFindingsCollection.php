@@ -229,4 +229,22 @@ class RectorFindingsCollection
     {
         return count($this->byRule);
     }
+
+    /**
+     * Get count of findings by change type.
+     *
+     * @return array<string, int>
+     */
+    public function getTypeCounts(): array
+    {
+        $counts = [];
+        $allFindings = array_merge($this->breakingChanges, $this->deprecations, $this->improvements);
+
+        foreach ($allFindings as $finding) {
+            $type = $finding->getChangeType()->value;
+            $counts[$type] = ($counts[$type] ?? 0) + 1;
+        }
+
+        return $counts;
+    }
 }

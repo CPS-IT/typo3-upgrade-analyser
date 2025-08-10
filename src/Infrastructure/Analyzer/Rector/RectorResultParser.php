@@ -55,24 +55,24 @@ class RectorResultParser
      */
     public function aggregateFindings(array $findings): RectorAnalysisSummary
     {
+        $categorized = $this->categorizeFindings($findings);
+        
+        $severityCounts = $categorized->getSeverityCounts();
+        $fileCounts = $categorized->getFileCounts();
+        $ruleCounts = $categorized->getRuleCounts();
+        $typeCounts = $categorized->getTypeCounts();
+        
         $totalFiles = $this->countUniqueFiles($findings);
-        $affectedFiles = \count($this->groupFindingsByFile($findings));
-
-        $severityCounts = $this->countBySeverity($findings);
-        $typeCounts = $this->countByType($findings);
-        $fileCounts = $this->groupFindingsByFile($findings);
-        $ruleCounts = $this->groupFindingsByRule($findings);
-
         $complexityScore = $this->calculateComplexityScore($findings);
         $estimatedFixTime = $this->calculateEstimatedFixTime($findings);
 
         return new RectorAnalysisSummary(
             totalFindings: \count($findings),
-            criticalIssues: $severityCounts['critical'],
-            warnings: $severityCounts['warning'],
-            infoIssues: $severityCounts['info'],
-            suggestions: $severityCounts['suggestion'],
-            affectedFiles: $affectedFiles,
+            criticalIssues: $severityCounts['critical'] ?? 0,
+            warnings: $severityCounts['warning'] ?? 0,
+            infoIssues: $severityCounts['info'] ?? 0,
+            suggestions: $severityCounts['suggestion'] ?? 0,
+            affectedFiles: $categorized->getAffectedFileCount(),
             totalFiles: $totalFiles,
             ruleBreakdown: $ruleCounts,
             fileBreakdown: $fileCounts,
@@ -168,7 +168,8 @@ class RectorResultParser
         $totalComplexity += $fileSpread * $weights['file_spread'];
 
         // Severity mix factor
-        $severityCounts = $this->countBySeverity($findings);
+        $categorized = $this->categorizeFindings($findings);
+        $severityCounts = $categorized->getSeverityCounts();
         $severityEntropy = $this->calculateEntropy(array_values($severityCounts));
         $totalComplexity += $severityEntropy * $weights['severity_mix'];
 
@@ -251,85 +252,6 @@ class RectorResultParser
         );
     }
 
-    /**
-     * Count findings by severity.
-     *
-     * @param array<RectorFinding> $findings
-     *
-     * @return array<string, int>
-     */
-    private function countBySeverity(array $findings): array
-    {
-        $counts = [
-            'critical' => 0,
-            'warning' => 0,
-            'info' => 0,
-            'suggestion' => 0,
-        ];
-
-        foreach ($findings as $finding) {
-            ++$counts[$finding->getSeverity()->value];
-        }
-
-        return $counts;
-    }
-
-    /**
-     * Count findings by change type.
-     *
-     * @param array<RectorFinding> $findings
-     *
-     * @return array<string, int>
-     */
-    private function countByType(array $findings): array
-    {
-        $counts = [];
-
-        foreach ($findings as $finding) {
-            $type = $finding->getChangeType()->value;
-            $counts[$type] = ($counts[$type] ?? 0) + 1;
-        }
-
-        return $counts;
-    }
-
-    /**
-     * Group findings by file.
-     *
-     * @param array<RectorFinding> $findings
-     *
-     * @return array<string, int>
-     */
-    private function groupFindingsByFile(array $findings): array
-    {
-        $groups = [];
-
-        foreach ($findings as $finding) {
-            $file = $finding->getFile();
-            $groups[$file] = ($groups[$file] ?? 0) + 1;
-        }
-
-        return $groups;
-    }
-
-    /**
-     * Group findings by rule.
-     *
-     * @param array<RectorFinding> $findings
-     *
-     * @return array<string, int>
-     */
-    private function groupFindingsByRule(array $findings): array
-    {
-        $groups = [];
-
-        foreach ($findings as $finding) {
-            $rule = $finding->getRuleName();
-            $groups[$rule] = ($groups[$rule] ?? 0) + 1;
-        }
-
-        return $groups;
-    }
 
     /**
      * Count unique files in findings.
