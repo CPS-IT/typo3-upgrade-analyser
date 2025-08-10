@@ -130,8 +130,13 @@ class CacheService
 
         try {
             $files = glob($cacheDir . '/*' . self::FILE_EXTENSION);
+            
+            if (false === $files) {
+                $this->logger->info('No matching files found in cache directory');
+                return true;
+            }
+            
             $deletedCount = 0;
-
             foreach ($files as $file) {
                 if (unlink($file)) {
                     ++$deletedCount;
@@ -157,7 +162,12 @@ class CacheService
             'timestamp' => filemtime($path) ?: time(),
         ];
 
-        return $type . '_' . hash('sha256', json_encode($data));
+        $jsonData = json_encode($data);
+        if (false === $jsonData) {
+            throw new \RuntimeException('Failed to encode cache key data');
+        }
+        
+        return $type . '_' . hash('sha256', $jsonData);
     }
 
     private function getCacheFilePath(string $key): string

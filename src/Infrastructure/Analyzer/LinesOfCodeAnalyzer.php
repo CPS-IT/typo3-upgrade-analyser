@@ -154,64 +154,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
         return $components;
     }
 
-    /**
-     * Scan extension files and calculate metrics.
-     */
-    private function scanExtensionFiles(array $phpFiles): array
-    {
-        $metrics = [
-            'total_lines' => 0,
-            'code_lines' => 0,
-            'comment_lines' => 0,
-            'blank_lines' => 0,
-            'php_files' => 0,
-            'classes' => 0,
-            'methods' => 0,
-            'functions' => 0,
-            'largest_file_lines' => 0,
-            'largest_file_path' => '',
-            'average_file_size' => 0,
-        ];
 
-        foreach ($phpFiles as $filePath) {
-            if (!file_exists($filePath)) {
-                continue;
-            }
-
-            $fileMetrics = $this->analyzeFileByPath($filePath);
-
-            $metrics['total_lines'] += $fileMetrics['total_lines'];
-            $metrics['code_lines'] += $fileMetrics['code_lines'];
-            $metrics['comment_lines'] += $fileMetrics['comment_lines'];
-            $metrics['blank_lines'] += $fileMetrics['blank_lines'];
-            $metrics['classes'] += $fileMetrics['classes'];
-            $metrics['methods'] += $fileMetrics['methods'];
-            $metrics['functions'] += $fileMetrics['functions'];
-            ++$metrics['php_files'];
-
-            if ($fileMetrics['total_lines'] > $metrics['largest_file_lines']) {
-                $metrics['largest_file_lines'] = $fileMetrics['total_lines'];
-                $metrics['largest_file_path'] = basename($filePath);
-            }
-        }
-
-        if ($metrics['php_files'] > 0) {
-            $metrics['average_file_size'] = (int) round($metrics['total_lines'] / $metrics['php_files']);
-        }
-
-        return $metrics;
-    }
-
-    /**
-     * Analyze a single PHP file by file path.
-     */
-    private function analyzeFileByPath(string $filePath): array
-    {
-        $content = file_get_contents($filePath);
-        $lines = explode("\n", $content);
-
-        return $this->analyzeFileContent($content, $lines);
-    }
 
     /**
      * Analyze a single PHP file.
