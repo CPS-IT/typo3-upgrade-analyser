@@ -147,7 +147,7 @@ class RectorRuleRegistry
 
             // Include sets for versions greater than source and less than or equal to target
             if ($setVersion->isGreaterThan($fromVersion) && $setVersion->isLessThanOrEqualTo($toVersion)) {
-                $sets = array_merge($sets, $versionSets);
+                array_push($sets, ...$versionSets);
 
                 $this->logger->info('Including sets for TYPO3 version {version}', [
                     'version' => $versionString,
@@ -156,8 +156,9 @@ class RectorRuleRegistry
             }
         }
 
-        // Always include general sets for upgrades if version is supported
-        if ($this->isVersionSupported($fromVersion) || $this->isVersionSupported($toVersion)) {
+        // Always include general sets for upgrades when at least one version is supported
+        // (fromVersion is already validated above, so we always include general sets)
+        {
             $sets = array_merge($sets, self::GENERAL_SETS['general']);
 
             // Include code quality sets for major version upgrades
@@ -231,37 +232,45 @@ class RectorRuleRegistry
     {
         $metadata = self::SET_METADATA[$setPath] ?? null;
 
-        if ($metadata && isset($metadata['severity'])) {
+        if ($metadata) {
             return RectorRuleSeverity::from($metadata['severity']);
         }
 
         // Determine severity from set path patterns
         if (str_contains($setPath, 'typo3-12') || str_contains($setPath, 'typo3-13') || str_contains($setPath, 'typo3-14')) {
             return RectorRuleSeverity::CRITICAL;
-        } elseif (str_contains($setPath, 'typo3-10') || str_contains($setPath, 'typo3-11')) {
-            return RectorRuleSeverity::WARNING;
-        } else {
-            return RectorRuleSeverity::INFO;
         }
+
+        if (str_contains($setPath, 'typo3-10') || str_contains($setPath, 'typo3-11')) {
+            return RectorRuleSeverity::WARNING;
+        }
+
+        return RectorRuleSeverity::INFO;
     }
 
     /**
-     * Get change type for a specific set.
+     * Get a change type for a specific set.
      */
     public function getSetChangeType(string $setPath): RectorChangeType
     {
-        // Determine change type from set path
+        // Determine a change type from a set path
         if (str_contains($setPath, 'typo3-12') || str_contains($setPath, 'typo3-13') || str_contains($setPath, 'typo3-14')) {
             return RectorChangeType::BREAKING_CHANGE;
-        } elseif (str_contains($setPath, 'typo3-10') || str_contains($setPath, 'typo3-11')) {
-            return RectorChangeType::DEPRECATION;
-        } elseif (str_contains($setPath, 'code-quality')) {
-            return RectorChangeType::BEST_PRACTICE;
-        } elseif (str_contains($setPath, 'general')) {
-            return RectorChangeType::BEST_PRACTICE;
-        } else {
+        }
+
+        if (str_contains($setPath, 'typo3-10') || str_contains($setPath, 'typo3-11')) {
             return RectorChangeType::DEPRECATION;
         }
+
+        if (str_contains($setPath, 'code-quality')) {
+            return RectorChangeType::BEST_PRACTICE;
+        }
+
+        if (str_contains($setPath, 'general')) {
+            return RectorChangeType::BEST_PRACTICE;
+        }
+
+        return RectorChangeType::DEPRECATION;
     }
 
     /**
@@ -271,14 +280,12 @@ class RectorRuleRegistry
     {
         $metadata = self::SET_METADATA[$setPath] ?? null;
 
-        if ($metadata && isset($metadata['effort_minutes'])) {
+        if ($metadata) {
             return $metadata['effort_minutes'];
         }
 
-        // Default effort based on change type
-        $changeType = $this->getSetChangeType($setPath);
-
-        return $changeType->getEstimatedEffort();
+        // Default effort based on a change type
+        return $this->getSetChangeType($setPath)->getEstimatedEffort();
     }
 
     /**
@@ -383,5 +390,104 @@ class RectorRuleRegistry
         $stats['sets_by_severity'] = $severityCount;
 
         return $stats;
+    }
+
+    /**
+     * Get severity for a specific rule class based on pattern matching.
+     * This method provides rule-level granularity by analyzing the rule class name.
+     */
+    public function getRuleSeverity(string $ruleClass): RectorRuleSeverity
+    {
+        // First, try to determine severity from rule class patterns
+        // This provides more granular control than set-based severity
+
+        // Explicit critical patterns
+        if (str_contains($ruleClass, 'Critical') || str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
+            return RectorRuleSeverity::CRITICAL;
+        }
+
+        // Deprecations in older versions
+        if (str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
+            return RectorRuleSeverity::WARNING;
+        }
+
+        // Code quality improvements
+        if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
+            return RectorRuleSeverity::INFO;
+        }
+
+        // Default for unknown patterns - use warning as conservative approach
+        return RectorRuleSeverity::WARNING;
+    }
+
+    /**
+     * Get change type for a specific rule class based on pattern matching.
+     * This method provides rule-level granularity by analyzing the rule class name.
+     */
+    public function getRuleChangeType(string $ruleClass): RectorChangeType
+    {
+        // Breaking changes
+        if (str_contains($ruleClass, 'Remove') || str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
+            return RectorChangeType::BREAKING_CHANGE;
+        }
+
+        // Deprecations
+        if (str_contains($ruleClass, 'Deprecat') || str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
+            return RectorChangeType::DEPRECATION;
+        }
+
+        // Code quality improvements
+        if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
+            return RectorChangeType::BEST_PRACTICE;
+        }
+
+        // Default for unknown patterns
+        return RectorChangeType::DEPRECATION;
+    }
+
+    /**
+     * Get rule information for a specific rule class.
+     * This combines severity, change type, and estimated effort into a single lookup.
+     *
+     * @return array{severity: RectorRuleSeverity, changeType: RectorChangeType, effort: int}
+     */
+    public function getRuleInfo(string $ruleClass): array
+    {
+        $severity = $this->getRuleSeverity($ruleClass);
+        $changeType = $this->getRuleChangeType($ruleClass);
+
+        // Calculate effort based on change type and severity
+        $effort = match ([$changeType, $severity]) {
+            [RectorChangeType::BREAKING_CHANGE, RectorRuleSeverity::CRITICAL] => 15,
+            [RectorChangeType::BREAKING_CHANGE, RectorRuleSeverity::WARNING] => 10,
+            [RectorChangeType::BREAKING_CHANGE, RectorRuleSeverity::INFO] => 10,
+            [RectorChangeType::BREAKING_CHANGE, RectorRuleSeverity::SUGGESTION] => 10,
+            [RectorChangeType::DEPRECATION, RectorRuleSeverity::WARNING] => $this->isKnownRule($ruleClass) ? 8 : 5,
+            [RectorChangeType::DEPRECATION, RectorRuleSeverity::CRITICAL] => 5,
+            [RectorChangeType::DEPRECATION, RectorRuleSeverity::INFO] => 5,
+            [RectorChangeType::DEPRECATION, RectorRuleSeverity::SUGGESTION] => 5,
+            [RectorChangeType::BEST_PRACTICE, RectorRuleSeverity::CRITICAL] => 3,
+            [RectorChangeType::BEST_PRACTICE, RectorRuleSeverity::WARNING] => 3,
+            [RectorChangeType::BEST_PRACTICE, RectorRuleSeverity::INFO] => 3,
+            [RectorChangeType::BEST_PRACTICE, RectorRuleSeverity::SUGGESTION] => 3,
+            default => 5,
+        };
+
+        return [
+            'severity' => $severity,
+            'changeType' => $changeType,
+            'effort' => $effort,
+        ];
+    }
+
+    /**
+     * Check if a rule class matches any known TYPO3 Rector patterns.
+     */
+    public function isKnownRule(string $ruleClass): bool
+    {
+        // Check if it's a TYPO3 Rector rule
+        return str_contains($ruleClass, 'TYPO3Rector')
+            || str_contains($ruleClass, 'Ssch\\')
+            || preg_match('/v\d+\\\\/', $ruleClass);
     }
 }

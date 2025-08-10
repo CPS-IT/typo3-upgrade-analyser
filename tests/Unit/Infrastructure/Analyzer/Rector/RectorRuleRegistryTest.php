@@ -296,4 +296,158 @@ class RectorRuleRegistryTest extends TestCase
         $this->assertNotEmpty($v12Sets);
         $this->assertContains(Typo3SetList::TYPO3_12, $v12Sets);
     }
+
+    /**
+     * Test rule-based severity determination.
+     */
+    public function testGetRuleSeverity(): void
+    {
+        // Test critical severity for newer TYPO3 versions
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\SomeRule');
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $severity);
+
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\Rector\\v13\\v0\\AnotherRule');
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $severity);
+
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\Rector\\v14\\v0\\FutureRule');
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $severity);
+
+        // Test warning severity for older TYPO3 versions
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedRule');
+        $this->assertEquals(RectorRuleSeverity::WARNING, $severity);
+
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\Rector\\v11\\v0\\OldRule');
+        $this->assertEquals(RectorRuleSeverity::WARNING, $severity);
+
+        // Test info severity for code quality rules
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\CodeQuality\\SomeQualityRule');
+        $this->assertEquals(RectorRuleSeverity::INFO, $severity);
+
+        $severity = $this->registry->getRuleSeverity('Ssch\\TYPO3Rector\\General\\GeneralRule');
+        $this->assertEquals(RectorRuleSeverity::INFO, $severity);
+
+        // Test default warning for unknown patterns
+        $severity = $this->registry->getRuleSeverity('Some\\Unknown\\Rule');
+        $this->assertEquals(RectorRuleSeverity::WARNING, $severity);
+    }
+
+    /**
+     * Test rule-based change type determination.
+     */
+    public function testGetRuleChangeType(): void
+    {
+        // Test breaking changes for newer TYPO3 versions
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\BreakingRule');
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $changeType);
+
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Rector\\v13\\v0\\AnotherBreaking');
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $changeType);
+
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Rector\\v14\\v0\\FutureBreaking');
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $changeType);
+
+        // Test breaking changes for Remove rules
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Remove\\SomethingRector');
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $changeType);
+
+        // Test deprecations for older TYPO3 versions
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecationRule');
+        $this->assertEquals(RectorChangeType::DEPRECATION, $changeType);
+
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Rector\\v11\\v0\\OldRule');
+        $this->assertEquals(RectorChangeType::DEPRECATION, $changeType);
+
+        // Test deprecations for Deprecated rules
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\Deprecat\\SomethingRector');
+        $this->assertEquals(RectorChangeType::DEPRECATION, $changeType);
+
+        // Test best practice for code quality rules
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\CodeQuality\\QualityRule');
+        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $changeType);
+
+        $changeType = $this->registry->getRuleChangeType('Ssch\\TYPO3Rector\\General\\GeneralRule');
+        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $changeType);
+
+        // Test default deprecation for unknown patterns
+        $changeType = $this->registry->getRuleChangeType('Some\\Unknown\\Rule');
+        $this->assertEquals(RectorChangeType::DEPRECATION, $changeType);
+    }
+
+    /**
+     * Test complete rule information retrieval.
+     */
+    public function testGetRuleInfo(): void
+    {
+        // Test critical breaking change rule
+        $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveRule');
+        
+        $this->assertIsArray($ruleInfo);
+        $this->assertArrayHasKey('severity', $ruleInfo);
+        $this->assertArrayHasKey('changeType', $ruleInfo);
+        $this->assertArrayHasKey('effort', $ruleInfo);
+        
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $ruleInfo['severity']);
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $ruleInfo['changeType']);
+        $this->assertEquals(15, $ruleInfo['effort']); // Critical breaking change effort
+        
+        // Test code quality rule
+        $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\CodeQuality\\ImprovementRule');
+        
+        $this->assertEquals(RectorRuleSeverity::INFO, $ruleInfo['severity']);
+        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $ruleInfo['changeType']);
+        $this->assertEquals(3, $ruleInfo['effort']); // Best practice effort
+        
+        // Test deprecation warning rule
+        $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedRule');
+        
+        $this->assertEquals(RectorRuleSeverity::WARNING, $ruleInfo['severity']);
+        $this->assertEquals(RectorChangeType::DEPRECATION, $ruleInfo['changeType']);
+        $this->assertEquals(8, $ruleInfo['effort']); // Deprecation warning effort
+    }
+
+    /**
+     * Test known rule pattern recognition.
+     */
+    public function testIsKnownRule(): void
+    {
+        // Test TYPO3 Rector rules
+        $this->assertTrue($this->registry->isKnownRule('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\SomeRule'));
+        $this->assertTrue($this->registry->isKnownRule('TYPO3Rector\\CodeQuality\\QualityRule'));
+        $this->assertTrue($this->registry->isKnownRule('Ssch\\SomeOtherRule'));
+        $this->assertTrue($this->registry->isKnownRule('SomePackage\\v11\\SomeRule'));
+        
+        // Test unknown rules
+        $this->assertFalse($this->registry->isKnownRule('Random\\Unknown\\Rule'));
+        $this->assertFalse($this->registry->isKnownRule('SimpleRule'));
+    }
+
+    /**
+     * Test effort calculation consistency between rule patterns.
+     */
+    public function testRuleEffortConsistency(): void
+    {
+        $testCases = [
+            // Critical breaking changes should have highest effort
+            ['Ssch\\TYPO3Rector\\Remove\\CriticalRule', 15],
+            ['Ssch\\TYPO3Rector\\Rector\\v12\\v0\\BreakingRule', 15],
+            
+            // Non-critical breaking changes
+            ['Ssch\\TYPO3Rector\\Remove\\SomeRule', 10], // Remove but not critical
+            
+            // Warning deprecations
+            ['Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecationRule', 8],
+            
+            // Best practices should have lowest effort
+            ['Ssch\\TYPO3Rector\\CodeQuality\\QualityRule', 3],
+            ['Ssch\\TYPO3Rector\\General\\GeneralRule', 3],
+            
+            // Default effort for unknown patterns
+            ['Some\\Unknown\\Rule', 5],
+        ];
+        
+        foreach ($testCases as [$ruleClass, $expectedEffort]) {
+            $ruleInfo = $this->registry->getRuleInfo($ruleClass);
+            $this->assertEquals($expectedEffort, $ruleInfo['effort'], "Effort mismatch for rule: {$ruleClass}");
+        }
+    }
 }
