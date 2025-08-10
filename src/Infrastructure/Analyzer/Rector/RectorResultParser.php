@@ -86,55 +86,58 @@ class RectorResultParser
      * Categorize findings by various criteria.
      *
      * @param array<RectorFinding> $findings
-     *
-     * @return array<string, array<RectorFinding>>
      */
-    public function categorizeFindings(array $findings): array
+    public function categorizeFindings(array $findings): RectorFindingsCollection
     {
-        $categories = [
-            'breaking_changes' => [],
-            'deprecations' => [],
-            'improvements' => [],
-            'by_severity' => [
-                'critical' => [],
-                'warning' => [],
-                'info' => [],
-                'suggestion' => [],
-            ],
-            'by_file' => [],
-            'by_rule' => [],
+        $breakingChanges = [];
+        $deprecations = [];
+        $improvements = [];
+        $bySeverity = [
+            'critical' => [],
+            'warning' => [],
+            'info' => [],
+            'suggestion' => [],
         ];
+        $byFile = [];
+        $byRule = [];
 
         foreach ($findings as $finding) {
             // Categorize by impact type
             if ($finding->isBreakingChange()) {
-                $categories['breaking_changes'][] = $finding;
+                $breakingChanges[] = $finding;
             } elseif ($finding->isDeprecation()) {
-                $categories['deprecations'][] = $finding;
+                $deprecations[] = $finding;
             } else {
-                $categories['improvements'][] = $finding;
+                $improvements[] = $finding;
             }
 
             // Categorize by severity
             $severityKey = $finding->getSeverity()->value;
-            $categories['by_severity'][$severityKey][] = $finding;
+            $bySeverity[$severityKey][] = $finding;
 
             // Categorize by file
             $file = $finding->getFile();
-            if (!isset($categories['by_file'][$file])) {
-                $categories['by_file'][$file] = [];
+            if (!isset($byFile[$file])) {
+                $byFile[$file] = [];
             }
-            $categories['by_file'][$file][] = $finding;
+            $byFile[$file][] = $finding;
 
             // Categorize by rule
             $rule = $finding->getRuleClass();
-            if (!isset($categories['by_rule'][$rule])) {
-                $categories['by_rule'][$rule] = [];
+            if (!isset($byRule[$rule])) {
+                $byRule[$rule] = [];
             }
-            $categories['by_rule'][$rule][] = $finding;
+            $byRule[$rule][] = $finding;
         }
 
-        return $categories;
+        return new RectorFindingsCollection(
+            $breakingChanges,
+            $deprecations,
+            $improvements,
+            $bySeverity,
+            $byFile,
+            $byRule
+        );
     }
 
     /**
@@ -222,8 +225,8 @@ class RectorResultParser
         $newCode = $rectorData['new'] ?? null;
 
         // Determine severity and change type based on rule class name patterns
-        $severity = $this->inferSeverityFromRuleClass($ruleClass);
-        $changeType = $this->inferChangeTypeFromRuleClass($ruleClass);
+        $severity = $this->ruleRegistry->getRuleSeverity($ruleClass);
+        $changeType = $this->ruleRegistry->getRuleChangeType($ruleClass);
 
         $suggestedFix = null;
         if ($oldCode && $newCode && $oldCode !== $newCode) {
@@ -382,51 +385,4 @@ class RectorResultParser
         return $entropy / 2;
     }
 
-    /**
-     * Infer severity from rule class name patterns.
-     */
-    private function inferSeverityFromRuleClass(string $ruleClass): RectorRuleSeverity
-    {
-        // Breaking changes in newer TYPO3 versions
-        if (str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
-            return RectorRuleSeverity::CRITICAL;
-        }
-
-        // Deprecations in older versions
-        if (str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
-            return RectorRuleSeverity::WARNING;
-        }
-
-        // Code quality improvements
-        if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
-            return RectorRuleSeverity::INFO;
-        }
-
-        // Default for unknown patterns
-        return RectorRuleSeverity::WARNING;
-    }
-
-    /**
-     * Infer change type from rule class name patterns.
-     */
-    private function inferChangeTypeFromRuleClass(string $ruleClass): RectorChangeType
-    {
-        // Breaking changes
-        if (str_contains($ruleClass, 'Remove') || str_contains($ruleClass, 'v12\\') || str_contains($ruleClass, 'v13\\') || str_contains($ruleClass, 'v14\\')) {
-            return RectorChangeType::BREAKING_CHANGE;
-        }
-
-        // Deprecations
-        if (str_contains($ruleClass, 'Deprecat') || str_contains($ruleClass, 'v10\\') || str_contains($ruleClass, 'v11\\')) {
-            return RectorChangeType::DEPRECATION;
-        }
-
-        // Code quality improvements
-        if (str_contains($ruleClass, 'CodeQuality') || str_contains($ruleClass, 'General')) {
-            return RectorChangeType::BEST_PRACTICE;
-        }
-
-        // Default for unknown patterns
-        return RectorChangeType::DEPRECATION;
-    }
 }

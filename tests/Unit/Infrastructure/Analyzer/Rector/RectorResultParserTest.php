@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFindingsCollection;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
@@ -27,13 +28,14 @@ use Psr\Log\NullLogger;
 class RectorResultParserTest extends TestCase
 {
     private RectorResultParser $parser;
-    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
+    private RectorRuleRegistry $ruleRegistry;
     private NullLogger $logger;
 
     protected function setUp(): void
     {
         $this->logger = new NullLogger();
-        $this->ruleRegistry = $this->createMock(RectorRuleRegistry::class);
+        // Use real RectorRuleRegistry instead of mock since we can't mock enum returns
+        $this->ruleRegistry = new RectorRuleRegistry($this->logger);
         $this->parser = new RectorResultParser($this->ruleRegistry, $this->logger);
     }
 
@@ -194,30 +196,40 @@ class RectorResultParserTest extends TestCase
             ),
         ];
 
-        $categories = $this->parser->categorizeFindings($findings);
+        $collection = $this->parser->categorizeFindings($findings);
 
-        $this->assertArrayHasKey('breaking_changes', $categories);
-        $this->assertArrayHasKey('deprecations', $categories);
-        $this->assertArrayHasKey('improvements', $categories);
-        $this->assertArrayHasKey('by_severity', $categories);
-        $this->assertArrayHasKey('by_file', $categories);
-        $this->assertArrayHasKey('by_rule', $categories);
+        $this->assertInstanceOf(RectorFindingsCollection::class, $collection);
 
-        $this->assertCount(1, $categories['breaking_changes']);
-        $this->assertCount(1, $categories['deprecations']);
-        $this->assertCount(1, $categories['improvements']);
+        // Test categorization by impact type
+        $this->assertCount(1, $collection->getBreakingChanges());
+        $this->assertCount(1, $collection->getDeprecations());
+        $this->assertCount(1, $collection->getImprovements());
 
-        $this->assertCount(1, $categories['by_severity']['critical']);
-        $this->assertCount(1, $categories['by_severity']['warning']);
-        $this->assertCount(1, $categories['by_severity']['info']);
+        // Test categorization by severity
+        $this->assertCount(1, $collection->getFindingsWithSeverity(RectorRuleSeverity::CRITICAL));
+        $this->assertCount(1, $collection->getFindingsWithSeverity(RectorRuleSeverity::WARNING));
+        $this->assertCount(1, $collection->getFindingsWithSeverity(RectorRuleSeverity::INFO));
+        $this->assertCount(0, $collection->getFindingsWithSeverity(RectorRuleSeverity::SUGGESTION));
 
-        $this->assertArrayHasKey('src/Test1.php', $categories['by_file']);
-        $this->assertArrayHasKey('src/Test2.php', $categories['by_file']);
-        $this->assertArrayHasKey('src/Test3.php', $categories['by_file']);
+        // Test categorization by file
+        $this->assertCount(1, $collection->getFindingsInFile('src/Test1.php'));
+        $this->assertCount(1, $collection->getFindingsInFile('src/Test2.php'));
+        $this->assertCount(1, $collection->getFindingsInFile('src/Test3.php'));
+        $this->assertCount(0, $collection->getFindingsInFile('nonexistent.php'));
 
-        $this->assertArrayHasKey('Rule1', $categories['by_rule']);
-        $this->assertArrayHasKey('Rule2', $categories['by_rule']);
-        $this->assertArrayHasKey('Rule3', $categories['by_rule']);
+        // Test categorization by rule
+        $this->assertCount(1, $collection->getFindingsForRule('Rule1'));
+        $this->assertCount(1, $collection->getFindingsForRule('Rule2'));
+        $this->assertCount(1, $collection->getFindingsForRule('Rule3'));
+        $this->assertCount(0, $collection->getFindingsForRule('NonexistentRule'));
+
+        // Test convenience methods
+        $this->assertTrue($collection->hasBreakingChanges());
+        $this->assertTrue($collection->hasDeprecations());
+        $this->assertTrue($collection->hasImprovements());
+        $this->assertEquals(3, $collection->getTotalCount());
+        $this->assertEquals(3, $collection->getAffectedFileCount());
+        $this->assertEquals(3, $collection->getTriggeredRuleCount());
     }
 
     public function testCalculateComplexityScoreWithEmptyFindings(): void
@@ -369,5 +381,132 @@ class RectorResultParserTest extends TestCase
         $entropy = $method->invoke($this->parser, [2, 1, 1, 0]);
         $this->assertGreaterThan(0.0, $entropy);
         $this->assertLessThan(1.0, $entropy);
+    }
+
+
+    /**
+     * Test that parsing creates findings with correct severity and change type.
+     */
+    public function testParseOutputAssignsSeverityAndChangeType(): void
+    {
+        $jsonOutput = json_encode([
+            'changed_files' => [
+                [
+                    'file' => 'src/Controller/TestController.php',
+                    'applied_rectors' => [
+                        [
+                            'class' => 'Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveTypoScriptConstantsRector',
+                            'message' => 'Breaking change for TYPO3 12',
+                            'line' => 42,
+                        ],
+                        [
+                            'class' => 'Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedMethodRector',
+                            'message' => 'Deprecated method usage',
+                            'line' => 24,
+                        ],
+                        [
+                            'class' => 'Ssch\\TYPO3Rector\\CodeQuality\\ImprovementRector',
+                            'message' => 'Code quality improvement',
+                            'line' => 18,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $findings = $this->parser->parseRectorOutput($jsonOutput);
+
+        $this->assertCount(3, $findings);
+
+        // First finding - v12 rule should be critical + breaking change
+        $v12Finding = $findings[0];
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $v12Finding->getSeverity());
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $v12Finding->getChangeType());
+
+        // Second finding - v10 rule should be warning + deprecation
+        $v10Finding = $findings[1];
+        $this->assertEquals(RectorRuleSeverity::WARNING, $v10Finding->getSeverity());
+        $this->assertEquals(RectorChangeType::DEPRECATION, $v10Finding->getChangeType());
+
+        // Third finding - CodeQuality rule should be info + best practice
+        $qualityFinding = $findings[2];
+        $this->assertEquals(RectorRuleSeverity::INFO, $qualityFinding->getSeverity());
+        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $qualityFinding->getChangeType());
+    }
+
+    /**
+     * Test parsing with different JSON structures (file_diffs vs changed_files).
+     */
+    public function testParseOutputWithFileDiffsStructure(): void
+    {
+        // Test the newer file_diffs structure that some Rector versions use
+        $jsonOutput = json_encode([
+            'totals' => ['changed_files' => 2],
+            'file_diffs' => [
+                [
+                    'file' => 'src/Test.php',
+                    'applied_rectors' => ['SomeRule', 'AnotherRule'],
+                    'diff' => '--- Original
++++ New
+@@ -1,3 +1,3 @@
+-old code
++new code',
+                ],
+            ],
+        ]);
+
+        $findings = $this->parser->parseRectorOutput($jsonOutput);
+
+        $this->assertIsArray($findings);
+        // Note: Current implementation might not handle this structure
+        // This test documents the gap for future enhancement
+    }
+
+    /**
+     * Test suggested fix generation logic.
+     */
+    public function testSuggestedFixGeneration(): void
+    {
+        $jsonOutput = json_encode([
+            'changed_files' => [
+                [
+                    'file' => 'src/Test.php',
+                    'applied_rectors' => [
+                        [
+                            'class' => 'TestRule',
+                            'message' => 'Test replacement',
+                            'line' => 10,
+                            'old' => 'oldMethod()',
+                            'new' => 'newMethod()',
+                        ],
+                        [
+                            'class' => 'AddRule',
+                            'message' => 'Add something',
+                            'line' => 15,
+                            'new' => 'addedCode()',
+                        ],
+                        [
+                            'class' => 'RemoveRule',
+                            'message' => 'Remove something',
+                            'line' => 20,
+                            'old' => 'removedCode()',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $findings = $this->parser->parseRectorOutput($jsonOutput);
+
+        $this->assertCount(3, $findings);
+
+        // Test replacement suggestion
+        $this->assertEquals("Replace 'oldMethod()' with 'newMethod()'", $findings[0]->getSuggestedFix());
+
+        // Test addition suggestion
+        $this->assertEquals("Add: 'addedCode()'", $findings[1]->getSuggestedFix());
+
+        // Test removal suggestion
+        $this->assertEquals("Remove: 'removedCode()'", $findings[2]->getSuggestedFix());
     }
 }
