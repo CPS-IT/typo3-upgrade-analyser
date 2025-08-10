@@ -107,7 +107,13 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
         }
 
         try {
-            $lockData = json_decode(file_get_contents($lockFilePath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($lockFilePath);
+            if (false === $json) {
+                $this->logger->warning('Failed to read composer.lock', ['lockFilePath' => $lockFilePath]);
+                return null;
+            }
+
+            $lockData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($lockData) || !isset($lockData['packages'])) {
                 $this->logger->warning('Invalid composer.lock structure', ['path' => $lockFilePath]);
@@ -174,7 +180,13 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
         }
 
         try {
-            $jsonData = json_decode(file_get_contents($jsonFilePath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($jsonFilePath);
+            if (false === $json) {
+                $this->logger->warning('Failed to read composer.json', ['jsonFilePath' => $jsonFilePath]);
+                return null;
+            }
+
+            $jsonData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($jsonData)) {
                 $this->logger->warning('Invalid composer.json structure', ['path' => $jsonFilePath]);
@@ -276,6 +288,9 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
     {
         // Remove common constraint operators
         $constraint = preg_replace('/^[\^~>=<]+/', '', $constraint);
+        if (null === $constraint) {
+            $constraint = '';
+        }
         $constraint = trim($constraint);
 
         // Handle version ranges (take the lower bound)
