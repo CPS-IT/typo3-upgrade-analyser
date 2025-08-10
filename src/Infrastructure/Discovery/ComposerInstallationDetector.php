@@ -28,13 +28,6 @@ use Psr\Log\LoggerInterface;
 final class ComposerInstallationDetector implements DetectionStrategyInterface
 {
     private const REQUIRED_COMPOSER_FILES = ['composer.json'];
-    private const TYPO3_INDICATORS = [
-        'public/typo3conf',
-        'public/typo3',
-        'config/system',
-        'var/log',
-    ];
-
     private const TYPO3_CORE_PACKAGES = [
         'typo3/cms-core',
         'typo3/cms',
@@ -184,7 +177,12 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         }
 
         try {
-            $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return false;
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($composerData)) {
                 return false;
@@ -256,7 +254,12 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         }
 
         try {
-            $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return [];
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (isset($composerData['require']['php'])) {
                 return [$composerData['require']['php']];
@@ -349,13 +352,18 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         }
 
         try {
-            $composerData = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return $paths;
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($composerData)) {
                 return $paths;
             }
 
-            // Read composer config section
+            // Read the composer config section
             if (isset($composerData['config'])) {
                 $composerConfig = $composerData['config'];
 
