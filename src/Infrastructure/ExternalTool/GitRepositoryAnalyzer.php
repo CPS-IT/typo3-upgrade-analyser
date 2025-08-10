@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -157,7 +158,7 @@ class GitRepositoryAnalyzer
     /**
      * Calculate repository health score based on various metrics.
      */
-    private function calculateRepositoryHealth(object $provider, string $repositoryUrl): float
+    private function calculateRepositoryHealth(GitProviderInterface $provider, string $repositoryUrl): float
     {
         try {
             $health = $provider->getRepositoryHealth($repositoryUrl);
