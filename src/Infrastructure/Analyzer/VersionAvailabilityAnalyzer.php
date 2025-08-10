@@ -278,7 +278,9 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         // Mixed availability recommendations
         if ($gitAvailable && ($terAvailable || $packagistAvailable)) {
             $result->addRecommendation('Extension available in multiple sources. Consider using most stable source for production.');
-        } elseif ($terAvailable && $packagistAvailable && !$gitAvailable) {
+        }
+
+        if ($terAvailable && $packagistAvailable && !$gitAvailable) {
             $result->addRecommendation('Extension available in multiple sources (TER and Packagist). Consider using Composer for better dependency management.');
         }
 
