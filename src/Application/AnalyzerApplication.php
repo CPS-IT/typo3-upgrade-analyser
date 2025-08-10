@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ValidateCommand;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -33,13 +34,15 @@ class AnalyzerApplication extends Application
         parent::__construct('TYPO3 Upgrade Analyzer', '1.0.0');
 
         $this->container = ContainerFactory::create();
-        $this->addCommands([
+        /** @var array<Command> $commands */
+        $commands = [
             $this->container->get(AnalyzeCommand::class),
             $this->container->get(InitConfigCommand::class),
             $this->container->get(ListAnalyzersCommand::class),
             $this->container->get(ListExtensionsCommand::class),
             $this->container->get(ValidateCommand::class),
-        ]);
+        ];
+        $this->addCommands($commands);
     }
 
     public function getContainer(): ContainerInterface

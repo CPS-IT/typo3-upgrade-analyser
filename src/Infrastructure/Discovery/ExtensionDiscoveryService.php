@@ -22,8 +22,8 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ?ConfigurationService $configService = null,
-        private readonly ?CacheService $cacheService = null,
+        private readonly ConfigurationService $configService,
+        private readonly CacheService $cacheService,
     ) {
     }
 
@@ -33,7 +33,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 
         try {
             // Check cache if enabled
-            if ($this->isCacheEnabled()) {
+            if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
@@ -118,7 +118,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
             $result = ExtensionDiscoveryResult::success($extensions, $successfulMethods, $discoveryMetadata);
 
             // Cache the result if enabled
-            if ($this->isCacheEnabled()) {
+            if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
@@ -407,12 +407,6 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         return 'local';
     }
 
-    private function isCacheEnabled(): bool
-    {
-        return null !== $this->configService
-            && null !== $this->cacheService
-            && $this->configService->isResultCacheEnabled();
-    }
 
     private function serializeResult(ExtensionDiscoveryResult $result): array
     {

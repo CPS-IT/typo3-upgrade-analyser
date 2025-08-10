@@ -36,16 +36,16 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
      * @param iterable<ValidationRuleInterface>    $validationRules               Installation validation rules
      * @param ConfigurationDiscoveryService|null   $configurationDiscoveryService Configuration discovery service
      * @param LoggerInterface                      $logger                        Logger instance
-     * @param ConfigurationService|null            $configService                 Configuration service for cache settings
-     * @param CacheService|null                    $cacheService                  Cache service for result caching
+     * @param ConfigurationService                 $configService                 Configuration service for cache settings
+     * @param CacheService                         $cacheService                  Cache service for result caching
      */
     public function __construct(
         iterable $detectionStrategies,
         private readonly iterable $validationRules,
         private readonly ?ConfigurationDiscoveryService $configurationDiscoveryService,
         private readonly LoggerInterface $logger,
-        private readonly ?ConfigurationService $configService = null,
-        private readonly ?CacheService $cacheService = null,
+        private readonly ConfigurationService $configService,
+        private readonly CacheService $cacheService,
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);
@@ -73,7 +73,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
         }
 
         // Check cache if enabled
-        if ($this->isCacheEnabled()) {
+        if ($this->configService->isResultCacheEnabled()) {
             $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
             $cachedResult = $this->cacheService->get($cacheKey);
 
@@ -162,7 +162,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
                     );
 
                     // Cache the result if enabled
-                    if ($this->isCacheEnabled()) {
+                    if ($this->configService->isResultCacheEnabled()) {
                         $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
                         $this->cacheService->set($cacheKey, $this->serializeResult($result));
                     }
@@ -368,14 +368,6 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
 
         return true;
     }
-
-    private function isCacheEnabled(): bool
-    {
-        return null !== $this->configService
-            && null !== $this->cacheService
-            && $this->configService->isResultCacheEnabled();
-    }
-
     private function serializeResult(InstallationDiscoveryResult $result): array
     {
         $data = $result->toArray();

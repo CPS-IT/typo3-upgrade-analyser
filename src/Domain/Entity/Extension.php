@@ -127,7 +127,10 @@ class Extension
         $lines = 0;
         foreach ($this->getPhpFiles() as $file) {
             if (file_exists($file)) {
-                $lines += \count(file($file));
+                $fileLines = file($file);
+                if (false !== $fileLines) {
+                    $lines += \count($fileLines);
+                }
             }
         }
 

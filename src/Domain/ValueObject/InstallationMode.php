@@ -24,7 +24,9 @@ enum InstallationMode: string
 
     public function isComposerMode(): bool
     {
-        return self::COMPOSER === $this;
+        return match ($this) {
+            self::COMPOSER => true,
+        };
     }
 
     public function getDisplayName(): string

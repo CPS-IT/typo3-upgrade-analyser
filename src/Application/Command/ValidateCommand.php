@@ -118,9 +118,12 @@ class ValidateCommand extends Command
         // Try to detect version from composer.json
         $composerPath = $path . '/composer.json';
         if (file_exists($composerPath)) {
-            $composer = json_decode(file_get_contents($composerPath), true);
-            if (isset($composer['require']['typo3/cms-core'])) {
-                return $composer['require']['typo3/cms-core'];
+            $composerContent = file_get_contents($composerPath);
+            if (false !== $composerContent) {
+                $composer = json_decode($composerContent, true);
+                if (isset($composer['require']['typo3/cms-core'])) {
+                    return $composer['require']['typo3/cms-core'];
+                }
             }
         }
 
@@ -128,7 +131,7 @@ class ValidateCommand extends Command
         $constantsFile = $path . '/typo3/sysext/core/Classes/Information/Typo3Version.php';
         if (file_exists($constantsFile)) {
             $content = file_get_contents($constantsFile);
-            if (preg_match('/const VERSION = [\'"]([^\'"]*)[\'"]/m', $content, $matches)) {
+            if (false !== $content && preg_match('/const VERSION = [\'"]([^\'"]*)[\'"]/m', $content, $matches)) {
                 return $matches[1];
             }
         }
