@@ -233,7 +233,11 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         }
 
         try {
-            $installedContent = json_decode(file_get_contents($installedJsonPath), true, 512, JSON_THROW_ON_ERROR);
+            $json = file_get_contents($installedJsonPath);
+            if (false === $json) {
+                throw new \RuntimeException('Could not read composer installed.json file');
+            }
+            $installedContent = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($installedContent) || !isset($installedContent['packages'])) {
                 $this->logger->warning('Invalid composer installed.json format');
@@ -300,6 +304,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
                     $EM_CONF = [];
                     include $emconfPath;
 
+                    // @phpstan-ignore isset.offset
                     if (isset($EM_CONF[$packageKey])) {
                         $emConfig = $EM_CONF[$packageKey];
                         $version = $emConfig['version'] ?? '0.0.0';
@@ -406,7 +411,6 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 
         return 'local';
     }
-
 
     private function serializeResult(ExtensionDiscoveryResult $result): array
     {
