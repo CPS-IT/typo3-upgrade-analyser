@@ -106,13 +106,6 @@ class ServiceIntegrationTest extends AbstractIntegrationTest
         $extensions = $extensionResult->getExtensions();
         $this->assertNotEmpty($extensions);
 
-        // Step 3: Verify separation of concerns
-        // Installation result should NOT contain extension data
-        $this->assertNull(
-            $installation->getExtensions(),
-            'Installation entity should not contain extension data - separation of concerns',
-        );
-
         // Extension result should NOT contain installation version data directly
         foreach ($extensions as $extension) {
             $this->assertNotNull($extension->getKey());

@@ -22,7 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 /**
  * Represents a TYPO3 installation to be analyzed.
  */
-class Installation implements SerializableInterface
+final class Installation implements SerializableInterface
 {
     private array $extensions = [];
     private array $configuration = [];
@@ -63,14 +63,7 @@ class Installation implements SerializableInterface
     {
         $this->extensions[$extension->getKey()] = $extension;
     }
-
-    public function getExtensions(): ?array
-    {
-        // Extensions are now handled separately by ExtensionDiscoveryService
-        // This method returns null to enforce separation of concerns
-        return null;
-    }
-
+    
     public function getExtension(string $key): ?Extension
     {
         return $this->extensions[$key] ?? null;
@@ -137,12 +130,6 @@ class Installation implements SerializableInterface
     {
         return $this->metadata;
     }
-
-    public function getExtensionByKey(string $key): ?Extension
-    {
-        return $this->getExtension($key);
-    }
-
     public function getSystemExtensions(): array
     {
         return array_filter($this->extensions, fn (Extension $ext): bool => 'system' === $ext->getType());
@@ -235,7 +222,7 @@ class Installation implements SerializableInterface
      */
     public static function fromArray(array $data): static
     {
-        $installation = new self(
+        $installation = new static(
             $data['path'],
             Version::fromString($data['version']),
             $data['type'] ?? 'composer',

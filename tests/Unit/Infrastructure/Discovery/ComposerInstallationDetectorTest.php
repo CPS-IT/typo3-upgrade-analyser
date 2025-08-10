@@ -248,11 +248,6 @@ final class ComposerInstallationDetectorTest extends TestCase
         if (null !== $result) {
             self::assertInstanceOf(Installation::class, $result);
 
-            // Extensions are now handled separately by ExtensionDiscoveryService
-            // getExtensions() returns null to enforce separation of concerns
-            $extensions = $result->getExtensions();
-            self::assertNull($extensions);
-
             // The detection itself should succeed even if extensions are handled separately
             self::assertInstanceOf(Installation::class, $result);
         } else {
@@ -296,13 +291,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
 
         $result = $workingDetector->detect($this->testDir);
-
-        if (null !== $result) {
-            // Extensions are now handled separately by ExtensionDiscoveryService
-            // getExtensions() returns null to enforce separation of concerns
-            $extensions = $result->getExtensions();
-            self::assertNull($extensions);
-        }
+        $this->assertNotEmpty($result);
     }
 
     private function createValidComposerTypo3Installation(): void

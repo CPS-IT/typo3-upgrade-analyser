@@ -107,7 +107,6 @@ class InstallationTest extends TestCase
 
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtensions
      */
     public function testGetExtensions(): void
     {
@@ -116,11 +115,6 @@ class InstallationTest extends TestCase
 
         $this->installation->addExtension($extension1);
         $this->installation->addExtension($extension2);
-
-        // Extensions are now handled separately by ExtensionDiscoveryService
-        // getExtensions() returns null to enforce separation of concerns
-        $extensions = $this->installation->getExtensions();
-        self::assertNull($extensions);
 
         // But individual extensions can still be retrieved
         self::assertSame($extension1, $this->installation->getExtension('ext1'));
@@ -211,7 +205,6 @@ class InstallationTest extends TestCase
 
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtensions
      * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtension
      */
     public function testAddExtensionOverwritesExistingExtension(): void
@@ -221,10 +214,6 @@ class InstallationTest extends TestCase
 
         $this->installation->addExtension($extension1);
         $this->installation->addExtension($extension2);
-
-        // Extensions are now handled separately by ExtensionDiscoveryService
-        // getExtensions() returns null to enforce separation of concerns
-        self::assertNull($this->installation->getExtensions());
 
         // But the second extension should overwrite the first
         self::assertSame($extension2, $this->installation->getExtension('test_ext'));
@@ -273,21 +262,6 @@ class InstallationTest extends TestCase
         $this->installation->setMetadata($metadata);
 
         self::assertSame($metadata, $this->installation->getMetadata());
-    }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtensionByKey
-     */
-    public function testGetExtensionByKeyIsAliasForGetExtension(): void
-    {
-        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
-        $this->installation->addExtension($extension);
-
-        self::assertSame($extension, $this->installation->getExtensionByKey('test_ext'));
-        self::assertSame(
-            $this->installation->getExtension('test_ext'),
-            $this->installation->getExtensionByKey('test_ext'),
-        );
     }
 
     /**
