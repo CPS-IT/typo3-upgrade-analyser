@@ -27,7 +27,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
  * @group performance
  * @group real-world
  */
-class PerformanceReliabilityCase extends AbstractIntegrationCase
+class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
     private array $testExtensions;

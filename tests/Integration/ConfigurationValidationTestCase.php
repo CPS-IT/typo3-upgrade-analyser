@@ -20,7 +20,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * @group integration
  */
-class ConfigurationValidationCase extends AbstractIntegrationCase
+class ConfigurationValidationTestCase extends AbstractIntegrationTestCase
 {
     /**
      * @coversNothing

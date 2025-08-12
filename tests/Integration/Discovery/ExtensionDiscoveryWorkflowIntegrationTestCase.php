@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInte
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -34,7 +34,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService
  */
 #[Group('integration')]
-class ExtensionDiscoveryWorkflowIntegrationCase extends AbstractIntegrationCase
+class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationTestCase
 {
     private ExtensionDiscoveryServiceInterface $extensionDiscoveryService;
     private InstallationDiscoveryServiceInterface $installationDiscoveryService;
@@ -236,7 +236,7 @@ class ExtensionDiscoveryWorkflowIntegrationCase extends AbstractIntegrationCase
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::createExtensionFromPackageData
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::isCacheEnabled
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::serializeResult
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Discovery\ExtensionDiscoveryWorkflowIntegrationCase::brokenInstallationProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Discovery\ExtensionDiscoveryWorkflowIntegrationTestCase::brokenInstallationProvider
      */
     #[DataProvider('brokenInstallationProvider')]
     public function testExtensionDiscoveryWithBrokenFiles(string $installationType, bool $shouldSucceed, array $expectedBehavior): void

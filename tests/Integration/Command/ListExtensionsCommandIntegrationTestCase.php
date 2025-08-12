@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Command;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Console\Command\Command;
@@ -35,7 +35,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService
  */
 #[Group('integration')]
-class ListExtensionsCommandIntegrationCase extends AbstractIntegrationCase
+class ListExtensionsCommandIntegrationTestCase extends AbstractIntegrationTestCase
 {
     private ListExtensionsCommand $command;
     private string $fixturesPath;
@@ -263,8 +263,8 @@ class ListExtensionsCommandIntegrationCase extends AbstractIntegrationCase
      * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::run
      * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::execute
      * @covers \CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand::detectLegacyInstallationPaths
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Command\ListExtensionsCommandIntegrationCase::createTestConfig
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Command\ListExtensionsCommandIntegrationCase::verbosityLevelProvider
+     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Command\ListExtensionsCommandIntegrationTestCase::createTestConfig
+     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Command\ListExtensionsCommandIntegrationTestCase::verbosityLevelProvider
      */
     #[DataProvider('verbosityLevelProvider')]
     public function testListExtensionsWithDifferentVerbosityLevels(int $verbosity, array $expectedContent, array $notExpectedContent = []): void

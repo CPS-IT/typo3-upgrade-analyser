@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 
 /**
  * Integration tests for Git repository analysis with real API calls.
@@ -28,7 +28,7 @@ use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
  * @group github-api
  * @group real-world
  */
-class GitRepositoryIntegrationTest extends AbstractIntegrationCase
+class GitRepositoryIntegrationTestTest extends AbstractIntegrationTestCase
 {
     private GitHubClient $gitHubClient;
     private GitProviderFactory $providerFactory;
