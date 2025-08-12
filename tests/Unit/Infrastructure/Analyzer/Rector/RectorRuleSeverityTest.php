@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -79,14 +79,10 @@ class RectorRuleSeverityTest extends TestCase
     public function testAllSeveritiesHaveValidProperties(): void
     {
         foreach (RectorRuleSeverity::cases() as $severity) {
-            $this->assertIsFloat($severity->getRiskWeight());
             $this->assertGreaterThan(0, $severity->getRiskWeight());
             $this->assertLessThanOrEqual(1.0, $severity->getRiskWeight());
 
-            $this->assertIsString($severity->getDisplayName());
             $this->assertNotEmpty($severity->getDisplayName());
-
-            $this->assertIsString($severity->getDescription());
             $this->assertNotEmpty($severity->getDescription());
         }
     }

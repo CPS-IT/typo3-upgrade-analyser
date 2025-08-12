@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
@@ -90,6 +90,10 @@ abstract class AbstractIntegrationTest extends TestCase
 
         $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
+        if (false === $lines) {
+            return;
+        }
+
         foreach ($lines as $line) {
             $line = trim($line);
 
@@ -158,7 +162,12 @@ abstract class AbstractIntegrationTest extends TestCase
             return false;
         }
 
-        $data = json_decode(file_get_contents($rateLimitFile), true);
+        $content = file_get_contents($rateLimitFile);
+        if (false === $content) {
+            return false;
+        }
+
+        $data = json_decode($content, true);
         $resetTime = $data['reset_time'] ?? 0;
 
         // If reset time has passed, we're no longer rate limited
@@ -263,6 +272,10 @@ abstract class AbstractIntegrationTest extends TestCase
         }
 
         $content = file_get_contents($filePath);
+        if (false === $content) {
+            throw new \RuntimeException("Could not read test data file: {$filePath}");
+        }
+
         $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         return $data;
@@ -276,7 +289,9 @@ abstract class AbstractIntegrationTest extends TestCase
         $cacheFile = $this->cacheDir . '/' . md5($cacheKey) . '.json';
 
         if (file_exists($cacheFile)) {
-            $cachedData = json_decode(file_get_contents($cacheFile), true, 512, JSON_THROW_ON_ERROR);
+            $content = file_get_contents($cacheFile);
+            self::assertNotFalse($content, "Failed to read cache file: {$cacheFile}");
+            $cachedData = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
             return $cachedData;
         }
@@ -378,9 +393,6 @@ abstract class AbstractIntegrationTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $health->getOpenIssuesCount());
         $this->assertGreaterThanOrEqual(0, $health->getClosedIssuesCount());
         $this->assertGreaterThanOrEqual(0, $health->getContributorCount());
-        $this->assertIsBool($health->isArchived());
-        $this->assertIsBool($health->hasReadme());
-        $this->assertIsBool($health->hasLicense());
     }
 
     /**
@@ -390,9 +402,7 @@ abstract class AbstractIntegrationTest extends TestCase
         \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata $metadata,
     ): void {
         $this->assertNotEmpty($metadata->getName());
-        $this->assertIsString($metadata->getDescription());
-        $this->assertIsBool($metadata->isArchived());
-        $this->assertIsBool($metadata->isFork());
+        // Description is string, archived and fork status are boolean by design
         $this->assertGreaterThanOrEqual(0, $metadata->getStarCount());
         $this->assertGreaterThanOrEqual(0, $metadata->getForkCount());
         $this->assertInstanceOf(\DateTimeInterface::class, $metadata->getLastUpdated());
@@ -404,7 +414,7 @@ abstract class AbstractIntegrationTest extends TestCase
      */
     protected function assertGitTagsValid(array $tags): void
     {
-        $this->assertIsArray($tags);
+        // Tags parameter is typed as array
 
         foreach ($tags as $tag) {
             $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::class, $tag);
@@ -417,17 +427,15 @@ abstract class AbstractIntegrationTest extends TestCase
     }
 
     /**
-     * Validate that analysis result has required structure.
+     * Validate that the analysis result has the required structure.
      */
     protected function assertAnalysisResultValid(
         \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult $result,
     ): void {
         $this->assertNotEmpty($result->getAnalyzerName());
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension::class, $result->getExtension());
-        $this->assertIsFloat($result->getRiskScore());
+        // Risk score bounds validation
         $this->assertGreaterThanOrEqual(0.0, $result->getRiskScore());
         $this->assertLessThanOrEqual(10.0, $result->getRiskScore());
-        $this->assertIsArray($result->getMetrics());
-        $this->assertIsArray($result->getRecommendations());
+        // Metrics and recommendations are typed as arrays
     }
 }

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
@@ -52,7 +52,9 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('getName');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('string', $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame('string', $returnType->getName());
         self::assertCount(0, $method->getParameters());
     }
 
@@ -62,7 +64,9 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('getDescription');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('string', $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame('string', $returnType->getName());
         self::assertCount(0, $method->getParameters());
     }
 
@@ -72,12 +76,16 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('supports');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('bool', $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame('bool', $returnType->getName());
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('extension', $parameter->getName());
-        self::assertSame(Extension::class, $parameter->getType()?->getName());
+        $parameterType = $parameter->getType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $parameterType);
+        self::assertSame(Extension::class, $parameterType->getName());
     }
 
     public function testAnalyzeMethodSignature(): void
@@ -86,16 +94,22 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('analyze');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(AnalysisResult::class, $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame(AnalysisResult::class, $returnType->getName());
         self::assertCount(2, $method->getParameters());
 
         $extensionParam = $method->getParameters()[0];
         self::assertSame('extension', $extensionParam->getName());
-        self::assertSame(Extension::class, $extensionParam->getType()?->getName());
+        $extensionParamType = $extensionParam->getType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $extensionParamType);
+        self::assertSame(Extension::class, $extensionParamType->getName());
 
         $contextParam = $method->getParameters()[1];
         self::assertSame('context', $contextParam->getName());
-        self::assertSame(AnalysisContext::class, $contextParam->getType()?->getName());
+        $contextParamType = $contextParam->getType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $contextParamType);
+        self::assertSame(AnalysisContext::class, $contextParamType->getName());
     }
 
     public function testGetRequiredToolsMethodSignature(): void
@@ -104,7 +118,9 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('getRequiredTools');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('array', $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame('array', $returnType->getName());
         self::assertCount(0, $method->getParameters());
     }
 
@@ -114,7 +130,9 @@ class AnalyzerInterfaceTest extends TestCase
         $method = $reflection->getMethod('hasRequiredTools');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('bool', $method->getReturnType()?->getName());
+        $returnType = $method->getReturnType();
+        self::assertInstanceOf(\ReflectionNamedType::class, $returnType);
+        self::assertSame('bool', $returnType->getName());
         self::assertCount(0, $method->getParameters());
     }
 

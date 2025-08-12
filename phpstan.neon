@@ -7,18 +7,19 @@ parameters:
 		excludePaths:
 				- tests/Fixtures
 				- tests/Integration/Fixtures
+				- tests/Helper
 		tmpDir: var/phpstan
 		ignoreErrors:
 				# Allow mixed types in configuration arrays
-				- '#Parameter \#1 \$config of method .* expects array<string, mixed>, array given#'
+				#- '#Parameter \#1 \$config of method .* expects array<string, mixed>, array given#'
 				# Allow dynamic property access in some cases
-				- '#Cannot access property \$\w+ on mixed#'
+				#- '#Cannot access property \$\w+ on mixed#'
 				# Ignore missing typehints from arrays (replaces deprecated checkMissingIterableValueType)
 				-
 						identifier: missingType.iterableValue
 				# Ignore missing typehints from generics (replaces deprecated checkGenericClassInNonGenericObjectType)
-				-
-						identifier: missingType.generics
+				#-
+				#		identifier: missingType.generics
 		bootstrapFiles:
 				- vendor/autoload.php
 		scanDirectories:

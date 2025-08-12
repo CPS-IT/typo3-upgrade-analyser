@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
@@ -46,6 +46,11 @@ class GitTag
     {
         // Remove common prefixes
         $version = preg_replace('/^(v|version|release)[-_]?/i', '', $this->name);
+
+        // Ensure preg_replace didn't return null
+        if (null === $version) {
+            return null;
+        }
 
         // Check if it matches semantic versioning pattern
         if (preg_match('/^\d+\.\d+(\.\d+)?(-[\w\.-]+)?(\+[\w\.-]+)?$/', $version)) {

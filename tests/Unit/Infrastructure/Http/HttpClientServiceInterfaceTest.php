@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
@@ -21,6 +21,15 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class HttpClientServiceInterfaceTest extends TestCase
 {
+    private function getTypeName(?\ReflectionType $type): string
+    {
+        if ($type instanceof \ReflectionNamedType) {
+            return $type->getName();
+        }
+
+        self::fail('Expected ReflectionNamedType, got ' . ($type ? \get_class($type) : 'null'));
+    }
+
     public function testInterfaceDefinesRequiredMethods(): void
     {
         $reflection = new \ReflectionClass(HttpClientServiceInterface::class);
@@ -49,22 +58,22 @@ class HttpClientServiceInterfaceTest extends TestCase
         $method = $reflection->getMethod('request');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(ResponseInterface::class, $method->getReturnType()?->getName());
+        self::assertSame(ResponseInterface::class, $this->getTypeName($method->getReturnType()));
         self::assertCount(3, $method->getParameters());
 
         $parameters = $method->getParameters();
 
         $methodParam = $parameters[0];
         self::assertSame('method', $methodParam->getName());
-        self::assertSame('string', $methodParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($methodParam->getType()));
 
         $urlParam = $parameters[1];
         self::assertSame('url', $urlParam->getName());
-        self::assertSame('string', $urlParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($urlParam->getType()));
 
         $optionsParam = $parameters[2];
         self::assertSame('options', $optionsParam->getName());
-        self::assertSame('array', $optionsParam->getType()?->getName());
+        self::assertSame('array', $this->getTypeName($optionsParam->getType()));
         self::assertTrue($optionsParam->isDefaultValueAvailable());
         self::assertSame([], $optionsParam->getDefaultValue());
     }
@@ -75,18 +84,18 @@ class HttpClientServiceInterfaceTest extends TestCase
         $method = $reflection->getMethod('get');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(ResponseInterface::class, $method->getReturnType()?->getName());
+        self::assertSame(ResponseInterface::class, $this->getTypeName($method->getReturnType()));
         self::assertCount(2, $method->getParameters());
 
         $parameters = $method->getParameters();
 
         $urlParam = $parameters[0];
         self::assertSame('url', $urlParam->getName());
-        self::assertSame('string', $urlParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($urlParam->getType()));
 
         $optionsParam = $parameters[1];
         self::assertSame('options', $optionsParam->getName());
-        self::assertSame('array', $optionsParam->getType()?->getName());
+        self::assertSame('array', $this->getTypeName($optionsParam->getType()));
         self::assertTrue($optionsParam->isDefaultValueAvailable());
     }
 
@@ -96,7 +105,7 @@ class HttpClientServiceInterfaceTest extends TestCase
         $method = $reflection->getMethod('post');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(ResponseInterface::class, $method->getReturnType()?->getName());
+        self::assertSame(ResponseInterface::class, $this->getTypeName($method->getReturnType()));
         self::assertCount(2, $method->getParameters());
     }
 
@@ -106,18 +115,18 @@ class HttpClientServiceInterfaceTest extends TestCase
         $method = $reflection->getMethod('makeAuthenticatedRequest');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(ResponseInterface::class, $method->getReturnType()?->getName());
+        self::assertSame(ResponseInterface::class, $this->getTypeName($method->getReturnType()));
         self::assertCount(4, $method->getParameters());
 
         $parameters = $method->getParameters();
 
         $methodParam = $parameters[0];
         self::assertSame('method', $methodParam->getName());
-        self::assertSame('string', $methodParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($methodParam->getType()));
 
         $urlParam = $parameters[1];
         self::assertSame('url', $urlParam->getName());
-        self::assertSame('string', $urlParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($urlParam->getType()));
 
         $tokenParam = $parameters[2];
         self::assertSame('token', $tokenParam->getName());
@@ -127,7 +136,7 @@ class HttpClientServiceInterfaceTest extends TestCase
 
         $optionsParam = $parameters[3];
         self::assertSame('options', $optionsParam->getName());
-        self::assertSame('array', $optionsParam->getType()?->getName());
+        self::assertSame('array', $this->getTypeName($optionsParam->getType()));
         self::assertTrue($optionsParam->isDefaultValueAvailable());
     }
 
@@ -137,33 +146,33 @@ class HttpClientServiceInterfaceTest extends TestCase
         $method = $reflection->getMethod('makeRateLimitedRequest');
 
         self::assertTrue($method->isPublic());
-        self::assertSame(ResponseInterface::class, $method->getReturnType()?->getName());
+        self::assertSame(ResponseInterface::class, $this->getTypeName($method->getReturnType()));
         self::assertCount(5, $method->getParameters());
 
         $parameters = $method->getParameters();
 
         $methodParam = $parameters[0];
         self::assertSame('method', $methodParam->getName());
-        self::assertSame('string', $methodParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($methodParam->getType()));
 
         $urlParam = $parameters[1];
         self::assertSame('url', $urlParam->getName());
-        self::assertSame('string', $urlParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($urlParam->getType()));
 
         $optionsParam = $parameters[2];
         self::assertSame('options', $optionsParam->getName());
-        self::assertSame('array', $optionsParam->getType()?->getName());
+        self::assertSame('array', $this->getTypeName($optionsParam->getType()));
         self::assertTrue($optionsParam->isDefaultValueAvailable());
 
         $maxRetriesParam = $parameters[3];
         self::assertSame('maxRetries', $maxRetriesParam->getName());
-        self::assertSame('int', $maxRetriesParam->getType()?->getName());
+        self::assertSame('int', $this->getTypeName($maxRetriesParam->getType()));
         self::assertTrue($maxRetriesParam->isDefaultValueAvailable());
         self::assertSame(3, $maxRetriesParam->getDefaultValue());
 
         $retryDelayParam = $parameters[4];
         self::assertSame('retryDelay', $retryDelayParam->getName());
-        self::assertSame('int', $retryDelayParam->getType()?->getName());
+        self::assertSame('int', $this->getTypeName($retryDelayParam->getType()));
         self::assertTrue($retryDelayParam->isDefaultValueAvailable());
         self::assertSame(1, $retryDelayParam->getDefaultValue());
     }

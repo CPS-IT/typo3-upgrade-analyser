@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Discovery;
@@ -50,10 +50,22 @@ class ExtensionDiscoveryWorkflowIntegrationTest extends AbstractIntegrationTest
 
         // Setup container and services
         $container = ContainerFactory::create();
-        $this->extensionDiscoveryService = $container->get(ExtensionDiscoveryService::class);
-        $this->installationDiscoveryService = $container->get(InstallationDiscoveryService::class);
-        $this->configurationService = $container->get(ConfigurationService::class);
-        $this->cacheService = $container->get(CacheService::class);
+
+        $extensionService = $container->get(ExtensionDiscoveryService::class);
+        \assert($extensionService instanceof ExtensionDiscoveryService);
+        $this->extensionDiscoveryService = $extensionService;
+
+        $installationService = $container->get(InstallationDiscoveryService::class);
+        \assert($installationService instanceof InstallationDiscoveryService);
+        $this->installationDiscoveryService = $installationService;
+
+        $configService = $container->get(ConfigurationService::class);
+        \assert($configService instanceof ConfigurationService);
+        $this->configurationService = $configService;
+
+        $cacheService = $container->get(CacheService::class);
+        \assert($cacheService instanceof CacheService);
+        $this->cacheService = $cacheService;
 
         // Clear cache before each test
         $this->cacheService->clear();

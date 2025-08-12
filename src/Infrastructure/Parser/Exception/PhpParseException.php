@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception;
@@ -21,7 +21,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception;
 final class PhpParseException extends ParseException
 {
     private array $astErrors;
-    private ?string $phpVersion;
+    private string $phpVersion;
 
     /**
      * @param string               $message    Error message
@@ -64,9 +64,9 @@ final class PhpParseException extends ParseException
     /**
      * Get PHP version used for parsing.
      *
-     * @return string|null PHP version or null if not available
+     * @return string PHP version
      */
-    public function getPhpVersion(): ?string
+    public function getPhpVersion(): string
     {
         return $this->phpVersion;
     }

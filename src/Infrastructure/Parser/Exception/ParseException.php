@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception;
@@ -159,8 +159,6 @@ class ParseException extends \RuntimeException
      * @param int|null             $line       Line number
      * @param int|null             $column     Column number
      * @param array<string, mixed> $context    Context
-     *
-     * @return static
      */
     public static function syntaxError(
         string $message,
@@ -170,7 +168,7 @@ class ParseException extends \RuntimeException
         ?int $column = null,
         array $context = [],
     ): self {
-        return new static($message, $sourcePath, $format, $line, $column, $context);
+        return new self($message, $sourcePath, $format, $line, $column, $context);
     }
 
     /**
@@ -179,8 +177,6 @@ class ParseException extends \RuntimeException
      * @param string      $sourcePath Source path
      * @param string      $format     Format
      * @param string|null $reason     Optional reason
-     *
-     * @return static
      */
     public static function fileAccessError(string $sourcePath, string $format, ?string $reason = null): self
     {
@@ -189,7 +185,7 @@ class ParseException extends \RuntimeException
             $message .= " ({$reason})";
         }
 
-        return new static($message, $sourcePath, $format);
+        return new self($message, $sourcePath, $format);
     }
 
     /**
@@ -197,14 +193,12 @@ class ParseException extends \RuntimeException
      *
      * @param string $sourcePath Source path
      * @param string $format     Format
-     *
-     * @return static
      */
     public static function unsupportedFormat(string $sourcePath, string $format): self
     {
         $message = "Unsupported configuration format: {$format}";
 
-        return new static($message, $sourcePath, $format);
+        return new self($message, $sourcePath, $format);
     }
 
     /**
@@ -214,8 +208,6 @@ class ParseException extends \RuntimeException
      * @param string               $sourcePath Source path
      * @param string               $format     Format
      * @param array<string, mixed> $context    Context
-     *
-     * @return static
      */
     public static function invalidStructure(
         string $message,
@@ -223,7 +215,7 @@ class ParseException extends \RuntimeException
         string $format,
         array $context = [],
     ): self {
-        return new static($message, $sourcePath, $format, null, null, $context);
+        return new self($message, $sourcePath, $format, null, null, $context);
     }
 
     /**
@@ -232,12 +224,10 @@ class ParseException extends \RuntimeException
      * @param \Throwable $throwable  Source exception
      * @param string     $sourcePath Source path
      * @param string     $format     Format
-     *
-     * @return static
      */
     public static function fromThrowable(\Throwable $throwable, string $sourcePath, string $format): self
     {
-        return new static(
+        return new self(
             $throwable->getMessage(),
             $sourcePath,
             $format,

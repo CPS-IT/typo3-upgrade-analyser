@@ -7,19 +7,20 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Configuration;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 final class ConfigurationServiceTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private LoggerInterface&MockObject $logger;
     private string $tempConfigFile;
 
     protected function setUp(): void

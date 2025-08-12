@@ -1,9 +1,9 @@
 # Feature Specification: PHPStan Analyzer
 
-**Status**: Planning  
-**Priority**: Medium  
-**Estimated Effort**: 8-12 hours  
-**Target Version**: 0.2  
+**Status**: Planning
+**Priority**: Medium
+**Estimated Effort**: 8-12 hours
+**Target Version**: 0.2
 **Dependencies**: Core Analyzer System, External Tool Integration
 
 ## Overview
@@ -13,7 +13,7 @@ The PHPStan Analyzer provides static code analysis capabilities for TYPO3 extens
 ### Business Value
 
 - **Risk Reduction**: Identify potential runtime errors before upgrade
-- **Code Quality Assessment**: Measure extension maintainability and reliability  
+- **Code Quality Assessment**: Measure extension maintainability and reliability
 - **Upgrade Planning**: Understand technical debt and complexity
 - **Developer Guidance**: Provide actionable recommendations for code improvements
 
@@ -141,19 +141,19 @@ class PhpstanConfigGenerator
     public function generateConfig(Extension $extension, AnalysisContext $context): PhpstanConfiguration
     {
         $config = new PhpstanConfiguration();
-        
+
         // Set analysis level based on extension maturity
         $config->setLevel($this->determineAnalysisLevel($extension));
-        
+
         // Include TYPO3 core stubs and extensions
         $config->addIncludePaths($this->getTypo3Includes($context));
-        
+
         // Add extension-specific rules
         $config->addRuleSet($this->selectRuleSet($extension, $context));
-        
+
         // Configure ignoring patterns for external dependencies
         $config->addIgnorePatterns($this->getIgnorePatterns($extension));
-        
+
         return $config;
     }
 }
@@ -166,7 +166,7 @@ class PhpstanResultParser
     public function parseResults(string $phpstanOutput): PhpstanAnalysisResult
     {
         $jsonData = json_decode($phpstanOutput, true);
-        
+
         $issues = [];
         foreach ($jsonData['files'] as $file => $fileErrors) {
             foreach ($fileErrors['messages'] as $error) {
@@ -179,7 +179,7 @@ class PhpstanResultParser
                 );
             }
         }
-        
+
         return new PhpstanAnalysisResult($issues);
     }
 }
@@ -210,12 +210,12 @@ class PhpstanAnalysisResult extends AnalysisResult
     private array $issuesByCategory = [];
     private array $issuesBySeverity = [];
     private CodeQualityMetrics $qualityMetrics;
-    
+
     public function getIssuesByCategory(): array
     {
         return $this->issuesByCategory;
     }
-    
+
     public function getQualityScore(): float
     {
         return $this->qualityMetrics->getOverallScore();
@@ -285,18 +285,18 @@ analyzers:
     memory_limit: '1G'       # PHPStan memory limit
     include_tests: false     # analyze test files
     custom_config: null      # path to custom phpstan.neon
-    
+
     rules:
       typo3_core: true       # TYPO3 core API rules
       extension_standards: true  # Extension development standards
       security: true         # Security-focused rules
       compatibility: true    # Version compatibility rules
-      
+
     reporting:
       include_context: true  # include code context in reports
       group_by_severity: true
       max_issues_per_file: 50
-      
+
     cache:
       enabled: true
       ttl: 7200              # 2 hours cache
@@ -310,12 +310,12 @@ phpstan_rules:
     deprecated_api: error
     removed_api: error
     incompatible_types: error
-    
+
   extension_standards:
     missing_docblocks: warning
     naming_conventions: warning
     file_structure: info
-    
+
   security:
     sql_injection: error
     xss_vulnerability: error
@@ -400,7 +400,7 @@ Critical Issues (3)
    Impact: Runtime fatal error
    Fix: Implement missing method or remove call
 
-📍 Classes/Service/DataService.php:128  
+📍 Classes/Service/DataService.php:128
    Error: Argument type mismatch (string|null → string)
    Impact: Potential type error
    Fix: Add null check or make parameter nullable
@@ -464,7 +464,7 @@ Critical Issues (3)
 
 ### Technical Metrics
 - **Analysis Accuracy**: >95% of critical issues are valid problems
-- **Performance**: Analyze medium extensions (<100 files) in <30 seconds  
+- **Performance**: Analyze medium extensions (<100 files) in <30 seconds
 - **Coverage**: Successfully analyze >90% of common extension patterns
 - **Cache Effectiveness**: >80% cache hit rate for repeated analysis
 

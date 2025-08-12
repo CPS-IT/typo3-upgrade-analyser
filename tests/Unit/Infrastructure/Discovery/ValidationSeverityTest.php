@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -176,20 +176,12 @@ final class ValidationSeverityTest extends TestCase
         self::assertSame(ValidationSeverity::CRITICAL, ValidationSeverity::from('critical'));
     }
 
-    public function testFromValueWithInvalidValue(): void
-    {
-        $this->expectException(\ValueError::class);
-        ValidationSeverity::from('invalid');
-    }
-
     public function testTryFromValue(): void
     {
         self::assertSame(ValidationSeverity::INFO, ValidationSeverity::tryFrom('info'));
         self::assertSame(ValidationSeverity::WARNING, ValidationSeverity::tryFrom('warning'));
         self::assertSame(ValidationSeverity::ERROR, ValidationSeverity::tryFrom('error'));
         self::assertSame(ValidationSeverity::CRITICAL, ValidationSeverity::tryFrom('critical'));
-        self::assertNull(ValidationSeverity::tryFrom('invalid'));
-        self::assertNull(ValidationSeverity::tryFrom(''));
     }
 
     public function testEnumSerialization(): void

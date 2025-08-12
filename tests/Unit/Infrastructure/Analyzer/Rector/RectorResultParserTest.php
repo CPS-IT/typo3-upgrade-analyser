@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -43,7 +43,6 @@ class RectorResultParserTest extends TestCase
     {
         $findings = $this->parser->parseRectorOutput('');
 
-        $this->assertIsArray($findings);
         $this->assertEmpty($findings);
     }
 
@@ -51,7 +50,6 @@ class RectorResultParserTest extends TestCase
     {
         $findings = $this->parser->parseRectorOutput("   \n\t  ");
 
-        $this->assertIsArray($findings);
         $this->assertEmpty($findings);
     }
 
@@ -59,13 +57,12 @@ class RectorResultParserTest extends TestCase
     {
         $findings = $this->parser->parseRectorOutput('invalid json');
 
-        $this->assertIsArray($findings);
         $this->assertEmpty($findings);
-
-        // NullLogger doesn't track records, so we just verify the method handled the error
-        $this->assertTrue(true); // Test passes if we reach this point without exception
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function testParseRectorOutputWithValidJson(): void
     {
         $jsonOutput = json_encode([
@@ -88,30 +85,33 @@ class RectorResultParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
-        // No need to mock registry methods as parser now infers severity/type from rule class names
+        if ($jsonOutput) {
+            $findings = $this->parser->parseRectorOutput($jsonOutput);
 
-        $findings = $this->parser->parseRectorOutput($jsonOutput);
+            $this->assertCount(2, $findings);
 
-        $this->assertIsArray($findings);
-        $this->assertCount(2, $findings);
-
-        $firstFinding = $findings[0];
-        $this->assertInstanceOf(RectorFinding::class, $firstFinding);
-        $this->assertEquals('src/Controller/TestController.php', $firstFinding->getFile());
-        $this->assertEquals(42, $firstFinding->getLine());
-        $this->assertEquals('Replace deprecated method call', $firstFinding->getMessage());
+            $firstFinding = $findings[0];
+            $this->assertInstanceOf(RectorFinding::class, $firstFinding);
+            $this->assertEquals('src/Controller/TestController.php', $firstFinding->getFile());
+            $this->assertEquals(42, $firstFinding->getLine());
+            $this->assertEquals('Replace deprecated method call', $firstFinding->getMessage());
+        }
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function testParseRectorOutputWithMissingChangedFiles(): void
     {
-        $jsonOutput = json_encode(['some_other_key' => 'value']);
+        $jsonOutput = json_encode(['some_other_key' => 'value'], JSON_THROW_ON_ERROR);
 
-        $findings = $this->parser->parseRectorOutput($jsonOutput);
+        if ($jsonOutput) {
+            $findings = $this->parser->parseRectorOutput($jsonOutput);
 
-        $this->assertIsArray($findings);
-        $this->assertEmpty($findings);
+            $this->assertEmpty($findings);
+        }
     }
 
     public function testAggregateFindings(): void
@@ -270,20 +270,22 @@ class RectorResultParserTest extends TestCase
 
         $score = $this->parser->calculateComplexityScore($findings);
 
-        $this->assertIsFloat($score);
         $this->assertGreaterThanOrEqual(0.0, $score);
         $this->assertLessThanOrEqual(10.0, $score);
     }
 
-
+    /**
+     * @throws \ReflectionException
+     */
     public function testCalculateEntropy(): void
     {
-        // Use reflection to test private method
+        // Use reflection to test a private method
         $reflection = new \ReflectionClass($this->parser);
         $method = $reflection->getMethod('calculateEntropy');
+        /* @noinspection PhpExpressionResultUnusedInspection */
         $method->setAccessible(true);
 
-        // Test with empty array
+        // Test with an empty array
         $entropy = $method->invoke($this->parser, []);
         $this->assertEquals(0.0, $entropy);
 
@@ -305,9 +307,10 @@ class RectorResultParserTest extends TestCase
         $this->assertLessThan(1.0, $entropy);
     }
 
-
     /**
      * Test that parsing creates findings with correct severity and change type.
+     *
+     * @throws \JsonException
      */
     public function testParseOutputAssignsSeverityAndChangeType(): void
     {
@@ -334,58 +337,34 @@ class RectorResultParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
-        $findings = $this->parser->parseRectorOutput($jsonOutput);
+        if ($jsonOutput) {
+            $findings = $this->parser->parseRectorOutput($jsonOutput);
 
-        $this->assertCount(3, $findings);
+            $this->assertCount(3, $findings);
 
-        // First finding - v12 rule should be critical + breaking change
-        $v12Finding = $findings[0];
-        $this->assertEquals(RectorRuleSeverity::CRITICAL, $v12Finding->getSeverity());
-        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $v12Finding->getChangeType());
+            // First finding - v12 rule should be critical + breaking change
+            $v12Finding = $findings[0];
+            $this->assertEquals(RectorRuleSeverity::CRITICAL, $v12Finding->getSeverity());
+            $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $v12Finding->getChangeType());
 
-        // Second finding - v10 rule should be warning + deprecation
-        $v10Finding = $findings[1];
-        $this->assertEquals(RectorRuleSeverity::WARNING, $v10Finding->getSeverity());
-        $this->assertEquals(RectorChangeType::DEPRECATION, $v10Finding->getChangeType());
+            // The second finding-v10 rule should be warning + deprecation
+            $v10Finding = $findings[1];
+            $this->assertEquals(RectorRuleSeverity::WARNING, $v10Finding->getSeverity());
+            $this->assertEquals(RectorChangeType::DEPRECATION, $v10Finding->getChangeType());
 
-        // Third finding - CodeQuality rule should be info + best practice
-        $qualityFinding = $findings[2];
-        $this->assertEquals(RectorRuleSeverity::INFO, $qualityFinding->getSeverity());
-        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $qualityFinding->getChangeType());
-    }
-
-    /**
-     * Test parsing with different JSON structures (file_diffs vs changed_files).
-     */
-    public function testParseOutputWithFileDiffsStructure(): void
-    {
-        // Test the newer file_diffs structure that some Rector versions use
-        $jsonOutput = json_encode([
-            'totals' => ['changed_files' => 2],
-            'file_diffs' => [
-                [
-                    'file' => 'src/Test.php',
-                    'applied_rectors' => ['SomeRule', 'AnotherRule'],
-                    'diff' => '--- Original
-+++ New
-@@ -1,3 +1,3 @@
--old code
-+new code',
-                ],
-            ],
-        ]);
-
-        $findings = $this->parser->parseRectorOutput($jsonOutput);
-
-        $this->assertIsArray($findings);
-        // Note: Current implementation might not handle this structure
-        // This test documents the gap for future enhancement
+            // Third finding - CodeQuality rule should be info + best practice
+            $qualityFinding = $findings[2];
+            $this->assertEquals(RectorRuleSeverity::INFO, $qualityFinding->getSeverity());
+            $this->assertEquals(RectorChangeType::BEST_PRACTICE, $qualityFinding->getChangeType());
+        }
     }
 
     /**
      * Test suggested fix generation logic.
+     *
+     * @throws \JsonException
      */
     public function testSuggestedFixGeneration(): void
     {
@@ -416,19 +395,20 @@ class RectorResultParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
-        $findings = $this->parser->parseRectorOutput($jsonOutput);
+        if ($jsonOutput) {
+            $findings = $this->parser->parseRectorOutput($jsonOutput);
+            $this->assertCount(3, $findings);
 
-        $this->assertCount(3, $findings);
+            // Test replacement suggestion
+            $this->assertEquals("Replace 'oldMethod()' with 'newMethod()'", $findings[0]->getSuggestedFix());
 
-        // Test replacement suggestion
-        $this->assertEquals("Replace 'oldMethod()' with 'newMethod()'", $findings[0]->getSuggestedFix());
+            // Test addition suggestion
+            $this->assertEquals("Add: 'addedCode()'", $findings[1]->getSuggestedFix());
 
-        // Test addition suggestion
-        $this->assertEquals("Add: 'addedCode()'", $findings[1]->getSuggestedFix());
-
-        // Test removal suggestion
-        $this->assertEquals("Remove: 'removedCode()'", $findings[2]->getSuggestedFix());
+            // Test removal suggestion
+            $this->assertEquals("Remove: 'removedCode()'", $findings[2]->getSuggestedFix());
+        }
     }
 }

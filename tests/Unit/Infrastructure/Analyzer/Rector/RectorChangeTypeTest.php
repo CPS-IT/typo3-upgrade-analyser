@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -101,7 +101,6 @@ class RectorChangeTypeTest extends TestCase
     {
         foreach (RectorChangeType::cases() as $changeType) {
             $effort = $changeType->getEstimatedEffort();
-            $this->assertIsInt($effort);
             $this->assertGreaterThan(0, $effort, "Effort should be positive for {$changeType->value}");
             $this->assertLessThanOrEqual(60, $effort, "Effort should not exceed 60 minutes for {$changeType->value}");
         }
@@ -110,15 +109,8 @@ class RectorChangeTypeTest extends TestCase
     public function testAllChangeTypesHaveValidProperties(): void
     {
         foreach (RectorChangeType::cases() as $changeType) {
-            $this->assertIsString($changeType->getCategory());
             $this->assertNotEmpty($changeType->getCategory());
-
-            $this->assertIsInt($changeType->getEstimatedEffort());
             $this->assertGreaterThan(0, $changeType->getEstimatedEffort());
-
-            $this->assertIsBool($changeType->requiresManualIntervention());
-
-            $this->assertIsString($changeType->getDisplayName());
             $this->assertNotEmpty($changeType->getDisplayName());
         }
     }

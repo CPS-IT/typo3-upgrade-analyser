@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Analyzer;
@@ -79,8 +79,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::supports
      */
     public function testAnalyzerSupportsAllExtensions(): void
@@ -91,8 +89,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::hasRequiredTools
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::getRequiredTools
      */
@@ -103,8 +99,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeActiveExtensionWithMultipleSources(): void
@@ -157,8 +151,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeArchivedExtension(): void
@@ -177,8 +169,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
         $metrics = $result->getMetrics();
 
         // Assert expected availability for archived extension
-        $this->assertTrue($metrics['ter_available'] || !$metrics['ter_available'], 'TER availability check completed');
-        $this->assertTrue($metrics['packagist_available'] || !$metrics['packagist_available'], 'Packagist availability check completed');
+        // TER and Packagist availability checks completed (no specific assertion needed as both true/false are valid)
         $this->assertFalse($metrics['git_available'], 'Archived extension should not be compatible with TYPO3 12.4');
 
         // Assert archived repository has lower health score
@@ -198,8 +189,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeSystemExtension(): void
@@ -227,8 +216,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeLocalExtension(): void
@@ -265,8 +252,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeExtensionWithComposerNameButNoPackagistPresence(): void
@@ -295,8 +280,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalyzeMultipleExtensionsPerformance(): void
@@ -346,8 +329,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalysisWithDifferentTypo3Versions(): void
@@ -383,8 +364,6 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAnalysisErrorHandling(): void
@@ -398,15 +377,13 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
 
         $this->assertAnalysisResultValid($result);
 
-        // Even if some checks fail, the result should still be valid
-        $this->assertIsFloat($result->getRiskScore());
-        $this->assertIsArray($result->getMetrics());
-        $this->assertIsArray($result->getRecommendations());
+        // Even if some checks fail, the result should still be valid (basic bounds checking)
+        $this->assertGreaterThanOrEqual(0.0, $result->getRiskScore());
+        $this->assertLessThanOrEqual(10.0, $result->getRiskScore());
+        // Metrics and recommendations are typed as arrays
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testRecommendationQuality(): void
@@ -426,7 +403,7 @@ class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
             $result = $this->analyzer->analyze($extension, $context);
 
             $recommendations = $result->getRecommendations();
-            $this->assertIsArray($recommendations);
+            // Recommendations are typed as array
 
             // Each extension type should have specific recommendations
             if ('news' === $extension->getKey()) {

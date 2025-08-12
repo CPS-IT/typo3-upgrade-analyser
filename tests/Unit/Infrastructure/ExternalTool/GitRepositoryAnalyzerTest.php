@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
@@ -130,7 +130,9 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertEquals($health, $result->getHealth());
         $this->assertEquals($compatibleTags, $result->getCompatibleVersions());
         $this->assertTrue($result->hasCompatibleVersion());
-        $this->assertEquals('v12.4.0', $result->getLatestCompatibleVersion()->getName());
+        $latestCompatibleVersion = $result->getLatestCompatibleVersion();
+        $this->assertNotNull($latestCompatibleVersion, 'Expected a latest compatible version');
+        $this->assertEquals('v12.4.0', $latestCompatibleVersion->getName());
         $this->assertGreaterThan(0, $result->getHealthScore());
     }
 

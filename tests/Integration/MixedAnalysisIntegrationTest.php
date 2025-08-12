@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
@@ -47,8 +47,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testCompleteTypo3InstallationAnalysis(): void
@@ -110,8 +108,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testAvailabilityConsistencyAcrossSources(): void
@@ -158,8 +154,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testVersionCompatibilityAcrossTypo3Versions(): void
@@ -192,8 +186,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testArchivedExtensionMigrationScenario(): void
@@ -218,8 +210,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testSystemExtensionSpecialHandling(): void
@@ -243,8 +233,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testNetworkFailureResilience(): void
@@ -257,8 +245,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
         $result = $this->analyzer->analyze($extension, $context);
 
         $this->assertAnalysisResultValid($result);
-        $this->assertIsFloat($result->getRiskScore());
-        $this->assertIsArray($result->getMetrics());
 
         // Should have some availability information even with partial failures
         $metrics = $result->getMetrics();
@@ -268,8 +254,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testBatchAnalysisEfficiency(): void
@@ -306,8 +290,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      */
     public function testRiskScoreConsistency(): void
@@ -352,8 +334,6 @@ class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze

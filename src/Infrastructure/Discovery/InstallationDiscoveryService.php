@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
@@ -125,7 +125,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
                     $this->logger->info('Installation detected successfully', [
                         'strategy' => $strategyName,
                         'version' => $installation->getVersion()->toString(),
-                        'mode' => $installation->getMode()?->value ?? 'unknown',
+                        'mode' => $installation->getMode()->value ?? 'unknown',
                     ]);
 
                     $attemptedStrategies[] = [
@@ -196,7 +196,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt): bool => $attempt['supported'] ?? false);
+        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt): bool => $attempt['supported']);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
             : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
@@ -368,6 +368,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
 
         return true;
     }
+
     private function serializeResult(InstallationDiscoveryResult $result): array
     {
         $data = $result->toArray();

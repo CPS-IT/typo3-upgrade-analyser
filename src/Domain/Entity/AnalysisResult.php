@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
@@ -22,8 +22,8 @@ class AnalysisResult implements ResultInterface
     private array $metrics = [];
     private float $riskScore = 0.0;
     private array $recommendations = [];
-    private ?\DateTimeImmutable $executedAt = null;
-    private ?string $error = null;
+    private \DateTimeImmutable $executedAt;
+    private string $error = '';
 
     public function __construct(
         private readonly string $analyzerName,
@@ -95,7 +95,7 @@ class AnalysisResult implements ResultInterface
         return $this->recommendations;
     }
 
-    public function getExecutedAt(): ?\DateTimeImmutable
+    public function getExecutedAt(): \DateTimeImmutable
     {
         return $this->executedAt;
     }
@@ -105,19 +105,19 @@ class AnalysisResult implements ResultInterface
         $this->error = $error;
     }
 
-    public function getError(): ?string
+    public function getError(): string
     {
         return $this->error;
     }
 
     public function hasError(): bool
     {
-        return null !== $this->error;
+        return '' !== $this->error;
     }
 
     public function isSuccessful(): bool
     {
-        return null === $this->error;
+        return '' === $this->error;
     }
 
     public function getType(): string
@@ -170,7 +170,7 @@ class AnalysisResult implements ResultInterface
 
     public function getTimestamp(): \DateTimeImmutable
     {
-        return $this->executedAt ?? new \DateTimeImmutable();
+        return new \DateTimeImmutable();
     }
 
     public function getSummary(): string
@@ -197,7 +197,7 @@ class AnalysisResult implements ResultInterface
             'risk_score' => $this->riskScore,
             'risk_level' => $this->getRiskLevel(),
             'recommendations' => $this->recommendations,
-            'executed_at' => $this->executedAt?->format(\DateTime::ATOM),
+            'executed_at' => $this->executedAt->format(\DateTimeInterface::ATOM),
             'timestamp' => $this->getTimestamp()->format(\DateTimeInterface::ATOM),
             'error' => $this->error,
             'successful' => $this->isSuccessful(),

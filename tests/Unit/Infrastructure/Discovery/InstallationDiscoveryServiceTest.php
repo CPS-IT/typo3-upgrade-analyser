@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -16,12 +16,15 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationRuleInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -30,8 +33,10 @@ use Psr\Log\LoggerInterface;
  */
 final class InstallationDiscoveryServiceTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $configurationDiscoveryService;
+    private MockObject&LoggerInterface $logger;
+    private MockObject&ConfigurationDiscoveryService $configurationDiscoveryService;
+    private MockObject&ConfigurationService $configService;
+    private MockObject&CacheService $cacheService;
     private InstallationDiscoveryService $service;
     private string $testDir;
 
@@ -39,6 +44,8 @@ final class InstallationDiscoveryServiceTest extends TestCase
     {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->configurationDiscoveryService = $this->createMock(ConfigurationDiscoveryService::class);
+        $this->configService = $this->createMock(ConfigurationService::class);
+        $this->cacheService = $this->createMock(CacheService::class);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($this->testDir, 0o755, true);
     }
@@ -489,7 +496,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
         self::assertSame($installation, $result->getInstallation());
     }
 
-    private function createMockStrategy(string $name, int $priority, array $requiredIndicators = []): DetectionStrategyInterface
+    private function createMockStrategy(string $name, int $priority, array $requiredIndicators = []): DetectionStrategyInterface&MockObject
     {
         $strategy = $this->createMock(DetectionStrategyInterface::class);
         $strategy->method('getName')->willReturn($name);
@@ -515,8 +522,11 @@ final class InstallationDiscoveryServiceTest extends TestCase
         return $installation;
     }
 
-    private function createMockValidationRule(string $name, array $issues, bool $appliesTo = true): ValidationRuleInterface
-    {
+    private function createMockValidationRule(
+        string $name,
+        array $issues,
+        bool $appliesTo = true,
+    ): ValidationRuleInterface&MockObject {
         $rule = $this->createMock(ValidationRuleInterface::class);
         $rule->method('getName')->willReturn($name);
         $rule->method('getSeverity')->willReturn(ValidationSeverity::WARNING);
@@ -538,6 +548,8 @@ final class InstallationDiscoveryServiceTest extends TestCase
             $validationRules,
             $configService ?? $this->configurationDiscoveryService,
             $this->logger,
+            $this->configService,
+            $this->cacheService,
         );
     }
 

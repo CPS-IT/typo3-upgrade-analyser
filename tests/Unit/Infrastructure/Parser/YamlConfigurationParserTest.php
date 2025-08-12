@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
@@ -112,7 +112,6 @@ class YamlConfigurationParserTest extends TestCase
         self::assertSame($servicesFile, $result->getSourcePath());
 
         $data = $result->getData();
-        self::assertIsArray($data);
         self::assertArrayHasKey('services', $data);
         self::assertArrayHasKey('parameters', $data);
         self::assertArrayHasKey('when@dev', $data);
@@ -156,7 +155,9 @@ class YamlConfigurationParserTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
-        self::assertStringContainsString('parsing', strtolower($result->getFirstError()));
+        $firstError = $result->getFirstError();
+        self::assertNotNull($firstError, 'Expected an error message');
+        self::assertStringContainsString('parsing', strtolower($firstError));
     }
 
     public function testParseContentWithValidYaml(): void
@@ -256,7 +257,9 @@ class YamlConfigurationParserTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertSame([], $result->getData());
         self::assertTrue($result->hasWarnings());
-        self::assertStringContainsString('empty', $result->getFirstWarning());
+        $firstWarning = $result->getFirstWarning();
+        self::assertNotNull($firstWarning, 'Expected a warning message');
+        self::assertStringContainsString('empty', $firstWarning);
     }
 
     public function testParseContentWithOnlyComments(): void
@@ -324,7 +327,9 @@ class YamlConfigurationParserTest extends TestCase
 
             self::assertTrue($result->isSuccessful());
             self::assertTrue($result->hasWarnings());
-            self::assertStringContainsString('does not contain services section', $result->getFirstWarning());
+            $firstWarning = $result->getFirstWarning();
+            self::assertNotNull($firstWarning, 'Expected a warning message');
+            self::assertStringContainsString('does not contain services section', $firstWarning);
         } finally {
             unlink($tempFile);
         }
@@ -507,7 +512,9 @@ class YamlConfigurationParserTest extends TestCase
 
         self::assertTrue($result->isSuccessful());
         self::assertTrue($result->hasWarnings());
-        self::assertStringContainsString('deeply nested', $result->getFirstWarning());
+        $firstWarning = $result->getFirstWarning();
+        self::assertNotNull($firstWarning, 'Expected a warning message');
+        self::assertStringContainsString('deeply nested', $firstWarning);
     }
 
     public function testYamlStructureValidationWithEmptySections(): void

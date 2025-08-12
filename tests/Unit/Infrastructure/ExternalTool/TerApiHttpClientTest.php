@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
@@ -23,8 +23,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class TerApiHttpClientTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $mockHttpClient;
-    private \PHPUnit\Framework\MockObject\MockObject $mockLogger;
+    private HttpClientServiceInterface&\PHPUnit\Framework\MockObject\MockObject $mockHttpClient;
+    private LoggerInterface&\PHPUnit\Framework\MockObject\MockObject $mockLogger;
     private TerApiHttpClient $httpClient;
 
     protected function setUp(): void

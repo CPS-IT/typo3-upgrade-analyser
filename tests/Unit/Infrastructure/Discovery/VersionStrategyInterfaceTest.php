@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -27,12 +27,6 @@ final class VersionStrategyInterfaceTest extends TestCase
     {
         $strategy = new TestVersionStrategy();
 
-        // Test interface method contracts
-        self::assertIsString($strategy->getName());
-        self::assertIsInt($strategy->getPriority());
-        self::assertIsArray($strategy->getRequiredFiles());
-        self::assertIsFloat($strategy->getReliabilityScore());
-
         // Test reliability score is within valid range
         $reliability = $strategy->getReliabilityScore();
         self::assertGreaterThanOrEqual(0.0, $reliability);
@@ -49,30 +43,6 @@ final class VersionStrategyInterfaceTest extends TestCase
         $unsupportedPath = '/legacy/installation';
         self::assertFalse($strategy->supports($unsupportedPath));
         self::assertNull($strategy->extractVersion($unsupportedPath));
-    }
-
-    public function testInterfaceMethodReturnTypes(): void
-    {
-        $strategy = new TestVersionStrategy();
-
-        // Test all methods return correct types
-        self::assertIsString($strategy->getName());
-        self::assertIsInt($strategy->getPriority());
-        self::assertIsArray($strategy->getRequiredFiles());
-        self::assertIsFloat($strategy->getReliabilityScore());
-
-        foreach ($strategy->getRequiredFiles() as $file) {
-            self::assertIsString($file);
-        }
-
-        // Test supports method with various inputs
-        self::assertIsBool($strategy->supports('/some/path'));
-        self::assertIsBool($strategy->supports(''));
-        self::assertIsBool($strategy->supports('/'));
-
-        // Test extractVersion method returns Version or null
-        $result = $strategy->extractVersion('/composer/installation');
-        self::assertTrue($result instanceof Version || null === $result);
     }
 
     public function testMultipleStrategiesWithDifferentPriorities(): void
@@ -126,7 +96,6 @@ final class VersionStrategyInterfaceTest extends TestCase
 
         // All required files should be valid relative paths
         foreach ($requiredFiles as $file) {
-            self::assertIsString($file);
             self::assertNotEmpty($file);
             // Should be relative paths, not absolute
             self::assertStringNotContainsString('\\', $file);

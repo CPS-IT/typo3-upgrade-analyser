@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvider;
@@ -127,12 +127,10 @@ class GitProviderFactoryTest extends TestCase
      */
     public function testCreateProviderWithEmptyProviders(): void
     {
-        $factory = new GitProviderFactory([], $this->logger);
-
         $this->expectException(GitAnalysisException::class);
         $this->expectExceptionMessage('No suitable Git provider found for repository: https://github.com/user/repo');
 
-        $factory->createProvider('https://github.com/user/repo');
+        $this->factory->createProvider('https://github.com/user/repo');
     }
 
     /**

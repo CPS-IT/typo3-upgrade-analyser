@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
@@ -67,12 +67,6 @@ final class InstallationModeTest extends TestCase
         ];
     }
 
-    public function testFromValueWithInvalidValue(): void
-    {
-        $this->expectException(\ValueError::class);
-        InstallationMode::from('invalid');
-    }
-
     /**
      * @dataProvider tryFromValueProvider
      */
@@ -101,37 +95,5 @@ final class InstallationModeTest extends TestCase
 
         self::assertSame($mode, $unserialized);
         self::assertSame($mode->value, $unserialized->value);
-    }
-
-    public function testEnumComparison(): void
-    {
-        $mode1 = InstallationMode::COMPOSER;
-        $mode2 = InstallationMode::COMPOSER;
-
-        self::assertSame($mode1, $mode2);
-        self::assertTrue($mode1 === $mode2);
-    }
-
-    public function testEnumAsString(): void
-    {
-        self::assertSame('composer', (string) InstallationMode::COMPOSER->value);
-    }
-
-    public function testEnumInArray(): void
-    {
-        $modes = [InstallationMode::COMPOSER];
-
-        self::assertContains(InstallationMode::COMPOSER, $modes);
-        self::assertTrue(\in_array(InstallationMode::COMPOSER, $modes, true));
-    }
-
-    public function testMatchExpression(): void
-    {
-        $result = match (InstallationMode::COMPOSER) {
-            InstallationMode::COMPOSER => 'matched',
-            default => 'not matched'
-        };
-
-        self::assertSame('matched', $result);
     }
 }

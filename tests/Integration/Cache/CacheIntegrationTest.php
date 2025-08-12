@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Cache;
@@ -49,10 +49,22 @@ class CacheIntegrationTest extends AbstractIntegrationTest
 
         // Setup container and services
         $container = ContainerFactory::create();
-        $this->extensionDiscoveryService = $container->get(ExtensionDiscoveryService::class);
-        $this->installationDiscoveryService = $container->get(InstallationDiscoveryService::class);
-        $this->configurationService = $container->get(ConfigurationService::class);
-        $this->cacheService = $container->get(CacheService::class);
+
+        $extensionService = $container->get(ExtensionDiscoveryService::class);
+        \assert($extensionService instanceof ExtensionDiscoveryService);
+        $this->extensionDiscoveryService = $extensionService;
+
+        $installationService = $container->get(InstallationDiscoveryService::class);
+        \assert($installationService instanceof InstallationDiscoveryService);
+        $this->installationDiscoveryService = $installationService;
+
+        $configService = $container->get(ConfigurationService::class);
+        \assert($configService instanceof ConfigurationService);
+        $this->configurationService = $configService;
+
+        $cacheService = $container->get(CacheService::class);
+        \assert($cacheService instanceof CacheService);
+        $this->cacheService = $cacheService;
 
         // Enable caching for all tests
         $this->configurationService->set('analysis.resultCache.enabled', true);
@@ -98,6 +110,9 @@ class CacheIntegrationTest extends AbstractIntegrationTest
         $this->assertTrue($result2->isSuccessful());
         $installation2 = $result2->getInstallation();
 
+        $this->assertNotNull($installation1, 'First installation should not be null');
+        $this->assertNotNull($installation2, 'Second installation should not be null');
+
         // Results should be identical
         $this->assertEquals($installation1->getPath(), $installation2->getPath());
         $this->assertEquals($installation1->getVersion()->toString(), $installation2->getVersion()->toString());
@@ -110,9 +125,9 @@ class CacheIntegrationTest extends AbstractIntegrationTest
             'Second execution should benefit from caching',
         );
 
-        // Verify cache was used by checking that a cache key exists
-        // We can't directly verify cache contents, but we can verify the service behavior
-        $this->assertTrue(true, 'Cache behavior verified through performance comparison');
+        // Verify cache behavior through performance comparison
+        // Cache effectiveness is demonstrated by the timing assertions above
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -160,9 +175,9 @@ class CacheIntegrationTest extends AbstractIntegrationTest
             'Second execution should benefit from caching',
         );
 
-        // Verify cache was used by checking that a cache key exists
-        // We can't directly verify cache contents, but we can verify the service behavior
-        $this->assertTrue(true, 'Cache behavior verified through performance comparison');
+        // Verify cache behavior through performance comparison
+        // Cache effectiveness is demonstrated by the timing assertions above
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -220,9 +235,14 @@ class CacheIntegrationTest extends AbstractIntegrationTest
         $this->assertTrue($extensionResult2->isSuccessful());
 
         // Results should be consistent
+        $installation1 = $installationResult->getInstallation();
+        $installation2 = $installationResult2->getInstallation();
+        $this->assertNotNull($installation1, 'First installation should not be null');
+        $this->assertNotNull($installation2, 'Second installation should not be null');
+
         $this->assertEquals(
-            $installationResult->getInstallation()->getVersion()->toString(),
-            $installationResult2->getInstallation()->getVersion()->toString(),
+            $installation1->getVersion()->toString(),
+            $installation2->getVersion()->toString(),
         );
         $this->assertCount(\count($extensionResult->getExtensions()), $extensionResult2->getExtensions());
     }
@@ -402,9 +422,14 @@ class CacheIntegrationTest extends AbstractIntegrationTest
         );
 
         // Results should be consistent in terms of basic data
+        $installation1 = $resultWithValidation->getInstallation();
+        $installation2 = $resultWithoutValidation->getInstallation();
+        $this->assertNotNull($installation1, 'Installation with validation should not be null');
+        $this->assertNotNull($installation2, 'Installation without validation should not be null');
+
         $this->assertEquals(
-            $resultWithValidation->getInstallation()->getVersion()->toString(),
-            $resultWithoutValidation->getInstallation()->getVersion()->toString(),
+            $installation1->getVersion()->toString(),
+            $installation2->getVersion()->toString(),
         );
     }
 

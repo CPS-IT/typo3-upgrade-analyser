@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
@@ -18,9 +18,9 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 class RectorFindingsCollection
 {
     /**
-     * @param array<RectorFinding> $breakingChanges
-     * @param array<RectorFinding> $deprecations
-     * @param array<RectorFinding> $improvements
+     * @param array<RectorFinding>                $breakingChanges
+     * @param array<RectorFinding>                $deprecations
+     * @param array<RectorFinding>                $improvements
      * @param array<string, array<RectorFinding>> $bySeverity
      * @param array<string, array<RectorFinding>> $byFile
      * @param array<string, array<RectorFinding>> $byRule
@@ -32,8 +32,7 @@ class RectorFindingsCollection
         private readonly array $bySeverity,
         private readonly array $byFile,
         private readonly array $byRule,
-    )
-    {
+    ) {
     }
 
     /**
@@ -155,7 +154,7 @@ class RectorFindingsCollection
      */
     public function getTotalCount(): int
     {
-        return count($this->breakingChanges) + count($this->deprecations) + count($this->improvements);
+        return \count($this->breakingChanges) + \count($this->deprecations) + \count($this->improvements);
     }
 
     /**
@@ -198,7 +197,7 @@ class RectorFindingsCollection
         $fileCounts = $this->getFileCounts();
         arsort($fileCounts);
 
-        return array_slice($fileCounts, 0, $limit, true);
+        return \array_slice($fileCounts, 0, $limit, true);
     }
 
     /**
@@ -211,7 +210,7 @@ class RectorFindingsCollection
         $ruleCounts = $this->getRuleCounts();
         arsort($ruleCounts);
 
-        return array_slice($ruleCounts, 0, $limit, true);
+        return \array_slice($ruleCounts, 0, $limit, true);
     }
 
     /**
@@ -219,7 +218,7 @@ class RectorFindingsCollection
      */
     public function getAffectedFileCount(): int
     {
-        return count($this->byFile);
+        return \count($this->byFile);
     }
 
     /**
@@ -227,7 +226,7 @@ class RectorFindingsCollection
      */
     public function getTriggeredRuleCount(): int
     {
-        return count($this->byRule);
+        return \count($this->byRule);
     }
 
     /**

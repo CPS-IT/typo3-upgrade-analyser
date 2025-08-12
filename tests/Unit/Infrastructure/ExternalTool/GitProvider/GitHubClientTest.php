@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvider;
@@ -178,10 +178,12 @@ class GitHubClientTest extends TestCase
 
         $this->assertCount(2, $tags);
         $this->assertEquals('v1.2.0', $tags[0]->getName());
+        $this->assertNotNull($tags[0]->getDate());
         $this->assertEquals('2024-01-15T10:00:00+00:00', $tags[0]->getDate()->format('c'));
         $this->assertEquals('abc123', $tags[0]->getCommit());
 
         $this->assertEquals('v1.1.0', $tags[1]->getName());
+        $this->assertNotNull($tags[1]->getDate());
         $this->assertEquals('2024-01-01T10:00:00+00:00', $tags[1]->getDate()->format('c'));
         $this->assertNull($tags[1]->getCommit());
     }
@@ -198,13 +200,16 @@ class GitHubClientTest extends TestCase
             ->willReturn(['owner' => 'user', 'name' => 'repo']);
 
         $response = $this->createMock(ResponseInterface::class);
+        $jsonContent = json_encode([
+            'name' => 'vendor/package',
+            'require' => [
+                'typo3/cms-core' => '^12.4',
+            ],
+        ]);
+        self::assertNotFalse($jsonContent, 'Failed to encode JSON');
+
         $response->method('toArray')->willReturn([
-            'content' => base64_encode(json_encode([
-                'name' => 'vendor/package',
-                'require' => [
-                    'typo3/cms-core' => '^12.4',
-                ],
-            ])),
+            'content' => base64_encode($jsonContent),
         ]);
 
         $this->httpClient->expects($this->once())
@@ -304,6 +309,7 @@ class GitHubClientTest extends TestCase
 
         $health = $this->client->getRepositoryHealth('https://github.com/user/repo');
 
+        $this->assertNotNull($health->getLastCommitDate());
         $this->assertEquals('2024-01-10T15:30:00+00:00', $health->getLastCommitDate()->format('c'));
         $this->assertEquals(25, $health->getStarCount());
         $this->assertEquals(5, $health->getForkCount());

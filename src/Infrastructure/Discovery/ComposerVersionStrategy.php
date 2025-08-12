@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
@@ -110,6 +110,7 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
             $json = file_get_contents($lockFilePath);
             if (false === $json) {
                 $this->logger->warning('Failed to read composer.lock', ['lockFilePath' => $lockFilePath]);
+
                 return null;
             }
 
@@ -183,6 +184,7 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
             $json = file_get_contents($jsonFilePath);
             if (false === $json) {
                 $this->logger->warning('Failed to read composer.json', ['jsonFilePath' => $jsonFilePath]);
+
                 return null;
             }
 

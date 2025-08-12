@@ -45,7 +45,7 @@ function testPackagistEndpoint(string $url, string $description): array
 
         // Parse HTTP response headers
         $headers = [];
-        if (isset($http_response_header)) {
+        if (!empty($http_response_header)) {
             foreach ($http_response_header as $header) {
                 if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $header, $matches)) {
                     $result['status_code'] = (int) $matches[1];

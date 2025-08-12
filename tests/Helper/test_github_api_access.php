@@ -50,8 +50,12 @@ function makeRequest(string $url, array $headers = [], ?string $data = null): ar
 
     curl_close($ch);
 
-    if ($error) {
-        throw new Exception("cURL error: {$error}");
+    if ($error || $response === false) {
+        throw new Exception("cURL error: " . ($error ?: 'Request failed'));
+    }
+
+    if (!is_string($response)) {
+        throw new Exception('curl_exec returned non-string response');
     }
 
     $data = json_decode($response, true);
@@ -197,6 +201,10 @@ function testGraphQLApi(string $token = ''): void
             ],
         ]);
 
+        if ($payload === false) {
+            throw new Exception('Failed to encode JSON payload');
+        }
+
         $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
 
         if (200 === $response['status'] && !isset($response['data']['errors'])) {
@@ -249,6 +257,10 @@ function testGraphQLApi(string $token = ''): void
                 'first' => 5,
             ],
         ]);
+
+        if ($payload === false) {
+            throw new Exception('Failed to encode JSON payload');
+        }
 
         $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
 
@@ -303,6 +315,10 @@ function testGraphQLApi(string $token = ''): void
                 'name' => 'news',
             ],
         ]);
+
+        if ($payload === false) {
+            throw new Exception('Failed to encode JSON payload');
+        }
 
         $response = makeRequest('https://api.github.com/graphql', $headers, $payload);
 

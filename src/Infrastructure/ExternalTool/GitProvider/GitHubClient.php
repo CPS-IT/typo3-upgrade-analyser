@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
@@ -226,6 +226,9 @@ class GitHubClient extends AbstractGitProvider
 
                 // Content is base64 encoded
                 $content = base64_decode($data['content'], true);
+                if (false === $content) {
+                    continue; // Skip this branch if base64 decode fails
+                }
 
                 return $this->parseComposerJson($content);
             } catch (GitProviderException $e) {

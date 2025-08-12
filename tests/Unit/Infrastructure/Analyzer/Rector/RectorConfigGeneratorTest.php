@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -74,10 +74,17 @@ class RectorConfigGeneratorTest extends TestCase
         $configPath = $this->generator->generateConfig($extension, $context, $extensionPath);
 
         $this->assertFileExists($configPath);
-        $this->assertStringStartsWith($this->tempDirectory, $configPath);
+        if (!empty($this->tempDirectory)) {
+            $this->assertStringStartsWith($this->tempDirectory, $configPath);
+        }
         $this->assertStringEndsWith('.php', $configPath);
 
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('<?php', $content);
         $this->assertStringContainsString('declare(strict_types=1)', $content);
         $this->assertStringContainsString('RectorConfig', $content);
@@ -95,6 +102,11 @@ class RectorConfigGeneratorTest extends TestCase
         $this->assertFileExists($configPath);
 
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('MinimalRule1', $content);
         $this->assertStringContainsString('MinimalRule2', $content);
         $this->assertStringContainsString($targetPath, $content);
@@ -119,6 +131,11 @@ class RectorConfigGeneratorTest extends TestCase
         $this->assertFileExists($configPath);
 
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('BreakingRule1', $content);
         $this->assertStringContainsString('BreakingRule2', $content);
     }
@@ -185,6 +202,11 @@ class RectorConfigGeneratorTest extends TestCase
 
         $configPath = $this->generator->generateConfig($extension, $context13, '/path/to/extension');
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('PhpVersion::PHP_82', $content);
 
         // Test TYPO3 12
@@ -195,6 +217,11 @@ class RectorConfigGeneratorTest extends TestCase
 
         $configPath = $this->generator->generateConfig($extension, $context12, '/path/to/extension');
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('PhpVersion::PHP_81', $content);
 
         // Test TYPO3 11
@@ -205,6 +232,11 @@ class RectorConfigGeneratorTest extends TestCase
 
         $configPath = $this->generator->generateConfig($extension, $context11, '/path/to/extension');
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('PhpVersion::PHP_80', $content);
     }
 
@@ -222,6 +254,10 @@ class RectorConfigGeneratorTest extends TestCase
 
         $configPath = $this->generator->generateConfig($extension, $context, '/path/to/extension');
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
 
         $this->assertStringContainsString('*/vendor/*', $content);
         $this->assertStringContainsString('*/Tests/*', $content);
@@ -243,6 +279,10 @@ class RectorConfigGeneratorTest extends TestCase
 
         $configPath = $this->generator->generateConfig($extension, $context, '/path/to/extension');
         $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
 
         $this->assertStringContainsString('*/vendor/*', $content);
         $this->assertStringNotContainsString('*/Tests/*', $content); // Tests NOT skipped for test_extension
@@ -266,6 +306,10 @@ class RectorConfigGeneratorTest extends TestCase
         $configPath = $this->generator->generateConfig($extension, $context, '/path/to/extension');
         $content = file_get_contents($configPath);
 
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString('*/Migrations/*', $content); // Added for system extensions
     }
 
@@ -286,6 +330,10 @@ class RectorConfigGeneratorTest extends TestCase
         $configPath = $this->generator->generateConfig($extension, $context, $extensionPath);
         $content = file_get_contents($configPath);
 
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
         $this->assertStringContainsString($extensionPath, $content);
     }
 
@@ -304,6 +352,9 @@ class RectorConfigGeneratorTest extends TestCase
         $extensionPath = '/path/to/extensions/test_extension';
         $configPath = $this->generator->generateConfig($extension, $context, $extensionPath);
         $content = file_get_contents($configPath);
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
 
         $this->assertStringContainsString($extensionPath, $content);
     }

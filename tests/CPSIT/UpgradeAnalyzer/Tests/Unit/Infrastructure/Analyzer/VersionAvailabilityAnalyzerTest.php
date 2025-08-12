@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
@@ -33,32 +34,33 @@ use Psr\Log\LoggerInterface;
 class VersionAvailabilityAnalyzerTest extends TestCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
-    private MockObject&CacheService $cacheService;
     private MockObject&TerApiClient $terClient;
     private MockObject&PackagistClient $packagistClient;
-    private MockObject&GitRepositoryAnalyzer $gitAnalyzer;
     private MockObject&LoggerInterface $logger;
     private Extension $extension;
     private AnalysisContext $context;
 
+    /**
+     * @throws \PHPUnit\Framework\MockObject\Exception
+     */
     protected function setUp(): void
     {
-        $this->cacheService = $this->createMock(CacheService::class);
+        $cacheService = $this->createMock(CacheService::class);
         $this->terClient = $this->createMock(TerApiClient::class);
         $this->packagistClient = $this->createMock(PackagistClient::class);
-        $this->gitAnalyzer = $this->createMock(GitRepositoryAnalyzer::class);
+        $gitAnalyzer = $this->createMock(GitRepositoryAnalyzer::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         // Setup default git analyzer behavior to avoid GitAnalysisException
-        $this->gitAnalyzer->method('analyzeExtension')
-            ->willThrowException(new \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException('Git analysis not available'));
+        $gitAnalyzer->method('analyzeExtension')
+            ->willThrowException(new GitAnalysisException('Git analysis not available'));
 
         $this->analyzer = new VersionAvailabilityAnalyzer(
-            $this->cacheService,
+            $cacheService,
             $this->logger,
             $this->terClient,
             $this->packagistClient,
-            $this->gitAnalyzer,
+            $gitAnalyzer,
         );
 
         $this->extension = new Extension(
@@ -93,7 +95,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     public function testGetDescription(): void
     {
         $description = $this->analyzer->getDescription();
-        self::assertIsString($description);
         self::assertStringContainsString('TER', $description);
         self::assertStringContainsString('Packagist', $description);
     }
@@ -214,7 +215,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('packagist_available'));
         self::assertEquals(5.0, $result->getRiskScore());
 
-        // Should have recommendation about Composer mode
+        // Should have a recommendation about Composer mode
         $recommendations = $result->getRecommendations();
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('Composer', $recommendations[0]);
@@ -246,7 +247,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(9.0, $result->getRiskScore());
         self::assertEquals('critical', $result->getRiskLevel());
 
-        // Should have recommendation about contacting author
+        // Should have a recommendation about contacting author
         $recommendations = $result->getRecommendations();
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('contacting author', $recommendations[0]);
@@ -272,7 +273,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $result = $this->analyzer->analyze($systemExtension, $this->context);
 
         // Assert
-        self::assertEquals(1.0, $result->getRiskScore()); // System extensions are always low risk
+        self::assertEquals(1.0, $result->getRiskScore()); // System extensions are always "low risk"
         self::assertEquals('low', $result->getRiskLevel());
     }
 
@@ -375,7 +376,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         // Assert
         self::assertFalse($result->isSuccessful());
-        self::assertNotNull($result->getError());
+        self::assertNotEmpty($result->getError());
     }
 
     /**

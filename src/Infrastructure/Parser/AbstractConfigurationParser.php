@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser;
@@ -312,9 +312,10 @@ abstract class AbstractConfigurationParser implements ConfigurationParserInterfa
         $warnings = [];
 
         // Subclasses can override this for format-specific validation
+        // Base implementation considers all data valid
 
         return [
-            'valid' => empty($errors),
+            'valid' => true, // Base implementation has no validation rules
             'errors' => $errors,
             'warnings' => $warnings,
         ];

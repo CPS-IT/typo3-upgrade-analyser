@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
@@ -16,6 +16,12 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
+use Exception;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
  * Integration tests for TER API with real API calls.
@@ -47,8 +53,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForExistingExtensionWithTypo3Twelve(): void
@@ -70,8 +74,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForExistingExtensionWithTypo3Eleven(): void
@@ -88,8 +90,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForArchivedExtensionWithTypo3Twelve(): void
@@ -106,8 +106,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForArchivedExtensionWithOlderTypo3(): void
@@ -124,8 +122,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testHasVersionForNonExistentExtension(): void
@@ -141,8 +137,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForExistingExtension(): void
@@ -170,8 +164,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForArchivedExtensionWithNewTypo3(): void
@@ -188,8 +180,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForArchivedExtensionWithOldTypo3(): void
@@ -207,13 +197,11 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::getLatestVersion
      */
     public function testGetLatestVersionForNonExistentExtension(): void
     {
-        $nonExistentKey = 'non_existent_extension_' . uniqid();
+        $nonExistentKey = 'non_existent_extension_' . uniqid('', true);
         $typo3Version = new Version('12.4.0');
 
         // TER API with authentication should return null for non-existent extensions
@@ -224,8 +212,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testMultipleExtensionsCompatibilityCheck(): void
@@ -276,9 +262,10 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
+     *
+     * @throws \JsonException
+     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException
      */
     public function testVersionCompatibilityLogic(): void
     {
@@ -292,30 +279,22 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
         ];
 
         foreach ($versionTests as $versionString => $expectedResult) {
-            if (null === $expectedResult) {
-                continue; // Skip uncertain cases
-            }
-
             $typo3Version = new Version($versionString);
 
             $hasVersion = $this->cacheApiResponse(
                 "ter_version_logic_{$extensionKey}_{$versionString}",
-                fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
+                apiCall: fn (): bool => $this->terApiClient->hasVersionFor($extensionKey, $typo3Version),
             );
 
-            if (null !== $expectedResult) {
-                $this->assertEquals(
-                    $expectedResult,
-                    $hasVersion,
-                    "Extension {$extensionKey} compatibility with TYPO3 {$versionString} doesn't match expectation",
-                );
-            }
+            $this->assertEquals(
+                $expectedResult,
+                $hasVersion,
+                "Extension {$extensionKey} compatibility with TYPO3 {$versionString} doesn't match expectation",
+            );
         }
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testTerApiErrorHandling(): void
@@ -330,8 +309,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
@@ -367,9 +344,9 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
+     *
+     * @throws TransportExceptionInterface
      */
     public function testTerApiResponseStructure(): void
     {
@@ -392,10 +369,21 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $data = $response->toArray();
+        try {
+            $data = $response->toArray();
+        } catch (ClientExceptionInterface $e) {
+            $this->fail('Failed to get TER API response: 4xx' . $e->getMessage());
+        } catch (DecodingExceptionInterface $e) {
+            $this->fail('Failed to decode TER API response.');
+        } catch (RedirectionExceptionInterface $e) {
+            $this->fail('Failed to get TER API response: 3xx. ' . $e->getMessage());
+        } catch (ServerExceptionInterface $e) {
+            $this->fail('Failed to get TER API response: 5xx. ') . $e->getMessage();
+        } catch (TransportExceptionInterface $e) {
+            $this->fail('Failed to get TER API response: Error at the transport level. ' . $e->getMessage());
+        }
 
-        // TER API returns an array with extension data as first element
-        $this->assertIsArray($data);
+        // TER API returns an array with extension data as the first element
         $this->assertArrayHasKey(0, $data);
 
         $extensionData = $data[0];
@@ -414,8 +402,6 @@ class TerApiIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      */
     public function testSystemExtensionHandling(): void

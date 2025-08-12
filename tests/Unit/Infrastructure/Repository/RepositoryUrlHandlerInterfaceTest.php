@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Repository;
@@ -20,6 +20,15 @@ use PHPUnit\Framework\TestCase;
  */
 class RepositoryUrlHandlerInterfaceTest extends TestCase
 {
+    private function getTypeName(?\ReflectionType $type): string
+    {
+        if ($type instanceof \ReflectionNamedType) {
+            return $type->getName();
+        }
+
+        self::fail('Expected ReflectionNamedType, got ' . ($type ? \get_class($type) : 'null'));
+    }
+
     public function testInterfaceDefinesRequiredMethods(): void
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);
@@ -49,12 +58,12 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('normalizeUrl');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('string', $method->getReturnType()?->getName());
+        self::assertSame('string', $this->getTypeName($method->getReturnType()));
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
-        self::assertSame('string', $parameter->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($parameter->getType()));
     }
 
     public function testIsGitRepositoryMethodSignature(): void
@@ -63,12 +72,12 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('isGitRepository');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('bool', $method->getReturnType()?->getName());
+        self::assertSame('bool', $this->getTypeName($method->getReturnType()));
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
-        self::assertSame('string', $parameter->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($parameter->getType()));
     }
 
     public function testExtractRepositoryPathMethodSignature(): void
@@ -77,12 +86,12 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('extractRepositoryPath');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('array', $method->getReturnType()?->getName());
+        self::assertSame('array', $this->getTypeName($method->getReturnType()));
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
-        self::assertSame('string', $parameter->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($parameter->getType()));
     }
 
     public function testGetProviderTypeMethodSignature(): void
@@ -91,12 +100,12 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('getProviderType');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('string', $method->getReturnType()?->getName());
+        self::assertSame('string', $this->getTypeName($method->getReturnType()));
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
-        self::assertSame('string', $parameter->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($parameter->getType()));
     }
 
     public function testIsValidRepositoryUrlMethodSignature(): void
@@ -105,12 +114,12 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('isValidRepositoryUrl');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('bool', $method->getReturnType()?->getName());
+        self::assertSame('bool', $this->getTypeName($method->getReturnType()));
         self::assertCount(1, $method->getParameters());
 
         $parameter = $method->getParameters()[0];
         self::assertSame('url', $parameter->getName());
-        self::assertSame('string', $parameter->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($parameter->getType()));
     }
 
     public function testConvertToApiUrlMethodSignature(): void
@@ -119,18 +128,18 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         $method = $reflection->getMethod('convertToApiUrl');
 
         self::assertTrue($method->isPublic());
-        self::assertSame('string', $method->getReturnType()?->getName());
+        self::assertSame('string', $this->getTypeName($method->getReturnType()));
         self::assertCount(2, $method->getParameters());
 
         $parameters = $method->getParameters();
 
         $urlParam = $parameters[0];
         self::assertSame('url', $urlParam->getName());
-        self::assertSame('string', $urlParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($urlParam->getType()));
 
         $apiTypeParam = $parameters[1];
         self::assertSame('apiType', $apiTypeParam->getName());
-        self::assertSame('string', $apiTypeParam->getType()?->getName());
+        self::assertSame('string', $this->getTypeName($apiTypeParam->getType()));
         self::assertTrue($apiTypeParam->isDefaultValueAvailable());
         self::assertSame('rest', $apiTypeParam->getDefaultValue());
     }

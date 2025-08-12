@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
@@ -15,7 +15,9 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
@@ -27,6 +29,10 @@ use Psr\Log\LoggerInterface;
  */
 class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
 {
+    public const string NAME = 'typo3_rector';
+    public const string DESCRIPTION =
+        'Uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements';
+
     public function __construct(
         CacheService $cacheService,
         LoggerInterface $logger,
@@ -40,12 +46,12 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
 
     public function getName(): string
     {
-        return 'typo3_rector';
+        return self::NAME;
     }
 
     public function getDescription(): string
     {
-        return 'Uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements';
+        return self::DESCRIPTION;
     }
 
     public function supports(Extension $extension): bool
@@ -166,7 +172,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     /**
      * Execute Rector analysis with configuration.
      */
-    private function executeRectorAnalysis(string $configPath, string $extensionPath): Rector\RectorExecutionResult
+    private function executeRectorAnalysis(string $configPath, string $extensionPath): RectorExecutionResult
     {
         $options = [
             'memory_limit' => '1G',
@@ -194,7 +200,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
 
         // Convert relative path to absolute path
         $currentDir = getcwd();
-        if (!str_starts_with($installationPath, '/') && $currentDir !== false && !str_starts_with($installationPath, $currentDir)) {
+        if (!str_starts_with($installationPath, '/') && false !== $currentDir && !str_starts_with($installationPath, $currentDir)) {
             $resolvedPath = realpath($currentDir . '/' . $installationPath);
             if ($resolvedPath) {
                 $installationPath = $resolvedPath;
@@ -231,8 +237,8 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
      */
     private function addMetricsToResult(
         AnalysisResult $result,
-        Rector\RectorAnalysisSummary $summary,
-        Rector\RectorExecutionResult $executionResult,
+        RectorAnalysisSummary $summary,
+        RectorExecutionResult $executionResult,
     ): void {
         // Core metrics
         $result->addMetric('total_findings', $summary->getTotalFindings());
@@ -277,7 +283,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     /**
      * Calculate risk score based on analysis summary.
      */
-    private function calculateRiskScore(Rector\RectorAnalysisSummary $summary): float
+    private function calculateRiskScore(RectorAnalysisSummary $summary): float
     {
         $baseRisk = 1.0;
 
@@ -323,7 +329,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
      * @return array<string>
      */
     private function generateRecommendations(
-        Rector\RectorAnalysisSummary $summary,
+        RectorAnalysisSummary $summary,
         AnalysisContext $context,
     ): array {
         $recommendations = [];

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
@@ -35,6 +35,9 @@ class AbstractCachedAnalyzerTest extends TestCase
     private Extension $extension;
     private AnalysisContext $context;
 
+    /**
+     * @throws \PHPUnit\Framework\MockObject\Exception
+     */
     protected function setUp(): void
     {
         $this->cacheService = $this->createMock(CacheService::class);
@@ -98,10 +101,12 @@ class AbstractCachedAnalyzerTest extends TestCase
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::isCacheEnabled
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::generateCacheKey
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::deserializeResult
+     *
+     * @throws \JsonException
      */
     public function testAnalyzeWithValidCachedResult(): void
     {
-        $cacheKey = 'analysis_test_cached_analyzer_' . hash('sha256', json_encode([
+        $json = json_encode([
             'analyzer' => 'test_cached_analyzer',
             'extension_key' => 'test_extension',
             'extension_version' => '1.0.0',
@@ -109,7 +114,12 @@ class AbstractCachedAnalyzerTest extends TestCase
             'current_version' => '11.5.0',
             'extension_type' => 'local',
             'composer_name' => 'vendor/test-extension',
-        ]));
+        ], JSON_THROW_ON_ERROR);
+
+        if (!$json) {
+            $this->fail('Failed to serialize test extension');
+        }
+        $cacheKey = 'analysis_test_cached_analyzer_' . hash('sha256', $json);
 
         $cachedData = [
             'analyzer_name' => 'test_cached_analyzer',
@@ -197,18 +207,6 @@ class AbstractCachedAnalyzerTest extends TestCase
         $analysisResult->addRecommendation('Test recommendation');
         $this->analyzer->setAnalysisResult($analysisResult);
 
-        $expectedSerializedData = [
-            'analyzer_name' => 'test_cached_analyzer',
-            'extension_key' => 'test_extension',
-            'metrics' => ['test_metric' => 'test_value'],
-            'risk_score' => 3.5,
-            'recommendations' => ['Test recommendation'],
-            'successful' => true,
-            'error' => null,
-            'cached_at' => $this->anything(),
-            'cache_ttl' => 3600,
-        ];
-
         $this->cacheService->expects($this->once())
             ->method('set')
             ->with($this->isType('string'), $this->callback(function ($data): bool {
@@ -271,7 +269,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             ->method('get')
             ->willReturn(null);
 
-        // Set analyzer to throw exception
+        // Set analyzer to throw an exception
         $this->analyzer->setThrowException(new \RuntimeException('Test analysis exception'));
 
         $this->logger->expects($this->once())
@@ -292,6 +290,8 @@ class AbstractCachedAnalyzerTest extends TestCase
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::generateCacheKey
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::getAnalyzerSpecificCacheKeyComponents
+     *
+     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
      */
     public function testGenerateCacheKey(): void
     {
@@ -317,6 +317,8 @@ class AbstractCachedAnalyzerTest extends TestCase
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::generateCacheKey
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer::getAnalyzerSpecificCacheKeyComponents
+     *
+     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
      */
     public function testGenerateCacheKeyWithAnalyzerSpecificComponents(): void
     {
@@ -444,7 +446,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertEquals(8.5, $result->getRiskScore());
         $this->assertEquals(['Rec 1', 'Rec 2'], $result->getRecommendations());
         $this->assertTrue($result->isSuccessful());
-        $this->assertNull($result->getError());
+        $this->assertEmpty($result->getError());
     }
 
     /**
@@ -479,7 +481,7 @@ class AbstractCachedAnalyzerTest extends TestCase
      */
     public function testGetDirectoryModificationTimeWithEmptyDirectory(): void
     {
-        $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid();
+        $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid('', true);
         mkdir($tempDir);
 
         try {
@@ -495,7 +497,7 @@ class AbstractCachedAnalyzerTest extends TestCase
      */
     public function testGetDirectoryModificationTimeWithPhpFiles(): void
     {
-        $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid();
+        $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid('', true);
         mkdir($tempDir);
 
         try {
@@ -614,6 +616,9 @@ class TestCachedAnalyzer extends AbstractCachedAnalyzer
         $this->analyzerSpecificComponents = $components;
     }
 
+    /**
+     * @throws \Throwable
+     */
     protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
     {
         $this->doAnalyzeCalled = true;
@@ -631,6 +636,10 @@ class TestCachedAnalyzer extends AbstractCachedAnalyzer
     }
 
     // Public wrappers for testing protected methods
+
+    /**
+     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
+     */
     public function generateCacheKeyPublic(Extension $extension, AnalysisContext $context): string
     {
         return $this->generateCacheKey($extension, $context);

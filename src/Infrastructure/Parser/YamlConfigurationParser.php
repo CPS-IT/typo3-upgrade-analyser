@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser;
@@ -376,7 +376,8 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         // Check for common language file patterns
         $hasLanguageKeys = false;
         foreach ($data as $key => $value) {
-            if (\is_string($key) && (str_starts_with($key, 'LLL:') || str_contains($key, '.'))) {
+            $keyStr = (string) $key;
+            if (str_starts_with($keyStr, 'LLL:') || str_contains($keyStr, '.')) {
                 $hasLanguageKeys = true;
                 break;
             }
@@ -516,7 +517,7 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
     private function checkForEmptySections(array $data, array &$warnings): void
     {
         foreach ($data as $key => $value) {
-            if ([] === $value && \is_string($key)) {
+            if ([] === $value) {
                 $warnings[] = "Empty configuration section found: {$key}";
             }
         }

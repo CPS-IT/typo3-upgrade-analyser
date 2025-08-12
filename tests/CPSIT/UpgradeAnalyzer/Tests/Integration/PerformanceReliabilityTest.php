@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
@@ -47,8 +47,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
@@ -119,8 +117,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
@@ -162,8 +158,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getGitHubToken
      */
@@ -213,8 +207,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createLogger
      */
@@ -235,16 +227,14 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
         try {
             $result = $terClient->hasVersionFor($extension->getKey(), $context->getTargetVersion());
             // If it succeeds with short timeout, that's also fine
-            $this->assertIsBool($result);
+            $this->assertTrue($result);
         } catch (\Exception $e) {
             // Should catch timeout and wrap in appropriate exception
             $this->assertStringContainsString('Failed to check TER', $e->getMessage());
         }
     }
 
-    /**
-     * @test
-     *
+    /***
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -304,8 +294,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -337,8 +325,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
@@ -365,8 +351,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
@@ -413,8 +397,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient

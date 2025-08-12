@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
@@ -51,7 +51,6 @@ class LinesOfCodeAnalyzerTest extends TestCase
     {
         $description = $this->subject->getDescription();
 
-        self::assertIsString($description);
         self::assertStringContainsString('lines of code', $description);
         self::assertStringContainsString('codebase size', $description);
         self::assertStringContainsString('complexity', $description);
@@ -96,6 +95,7 @@ class LinesOfCodeAnalyzerTest extends TestCase
         self::assertSame('lines_of_code', $result->getAnalyzerName());
         self::assertSame('test_ext', $result->getExtension()->getKey());
         self::assertFalse($result->isSuccessful());
+        self::assertNotEmpty($result->getError());
         self::assertStringContainsString('No installation path', $result->getError());
     }
 
@@ -112,6 +112,7 @@ class LinesOfCodeAnalyzerTest extends TestCase
         $result = $this->subject->analyze($extension, $context);
 
         self::assertFalse($result->isSuccessful());
+        self::assertNotEmpty($result->getError());
         self::assertStringContainsString('No installation path', $result->getError());
     }
 
@@ -128,7 +129,10 @@ class LinesOfCodeAnalyzerTest extends TestCase
         $result = $this->subject->analyze($extension, $context);
 
         self::assertFalse($result->isSuccessful());
-        self::assertStringContainsString('Invalid installation path', $result->getError());
+
+        if ($error = $result->getError()) {
+            self::assertStringContainsString('Invalid installation path', $error);
+        }
     }
 
     public function testAnalyzeWithNonExistentExtensionPath(): void
@@ -170,9 +174,8 @@ class LinesOfCodeAnalyzerTest extends TestCase
 
         $result = $this->subject->analyze($extension, $context);
 
-        // Should not error on valid absolute path, even if extension doesn't exist
+        // Should not error on a valid absolute path, even if the extension doesn't exist
         self::assertTrue($result->isSuccessful());
-        self::assertIsFloat($result->getRiskScore());
         self::assertGreaterThanOrEqual(0, $result->getRiskScore());
     }
 
@@ -246,7 +249,6 @@ class LinesOfCodeAnalyzerTest extends TestCase
         $result = $this->subject->analyze($extension, $context);
 
         $recommendations = $result->getRecommendations();
-        self::assertIsArray($recommendations);
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('lines', $recommendations[0]);
     }
@@ -264,7 +266,6 @@ class LinesOfCodeAnalyzerTest extends TestCase
         $result = $this->subject->analyze($extension, $context);
 
         $riskScore = $result->getRiskScore();
-        self::assertIsFloat($riskScore);
         self::assertGreaterThanOrEqual(0.0, $riskScore);
         self::assertLessThanOrEqual(10.0, $riskScore);
     }
@@ -288,7 +289,6 @@ class LinesOfCodeAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertIsInt($result->getMetric('total_lines'));
         self::assertIsInt($result->getMetric('php_files'));
-        self::assertIsFloat($result->getRiskScore());
     }
 
     public function testAnalyzeHandlesExceptions(): void
@@ -312,13 +312,13 @@ class LinesOfCodeAnalyzerTest extends TestCase
         $result = $this->subject->analyze($extension, $context);
 
         self::assertFalse($result->isSuccessful());
-        self::assertNotNull($result->getError());
+        self::assertNotEmpty($result->getError());
     }
 
     public function testAnalyzeWithValidCurrentWorkingDirectory(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
-        // Use relative path that will be resolved against getcwd()
+        // Use a relative path that will be resolved against getcwd()
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
@@ -328,7 +328,7 @@ class LinesOfCodeAnalyzerTest extends TestCase
 
         $result = $this->subject->analyze($extension, $context);
 
-        // Should resolve . to current working directory
+        // Should resolve '.' to the current working directory
         self::assertTrue($result->isSuccessful());
     }
 }

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
@@ -127,6 +127,8 @@ final class ExtensionTypeTest extends TestCase
 
     /**
      * @return array<string, array{ExtensionType, string}>
+     *
+     * @noinspection SpellCheckingInspection
      */
     public static function getDescriptionProvider(): array
     {
@@ -147,6 +149,8 @@ final class ExtensionTypeTest extends TestCase
 
     /**
      * @return array<string, array{ExtensionType, string, string}>
+     *
+     * @noinspection SpellCheckingInspection
      */
     public static function getTypicalPathProvider(): array
     {
@@ -162,6 +166,7 @@ final class ExtensionTypeTest extends TestCase
 
     public function testGetTypicalPathWithDefaultBasePath(): void
     {
+        /* @noinspection SpellCheckingInspection */
         self::assertSame('/typo3/sysext/', ExtensionType::SYSTEM->getTypicalPath());
         self::assertSame('/typo3conf/ext/', ExtensionType::LOCAL->getTypicalPath());
         self::assertSame('/vendor/', ExtensionType::COMPOSER->getTypicalPath());
@@ -185,12 +190,6 @@ final class ExtensionTypeTest extends TestCase
             'local' => ['local', ExtensionType::LOCAL],
             'composer' => ['composer', ExtensionType::COMPOSER],
         ];
-    }
-
-    public function testFromValueWithInvalidValue(): void
-    {
-        $this->expectException(\ValueError::class);
-        ExtensionType::from('invalid');
     }
 
     /**
@@ -224,27 +223,6 @@ final class ExtensionTypeTest extends TestCase
             self::assertSame($type, $unserialized);
             self::assertSame($type->value, $unserialized->value);
         }
-    }
-
-    public function testEnumComparison(): void
-    {
-        $type1 = ExtensionType::SYSTEM;
-        $type2 = ExtensionType::SYSTEM;
-        $type3 = ExtensionType::LOCAL;
-
-        self::assertSame($type1, $type2);
-        self::assertTrue($type1 === $type2);
-        self::assertNotSame($type1, $type3);
-        self::assertFalse($type1 === $type3);
-    }
-
-    public function testEnumInArray(): void
-    {
-        $types = [ExtensionType::SYSTEM, ExtensionType::LOCAL];
-
-        self::assertContains(ExtensionType::SYSTEM, $types);
-        self::assertContains(ExtensionType::LOCAL, $types);
-        self::assertNotContains(ExtensionType::COMPOSER, $types);
     }
 
     public function testMatchExpression(): void

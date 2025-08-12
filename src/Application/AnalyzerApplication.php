@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Application;
@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
-use CPSIT\UpgradeAnalyzer\Application\Command\ValidateCommand;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -40,7 +39,6 @@ class AnalyzerApplication extends Application
             $this->container->get(InitConfigCommand::class),
             $this->container->get(ListAnalyzersCommand::class),
             $this->container->get(ListExtensionsCommand::class),
-            $this->container->get(ValidateCommand::class),
         ];
         $this->addCommands($commands);
     }

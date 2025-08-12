@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -37,28 +37,6 @@ final class ValidationRuleInterfaceTest extends TestCase
         );
     }
 
-    public function testInterfaceContractsWorkCorrectly(): void
-    {
-        $rule = new TestValidationRule();
-
-        // Test interface method contracts
-        self::assertIsString($rule->getName());
-        self::assertIsString($rule->getDescription());
-        self::assertIsString($rule->getCategory());
-        self::assertInstanceOf(ValidationSeverity::class, $rule->getSeverity());
-
-        // Test appliesTo method
-        self::assertIsBool($rule->appliesTo($this->testInstallation));
-
-        // Test validate method returns array of ValidationIssue objects
-        $issues = $rule->validate($this->testInstallation);
-        self::assertIsArray($issues);
-
-        foreach ($issues as $issue) {
-            self::assertInstanceOf(ValidationIssue::class, $issue);
-        }
-    }
-
     public function testValidationWithApplicableRule(): void
     {
         $rule = new TestValidationRule(true, true); // applies to installation, has issues
@@ -81,9 +59,8 @@ final class ValidationRuleInterfaceTest extends TestCase
 
         self::assertFalse($rule->appliesTo($this->testInstallation));
 
-        // Rule should still be able to validate, but may return empty array
+        // Rule should still be able to validate but may return an empty array
         $issues = $rule->validate($this->testInstallation);
-        self::assertIsArray($issues);
     }
 
     public function testValidationWithNoIssues(): void
@@ -172,12 +149,6 @@ final class ValidationRuleInterfaceTest extends TestCase
             self::assertNotEmpty($issue->getRuleName());
             self::assertNotEmpty($issue->getMessage());
             self::assertNotEmpty($issue->getCategory());
-            self::assertInstanceOf(ValidationSeverity::class, $issue->getSeverity());
-
-            // Arrays should be arrays
-            self::assertIsArray($issue->getContext());
-            self::assertIsArray($issue->getAffectedPaths());
-            self::assertIsArray($issue->getRecommendations());
         }
     }
 }

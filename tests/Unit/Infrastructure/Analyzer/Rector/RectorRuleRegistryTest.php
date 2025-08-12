@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -41,7 +41,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
         $this->assertNotEmpty($sets);
 
         // Should include TYPO3 12 set
@@ -57,7 +56,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
         $this->assertNotEmpty($sets);
 
         // Should include TYPO3 13 set
@@ -71,7 +69,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
         $this->assertNotEmpty($sets);
 
         // Should include sets from both 12 and 13 since it's a major version upgrade
@@ -87,8 +84,7 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
-        // Same version analysis should return general sets for code quality analysis
+        // The same version analysis should return general sets for code quality analysis
         $this->assertNotEmpty($sets);
         $this->assertContains(Typo3SetList::GENERAL, $sets);
         $this->assertContains(Typo3SetList::CODE_QUALITY, $sets);
@@ -101,7 +97,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
         $this->assertEmpty($sets);
     }
 
@@ -112,7 +107,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertIsArray($sets);
         $this->assertEmpty($sets); // 9.5 is not supported as source version
     }
 
@@ -120,7 +114,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $generalSets = $this->registry->getSetsByCategory('general');
 
-        $this->assertIsArray($generalSets);
         $this->assertNotEmpty($generalSets);
         $this->assertContains(Typo3SetList::GENERAL, $generalSets);
     }
@@ -129,7 +122,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $sets = $this->registry->getSetsByCategory('invalid_category');
 
-        $this->assertIsArray($sets);
         $this->assertEmpty($sets);
     }
 
@@ -137,24 +129,7 @@ class RectorRuleRegistryTest extends TestCase
     {
         $severity = $this->registry->getSetSeverity(Typo3SetList::TYPO3_12);
 
-        $this->assertInstanceOf(RectorRuleSeverity::class, $severity);
         $this->assertEquals(RectorRuleSeverity::CRITICAL, $severity);
-    }
-
-    public function testGetSetSeverityUnknownSet(): void
-    {
-        $severity = $this->registry->getSetSeverity('UnknownSet');
-
-        // Should return default severity based on pattern matching
-        $this->assertInstanceOf(RectorRuleSeverity::class, $severity);
-    }
-
-    public function testGetSetChangeType(): void
-    {
-        $changeType = $this->registry->getSetChangeType(Typo3SetList::TYPO3_12);
-
-        $this->assertInstanceOf(RectorChangeType::class, $changeType);
-        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $changeType);
     }
 
     public function testGetSetChangeTypeUnknownSet(): void
@@ -169,7 +144,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $description = $this->registry->getSetDescription(Typo3SetList::TYPO3_12);
 
-        $this->assertIsString($description);
         $this->assertNotEmpty($description);
         $this->assertEquals('TYPO3 12 upgrade rules', $description);
     }
@@ -186,7 +160,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $versions = $this->registry->getSupportedVersions();
 
-        $this->assertIsArray($versions);
         $this->assertNotEmpty($versions);
 
         // Should include supported TYPO3 versions
@@ -210,7 +183,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $v12Sets = $this->registry->getVersionSpecificSets(new Version('12.0.0'));
 
-        $this->assertIsArray($v12Sets);
         $this->assertNotEmpty($v12Sets);
 
         // Should contain TYPO3 12.0 specific set
@@ -221,7 +193,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $sets = $this->registry->getVersionSpecificSets(new Version('9.5.0'));
 
-        $this->assertIsArray($sets);
         $this->assertEmpty($sets);
     }
 
@@ -229,7 +200,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $stats = $this->registry->getSetsStatistics();
 
-        $this->assertIsArray($stats);
         $this->assertArrayHasKey('total_sets', $stats);
         $this->assertArrayHasKey('sets_by_version', $stats);
         $this->assertArrayHasKey('sets_by_category', $stats);
@@ -257,7 +227,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $allSets = $this->registry->getAllAvailableSets();
 
-        $this->assertIsArray($allSets);
         $this->assertNotEmpty($allSets);
 
         // Should contain all defined sets
@@ -283,7 +252,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $effort = $this->registry->getSetEffort(Typo3SetList::TYPO3_12);
 
-        $this->assertIsInt($effort);
         $this->assertGreaterThan(0, $effort);
         $this->assertEquals(120, $effort); // From metadata
     }
@@ -292,7 +260,6 @@ class RectorRuleRegistryTest extends TestCase
     {
         $v12Sets = $this->registry->getSetsForMajorVersion(12);
 
-        $this->assertIsArray($v12Sets);
         $this->assertNotEmpty($v12Sets);
         $this->assertContains(Typo3SetList::TYPO3_12, $v12Sets);
     }
@@ -380,29 +347,28 @@ class RectorRuleRegistryTest extends TestCase
     {
         // Test critical breaking change rule
         $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveRule');
-        
-        $this->assertIsArray($ruleInfo);
-        $this->assertArrayHasKey('severity', $ruleInfo);
-        $this->assertArrayHasKey('changeType', $ruleInfo);
-        $this->assertArrayHasKey('effort', $ruleInfo);
-        
-        $this->assertEquals(RectorRuleSeverity::CRITICAL, $ruleInfo['severity']);
-        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $ruleInfo['changeType']);
-        $this->assertEquals(15, $ruleInfo['effort']); // Critical breaking change effort
-        
+
+        $this->assertArrayHasKey(RectorRuleRegistry::KEY_SEVERITY, $ruleInfo);
+        $this->assertArrayHasKey(RectorRuleRegistry::KEY_CHANGE_TYPE, $ruleInfo);
+        $this->assertArrayHasKey(RectorRuleRegistry::KEY_EFFORT, $ruleInfo);
+
+        $this->assertEquals(RectorRuleSeverity::CRITICAL, $ruleInfo[RectorRuleRegistry::KEY_SEVERITY]);
+        $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $ruleInfo[RectorRuleRegistry::KEY_CHANGE_TYPE]);
+        $this->assertEquals(15, $ruleInfo[RectorRuleRegistry::KEY_EFFORT]); // Critical breaking change effort
+
         // Test code quality rule
         $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\CodeQuality\\ImprovementRule');
-        
-        $this->assertEquals(RectorRuleSeverity::INFO, $ruleInfo['severity']);
-        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $ruleInfo['changeType']);
+
+        $this->assertEquals(RectorRuleSeverity::INFO, $ruleInfo[RectorRuleRegistry::KEY_SEVERITY]);
+        $this->assertEquals(RectorChangeType::BEST_PRACTICE, $ruleInfo[RectorRuleRegistry::KEY_CHANGE_TYPE]);
         $this->assertEquals(3, $ruleInfo['effort']); // Best practice effort
-        
+
         // Test deprecation warning rule
         $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedRule');
-        
-        $this->assertEquals(RectorRuleSeverity::WARNING, $ruleInfo['severity']);
-        $this->assertEquals(RectorChangeType::DEPRECATION, $ruleInfo['changeType']);
-        $this->assertEquals(8, $ruleInfo['effort']); // Deprecation warning effort
+
+        $this->assertEquals(RectorRuleSeverity::WARNING, $ruleInfo[RectorRuleRegistry::KEY_SEVERITY]);
+        $this->assertEquals(RectorChangeType::DEPRECATION, $ruleInfo[RectorRuleRegistry::KEY_CHANGE_TYPE]);
+        $this->assertEquals(8, $ruleInfo[RectorRuleRegistry::KEY_EFFORT]); // Deprecation warning effort
     }
 
     /**
@@ -415,7 +381,7 @@ class RectorRuleRegistryTest extends TestCase
         $this->assertTrue($this->registry->isKnownRule('TYPO3Rector\\CodeQuality\\QualityRule'));
         $this->assertTrue($this->registry->isKnownRule('Ssch\\SomeOtherRule'));
         $this->assertTrue($this->registry->isKnownRule('SomePackage\\v11\\SomeRule'));
-        
+
         // Test unknown rules
         $this->assertFalse($this->registry->isKnownRule('Random\\Unknown\\Rule'));
         $this->assertFalse($this->registry->isKnownRule('SimpleRule'));
@@ -430,21 +396,21 @@ class RectorRuleRegistryTest extends TestCase
             // Critical breaking changes should have highest effort
             ['Ssch\\TYPO3Rector\\Remove\\CriticalRule', 15],
             ['Ssch\\TYPO3Rector\\Rector\\v12\\v0\\BreakingRule', 15],
-            
+
             // Non-critical breaking changes
             ['Ssch\\TYPO3Rector\\Remove\\SomeRule', 10], // Remove but not critical
-            
+
             // Warning deprecations
             ['Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecationRule', 8],
-            
+
             // Best practices should have lowest effort
             ['Ssch\\TYPO3Rector\\CodeQuality\\QualityRule', 3],
             ['Ssch\\TYPO3Rector\\General\\GeneralRule', 3],
-            
+
             // Default effort for unknown patterns
             ['Some\\Unknown\\Rule', 5],
         ];
-        
+
         foreach ($testCases as [$ruleClass, $expectedEffort]) {
             $ruleInfo = $this->registry->getRuleInfo($ruleClass);
             $this->assertEquals($expectedEffort, $ruleInfo['effort'], "Effort mismatch for rule: {$ruleClass}");

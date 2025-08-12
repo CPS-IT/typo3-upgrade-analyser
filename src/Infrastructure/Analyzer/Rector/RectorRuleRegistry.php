@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
@@ -21,6 +21,12 @@ use Ssch\TYPO3Rector\Set\Typo3SetList;
  */
 class RectorRuleRegistry
 {
+    public const KEY_CATEGORY = 'category';
+    public const string KEY_CHANGE_TYPE = 'changeType';
+    public const string KEY_DESCRIPTION = 'description';
+    public const string KEY_EFFORT = 'effort';
+    public const string KEY_SEVERITY = 'severity';
+
     /**
      * TYPO3 version-specific Rector sets mapping.
      * Organized by target version with sets that should be applied when upgrading TO that version.
@@ -56,45 +62,45 @@ class RectorRuleRegistry
      */
     private const SET_METADATA = [
         Typo3SetList::TYPO3_10 => [
-            'description' => 'TYPO3 10 upgrade rules',
-            'category' => 'version_upgrade',
-            'severity' => 'warning',
+            self::KEY_DESCRIPTION => 'TYPO3 10 upgrade rules',
+            self::KEY_CATEGORY => 'version_upgrade',
+            self::KEY_SEVERITY => 'warning',
             'effort_minutes' => 60,
         ],
         Typo3SetList::TYPO3_11 => [
-            'description' => 'TYPO3 11 upgrade rules',
-            'category' => 'version_upgrade',
-            'severity' => 'warning',
+            self::KEY_DESCRIPTION => 'TYPO3 11 upgrade rules',
+            self::KEY_CATEGORY => 'version_upgrade',
+            self::KEY_SEVERITY => 'warning',
             'effort_minutes' => 90,
         ],
         Typo3SetList::TYPO3_12 => [
-            'description' => 'TYPO3 12 upgrade rules',
-            'category' => 'version_upgrade',
-            'severity' => 'critical',
+            self::KEY_DESCRIPTION => 'TYPO3 12 upgrade rules',
+            self::KEY_CATEGORY => 'version_upgrade',
+            self::KEY_SEVERITY => 'critical',
             'effort_minutes' => 120,
         ],
         Typo3SetList::TYPO3_13 => [
-            'description' => 'TYPO3 13 upgrade rules',
-            'category' => 'version_upgrade',
-            'severity' => 'critical',
+            self::KEY_DESCRIPTION => 'TYPO3 13 upgrade rules',
+            self::KEY_CATEGORY => 'version_upgrade',
+            self::KEY_SEVERITY => 'critical',
             'effort_minutes' => 120,
         ],
         Typo3SetList::TYPO3_14 => [
-            'description' => 'TYPO3 14 upgrade rules',
-            'category' => 'version_upgrade',
-            'severity' => 'critical',
+            self::KEY_DESCRIPTION => 'TYPO3 14 upgrade rules',
+            self::KEY_CATEGORY => 'version_upgrade',
+            self::KEY_SEVERITY => 'critical',
             'effort_minutes' => 150,
         ],
         Typo3SetList::GENERAL => [
-            'description' => 'General TYPO3 best practices',
-            'category' => 'best_practice',
-            'severity' => 'info',
+            self::KEY_DESCRIPTION => 'General TYPO3 best practices',
+            self::KEY_CATEGORY => 'best_practice',
+            self::KEY_SEVERITY => 'info',
             'effort_minutes' => 30,
         ],
         Typo3SetList::CODE_QUALITY => [
-            'description' => 'Code quality improvements',
-            'category' => 'code_quality',
-            'severity' => 'info',
+            self::KEY_DESCRIPTION => 'Code quality improvements',
+            self::KEY_CATEGORY => 'code_quality',
+            self::KEY_SEVERITY => 'info',
             'effort_minutes' => 45,
         ],
     ];
@@ -158,13 +164,12 @@ class RectorRuleRegistry
 
         // Always include general sets for upgrades when at least one version is supported
         // (fromVersion is already validated above, so we always include general sets)
-        {
-            $sets = array_merge($sets, self::GENERAL_SETS['general']);
 
-            // Include code quality sets for major version upgrades
-            if ($fromVersion->getMajor() !== $toVersion->getMajor()) {
-                $sets = array_merge($sets, self::GENERAL_SETS['code_quality']);
-            }
+        $sets = array_merge($sets, self::GENERAL_SETS['general']);
+
+        // Include code quality sets for major version upgrades
+        if ($fromVersion->getMajor() !== $toVersion->getMajor()) {
+            $sets = array_merge($sets, self::GENERAL_SETS['code_quality']);
         }
 
         $sets = array_unique($sets);
@@ -218,7 +223,7 @@ class RectorRuleRegistry
         $metadata = self::SET_METADATA[$setPath] ?? null;
 
         if ($metadata) {
-            return $metadata['description'];
+            return $metadata[self::KEY_DESCRIPTION];
         }
 
         // Return default for unknown sets
@@ -233,7 +238,7 @@ class RectorRuleRegistry
         $metadata = self::SET_METADATA[$setPath] ?? null;
 
         if ($metadata) {
-            return RectorRuleSeverity::from($metadata['severity']);
+            return RectorRuleSeverity::from($metadata[self::KEY_SEVERITY]);
         }
 
         // Determine severity from set path patterns
@@ -474,9 +479,9 @@ class RectorRuleRegistry
         };
 
         return [
-            'severity' => $severity,
-            'changeType' => $changeType,
-            'effort' => $effort,
+            self::KEY_SEVERITY => $severity,
+            self::KEY_CHANGE_TYPE => $changeType,
+            self::KEY_EFFORT => $effort,
         ];
     }
 

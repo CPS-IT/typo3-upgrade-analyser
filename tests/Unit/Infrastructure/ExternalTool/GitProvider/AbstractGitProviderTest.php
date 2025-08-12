@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvider;
@@ -39,7 +39,9 @@ final class AbstractGitProviderTest extends TestCase
 
     public function testConstructor(): void
     {
-        $provider = new TestableGitProvider($this->httpClient, $this->logger, 'access-token');
+        $httpClient = $this->createMock(HttpClientServiceInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $provider = new TestableGitProvider($httpClient, $logger, 'access-token');
         $this->assertInstanceOf(AbstractGitProvider::class, $provider);
     }
 

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
@@ -69,8 +69,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::supports
      */
     public function testGitHubClientSupportsGitHubUrls(): void
@@ -82,8 +80,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::isAvailable
      */
     public function testGitHubClientIsAvailable(): void
@@ -92,8 +88,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
      */
     public function testGetRepositoryInfoForActiveRepository(): void
@@ -128,8 +122,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
      */
     public function testGetRepositoryInfoForArchivedRepository(): void
@@ -155,8 +147,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getTags
      */
     public function testGetTagsForActiveRepository(): void
@@ -196,8 +186,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getBranches
      */
     public function testGetBranchesForRepository(): void
@@ -215,8 +203,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getComposerJson
      */
     public function testGetComposerJsonForRepository(): void
@@ -246,8 +232,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryHealth
      */
     public function testGetRepositoryHealthForActiveRepository(): void
@@ -282,8 +266,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryHealth
      */
     public function testGetRepositoryHealthForArchivedRepository(): void
@@ -305,8 +287,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testRepositoryAnalyzerWithActiveExtension(): void
@@ -331,7 +311,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
             throw $e;
         }
 
-        $this->assertNotNull($result);
         $this->assertNotEmpty($result->getRepositoryUrl());
         $this->assertEquals(
             $this->testExtensions['extensions']['georgringer/news']['github_url'],
@@ -347,8 +326,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
      */
     public function testRepositoryAnalyzerWithArchivedExtension(): void
@@ -373,9 +350,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
             throw $e;
         }
 
-        $this->assertNotNull($result);
-
-        // Archived repository should have lower health score
+        // Archived repository should have a lower health score
         $healthScore = $result->getHealthScore();
         $this->assertLessThan(0.7, $healthScore, 'Archived repository should have lower health score');
 
@@ -385,8 +360,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
      */
     public function testHandleNonExistentRepository(): void
@@ -398,8 +371,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
      */
     public function testRateLimitHandling(): void
@@ -442,8 +413,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
      */
     public function testAuthenticatedVsUnauthenticatedAccess(): void
@@ -480,8 +449,6 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @test
-     *
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
@@ -504,8 +471,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
             $startTime = microtime(true);
 
             try {
-                $result = $this->repositoryAnalyzer->analyzeExtension($extension, $typo3Version);
-                $this->assertNotNull($result);
+                $this->repositoryAnalyzer->analyzeExtension($extension, $typo3Version);
 
                 $analysisTime = microtime(true) - $startTime;
                 $this->assertLessThan(

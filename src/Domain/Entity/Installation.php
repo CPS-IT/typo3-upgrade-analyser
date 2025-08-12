@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
@@ -130,6 +130,7 @@ final class Installation implements SerializableInterface
     {
         return $this->metadata;
     }
+
     public function getSystemExtensions(): array
     {
         return array_filter($this->extensions, fn (Extension $ext): bool => 'system' === $ext->getType());

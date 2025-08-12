@@ -18,6 +18,11 @@ function loadEnvFile(string $filePath): void
     }
 
     $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        echo "Error: Could not read file {$filePath}\n";
+        return;
+    }
+
     foreach ($lines as $line) {
         if (0 === strpos(trim($line), '#')) {
             continue; // Skip comments
@@ -97,7 +102,7 @@ function testTerApiEndpoint(string $url, string $description, string $terToken =
 
         // Parse HTTP response headers
         $headers = [];
-        if (isset($http_response_header)) {
+        if (!empty($http_response_header)) {
             foreach ($http_response_header as $header) {
                 if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $header, $matches)) {
                     $result['status_code'] = (int) $matches[1];

@@ -13,13 +13,15 @@ require_once \dirname(__DIR__, 1) . '/vendor/autoload.php';
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\HttpClient;
 
 echo "=== TER API Client Test ===\n\n";
 
-$httpClient = HttpClient::create();
+$symfonyClient = HttpClient::create();
 $logger = new NullLogger();
+$httpClient = new HttpClientService($symfonyClient, $logger);
 $terClient = new TerApiClient($httpClient, $logger);
 
 // Test cases: extension => [TYPO3 versions to test]

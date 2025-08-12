@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
@@ -92,6 +92,7 @@ class InitConfigCommandTest extends TestCase
 
         // Verify content structure
         $content = file_get_contents($outputFile);
+        self::assertIsString($content);
         self::assertStringContainsString('analysis:', $content);
         self::assertStringContainsString('targetVersion:', $content);
         self::assertStringContainsString('reporting:', $content);
@@ -113,7 +114,7 @@ class InitConfigCommandTest extends TestCase
         $this->commandTester->execute([
             '--output' => $invalidPath,
         ]);
-
+        self::assertFileDoesNotExist($invalidPath);
         self::assertEquals(Command::FAILURE, $this->commandTester->getStatusCode());
         self::assertStringContainsString('Failed to write configuration', $this->commandTester->getDisplay());
     }
@@ -127,6 +128,7 @@ class InitConfigCommandTest extends TestCase
         ]);
 
         $content = file_get_contents($outputFile);
+        self::assertIsString($content);
         $config = Yaml::parse($content);
 
         // Verify analysis section
@@ -177,6 +179,7 @@ class InitConfigCommandTest extends TestCase
 
         // Verify the generated file contains valid YAML configuration
         $content = file_get_contents($customPath);
+        self::assertIsString($content);
         $config = Yaml::parse($content);
         self::assertIsArray($config);
         self::assertArrayHasKey('analysis', $config);

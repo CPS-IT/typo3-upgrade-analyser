@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
@@ -199,7 +199,7 @@ class AnalysisResultTest extends TestCase
     public function testErrorHandling(): void
     {
         // Test no error initially
-        self::assertNull($this->analysisResult->getError());
+        self::assertEmpty($this->analysisResult->getError());
         self::assertFalse($this->analysisResult->hasError());
         self::assertTrue($this->analysisResult->isSuccessful());
 
@@ -228,8 +228,6 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->addRecommendation('Second recommendation');
 
         $array = $this->analysisResult->toArray();
-
-        self::assertIsArray($array);
 
         // Check required keys
         $expectedKeys = [

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
@@ -212,7 +212,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         }
 
         $version = $this->installation?->getVersion()->toString() ?? 'unknown';
-        $mode = $this->installation?->getMode()?->value ?? 'unknown';
+        $mode = $this->installation?->getMode()->value ?? 'unknown';
         $strategyName = $this->successfulStrategy?->getName() ?? 'unknown';
 
         $summary = \sprintf(
@@ -303,9 +303,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
 
         foreach ($this->validationIssues as $issue) {
             $severity = $issue->getSeverity()->value;
-            if (isset($counts[$severity])) {
-                ++$counts[$severity];
-            }
+            ++$counts[$severity];
         }
 
         return $counts;

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -26,8 +27,7 @@ use Psr\Log\LoggerInterface;
  */
 final class ComposerInstallationDetectorTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private VersionExtractor $versionExtractor;
+    private LoggerInterface&MockObject $logger;
     private ComposerInstallationDetector $detector;
     private string $testDir;
 
@@ -41,9 +41,9 @@ final class ComposerInstallationDetectorTest extends TestCase
         $mockStrategy->method('getName')->willReturn('Mock Strategy');
         $mockStrategy->method('getReliabilityScore')->willReturn(0.5);
         $mockStrategy->method('getRequiredFiles')->willReturn(['composer.json']);
-        $this->versionExtractor = new VersionExtractor([$mockStrategy], $this->logger);
+        $versionExtractor = new VersionExtractor([$mockStrategy], $this->logger);
 
-        $this->detector = new ComposerInstallationDetector($this->versionExtractor, $this->logger);
+        $this->detector = new ComposerInstallationDetector($versionExtractor, $this->logger);
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($this->testDir, 0o755, true);
     }
@@ -77,7 +77,6 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $indicators = $this->detector->getRequiredIndicators();
 
-        self::assertIsArray($indicators);
         self::assertContains('composer.json', $indicators);
         // Only composer.json is required - TYPO3 paths can be customized
         self::assertCount(1, $indicators);
@@ -227,9 +226,6 @@ final class ComposerInstallationDetectorTest extends TestCase
             self::assertSame($this->testDir, $result->getPath());
             self::assertSame(InstallationMode::COMPOSER, $result->getMode());
             self::assertNotNull($result->getMetadata());
-        } else {
-            // If result is null, it means version extraction failed, which is acceptable for this test
-            self::assertNull($result);
         }
     }
 
@@ -244,15 +240,8 @@ final class ComposerInstallationDetectorTest extends TestCase
         $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
 
         $result = $workingDetector->detect($this->testDir);
-
         if (null !== $result) {
             self::assertInstanceOf(Installation::class, $result);
-
-            // The detection itself should succeed even if extensions are handled separately
-            self::assertInstanceOf(Installation::class, $result);
-        } else {
-            // If result is null, version extraction failed
-            self::assertNull($result);
         }
     }
 

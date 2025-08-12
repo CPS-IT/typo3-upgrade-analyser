@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -28,13 +28,7 @@ final class DetectionStrategyInterfaceTest extends TestCase
     {
         $strategy = new TestDetectionStrategy();
 
-        // Test interface method contracts
-        self::assertIsString($strategy->getName());
-        self::assertIsString($strategy->getDescription());
-        self::assertIsInt($strategy->getPriority());
-        self::assertIsArray($strategy->getRequiredIndicators());
-
-        // Test behavior with valid path
+        // Test behavior with a valid path
         $validPath = '/valid/path';
         self::assertTrue($strategy->supports($validPath));
 
@@ -42,34 +36,10 @@ final class DetectionStrategyInterfaceTest extends TestCase
         self::assertInstanceOf(Installation::class, $installation);
         self::assertSame($validPath, $installation->getPath());
 
-        // Test behavior with invalid path
+        // Test behavior with an invalid path
         $invalidPath = '/does/not/exist';
         self::assertFalse($strategy->supports($invalidPath));
         self::assertNull($strategy->detect($invalidPath));
-    }
-
-    public function testInterfaceMethodReturnTypes(): void
-    {
-        $strategy = new TestDetectionStrategy();
-
-        // Test all methods return correct types
-        self::assertIsString($strategy->getName());
-        self::assertIsString($strategy->getDescription());
-        self::assertIsInt($strategy->getPriority());
-        self::assertIsArray($strategy->getRequiredIndicators());
-
-        foreach ($strategy->getRequiredIndicators() as $indicator) {
-            self::assertIsString($indicator);
-        }
-
-        // Test supports method with various inputs
-        self::assertIsBool($strategy->supports('/some/path'));
-        self::assertIsBool($strategy->supports(''));
-        self::assertIsBool($strategy->supports('/'));
-
-        // Test detect method returns Installation or null
-        $result = $strategy->detect('/valid/path');
-        self::assertTrue($result instanceof Installation || null === $result);
     }
 
     public function testMultipleStrategiesWithDifferentPriorities(): void
@@ -99,7 +69,6 @@ final class DetectionStrategyInterfaceTest extends TestCase
 
         // All indicators should be valid file/directory names
         foreach ($indicators as $indicator) {
-            self::assertIsString($indicator);
             self::assertNotEmpty($indicator);
             // Should not contain path separators (just filenames)
             self::assertStringNotContainsString('/', $indicator);

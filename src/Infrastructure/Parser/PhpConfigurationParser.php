@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser;
@@ -308,7 +308,8 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         // Check for common problematic patterns if we have any data
         if (!empty($data)) {
             foreach ($data as $key => $value) {
-                if (\is_string($key) && str_starts_with($key, '$GLOBALS')) {
+                $keyStr = (string) $key;
+                if (str_starts_with($keyStr, '$GLOBALS')) {
                     // This is normal for extension configuration
                     continue;
                 }
@@ -335,14 +336,14 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         $this->sourcePath = $sourcePath;
     }
 
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): ?int
     {
         // Extract from return statements (common in TYPO3 config files)
         if ($node instanceof Node\Stmt\Return_ && $node->expr instanceof Node\Expr\Array_) {
             $this->extractFromArrayNode($node->expr, $this->configuration);
             $this->extractionMethod = 'return_statement';
 
-            return;
+            return null;
         }
 
         // Extract from global variable assignments
@@ -354,6 +355,8 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         if ($node instanceof Node\Expr\ArrayDimFetch) {
             $this->extractFromGlobalsAccess($node);
         }
+
+        return null;
     }
 
     public function getConfiguration(): array
@@ -366,6 +369,11 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         return $this->extractionMethod;
     }
 
+    public function getSourcePath(): string
+    {
+        return $this->sourcePath;
+    }
+
     /**
      * Extract configuration from array node.
      *
@@ -375,15 +383,21 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     private function extractFromArrayNode(Node\Expr\Array_ $arrayNode, array &$target): void
     {
         foreach ($arrayNode->items as $item) {
-            if (null === $item || null === $item->key) {
+            // Array items can be null in PHP AST (e.g., [1, , 3])
+            /* @phpstan-ignore-next-line identical.alwaysFalse */
+            if (null === $item) {
+                continue;
+            }
+
+            if (null === $item->key) {
                 continue;
             }
 
             $key = $this->extractValue($item->key);
             $value = $this->extractValue($item->value);
 
-            if (null !== $key) {
-                $target[$key] = $value;
+            if (null !== $key && (\is_string($key) || \is_int($key))) {
+                $target[(string) $key] = $value;
             }
         }
     }
@@ -427,7 +441,7 @@ class ConfigurationExtractor extends NodeVisitorAbstract
      *
      * @param Node|null $node AST node
      *
-     * @return mixed Extracted value
+     * @return string|int|float|bool|array|null Extracted value
      */
     private function extractValue(?Node $node): string|int|float|bool|array|null
     {

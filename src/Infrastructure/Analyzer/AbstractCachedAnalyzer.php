@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
@@ -125,7 +125,7 @@ abstract class AbstractCachedAnalyzer implements AnalyzerInterface
         if (false === $jsonData) {
             throw new AnalyzerException('Failed to encode cache key data', $this->getName());
         }
-        
+
         return 'analysis_' . $this->getName() . '_' . hash('sha256', $jsonData);
     }
 

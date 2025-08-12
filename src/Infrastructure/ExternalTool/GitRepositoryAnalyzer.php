@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
@@ -15,7 +15,6 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -119,6 +118,9 @@ class GitRepositoryAnalyzer
         // Try to extract from composer package via Packagist
         if ($extension->hasComposerName() && $this->packagistClient) {
             $composerName = $extension->getComposerName();
+            if (null === $composerName) {
+                return null; // hasComposerName() says true but getComposerName() returns null - edge case
+            }
 
             try {
                 $repositoryUrl = $this->packagistClient->getRepositoryUrl($composerName);
@@ -153,84 +155,5 @@ class GitRepositoryAnalyzer
                || str_contains($url, 'github.com')
                || str_contains($url, 'gitlab.com')
                || str_contains($url, 'bitbucket.org');
-    }
-
-    /**
-     * Calculate repository health score based on various metrics.
-     */
-    private function calculateRepositoryHealth(GitProviderInterface $provider, string $repositoryUrl): float
-    {
-        try {
-            $health = $provider->getRepositoryHealth($repositoryUrl);
-
-            $score = 0.0;
-            $maxScore = 0.0;
-
-            // Repository activity (40% of score)
-            if ($health->getLastCommitDate()) {
-                $daysSinceLastCommit = (new \DateTime())->diff($health->getLastCommitDate())->days;
-                if ($daysSinceLastCommit <= 30) {
-                    $score += 0.4;
-                } elseif ($daysSinceLastCommit <= 90) {
-                    $score += 0.3;
-                } elseif ($daysSinceLastCommit <= 365) {
-                    $score += 0.2;
-                } else {
-                    $score += 0.1;
-                }
-            }
-            $maxScore += 0.4;
-
-            // Repository popularity (20% of score)
-            $stars = $health->getStarCount();
-            if ($stars > 100) {
-                $score += 0.2;
-            } elseif ($stars > 50) {
-                $score += 0.15;
-            } elseif ($stars > 10) {
-                $score += 0.1;
-            } elseif ($stars > 0) {
-                $score += 0.05;
-            }
-            $maxScore += 0.2;
-
-            // Issue management (20% of score)
-            $openIssues = $health->getOpenIssuesCount();
-            $closedIssues = $health->getClosedIssuesCount();
-            if ($closedIssues > 0) {
-                $issueRatio = $closedIssues / ($openIssues + $closedIssues);
-                if ($issueRatio > 0.8) {
-                    $score += 0.2;
-                } elseif ($issueRatio > 0.6) {
-                    $score += 0.15;
-                } elseif ($issueRatio > 0.4) {
-                    $score += 0.1;
-                } else {
-                    $score += 0.05;
-                }
-            }
-            $maxScore += 0.2;
-
-            // Repository maintenance indicators (20% of score)
-            if (!$health->isArchived()) {
-                $score += 0.1;
-            }
-            if ($health->hasReadme()) {
-                $score += 0.05;
-            }
-            if ($health->hasLicense()) {
-                $score += 0.05;
-            }
-            $maxScore += 0.2;
-
-            return $maxScore > 0 ? $score / $maxScore : 0.0;
-        } catch (\Throwable $e) {
-            $this->logger->warning('Could not calculate repository health', [
-                'repository_url' => $repositoryUrl,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 0.5; // Default neutral score
-        }
     }
 }

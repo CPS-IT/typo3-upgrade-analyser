@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Command;
@@ -55,8 +55,14 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
 
         // Setup container and services
         $container = ContainerFactory::create();
-        $this->command = $container->get(ListExtensionsCommand::class);
-        $this->cacheService = $container->get(CacheService::class);
+
+        $command = $container->get(ListExtensionsCommand::class);
+        \assert($command instanceof ListExtensionsCommand);
+        $this->command = $command;
+
+        $cacheService = $container->get(CacheService::class);
+        \assert($cacheService instanceof CacheService);
+        $this->cacheService = $cacheService;
 
         // Clear any existing cache
         $this->cacheService->clear();
@@ -267,6 +273,7 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
 
         $input = new ArrayInput(['--config' => $configPath]);
         $output = new BufferedOutput();
+        /* @phpstan-ignore-next-line argument.type */
         $output->setVerbosity($verbosity);
 
         $exitCode = $this->command->run($input, $output);
@@ -388,6 +395,10 @@ class ListExtensionsCommandIntegrationTest extends AbstractIntegrationTest
     {
         $templatePath = $this->fixturesPath . '/Configurations/' . $templateName;
         $configContent = file_get_contents($templatePath);
+
+        if (false === $configContent) {
+            throw new \RuntimeException("Failed to read config template: {$templatePath}");
+        }
 
         // Replace placeholder with actual fixture path
         $configContent = str_replace('%FIXTURE_PATH%', $this->fixturesPath, $configContent);

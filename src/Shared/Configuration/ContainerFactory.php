@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Shared\Configuration;
@@ -97,6 +97,13 @@ class ContainerFactory
         }
     }
 
+    /**
+     * Auto-register analyzer classes from directory.
+     *
+     * @param ContainerBuilder $container Container builder
+     *
+     * @phpstan-ignore-next-line method.unused
+     */
     private static function autoRegisterAnalyzers(ContainerBuilder $container): void
     {
         // Auto-register all analyzers in the Infrastructure/Analyzer directory
@@ -107,6 +114,10 @@ class ContainerFactory
         }
 
         $analyzerFiles = glob($analyzerDir . '/*Analyzer.php');
+
+        if (false === $analyzerFiles) {
+            return;
+        }
 
         foreach ($analyzerFiles as $file) {
             $className = 'CPSIT\\UpgradeAnalyzer\\Infrastructure\\Analyzer\\' .

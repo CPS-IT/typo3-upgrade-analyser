@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
@@ -43,6 +43,9 @@ class Typo3RectorAnalyzerTest extends TestCase
     private \PHPUnit\Framework\MockObject\MockObject $resultParser;
     private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
 
+    /**
+     * @throws \PHPUnit\Framework\MockObject\Exception
+     */
     protected function setUp(): void
     {
         $this->logger = new NullLogger();
@@ -64,16 +67,14 @@ class Typo3RectorAnalyzerTest extends TestCase
 
     public function testGetName(): void
     {
-        $this->assertEquals('typo3_rector', $this->analyzer->getName());
+        $this->assertEquals(Typo3RectorAnalyzer::NAME, $this->analyzer->getName());
     }
 
     public function testGetDescription(): void
     {
         $description = $this->analyzer->getDescription();
 
-        $this->assertIsString($description);
-        $this->assertStringContainsString('TYPO3 Rector', $description);
-        $this->assertStringContainsString('deprecated code patterns', $description);
+        $this->assertEquals(Typo3RectorAnalyzer::DESCRIPTION, $description);
     }
 
     public function testSupports(): void

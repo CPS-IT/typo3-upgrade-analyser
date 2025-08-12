@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
@@ -310,7 +310,9 @@ class PhpParseExceptionTest extends TestCase
 
         // Verify derived properties
         self::assertTrue($exception->hasAstErrors());
-        self::assertStringContainsString('Parse error: syntax error', $exception->getFirstAstError());
+        $firstAstError = $exception->getFirstAstError();
+        self::assertNotNull($firstAstError, 'Expected an AST error message');
+        self::assertStringContainsString('Parse error: syntax error', $firstAstError);
         self::assertTrue($exception->hasLocation());
         self::assertSame('line 42, column 25', $exception->getLocationString());
 

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider;
@@ -47,7 +47,7 @@ abstract class AbstractGitProvider implements GitProviderInterface
     protected function extractRepositoryPath(string $repositoryUrl): array
     {
         // Remove .git suffix and normalize URL
-        $url = preg_replace('/\.git$/', '', $repositoryUrl);
+        $url = preg_replace('/\.git$/', '', $repositoryUrl) ?? $repositoryUrl;
 
         // Handle different URL formats
         if (preg_match('#(?:https?://|git@)([^/:]+)[/:]([^/]+)/([^/]+?)(?:\.git)?/?$#', $url, $matches)) {

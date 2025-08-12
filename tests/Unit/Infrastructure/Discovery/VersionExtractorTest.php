@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -23,7 +24,7 @@ use Psr\Log\LoggerInterface;
  */
 final class VersionExtractorTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private LoggerInterface&MockObject $logger;
     private string $testDir;
 
     protected function setUp(): void
@@ -347,7 +348,10 @@ final class VersionExtractorTest extends TestCase
         self::assertSame('Second', $attemptedStrategies[1]['strategy']);
     }
 
-    private function createMockStrategy(string $name, int $priority): VersionStrategyInterface
+    /**
+     * @throws \PHPUnit\Framework\MockObject\Exception
+     */
+    private function createMockStrategy(string $name, int $priority): VersionStrategyInterface&MockObject
     {
         $strategy = $this->createMock(VersionStrategyInterface::class);
 

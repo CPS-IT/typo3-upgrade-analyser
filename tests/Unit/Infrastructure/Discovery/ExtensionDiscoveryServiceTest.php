@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -17,14 +17,15 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 final class ExtensionDiscoveryServiceTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $configService;
-    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
+    private LoggerInterface&MockObject $logger;
+    private ConfigurationService&MockObject $configService;
+    private CacheService&MockObject $cacheService;
     private ExtensionDiscoveryService $service;
     private string $tempDir;
 
@@ -101,7 +102,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
      */
     public function testConstructorWithoutOptionalServices(): void
     {
-        $service = new ExtensionDiscoveryService($this->logger);
+        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
         $this->assertInstanceOf(ExtensionDiscoveryService::class, $service);
     }
 
@@ -737,7 +738,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
      */
     public function testServiceWithoutCachingServices(): void
     {
-        $service = new ExtensionDiscoveryService($this->logger);
+        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
 
         $result = $service->discoverExtensions($this->tempDir);
 

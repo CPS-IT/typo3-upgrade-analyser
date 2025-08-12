@@ -147,7 +147,10 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
         // Clean up temp files
         $tempDir = __DIR__ . '/../../../var/temp/rector-test';
         if (is_dir($tempDir)) {
-            array_map('unlink', glob($tempDir . '/*'));
+            $files = glob($tempDir . '/*');
+            if (false !== $files) {
+                array_map('unlink', $files);
+            }
         }
 
         parent::tearDown();

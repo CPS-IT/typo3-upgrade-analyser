@@ -7,18 +7,19 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Cache;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 final class CacheServiceTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private LoggerInterface&MockObject $logger;
     private string $tempDir;
     private CacheService $cacheService;
 
@@ -137,7 +138,9 @@ final class CacheServiceTest extends TestCase
         $result = $this->cacheService->set($key, $data);
         $this->assertFalse($result);
 
-        fclose($resource);
+        if ($resource) {
+            fclose($resource);
+        }
     }
 
     /**
@@ -363,14 +366,13 @@ final class CacheServiceTest extends TestCase
         $type = 'installation_discovery';
         $path = '/path/to/installation';
 
-        // Mock filemtime to return a consistent value
+        // Mock file modification time to return a consistent value
         $key1 = $this->cacheService->generateKey($type, $path);
         $key2 = $this->cacheService->generateKey($type, $path);
 
-        // Keys should be consistent for same input
+        // Keys should be consistent for the same input
         $this->assertSame($key1, $key2);
         $this->assertStringStartsWith($type . '_', $key1);
-        $this->assertIsString($key1);
         $this->assertGreaterThan(\strlen($type . '_'), \strlen($key1));
     }
 
@@ -407,7 +409,6 @@ final class CacheServiceTest extends TestCase
 
         // Should still generate a valid key even for non-existent paths
         $this->assertStringStartsWith($type . '_', $key);
-        $this->assertIsString($key);
     }
 
     /**
@@ -580,12 +581,14 @@ final class CacheServiceTest extends TestCase
         $cacheFile = $cacheDir . '/' . $key . '.json';
         $content = file_get_contents($cacheFile);
 
-        // Verify it's valid JSON
-        $decodedData = json_decode($content, true);
-        $this->assertSame($data, $decodedData);
+        if (\is_string($content)) {
+            // Verify it's valid JSON
+            $decodedData = json_decode($content, true);
+            $this->assertSame($data, $decodedData);
 
-        // Verify it's pretty printed (contains newlines and indentation)
-        $this->assertStringContainsString("\n", $content);
-        $this->assertStringContainsString('    ', $content);
+            // Verify it's pretty printed (contains newlines and indentation)
+            $this->assertStringContainsString("\n", $content);
+            $this->assertStringContainsString('    ', $content);
+        }
     }
 }

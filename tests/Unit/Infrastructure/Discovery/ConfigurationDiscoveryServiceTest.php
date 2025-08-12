@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -365,7 +365,6 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverConfiguration($this->installation);
         $summary = $this->service->getConfigurationSummary($result);
 
-        self::assertIsArray($summary);
         self::assertArrayHasKey('total_configurations', $summary);
         self::assertArrayHasKey('configurations', $summary);
         self::assertArrayHasKey('statistics', $summary);

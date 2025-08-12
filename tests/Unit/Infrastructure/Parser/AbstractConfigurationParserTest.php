@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
@@ -80,7 +80,9 @@ class AbstractConfigurationParserTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
-        self::assertStringContainsString('not accessible', $result->getFirstError());
+        $firstError = $result->getFirstError();
+        self::assertNotNull($firstError, 'Expected an error message');
+        self::assertStringContainsString('not accessible', $firstError);
         self::assertSame('test', $result->getFormat());
         self::assertSame($nonExistentFile, $result->getSourcePath());
     }
@@ -99,7 +101,9 @@ class AbstractConfigurationParserTest extends TestCase
 
             self::assertFalse($result->isSuccessful());
             self::assertTrue($result->hasErrors());
-            self::assertStringContainsString('does not support file', $result->getFirstError());
+            $firstError = $result->getFirstError();
+            self::assertNotNull($firstError, 'Expected an error message');
+            self::assertStringContainsString('does not support file', $firstError);
         } finally {
             unlink($unsupportedFile);
         }
@@ -124,7 +128,9 @@ class AbstractConfigurationParserTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
-        self::assertStringContainsString('Parse error', $result->getFirstError());
+        $firstError = $result->getFirstError();
+        self::assertNotNull($firstError, 'Expected an error message');
+        self::assertStringContainsString('Parse error', $firstError);
         self::assertSame(10, $result->getMetadataValue('line'));
         self::assertSame(5, $result->getMetadataValue('column'));
     }
@@ -148,7 +154,9 @@ class AbstractConfigurationParserTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
-        self::assertStringContainsString('Unexpected error', $result->getFirstError());
+        $firstError = $result->getFirstError();
+        self::assertNotNull($firstError, 'Expected an error message');
+        self::assertStringContainsString('Unexpected error', $firstError);
 
         // Additional assertion to ensure test is not risky
         self::assertSame('test', $result->getFormat());
@@ -177,7 +185,9 @@ class AbstractConfigurationParserTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertSame([], $result->getData());
         self::assertTrue($result->hasWarnings());
-        self::assertStringContainsString('empty', $result->getFirstWarning());
+        $firstWarning = $result->getFirstWarning();
+        self::assertNotNull($firstWarning, 'Expected a warning message');
+        self::assertStringContainsString('empty', $firstWarning);
         self::assertSame(0, $result->getMetadataValue('content_length'));
     }
 
@@ -478,6 +488,7 @@ class TestableAbstractParser extends AbstractConfigurationParser
 {
     private array $parseResult = [];
     private array $postProcessedData = [];
+    /** @var array{valid: bool, errors: array<string>, warnings: array<string>}|null */
     private ?array $validationResult = null;
     private ?\Throwable $throwException = null;
     private array $requiredDependencies = [];
@@ -508,6 +519,9 @@ class TestableAbstractParser extends AbstractConfigurationParser
         $this->postProcessedData = $data;
     }
 
+    /**
+     * @param array{valid: bool, errors: array<string>, warnings: array<string>} $result
+     */
     public function setValidationResult(array $result): void
     {
         $this->validationResult = $result;
@@ -529,12 +543,12 @@ class TestableAbstractParser extends AbstractConfigurationParser
     }
 
     // Test accessors for protected methods
-    public function testGetOption(string $key, $default = null)
+    public function testGetOption(string $key, mixed $default = null): mixed
     {
         return $this->getOption($key, $default);
     }
 
-    public function testSetOption(string $key, $value): void
+    public function testSetOption(string $key, mixed $value): void
     {
         $this->setOption($key, $value);
     }
@@ -573,9 +587,16 @@ class TestableAbstractParser extends AbstractConfigurationParser
         return $this->parseResult;
     }
 
+    /**
+     * @return array{valid: bool, errors: array<string>, warnings: array<string>}
+     */
     protected function validateParsedData(array $data, string $sourcePath): array
     {
-        return $this->validationResult ?? parent::validateParsedData($data, $sourcePath);
+        if (null !== $this->validationResult) {
+            return $this->validationResult;
+        }
+
+        return parent::validateParsedData($data, $sourcePath);
     }
 
     protected function postProcessData(array $data, string $sourcePath): array

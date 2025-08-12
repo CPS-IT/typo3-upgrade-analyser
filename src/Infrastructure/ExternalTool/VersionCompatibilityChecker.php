@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
@@ -63,7 +63,7 @@ class VersionCompatibilityChecker
         }
 
         // Sort versions and return the latest
-        usort($compatibleVersions, 'version_compare');
+        usort($compatibleVersions, fn ($a, $b): int => version_compare($a, $b));
 
         return end($compatibleVersions);
     }
@@ -98,7 +98,7 @@ class VersionCompatibilityChecker
     /**
      * Check if a supported version matches the target major version.
      */
-    private function isVersionSupported($supportedVersion, int $majorVersion): bool
+    private function isVersionSupported(mixed $supportedVersion, int $majorVersion): bool
     {
         // Handle integer versions (TER API returns integers like 8, 9, 10)
         if (\is_int($supportedVersion)) {

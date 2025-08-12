@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
@@ -20,6 +20,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 final class InstallationDiscoveryResultTest extends TestCase
 {
     private Installation $installation;
-    private \PHPUnit\Framework\MockObject\MockObject $strategy;
+    private DetectionStrategyInterface&MockObject $strategy;
     private array $attemptedStrategies;
 
     protected function setUp(): void

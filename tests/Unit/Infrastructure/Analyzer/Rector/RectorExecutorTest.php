@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
@@ -76,18 +76,6 @@ class RectorExecutorTest extends TestCase
         $version = $executor->getVersion();
 
         $this->assertNull($version);
-    }
-
-    public function testGetVersionWithPhpBinary(): void
-    {
-        // Use PHP_BINARY as a mock - it won't return Rector version format but tests the method
-        $executor = new RectorExecutor(PHP_BINARY, $this->logger, 10);
-
-        $version = $executor->getVersion();
-
-        // PHP version output won't match Rector format, so should return the raw output
-        // If PHP_BINARY is not available or returns unexpected output, it might return null
-        $this->assertTrue(null === $version || \is_string($version));
     }
 
     /**
@@ -214,7 +202,8 @@ class RectorExecutorTest extends TestCase
         $this->assertStringContainsString('Failed to parse Rector output', $result['errors'][0]);
 
         // NullLogger doesn't track records, so we just verify the error was added to result
-        $this->assertTrue(true); // Test passes if we reach this point without exception
+        // Test passes if we reach this point without exception
+        $this->addToAssertionCount(1);
     }
 
     public function testCreateFindingFromRectorData(): void
@@ -312,6 +301,9 @@ class RectorExecutorTest extends TestCase
         $this->assertFileExists($configFile);
 
         $content = file_get_contents($configFile);
+        if (!$content) {
+            $this->fail('Failed to read config file');
+        }
         $this->assertStringContainsString('Rule1::class', $content);
         $this->assertStringContainsString('Rule2::class', $content);
         $this->assertStringContainsString($targetPath, $content);

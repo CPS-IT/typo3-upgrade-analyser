@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
@@ -160,13 +160,13 @@ class PackagistClient
         });
 
         if (!empty($stableVersions)) {
-            usort($stableVersions, 'version_compare');
+            usort($stableVersions, fn (string $a, string $b): int => version_compare($a, $b));
 
             return end($stableVersions);
         }
 
         // Fall back to dev versions if no stable versions available
-        usort($compatibleVersions, 'version_compare');
+        usort($compatibleVersions, fn (string $a, string $b): int => version_compare($a, $b));
 
         return end($compatibleVersions);
     }

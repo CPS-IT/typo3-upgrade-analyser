@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
@@ -56,12 +56,12 @@ class RectorResultParser
     public function aggregateFindings(array $findings): RectorAnalysisSummary
     {
         $categorized = $this->categorizeFindings($findings);
-        
+
         $severityCounts = $categorized->getSeverityCounts();
         $fileCounts = $categorized->getFileCounts();
         $ruleCounts = $categorized->getRuleCounts();
         $typeCounts = $categorized->getTypeCounts();
-        
+
         $totalFiles = $this->countUniqueFiles($findings);
         $complexityScore = $this->calculateComplexityScore($findings);
         $estimatedFixTime = $this->calculateEstimatedFixTime($findings);
@@ -136,7 +136,7 @@ class RectorResultParser
             $improvements,
             $bySeverity,
             $byFile,
-            $byRule
+            $byRule,
         );
     }
 
@@ -252,7 +252,6 @@ class RectorResultParser
         );
     }
 
-
     /**
      * Count unique files in findings.
      *
@@ -306,5 +305,4 @@ class RectorResultParser
         // Normalize to 0-1 range (max entropy for 4 categories is log2(4) = 2)
         return $entropy / 2;
     }
-
 }

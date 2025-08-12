@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
@@ -108,7 +108,6 @@ class PhpConfigurationParserTest extends TestCase
         self::assertSame($localConfigFile, $result->getSourcePath());
 
         $data = $result->getData();
-        self::assertIsArray($data);
         self::assertArrayHasKey('BE', $data);
         self::assertArrayHasKey('DB', $data);
         self::assertArrayHasKey('EXTENSIONS', $data);
@@ -151,7 +150,9 @@ class PhpConfigurationParserTest extends TestCase
 
         self::assertFalse($result->isSuccessful());
         self::assertTrue($result->hasErrors());
-        self::assertStringContainsString('syntax error', strtolower($result->getFirstError()));
+        $firstError = $result->getFirstError();
+        self::assertNotNull($firstError, 'Expected an error message');
+        self::assertStringContainsString('syntax error', strtolower($firstError));
     }
 
     public function testParseContentWithValidReturnArray(): void
@@ -247,7 +248,9 @@ class PhpConfigurationParserTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertSame([], $result->getData());
         self::assertTrue($result->hasWarnings());
-        self::assertStringContainsString('empty', $result->getFirstWarning());
+        $firstWarning = $result->getFirstWarning();
+        self::assertNotNull($firstWarning, 'Expected a warning message');
+        self::assertStringContainsString('empty', $firstWarning);
     }
 
     public function testParseContentWithSyntaxError(): void
@@ -367,7 +370,9 @@ class PhpConfigurationParserTest extends TestCase
 
             self::assertFalse($result->isSuccessful());
             self::assertTrue($result->hasErrors());
-            self::assertStringContainsString('Missing packages configuration', $result->getFirstError());
+            $firstError = $result->getFirstError();
+            self::assertNotNull($firstError, 'Expected an error message');
+            self::assertStringContainsString('Missing packages configuration', $firstError);
         } finally {
             unlink($tempFile);
         }
@@ -429,7 +434,9 @@ class PhpConfigurationParserTest extends TestCase
             // Extension config files without data don't trigger warnings unless they match filename patterns
             // Check if we have warnings, otherwise just verify the result is successful with empty data
             if ($result->hasWarnings()) {
-                self::assertStringContainsString('no extractable configuration data', $result->getFirstWarning());
+                $firstWarning = $result->getFirstWarning();
+                self::assertNotNull($firstWarning, 'Expected a warning message');
+                self::assertStringContainsString('no extractable configuration data', $firstWarning);
             } else {
                 // This is expected for files that don't match specific extension config patterns
                 self::assertSame([], $result->getData());

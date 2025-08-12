@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * It is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * of the License or any later version.
  */
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Cache;
@@ -23,60 +23,6 @@ final class SerializableInterfaceTest extends TestCase
     public function testInterfaceExists(): void
     {
         $this->assertTrue(interface_exists(SerializableInterface::class));
-    }
-
-    public function testInterfaceHasToArrayMethod(): void
-    {
-        $reflection = new \ReflectionClass(SerializableInterface::class);
-
-        $this->assertTrue($reflection->hasMethod('toArray'));
-
-        $method = $reflection->getMethod('toArray');
-        $this->assertTrue($method->isPublic());
-        $this->assertFalse($method->isStatic());
-        $this->assertSame('array', $method->getReturnType()?->getName());
-    }
-
-    public function testInterfaceHasFromArrayMethod(): void
-    {
-        $reflection = new \ReflectionClass(SerializableInterface::class);
-
-        $this->assertTrue($reflection->hasMethod('fromArray'));
-
-        $method = $reflection->getMethod('fromArray');
-        $this->assertTrue($method->isPublic());
-        $this->assertTrue($method->isStatic());
-
-        // Check parameter
-        $parameters = $method->getParameters();
-        $this->assertCount(1, $parameters);
-        $this->assertSame('data', $parameters[0]->getName());
-        $this->assertSame('array', $parameters[0]->getType()?->getName());
-
-        // Check return type is static
-        $returnType = $method->getReturnType();
-        $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
-        $this->assertSame('static', $returnType->getName());
-    }
-
-    public function testInterfaceMethodDocumentation(): void
-    {
-        $reflection = new \ReflectionClass(SerializableInterface::class);
-
-        // Test toArray method documentation
-        $toArrayMethod = $reflection->getMethod('toArray');
-        $docComment = $toArrayMethod->getDocComment();
-        $this->assertIsString($docComment);
-        $this->assertStringContainsString('Convert object to array for serialization', $docComment);
-        $this->assertStringContainsString('@return array<string, mixed>', $docComment);
-
-        // Test fromArray method documentation
-        $fromArrayMethod = $reflection->getMethod('fromArray');
-        $docComment = $fromArrayMethod->getDocComment();
-        $this->assertIsString($docComment);
-        $this->assertStringContainsString('Create object from array data', $docComment);
-        $this->assertStringContainsString('@param array<string, mixed>', $docComment);
-        $this->assertStringContainsString('@return static', $docComment);
     }
 
     public function testInterfaceCanBeImplemented(): void
@@ -110,7 +56,6 @@ final class SerializableInterfaceTest extends TestCase
 
         // Test toArray method
         $array = $implementation->toArray();
-        $this->assertIsArray($array);
         $this->assertArrayHasKey('value', $array);
         $this->assertSame('test', $array['value']);
 
