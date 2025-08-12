@@ -1,0 +1,29 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # Invalid YAML structure - inconsistent indentation
+  App\Service\TestService:
+    arguments:
+      $param1: 'value1'
+     $param2: 'value2'  # Wrong indentation
+        $param3: 'value3'   # Wrong indentation
+
+  # Invalid YAML - missing colon
+  AnotherService
+    public: true
+
+  # Invalid YAML - invalid character
+  App\Service\BadService:
+    arguments: [
+      'value1',
+      'value2'
+      # Missing comma and bracket
+    ]
+
+# Invalid YAML - incorrect list structure
+parameters
+  - key1: value1
+  - key2: value2

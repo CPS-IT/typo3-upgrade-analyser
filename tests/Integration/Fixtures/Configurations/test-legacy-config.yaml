@@ -1,0 +1,6 @@
+analysis:
+  installationPath: %FIXTURE_PATH%/TYPO3Installations/LegacyInstallation
+  targetVersion: "12.4"
+  resultCache:
+    enabled: false
+    ttl: 1800

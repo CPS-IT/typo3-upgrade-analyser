@@ -1,0 +1,253 @@
+parameters:
+  # Rector configuration parameters
+  rector.binary_path: '%app.root_dir%/vendor/bin/rector'  # Default path, should be configurable
+  rector.timeout_seconds: 300
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # Commands
+  CPSIT\UpgradeAnalyzer\Application\Command\:
+    resource: '../src/Application/Command/*'
+    public: true
+
+  # Override AnalyzeCommand to inject analyzers and report service
+  CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand:
+    public: true
+    arguments:
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService'
+      - !tagged_iterator 'analyzer'
+
+  # Infrastructure services
+
+  # Shared HTTP client service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService:
+    arguments:
+      - '@http_client'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService
+
+  # Shared version constraint checker
+  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker: ~
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker
+
+  # Shared repository URL handler
+  CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler: ~
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler
+
+  # TER and Packagist API clients with shared services
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
+
+  # Working VersionAvailabilityAnalyzer with all API clients including Git
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
+    tags: ['analyzer']
+
+  # Lines of Code Analyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
+    tags: ['analyzer']
+
+  # TYPO3 Rector Analyzer and supporting services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry:
+    arguments:
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor:
+    arguments:
+      - '%rector.binary_path%'
+      - '@logger'
+      - '%rector.timeout_seconds%'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '%app.root_dir%/var/temp'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Typo3RectorAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+    tags: ['analyzer']
+
+  # Shared services
+  CPSIT\UpgradeAnalyzer\Shared\Configuration\:
+    resource: '../src/Shared/Configuration/*'
+
+  # Twig
+  Twig\Environment:
+    arguments:
+      $loader: '@twig.loader'
+      $options:
+        cache: '%app.root_dir%/var/cache/twig'
+        debug: false
+
+  twig.loader:
+    class: Twig\Loader\FilesystemLoader
+    arguments:
+      - '%app.resources_dir%/templates'
+
+  # PHP Parser
+  PhpParser\Parser:
+    factory: ['PhpParser\ParserFactory', 'createForHostVersion']
+
+  # Git Provider Factory and implementations
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory:
+    arguments:
+      - [
+          '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient'
+        ]
+      - '@logger'
+
+  # Git Provider Implementations with shared services
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
+
+  # Git Repository Analyzer
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
+
+  # Git Version Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
+
+  # Configuration Parsers
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\:
+    resource: '../src/Infrastructure/Parser/*'
+    exclude: '../src/Infrastructure/Parser/Exception/*'
+    tags: ['configuration_parser']
+
+  # PHP Configuration Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser:
+    arguments:
+      - '@PhpParser\Parser'
+      - '@logger'
+    tags: ['configuration_parser']
+
+  # YAML Configuration Parser
+  CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser:
+    arguments:
+      - '@logger'
+    tags: ['configuration_parser']
+
+  # Configuration Discovery Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService:
+    arguments:
+      - !tagged_iterator 'configuration_parser'
+      - '@logger'
+
+  # Discovery Services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
+    resource: '../src/Infrastructure/Discovery/*'
+    exclude: '../src/Infrastructure/Discovery/ConfigurationDiscoveryService.php'
+    tags: ['discovery_service']
+
+  # Extension Discovery Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService:
+    public: true
+    arguments:
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+    tags: ['discovery_service']
+
+  # Installation Discovery Service with Configuration Discovery
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService:
+    public: true
+    arguments:
+      - !tagged_iterator 'detection_strategy'
+      - !tagged_iterator 'validation_rule'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+
+  # Version Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy:
+    tags: ['version_strategy']
+
+  # Version Extractor
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor:
+    arguments:
+      - !tagged_iterator 'version_strategy'
+      - '@logger'
+
+  # Detection Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector:
+    tags: ['detection_strategy']
+
+  # Configuration Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService:
+    public: true
+    arguments:
+      - '@logger'
+
+  # Configuration Service Interface Alias
+  CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService
+
+  # Cache Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService:
+    public: true
+    arguments:
+      - '@logger'
+      - '%app.root_dir%'
+
+  # Report Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService:
+    public: true
+    arguments:
+      - '@Twig\Environment'
+      - '@logger'

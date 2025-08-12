@@ -1,0 +1,41 @@
+                <h3>Lines of Code Analysis</h3>
+                <p>This analyzer examines the codebase size and complexity of extensions to estimate upgrade effort.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Total Lines</th>
+                            <th>PHP Files</th>
+                            <th>Code Lines</th>
+                            <th>Classes</th>
+                            <th>Methods</th>
+                            <th>Risk Level</th>
+                            <th>Effort Estimate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in extension_data %}
+                        <tr>
+                            <td><strong><a href="extensions/{{ data.extension.key }}.html#lines-of-code-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+                            {% if data.loc_analysis %}
+                            <td>{{ data.loc_analysis.total_lines|number_format }}</td>
+                            <td>{{ data.loc_analysis.php_files }}</td>
+                            <td>{{ data.loc_analysis.code_lines|number_format }}</td>
+                            <td>{{ data.loc_analysis.classes }}</td>
+                            <td>{{ data.loc_analysis.methods }}</td>
+                            <td><span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span></td>
+                            <td>{% if data.loc_analysis.total_lines > 10000 %}High{% elseif data.loc_analysis.total_lines > 2000 %}Medium{% else %}Low{% endif %}</td>
+                            {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td><span class="badge badge-unknown">UNKNOWN</span></td>
+                            <td>N/A</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>

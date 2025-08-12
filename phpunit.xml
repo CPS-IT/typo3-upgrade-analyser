@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         executionOrder="depends,defects"
+         requireCoverageMetadata="false"
+         beStrictAboutCoverageMetadata="false"
+         beStrictAboutOutputDuringTests="true"
+         failOnRisky="false"
+         failOnWarning="false"
+         displayDetailsOnTestsThatTriggerWarnings="false"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+>
+
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        <testsuite name="Functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- Environment variables for integration tests -->
+    <php>
+        <!-- Integration test timeouts (in seconds) -->
+        <env name="INTEGRATION_TEST_TIMEOUT" value="30"/>
+        <env name="API_REQUEST_TIMEOUT" value="10"/>
+
+        <!-- Test data configuration -->
+        <env name="INTEGRATION_TEST_CACHE_DIR" value="var/integration-test-cache"/>
+
+        <!-- Enable/disable real API calls (set to false to use mocked responses where available) -->
+        <env name="ENABLE_REAL_API_CALLS" value="true"/>
+
+        <!-- Rate limiting configuration -->
+        <env name="API_RATE_LIMIT_DELAY" value="1"/>
+    </php>
+
+
+    <source restrictDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>src/Shared/Exception</directory>
+        </exclude>
+    </source>
+
+    <coverage>
+        <report>
+            <html outputDirectory="var/coverage/html"/>
+            <clover outputFile="var/coverage/clover.xml"/>
+        </report>
+    </coverage>
+
+    <logging>
+        <junit outputFile="var/phpunit/junit.xml"/>
+    </logging>
+</phpunit>

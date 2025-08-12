@@ -1,0 +1,17 @@
+{
+    "packages": [
+        {
+            "name": "typo3/cms-core",
+            "version": "v12.4.8",
+            "version_normalized": "12.4.8.0",
+            "type": "typo3-cms-framework",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "core"
+                }
+            }
+            // Missing comma and closing bracket to create invalid JSON
+        }
+    ],
+    "dev": false
+    // Missing closing bracket

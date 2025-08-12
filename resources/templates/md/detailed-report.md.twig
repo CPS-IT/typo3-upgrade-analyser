@@ -1,0 +1,192 @@
+# TYPO3 Upgrade Analysis - Detailed Report
+
+**Generated on:** {{ generated_at.format('Y-m-d H:i:s') }}
+
+## Executive Summary
+
+### Installation Information
+- **Path:** {{ installation.path }}
+- **Current Version:** {{ installation.version.toString() }}
+- **Installation Type:** {{ installation.type }}
+- **Target Version:** {{ target_version }}
+
+### Risk Overview
+- **Total Extensions:** {{ statistics.total_extensions }}
+- **Critical Risk Extensions:** {{ statistics.critical_extensions }}
+- **Extensions with No Availability:** {{ statistics.availability_stats.no_availability }}
+
+### Risk Distribution
+{% for level, count in statistics.risk_distribution %}
+- **{{ level|capitalize }} Risk:** {{ count }} extensions
+{% endfor %}
+
+### Version Availability Summary
+- **TER Available:** {{ statistics.availability_stats.ter_available }} extensions
+- **Packagist Available:** {{ statistics.availability_stats.packagist_available }} extensions
+- **Git Available:** {{ statistics.availability_stats.git_available }} extensions
+- **No Availability:** {{ statistics.availability_stats.no_availability }} extensions
+
+---
+
+## Extensions Overview
+
+| Extension | Version | Risk Level | Available | Latest Version |
+|-----------|---------|------------|-----------|----------------|
+{% for data in extension_data %}
+| {{ data.extension.key }} | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.risk_summary.risk_level|upper }} | {% if data.version_analysis %}{% if data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available %}✅{% else %}❌{% endif %}{% else %}❓{% endif %} | {{ data.version_analysis and data.version_analysis.git_latest_version ? data.version_analysis.git_latest_version : 'N/A' }} |
+{% endfor %}
+
+---
+
+## Discovery Results
+
+### Installation Discovery
+
+{% if discovery.installation %}
+- **Status:** {{ discovery.installation.isSuccessful ? '✅ Success' : '❌ Failed' }}
+- **Summary:** {{ discovery.installation.summary }}
+{% if discovery.installation.error %}
+- **Error:** {{ discovery.installation.error }}
+{% endif %}
+{% else %}
+- **Status:** ❌ No installation discovery data available
+{% endif %}
+
+### Extension Discovery
+
+{% if discovery.extensions %}
+- **Status:** {{ discovery.extensions.isSuccessful ? '✅ Success' : '❌ Failed' }}
+- **Summary:** {{ discovery.extensions.summary }}
+{% if discovery.extensions.error %}
+- **Error:** {{ discovery.extensions.error }}
+{% endif %}
+{% else %}
+- **Status:** ❌ No extension discovery data available
+{% endif %}
+
+---
+
+## Detailed Extension Analysis
+
+{% for data in extension_data %}
+### {{ data.extension.key }}
+
+**Extension Information:**
+- **Type:** {{ data.extension.isSystemExtension ? 'System' : (data.extension.isLocalExtension ? 'Local' : 'Third-party') }}
+- **Active:** {{ data.extension.isActive ? 'Yes' : 'No' }}
+{% if data.extension.hasComposerName %}
+- **Composer Name:** `{{ data.extension.composerName }}`
+{% endif %}
+{% if data.extension.version %}
+- **Current Version:** {{ data.extension.version.toString() }}
+{% endif %}
+
+**Risk Assessment:**
+- **Overall Risk Score:** {{ "%.1f"|format(data.risk_summary.overall_risk) }}/10.0
+- **Risk Level:** {{ data.risk_summary.risk_level|upper }}
+{% if data.risk_summary.has_errors %}
+- **⚠️  Analysis Errors:** Some analyzers failed for this extension
+{% endif %}
+
+{% if data.loc_analysis %}
+**Codebase Analysis:**
+- **Total Lines of Code:** {{ data.loc_analysis.total_lines|number_format }}
+- **PHP Files:** {{ data.loc_analysis.php_files }}
+- **Code Lines:** {{ data.loc_analysis.code_lines|number_format }}
+- **Comment Lines:** {{ data.loc_analysis.comment_lines|number_format }}
+- **Average File Size:** {{ data.loc_analysis.average_file_size }} lines
+- **Largest File:** {{ data.loc_analysis.largest_file_lines }} lines ({{ data.loc_analysis.largest_file_path }})
+- **Classes/Interfaces:** {{ data.loc_analysis.classes }}
+- **Methods:** {{ data.loc_analysis.methods }}
+- **Functions:** {{ data.loc_analysis.functions }}
+{% endif %}
+
+{% if data.version_analysis %}
+**Version Availability Analysis:**
+- **TER (TYPO3 Extension Repository):** {{ data.version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
+- **Packagist (Composer):** {{ data.version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
+- **Git Repository:** {{ data.version_analysis.git_available ? '✅ Available' : '❌ Not Available' }}
+
+{% if data.version_analysis.git_repository_url %}
+**Git Repository Details:**
+- **URL:** {{ data.version_analysis.git_repository_url }}
+{% if data.version_analysis.git_repository_health %}
+- **Repository Health:** {{ "%.1f"|format(data.version_analysis.git_repository_health * 100) }}%
+{% endif %}
+{% if data.version_analysis.git_latest_version %}
+- **Latest Compatible Version:** {{ data.version_analysis.git_latest_version }}
+{% endif %}
+{% endif %}
+
+{% if data.version_analysis.recommendations %}
+**Recommendations:**
+{% for recommendation in data.version_analysis.recommendations %}
+- {{ recommendation }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+**⚠️ No version availability analysis data available**
+{% endif %}
+
+{% if not loop.last %}
+---
+{% endif %}
+{% endfor %}
+
+---
+
+## Analysis Summary by Risk Level
+
+{% for level in ['critical', 'high', 'medium', 'low'] %}
+{% if statistics.risk_distribution[level] > 0 %}
+### {{ level|capitalize }} Risk Extensions ({{ statistics.risk_distribution[level] }})
+
+{% for data in extension_data %}
+{% if data.risk_summary.risk_level == level %}
+- **{{ data.extension.key }}**: Risk Score {{ "%.1f"|format(data.risk_summary.overall_risk) }}
+  {% if data.version_analysis %}
+  - Availability: {{ data.version_analysis.ter_available ? 'TER' : '' }}{{ data.version_analysis.packagist_available ? ' Packagist' : '' }}{{ data.version_analysis.git_available ? ' Git' : '' }}{{ not data.version_analysis.ter_available and not data.version_analysis.packagist_available and not data.version_analysis.git_available ? 'None' : '' }}
+  {% endif %}
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{% endfor %}
+
+---
+
+## Next Steps
+
+### Immediate Actions Required
+
+{% if statistics.critical_extensions > 0 %}
+1. **Review Critical Risk Extensions** ({{ statistics.critical_extensions }} extensions)
+   - Focus on extensions with no version availability
+   - Consider alternative extensions or custom development
+{% endif %}
+
+{% if statistics.availability_stats.no_availability > 0 %}
+2. **Address Extensions with No Availability** ({{ statistics.availability_stats.no_availability }} extensions)
+   - Contact extension authors for upgrade plans
+   - Evaluate functionality alternatives
+   - Consider in-house development or forking
+{% endif %}
+
+### Recommended Upgrade Strategy
+
+1. **System Extensions** - These will be automatically updated with TYPO3 core
+2. **Low Risk Extensions** - Plan for standard upgrade process
+3. **Medium Risk Extensions** - Test thoroughly in development environment
+4. **High/Critical Risk Extensions** - Require detailed migration planning
+
+### Development Environment Setup
+
+1. Set up TYPO3 {{ target_version }} development instance
+2. Test low-risk extensions first
+3. Gradually integrate medium and high-risk extensions
+4. Plan alternative solutions for critical-risk extensions
+
+---
+
+*This report was generated by TYPO3 Upgrade Analyzer on {{ generated_at.format('Y-m-d H:i:s') }}*

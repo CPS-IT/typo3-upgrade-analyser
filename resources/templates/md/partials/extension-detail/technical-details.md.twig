@@ -1,0 +1,12 @@
+## Technical Details
+
+### Extension Files
+{% if extension_data.loc_analysis %}
+- **Total Files Analyzed:** {{ extension_data.loc_analysis.php_files }}
+- **Extension Size:** {{ extension_data.loc_analysis.total_lines|number_format }} lines
+{% endif %}
+
+### Analysis Metadata
+- **Analysis Date:** {{ generated_at.format('Y-m-d H:i:s T') }}
+- **Target TYPO3 Version:** {{ target_version }}
+- **Current Installation:** {{ installation.path }}

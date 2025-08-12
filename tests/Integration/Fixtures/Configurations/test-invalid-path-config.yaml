@@ -1,0 +1,6 @@
+analysis:
+  installationPath: /non/existent/path
+  targetVersion: "13.4"
+  resultCache:
+    enabled: false
+    ttl: 3600

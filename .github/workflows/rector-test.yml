@@ -1,0 +1,130 @@
+name: Rector Integration Test
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      rector_version:
+        description: 'Rector version to test'
+        required: false
+        default: 'latest'
+
+jobs:
+  rector-integration:
+    name: Test Rector Analyzer Integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Verify Rector installation
+        run: |
+          vendor/bin/rector --version
+          ls -la vendor/bin/rector
+
+      - name: Test Rector configuration generation
+        run: |
+          php -r "
+          require 'vendor/autoload.php';
+          use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
+          use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+          use Psr\Log\NullLogger;
+          
+          \$registry = new RectorRuleRegistry(new NullLogger());
+          \$sets = \$registry->getSetsForVersionUpgrade(
+              Version::fromString('11.5.0'),
+              Version::fromString('12.4.0')
+          );
+          echo 'Rector sets generated: ' . count(\$sets) . PHP_EOL;
+          foreach (\$sets as \$set) {
+              echo '- ' . \$set . PHP_EOL;
+          }
+          "
+
+      - name: Test Rector analyzer on fixtures
+        run: |
+          if [ -d "tests/Fixtures/test_extension" ]; then
+            echo "Testing Rector analyzer with test fixtures"
+            ./bin/typo3-analyzer analyze tests/Fixtures/test_extension --target-version=12.4 --format=json || echo "Analysis completed"
+          else
+            echo "No test fixtures found, skipping integration test"
+          fi
+
+      - name: Test Rector dry-run on project itself
+        run: |
+          vendor/bin/rector process src/ --dry-run --no-progress-bar || echo "Rector dry-run completed"
+
+  rector-matrix-test:
+    name: "Test Multiple TYPO3 Versions - ${{ matrix.from_version }} → ${{ matrix.to_version }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - from_version: "11.5.0"
+            to_version: "12.4.0"
+          - from_version: "12.4.0"
+            to_version: "13.4.0"
+          - from_version: "11.5.0"
+            to_version: "13.4.0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Test version upgrade rules
+        run: |
+          php -r "
+          require 'vendor/autoload.php';
+          use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
+          use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+          use Psr\Log\NullLogger;
+          
+          \$registry = new RectorRuleRegistry(new NullLogger());
+          \$sets = \$registry->getSetsForVersionUpgrade(
+              Version::fromString('${{ matrix.from_version }}'),
+              Version::fromString('${{ matrix.to_version }}')
+          );
+          echo 'Testing upgrade ${{ matrix.from_version }} → ${{ matrix.to_version }}' . PHP_EOL;
+          echo 'Generated ' . count(\$sets) . ' Rector rule sets' . PHP_EOL;
+          if (empty(\$sets)) {
+              echo 'WARNING: No rule sets generated for this version combination' . PHP_EOL;
+              exit(1);
+          }
+          "

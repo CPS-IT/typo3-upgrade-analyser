@@ -1,0 +1,73 @@
+## TYPO3 Rector Analysis {#typo3-rector-analysis}
+
+{% if extension_data.rector_analysis %}
+{% set rector_analysis = extension_data.rector_analysis %}
+
+### Code Quality Assessment
+- **Processed Files:** {{ rector_analysis.processed_files }}
+- **Total Files Analyzed:** {{ rector_analysis.total_files }}
+- **Affected Files:** {{ rector_analysis.affected_files }}
+- **File Impact Percentage:** {{ "%.1f"|format(rector_analysis.file_impact_percentage) }}%
+
+### Findings Summary
+- **Total Findings:** {{ rector_analysis.total_findings }}
+- **Breaking Changes:** {{ rector_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }}
+- **Deprecated Patterns:** {{ rector_analysis.has_deprecations ? '📋 Yes' : '✅ No' }}
+
+### Findings by Severity
+{% if rector_analysis.findings_by_severity %}
+{% for severity, count in rector_analysis.findings_by_severity %}
+{% if count > 0 %}
+- **{{ severity|upper }}:** {{ count }} findings
+{% endif %}
+{% endfor %}
+{% else %}
+No severity breakdown available.
+{% endif %}
+
+### Top Affected Files
+{% if rector_analysis.top_affected_files %}
+{% for file, count in rector_analysis.top_affected_files %}
+- **{{ file }}:** {{ count }} findings
+{% endfor %}
+{% else %}
+No detailed file impact data available.
+{% endif %}
+
+### Most Triggered Rules
+{% if rector_analysis.top_rules_triggered %}
+{% for rule, count in rector_analysis.top_rules_triggered %}
+- **{{ rule }}:** {{ count }} occurrences
+{% endfor %}
+{% else %}
+No rule-specific data available.
+{% endif %}
+
+### Upgrade Assessment
+- **Upgrade Readiness Score:** {{ "%.1f"|format(rector_analysis.upgrade_readiness_score) }}/10.0
+- **Complexity Score:** {{ "%.1f"|format(rector_analysis.complexity_score) }}/10.0
+- **Estimated Fix Time:** {{ "%.1f"|format(rector_analysis.estimated_fix_time_hours) }} hours
+
+### Technical Details
+- **Analysis Duration:** {{ "%.2f"|format(rector_analysis.execution_time) }} seconds
+- **Rector Version:** {{ rector_analysis.rector_version }}
+
+### Summary
+{{ rector_analysis.summary_text ?: 'No summary available.' }}
+
+### Recommendations
+{% if rector_analysis.recommendations %}
+{% for recommendation in rector_analysis.recommendations %}
+- {{ recommendation }}
+{% endfor %}
+{% else %}
+No specific Rector recommendations available.
+{% endif %}
+
+{% else %}
+❌ **TYPO3 Rector analysis was not performed for this extension.** This may occur when:
+- Rector binary is not available
+- No PHP files were found to analyze
+- The extension path could not be resolved
+- Analysis failed due to configuration issues
+{% endif %}

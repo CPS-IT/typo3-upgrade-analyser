@@ -1,0 +1,176 @@
+{
+  "extensions": {
+    "georgringer/news": {
+      "extension_key": "news",
+      "composer_name": "georgringer/news",
+      "github_url": "https://github.com/georgringer/news",
+      "description": "Versatile news extension for TYPO3",
+      "is_active": true,
+      "has_ter_versions": true,
+      "has_packagist_versions": true,
+      "expected_tags_count": 50,
+      "expected_typo3_12_compatibility": true,
+      "test_scenarios": [
+        "active_repository",
+        "semantic_versioning",
+        "ter_and_packagist_availability",
+        "typo3_12_compatibility"
+      ]
+    },
+    "friendsoftypo3/extension-builder": {
+      "extension_key": "extensionbuilder_typo3",
+      "composer_name": "friendsoftypo3/extension-builder",
+      "github_url": "https://github.com/FriendsOfTYPO3/extension_builder",
+      "description": "Extension builder for TYPO3 (successor extension)",
+      "is_active": true,
+      "has_ter_versions": true,
+      "has_packagist_versions": true,
+      "expected_tags_count": 30,
+      "expected_typo3_12_compatibility": true,
+      "test_scenarios": [
+        "community_maintained",
+        "migration_to_packagist",
+        "active_development"
+      ]
+    },
+    "typo3-extensions/gridelements": {
+      "extension_key": "gridelements",
+      "composer_name": "typo3-extensions/gridelements",
+      "github_url": "https://github.com/TYPO3-extensions/gridelements",
+      "description": "Gridelements extension (archived)",
+      "is_active": false,
+      "is_archived": true,
+      "has_ter_versions": true,
+      "has_packagist_versions": false,
+      "expected_tags_count": 50,
+      "expected_typo3_12_compatibility": false,
+      "test_scenarios": [
+        "archived_repository",
+        "legacy_extension",
+        "no_typo3_12_support",
+        "ter_only_availability"
+      ]
+    },
+    "bk2k/bootstrap-package": {
+      "extension_key": "bootstrap_package",
+      "composer_name": "bk2k/bootstrap-package",
+      "github_url": "https://github.com/benjaminkott/bootstrap_package",
+      "description": "Bootstrap Package for TYPO3",
+      "is_active": true,
+      "has_ter_versions": true,
+      "has_packagist_versions": true,
+      "expected_tags_count": 100,
+      "expected_typo3_12_compatibility": true,
+      "test_scenarios": [
+        "popular_extension",
+        "frequent_releases",
+        "multiple_typo3_versions"
+      ]
+    },
+    "typo3/cms-core": {
+      "extension_key": "core",
+      "composer_name": "typo3/cms-core",
+      "github_url": "https://github.com/TYPO3/typo3",
+      "description": "TYPO3 Core System Extension",
+      "is_active": true,
+      "is_system_extension": true,
+      "has_ter_versions": false,
+      "has_packagist_versions": true,
+      "expected_tags_count": 200,
+      "expected_typo3_12_compatibility": true,
+      "test_scenarios": [
+        "system_extension",
+        "packagist_only",
+        "official_typo3"
+      ]
+    },
+    "dmitryd/typo3-realurl": {
+      "extension_key": "realurl",
+      "composer_name": "dmitryd/typo3-realurl",
+      "github_url": "https://github.com/dmitryd/typo3-realurl",
+      "description": "RealURL extension (archived/deprecated)",
+      "is_active": false,
+      "is_archived": true,
+      "has_ter_versions": true,
+      "has_packagist_versions": true,
+      "expected_tags_count": 40,
+      "expected_typo3_12_compatibility": false,
+      "expected_typo3_8_compatibility": true,
+      "test_scenarios": [
+        "archived_extension",
+        "deprecated_functionality",
+        "no_typo3_12_support",
+        "packagist_available_but_legacy"
+      ]
+    },
+    "local/test-extension": {
+      "extension_key": "test_extension",
+      "composer_name": null,
+      "github_url": null,
+      "description": "Local test extension without public repository",
+      "is_active": false,
+      "is_local_extension": true,
+      "has_ter_versions": false,
+      "has_packagist_versions": false,
+      "expected_tags_count": 0,
+      "expected_typo3_12_compatibility": false,
+      "test_scenarios": [
+        "local_extension",
+        "no_public_availability",
+        "migration_needed"
+      ]
+    }
+  },
+  "test_configurations": {
+    "typo3_versions": [
+      "11.5.0",
+      "12.4.0",
+      "13.0.0"
+    ],
+    "api_endpoints": {
+      "ter_api": "https://extensions.typo3.org/api/v1",
+      "packagist_api": "https://packagist.org/packages",
+      "github_api": "https://api.github.com"
+    },
+    "rate_limits": {
+      "github_authenticated": 5000,
+      "github_unauthenticated": 60,
+      "ter_api": 1000,
+      "packagist_api": 100
+    },
+    "expected_response_times": {
+      "github_api_max": 3.0,
+      "ter_api_max": 5.0,
+      "packagist_api_max": 3.0
+    }
+  },
+  "mock_responses": {
+    "github_repository_not_found": {
+      "status_code": 404,
+      "response": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest"
+      }
+    },
+    "github_rate_limit_exceeded": {
+      "status_code": 403,
+      "response": {
+        "message": "API rate limit exceeded",
+        "documentation_url": "https://docs.github.com/rest"
+      }
+    },
+    "ter_extension_not_found": {
+      "status_code": 404,
+      "response": {
+        "error": "Extension not found"
+      }
+    },
+    "packagist_package_not_found": {
+      "status_code": 404,
+      "response": {
+        "status": "error",
+        "message": "Package not found"
+      }
+    }
+  }
+}

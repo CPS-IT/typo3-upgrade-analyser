@@ -1,0 +1,159 @@
+name: API Integration Tests
+
+on:
+  schedule:
+    # Run API tests every Sunday at 3:00 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of API tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - github-api
+          - ter-api
+          - real-world
+
+env:
+  # Enable real API calls for integration tests
+  ENABLE_REAL_API_CALLS: true
+
+jobs:
+  github-api-tests:
+    name: GitHub API Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'github-api' || github.event.inputs.test_type == 'all' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run GitHub API tests
+        run: composer test:github-api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ter-api-tests:
+    name: TYPO3 Extension Repository API Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'ter-api' || github.event.inputs.test_type == 'all' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run TER API tests
+        run: composer test:ter-api
+
+  real-world-tests:
+    name: Real World Scenario Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'real-world' || github.event.inputs.test_type == 'all' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run real-world tests
+        run: composer test:real-world
+
+  all-integration-tests:
+    name: All Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, intl, zip, json, iconv, gd
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Run all integration tests
+        run: composer test:all-integration
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: |
+            var/logs/
+            var/reports/
+          retention-days: 7
+
+  api-health-check:
+    name: API Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check GitHub API
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/zen)
+          if [ $response -eq 200 ]; then
+            echo "✅ GitHub API is accessible"
+          else
+            echo "❌ GitHub API returned status code: $response"
+            exit 1
+          fi
+
+      - name: Check Packagist API
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://packagist.org/packages/list.json)
+          if [ $response -eq 200 ]; then
+            echo "✅ Packagist API is accessible"
+          else
+            echo "❌ Packagist API returned status code: $response"
+            exit 1
+          fi
+
+      - name: Check TYPO3 Extension Repository API
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" "https://extensions.typo3.org/ajax/extension/list")
+          if [ $response -eq 200 ]; then
+            echo "✅ TYPO3 Extension Repository API is accessible"
+          else
+            echo "❌ TER API returned status code: $response"
+            exit 1
+          fi
