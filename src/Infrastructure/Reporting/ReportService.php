@@ -54,13 +54,16 @@ class ReportService
         $reportResults = [];
 
         // Group results by type
+        $this->logger->debug('Grouping analysis results by type', ['result_count' => \count($results)]);
         $groupedResults = $this->groupResultsByType($results);
 
         // Generate context for templates
+        $this->logger->debug('Building report context for templates');
         $context = $this->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
 
         foreach ($formats as $format) {
             try {
+                $this->logger->debug('Generating report for format', ['format' => $format]);
                 $reportResult = $this->generateFormatReport($format, $context, $outputDirectory);
                 $reportResults[] = $reportResult;
 
@@ -379,7 +382,9 @@ class ReportService
         $result->setValue('format', $format);
 
         // Generate main report
+        $this->logger->debug('Generating main report', ['format' => $format]);
         $mainReportFiles = $this->generateMainReport($format, $context, $outputPath);
+        $this->logger->debug('Main report generated successfully', ['files_count' => \count($mainReportFiles)]);
 
         // Generate individual extension reports
         $extensionReportFiles = $this->generateExtensionReports($format, $context, $outputPath);
