@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 /**
  * Collection class for categorized Rector findings with structured access methods.
  */
-class RectorFindingsCollection
+readonly class RectorFindingsCollection implements \JsonSerializable
 {
     /**
      * @param array<RectorFinding>                $breakingChanges
@@ -26,12 +26,12 @@ class RectorFindingsCollection
      * @param array<string, array<RectorFinding>> $byRule
      */
     public function __construct(
-        private readonly array $breakingChanges,
-        private readonly array $deprecations,
-        private readonly array $improvements,
-        private readonly array $bySeverity,
-        private readonly array $byFile,
-        private readonly array $byRule,
+        private array $breakingChanges,
+        private array $deprecations,
+        private array $improvements,
+        private array $bySeverity,
+        private array $byFile,
+        private array $byRule,
     ) {
     }
 
@@ -245,5 +245,30 @@ class RectorFindingsCollection
         }
 
         return $counts;
+    }
+
+    /**
+     * Provide safe JSON serialization avoiding object duplication.
+     *
+     * Returns only summary data and counts instead of duplicating objects
+     * across multiple grouping arrays, which prevents memory issues during
+     * template rendering.
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'total_count' => $this->getTotalCount(),
+            'breaking_changes_count' => \count($this->breakingChanges),
+            'deprecations_count' => \count($this->deprecations),
+            'improvements_count' => \count($this->improvements),
+            'severity_counts' => $this->getSeverityCounts(),
+            'file_counts' => $this->getFileCounts(),
+            'rule_counts' => $this->getRuleCounts(),
+            'type_counts' => $this->getTypeCounts(),
+            'affected_file_count' => $this->getAffectedFileCount(),
+            'triggered_rule_count' => $this->getTriggeredRuleCount(),
+            'top_affected_files' => $this->getTopAffectedFiles(10),
+            'top_triggered_rules' => $this->getTopTriggeredRules(10),
+        ];
     }
 }

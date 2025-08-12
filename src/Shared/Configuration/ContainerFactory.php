@@ -82,14 +82,36 @@ class ContainerFactory
             ->setPublic(true);
 
         // Configuration parameters
-        $container->setParameter('app.root_dir', \dirname(__DIR__, 3));
+        $sourceDir = \dirname(__DIR__, 3);
+
+        // For deployed packages, find the actual package directory
+        $currentWorkingDir = getcwd() ?: $sourceDir;
+
+        // Check if we're running from a Composer installation by looking for our package
+        $packageDir = null;
+        if ($currentWorkingDir !== $sourceDir) {
+            // Look for the installed package directory
+            $vendorPackageDir = $currentWorkingDir . '/vendor/cpsit/typo3-upgrade-analyser';
+            if (is_dir($vendorPackageDir)) {
+                $packageDir = $vendorPackageDir;
+            }
+        }
+
+        // Use package directory if available, otherwise source directory
+        $actualSourceDir = $packageDir ?: $sourceDir;
+        $installDir = $packageDir ? $currentWorkingDir : $sourceDir;
+
+        $container->setParameter('app.root_dir', $actualSourceDir);
+        $container->setParameter('app.install_dir', $installDir);
         $container->setParameter('app.config_dir', '%app.root_dir%/config');
         $container->setParameter('app.resources_dir', '%app.root_dir%/resources');
     }
 
     private static function loadServiceDefinitions(ContainerBuilder $container): void
     {
-        $configDir = \dirname(__DIR__, 3) . '/config';
+        $rootDir = $container->getParameter('app.root_dir');
+        \assert(\is_string($rootDir), 'app.root_dir parameter must be a string');
+        $configDir = $rootDir . '/config';
 
         if (file_exists($configDir . '/services.yaml')) {
             $loader = new YamlFileLoader($container, new FileLocator($configDir));

@@ -335,6 +335,86 @@ class RectorFindingsCollectionTest extends TestCase
         $this->assertEmpty($typeCounts);
     }
 
+    public function testJsonSerialize(): void
+    {
+        $serialized = $this->collection->jsonSerialize();
+
+        $expected = [
+            'total_count' => 4,
+            'breaking_changes_count' => 1,
+            'deprecations_count' => 1,
+            'improvements_count' => 2,
+            'severity_counts' => [
+                'critical' => 1,
+                'warning' => 1,
+                'info' => 1,
+                'suggestion' => 1,
+            ],
+            'file_counts' => [
+                'src/Test1.php' => 2,
+                'src/Test2.php' => 2,
+            ],
+            'rule_counts' => [
+                'Ssch\\TYPO3Rector\\Remove\\RemoveRule' => 1,
+                'Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedRule' => 1,
+                'Ssch\\TYPO3Rector\\CodeQuality\\QualityRule' => 1,
+                'Ssch\\TYPO3Rector\\General\\GeneralRule' => 1,
+            ],
+            'type_counts' => [
+                'breaking_change' => 1,
+                'deprecation' => 1,
+                'best_practice' => 2,
+            ],
+            'affected_file_count' => 2,
+            'triggered_rule_count' => 4,
+            'top_affected_files' => [
+                'src/Test1.php' => 2,
+                'src/Test2.php' => 2,
+            ],
+            'top_triggered_rules' => [
+                'Ssch\\TYPO3Rector\\Remove\\RemoveRule' => 1,
+                'Ssch\\TYPO3Rector\\Rector\\v10\\v0\\DeprecatedRule' => 1,
+                'Ssch\\TYPO3Rector\\CodeQuality\\QualityRule' => 1,
+                'Ssch\\TYPO3Rector\\General\\GeneralRule' => 1,
+            ],
+        ];
+
+        $this->assertEquals($expected, $serialized);
+
+        // Verify it can be JSON encoded without issues
+        $json = json_encode($serialized);
+        $this->assertIsString($json);
+        $this->assertJson($json);
+    }
+
+    public function testJsonSerializeWithEmptyCollection(): void
+    {
+        $emptyCollection = new RectorFindingsCollection([], [], [], [], [], []);
+        $serialized = $emptyCollection->jsonSerialize();
+
+        $expected = [
+            'total_count' => 0,
+            'breaking_changes_count' => 0,
+            'deprecations_count' => 0,
+            'improvements_count' => 0,
+            'severity_counts' => [],
+            'file_counts' => [],
+            'rule_counts' => [],
+            'type_counts' => [],
+            'affected_file_count' => 0,
+            'triggered_rule_count' => 0,
+            'top_affected_files' => [],
+            'top_triggered_rules' => [],
+        ];
+
+        $this->assertEquals($expected, $serialized);
+
+        // Verify empty collection can also be JSON encoded
+        $json = json_encode($serialized);
+        $this->assertIsString($json);
+        $this->assertJson($json);
+    }
+
     public function testEmptyCollectionMethods(): void
     {
         $emptyCollection = new RectorFindingsCollection([], [], [], [], [], []);

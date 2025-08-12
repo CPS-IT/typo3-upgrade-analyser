@@ -1,6 +1,6 @@
 parameters:
   # Rector configuration parameters
-  rector.binary_path: '%app.root_dir%/vendor/bin/rector'  # Default path, should be configurable
+  rector.binary_path: '%app.install_dir%/vendor/bin/rector'  # Use installation directory for binary
   rector.timeout_seconds: 300
 
 services:

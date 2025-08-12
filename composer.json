@@ -9,11 +9,12 @@
     }
   ],
   "require": {
-    "php": "^8.1",
+    "php": "^8.3",
     "composer/semver": "^3.4",
     "guzzlehttp/guzzle": "^7.8",
     "monolog/monolog": "^3.5",
     "nikic/php-parser": "^4.18 || ^5.0",
+    "ssch/typo3-rector": "^3.6",
     "symfony/config": "^6.4 || ^7.0",
     "symfony/console": "^6.4 || ^7.0",
     "symfony/dependency-injection": "^6.4 || ^7.0",
@@ -21,15 +22,15 @@
     "symfony/filesystem": "^6.4 || ^7.0",
     "symfony/finder": "^6.4 || ^7.0",
     "symfony/http-client": "^6.4 || ^7.0",
+    "symfony/process": "^7.3",
     "symfony/yaml": "^6.4 || ^7.0",
-    "ssch/typo3-rector": "^3.6",
     "twig/twig": "^3.8"
   },
   "require-dev": {
-    "ergebnis/composer-normalize": "^2.47",
     "armin/editorconfig-cli": "^2.1",
-    "phpstan/phpstan": "^2.0",
+    "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
+    "phpstan/phpstan": "^2.0",
     "phpunit/phpunit": "^10.5",
     "roave/security-advisories": "dev-latest"
   },
