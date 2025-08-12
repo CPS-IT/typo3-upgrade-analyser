@@ -22,17 +22,16 @@
     "symfony/finder": "^6.4 || ^7.0",
     "symfony/http-client": "^6.4 || ^7.0",
     "symfony/yaml": "^6.4 || ^7.0",
+    "ssch/typo3-rector": "^3.6",
     "twig/twig": "^3.8"
   },
   "require-dev": {
-    "armin/editorconfig-cli": "^2.1",
     "ergebnis/composer-normalize": "^2.47",
-    "friendsofphp/php-cs-fixer": "^3.45",
+    "armin/editorconfig-cli": "^2.1",
     "phpstan/phpstan": "^2.0",
+    "friendsofphp/php-cs-fixer": "^3.45",
     "phpunit/phpunit": "^10.5",
-    "roave/security-advisories": "dev-latest",
-    "ssch/typo3-rector": "^3.6",
-    "symfony/var-dumper": "^6.4 || ^7.0"
+    "roave/security-advisories": "dev-latest"
   },
   "autoload": {
     "psr-4": {
