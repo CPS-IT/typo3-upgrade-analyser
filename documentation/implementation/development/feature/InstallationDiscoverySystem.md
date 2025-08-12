@@ -397,68 +397,6 @@ class InstallationDiscoveryService
 }
 ```
 
-#### Commands Integration
-```php
-// Enhanced existing commands to use discovery system
-
-// src/Application/Command/ValidateCommand.php (Enhanced)
-class ValidateCommand extends Command
-{
-    public function __construct(
-        private readonly InstallationDiscoveryService $discoveryService,
-        private readonly InstallationValidator $validator
-    );
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $path = $input->getArgument('path');
-
-        try {
-            $installation = $this->discoveryService->discoverFromPath($path);
-            $validationResult = $this->validator->validate($installation);
-
-            $this->displayValidationResults($output, $validationResult);
-
-            return $validationResult->isValid() ? 0 : 1;
-        } catch (InstallationNotFoundException $e) {
-            $output->writeln('<error>No TYPO3 installation found at: ' . $path . '</error>');
-            return 2;
-        }
-    }
-}
-
-// src/Application/Command/DiscoverCommand.php (New)
-class DiscoverCommand extends Command
-{
-    protected function configure(): void
-    {
-        $this->setName('discover')
-            ->setDescription('Discover TYPO3 installations')
-            ->addArgument('path', InputArgument::REQUIRED, 'Path to search for installations')
-            ->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Search recursively')
-            ->addOption('max-depth', null, InputOption::VALUE_REQUIRED, 'Maximum search depth', 3)
-            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (table, json)', 'table');
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $path = $input->getArgument('path');
-        $recursive = $input->getOption('recursive');
-
-        if ($recursive) {
-            $installations = $this->discoveryService->discoverRecursive($path);
-        } else {
-            $installation = $this->discoveryService->discoverFromPath($path);
-            $installations = $installation ? [$installation] : [];
-        }
-
-        $this->displayInstallations($output, $installations, $input->getOption('format'));
-
-        return 0;
-    }
-}
-```
-
 ## Testing Strategy
 
 ### Unit Testing
