@@ -1,3 +1,6 @@
+2025-08-12         [RELEASE] Release of typo3-upgrade-analyser 0.1.2 (Dirk Wenzel)
+2025-08-12 6484e90 [BUGFIX] Rector binary path corrected, segmentation fault fixed (Dirk Wenzel)
+
 2025-08-12         [RELEASE] Release of typo3-upgrade-analyser 0.1.1 (Dirk Wenzel)
 2025-08-12 29be5be [BUGFIX] require ssch/typo3-rector in require section We use it in our analyzers. (Dirk Wenzel)
 
