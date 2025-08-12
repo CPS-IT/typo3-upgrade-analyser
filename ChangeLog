@@ -1,3 +1,6 @@
+2025-08-12         [RELEASE] Release of typo3-upgrade-analyser 0.1.1 (Dirk Wenzel)
+2025-08-12 29be5be [BUGFIX] require ssch/typo3-rector in require section We use it in our analyzers. (Dirk Wenzel)
+
 2025-08-12         [RELEASE] Release of typo3-upgrade-analyser 0.1.0 (Dirk Wenzel)
 2025-08-12 6261191 [TASK] abstract test class renamed (again) (Dirk Wenzel)
 2025-08-12 8d7c24b [TASK] abstract test class rename to prevent warning (Dirk Wenzel)
