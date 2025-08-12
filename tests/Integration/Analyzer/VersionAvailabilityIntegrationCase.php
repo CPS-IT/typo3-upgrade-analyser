@@ -21,7 +21,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
 
 /**
  * Integration tests for complete version availability analysis workflow.
@@ -29,7 +29,7 @@ use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
  * @group integration
  * @group real-world
  */
-class VersionAvailabilityIntegrationTest extends AbstractIntegrationTest
+class VersionAvailabilityIntegrationCase extends AbstractIntegrationCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
     private array $testExtensions;

@@ -20,10 +20,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * @group integration
  */
-class ConfigurationValidationTest extends AbstractIntegrationTest
+class ConfigurationValidationCase extends AbstractIntegrationCase
 {
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::setUp
+     * @coversNothing
      */
     public function testEnvironmentConfigurationIsLoaded(): void
     {
@@ -37,7 +37,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::setUp
+     * @coversNothing
      */
     public function testCacheDirectoryExists(): void
     {
@@ -46,7 +46,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::loadTestData
+     * @coversNothing
      */
     public function testTestDataCanBeLoaded(): void
     {
@@ -71,7 +71,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createTestExtension
+     * @coversNothing
      */
     public function testTestExtensionCreation(): void
     {
@@ -85,7 +85,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createTestAnalysisContext
+     * @coversNothing
      */
     public function testAnalysisContextCreation(): void
     {
@@ -96,7 +96,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createLogger
+     * @coversNothing
      */
     public function testLoggerCreation(): void
     {
@@ -107,7 +107,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
+     * @coversNothing
      */
     public function testGitHubClientCreation(): void
     {
@@ -117,7 +117,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::cacheApiResponse
+     * @coversNothing
      */
     public function testApiResponseCaching(): void
     {
@@ -134,7 +134,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getTestDataPath
+     * @coversNothing
      */
     public function testTestDataPath(): void
     {
@@ -146,8 +146,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::requiresRealApiCalls
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::requiresGitHubToken
+     * @coversNothing
      */
     public function testSkipConditions(): void
     {
@@ -164,8 +163,7 @@ class ConfigurationValidationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertResponseTimeAcceptable
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertRateLimitRespected
+     * @coversNothing
      */
     public function testAssertionHelpers(): void
     {

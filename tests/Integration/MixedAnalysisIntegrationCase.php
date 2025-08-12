@@ -27,7 +27,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
  * @group integration
  * @group real-world
  */
-class MixedAnalysisIntegrationTest extends AbstractIntegrationTest
+class MixedAnalysisIntegrationCase extends AbstractIntegrationCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
     private array $testExtensions;

@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
 use Exception;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
@@ -30,7 +30,7 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
  * @group ter-api
  * @group real-world
  */
-class TerApiIntegrationTest extends AbstractIntegrationTest
+class TerApiIntegrationCase extends AbstractIntegrationCase
 {
     private TerApiClient $terApiClient;
     private array $testExtensions;

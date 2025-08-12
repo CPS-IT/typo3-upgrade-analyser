@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
 
 /**
  * Integration tests for Git repository analysis with real API calls.
@@ -28,7 +28,7 @@ use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
  * @group github-api
  * @group real-world
  */
-class GitRepositoryIntegrationTest extends AbstractIntegrationTest
+class GitRepositoryIntegrationTest extends AbstractIntegrationCase
 {
     private GitHubClient $gitHubClient;
     private GitProviderFactory $providerFactory;
@@ -371,7 +371,7 @@ class GitRepositoryIntegrationTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
+     * @coversNothing
      */
     public function testRateLimitHandling(): void
     {

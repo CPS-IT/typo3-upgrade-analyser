@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInte
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
-use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest;
+use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationCase;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -34,7 +34,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @covers \CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory
  */
 #[Group('integration')]
-class ServiceIntegrationTest extends AbstractIntegrationTest
+class ServiceIntegrationTest extends AbstractIntegrationCase
 {
     private ExtensionDiscoveryServiceInterface $extensionDiscoveryService;
     private InstallationDiscoveryServiceInterface $installationDiscoveryService;

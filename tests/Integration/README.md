@@ -96,7 +96,7 @@ Tests use real repository data defined in `Fixtures/known_extensions.json`:
 ## Contributing
 
 When adding new integration tests:
-1. Use the `AbstractIntegrationTest` base class
+1. Use the `AbstractIntegrationCase` base class
 2. Call `$this->requiresRealApiCalls()` in setUp()
 3. Handle rate limiting gracefully with try-catch blocks
 4. Use caching for expensive API calls when appropriate

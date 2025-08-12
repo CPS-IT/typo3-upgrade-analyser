@@ -25,7 +25,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * @group integration
  */
-abstract class AbstractIntegrationTest extends TestCase
+abstract class AbstractIntegrationCase extends TestCase
 {
     protected HttpClientInterface $httpClient;
     protected bool $enableRealApiCalls;

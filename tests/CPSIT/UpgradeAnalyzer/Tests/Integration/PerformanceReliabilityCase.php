@@ -27,7 +27,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
  * @group performance
  * @group real-world
  */
-class PerformanceReliabilityTest extends AbstractIntegrationTest
+class PerformanceReliabilityCase extends AbstractIntegrationCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
     private array $testExtensions;
@@ -49,8 +49,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     /**
      * @group performance
      *
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getGitHubToken
+     * @coversNothing
      */
     public function testApiResponseTimes(): void
     {
@@ -119,8 +118,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     /**
      * @group performance
      *
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
+     * @coversNothing
      */
     public function testBulkExtensionAnalysisPerformance(): void
     {
@@ -158,8 +156,7 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createAuthenticatedGitHubClient
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::getGitHubToken
+     * @coversNothing
      */
     public function testApiRateLimitHandling(): void
     {
@@ -208,7 +205,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::createLogger
      */
     public function testNetworkTimeoutHandling(): void
     {
@@ -236,7 +232,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /***
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
     public function testConcurrentAnalysisStability(): void
     {
@@ -295,7 +290,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
     public function testMemoryLeakDetection(): void
     {
@@ -326,7 +320,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
 
     /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
     public function testApiErrorRecovery(): void
     {
@@ -354,7 +347,6 @@ class PerformanceReliabilityTest extends AbstractIntegrationTest
      * @group performance
      *
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTest::assertAnalysisResultValid
      */
     public function testLargeDatasetHandling(): void
     {
