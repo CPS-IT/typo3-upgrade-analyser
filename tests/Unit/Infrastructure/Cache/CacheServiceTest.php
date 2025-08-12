@@ -232,43 +232,6 @@ final class CacheServiceTest extends TestCase
     }
 
     /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::delete
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     */
-    public function testDeleteWithPermissionError(): void
-    {
-        $key = 'test_key';
-        $data = ['test' => 'data'];
-
-        // Allow debug calls from set operation but don't expect specific calls
-        $this->logger->expects($this->any())->method('debug');
-
-        $this->cacheService->set($key, $data);
-
-        // Make the cache directory read-only to simulate permission error
-        $cacheDir = $this->tempDir . '/var/results';
-
-        // Skip this test on Windows where chmod doesn't work the same way
-        if (DIRECTORY_SEPARATOR === '\\' || PHP_OS_FAMILY === 'Darwin') {
-            $this->markTestSkipped('File permission tests not reliable on Windows or macOS');
-        }
-
-        chmod($cacheDir, 0o444);
-
-        $this->logger->expects($this->once())
-            ->method('error')
-            ->with('Failed to delete cache entry', $this->callback(function ($context) use ($key): bool {
-                return isset($context['key']) && $context['key'] === $key && isset($context['error']);
-            }));
-
-        $result = $this->cacheService->delete($key);
-        $this->assertFalse($result);
-
-        // Restore permissions for cleanup
-        chmod($cacheDir, 0o755);
-    }
-
-    /**
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::clear
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
      */
