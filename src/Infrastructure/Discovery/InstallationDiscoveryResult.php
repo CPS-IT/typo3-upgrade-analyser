@@ -201,7 +201,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     {
         if (!$this->isSuccessful) {
             $attemptedCount = \count($this->attemptedStrategies);
-            $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt): mixed => $attempt['supported'] ?? false));
+            $supportedCount = \count(array_filter($this->attemptedStrategies, fn (array $attempt): mixed => $attempt['supported'] ?? false));
 
             return \sprintf(
                 'Installation discovery failed: %s (attempted %d strategies, %d supported)',
@@ -247,7 +247,7 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
         $stats = [
             'successful' => $this->isSuccessful,
             'attempted_strategies' => \count($this->attemptedStrategies),
-            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn ($attempt): mixed => $attempt['supported'] ?? false)),
+            'supported_strategies' => \count(array_filter($this->attemptedStrategies, fn (array $attempt): mixed => $attempt['supported'] ?? false)),
             'validation_issues' => \count($this->validationIssues),
             'blocking_issues' => \count(array_filter($this->validationIssues, fn ($issue): bool => $issue->isBlockingAnalysis())),
         ];

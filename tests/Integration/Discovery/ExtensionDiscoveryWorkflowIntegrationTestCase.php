@@ -408,7 +408,7 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
             $this->assertNotEmpty($metadata);
 
             // Should indicate which methods failed
-            $failedMethods = array_filter($metadata, fn ($m): bool => !$m['successful']);
+            $failedMethods = array_filter($metadata, fn (array $m): bool => !$m['successful']);
             $this->assertNotEmpty($failedMethods, 'Should report failed discovery methods');
         } else {
             // If failed, should provide clear error message

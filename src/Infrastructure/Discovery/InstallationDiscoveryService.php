@@ -196,7 +196,7 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn ($attempt): bool => $attempt['supported']);
+        $supportedStrategies = array_filter($attemptedStrategies, fn (array $attempt): bool => $attempt['supported']);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
             : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
