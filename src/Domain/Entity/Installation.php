@@ -22,7 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 /**
  * Represents a TYPO3 installation to be analyzed.
  */
-final class Installation implements SerializableInterface
+final class Installation implements SerializableInterface, \JsonSerializable
 {
     private array $extensions = [];
     private array $configuration = [];
@@ -450,6 +450,18 @@ final class Installation implements SerializableInterface
                 fn (ConfigurationMetadata $meta): string => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
                 $this->configurationMetadata,
             ),
+        ];
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'path' => $this->path,
+            'version' => $this->version->toString(),
+            'type' => $this->type,
+            'is_valid' => $this->isValid,
+            'extensions_count' => count($this->extensions),
+            'has_configuration' => !empty($this->configuration),
         ];
     }
 }
