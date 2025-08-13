@@ -17,16 +17,13 @@ use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
 use Monolog\Logger;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/**
- * Test case for the ContainerFactory.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory
- */
+#[CoversClass(ContainerFactory::class)]
 class ContainerFactoryTest extends TestCase
 {
     private static ContainerInterface $sharedContainer;

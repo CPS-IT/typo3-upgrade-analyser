@@ -15,11 +15,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Repository;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler
- */
+#[CoversClass(RepositoryUrlHandler::class)]
 class RepositoryUrlHandlerTest extends TestCase
 {
     private RepositoryUrlHandler $subject;
@@ -34,9 +34,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertInstanceOf(RepositoryUrlHandlerInterface::class, $this->subject);
     }
 
-    /**
-     * @dataProvider normalizeUrlProvider
-     */
+    #[DataProvider('normalizeUrlProvider')]
     public function testNormalizeUrl(string $input, string $expected): void
     {
         $result = $this->subject->normalizeUrl($input);
@@ -44,7 +42,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function normalizeUrlProvider(): array
+    public static function normalizeUrlProvider(): array
     {
         return [
             // GitHub URLs
@@ -73,9 +71,7 @@ class RepositoryUrlHandlerTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider isGitRepositoryProvider
-     */
+    #[DataProvider('isGitRepositoryProvider')]
     public function testIsGitRepository(string $url, bool $expected): void
     {
         $result = $this->subject->isGitRepository($url);
@@ -83,7 +79,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function isGitRepositoryProvider(): array
+    public static function isGitRepositoryProvider(): array
     {
         return [
             // Git URLs
@@ -103,9 +99,7 @@ class RepositoryUrlHandlerTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider extractRepositoryPathProvider
-     */
+    #[DataProvider('extractRepositoryPathProvider')]
     public function testExtractRepositoryPath(string $url, array $expected): void
     {
         $result = $this->subject->extractRepositoryPath($url);
@@ -113,7 +107,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function extractRepositoryPathProvider(): array
+    public static function extractRepositoryPathProvider(): array
     {
         return [
             [
@@ -151,9 +145,7 @@ class RepositoryUrlHandlerTest extends TestCase
         $this->subject->extractRepositoryPath('https://github.com/user');
     }
 
-    /**
-     * @dataProvider getProviderTypeProvider
-     */
+    #[DataProvider('getProviderTypeProvider')]
     public function testGetProviderType(string $url, string $expected): void
     {
         $result = $this->subject->getProviderType($url);
@@ -161,7 +153,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function getProviderTypeProvider(): array
+    public static function getProviderTypeProvider(): array
     {
         return [
             ['https://github.com/user/repo', 'github'],
@@ -175,9 +167,7 @@ class RepositoryUrlHandlerTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider isValidRepositoryUrlProvider
-     */
+    #[DataProvider('isValidRepositoryUrlProvider')]
     public function testIsValidRepositoryUrl(string $url, bool $expected): void
     {
         $result = $this->subject->isValidRepositoryUrl($url);
@@ -185,7 +175,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function isValidRepositoryUrlProvider(): array
+    public static function isValidRepositoryUrlProvider(): array
     {
         return [
             // Valid URLs
@@ -203,9 +193,7 @@ class RepositoryUrlHandlerTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider convertToApiUrlProvider
-     */
+    #[DataProvider('convertToApiUrlProvider')]
     public function testConvertToApiUrl(string $url, string $apiType, string $expected): void
     {
         $result = $this->subject->convertToApiUrl($url, $apiType);
@@ -213,7 +201,7 @@ class RepositoryUrlHandlerTest extends TestCase
         self::assertSame($expected, $result);
     }
 
-    public function convertToApiUrlProvider(): array
+    public static function convertToApiUrlProvider(): array
     {
         return [
             // GitHub REST API

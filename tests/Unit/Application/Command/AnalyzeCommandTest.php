@@ -17,17 +17,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInter
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/**
- * Test case for the AnalyzeCommand.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand
- */
+#[CoversClass(AnalyzeCommand::class)]
 class AnalyzeCommandTest extends TestCase
 {
     private \PHPUnit\Framework\MockObject\MockObject $logger;

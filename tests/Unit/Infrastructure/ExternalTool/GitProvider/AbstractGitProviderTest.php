@@ -17,13 +17,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderExc
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\AbstractGitProvider
- */
+#[CoversClass(AbstractGitProvider::class)]
 final class AbstractGitProviderTest extends TestCase
 {
     private \PHPUnit\Framework\MockObject\MockObject $httpClient;

@@ -21,9 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests the ValidationRuleInterface contract with a mock implementation.
- *
- * @coversNothing
- */
+ * */
 final class ValidationRuleInterfaceTest extends TestCase
 {
     private Installation $testInstallation;

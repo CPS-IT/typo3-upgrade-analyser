@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode
- */
+#[CoversClass(InstallationMode::class)]
 final class InstallationModeTest extends TestCase
 {
     public function testEnumCases(): void
@@ -49,9 +49,7 @@ final class InstallationModeTest extends TestCase
         self::assertSame($expectedDescription, InstallationMode::COMPOSER->getDescription());
     }
 
-    /**
-     * @dataProvider fromValueProvider
-     */
+    #[DataProvider('fromValueProvider')]
     public function testFromValue(string $value, InstallationMode $expected): void
     {
         self::assertSame($expected, InstallationMode::from($value));
@@ -67,9 +65,7 @@ final class InstallationModeTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider tryFromValueProvider
-     */
+    #[DataProvider('tryFromValueProvider')]
     public function testTryFromValue(string $value, ?InstallationMode $expected): void
     {
         self::assertSame($expected, InstallationMode::tryFrom($value));

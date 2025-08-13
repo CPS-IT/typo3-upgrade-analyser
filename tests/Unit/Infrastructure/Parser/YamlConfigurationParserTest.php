@@ -14,15 +14,13 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * Test case for YamlConfigurationParser.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser
- */
+#[CoversClass(YamlConfigurationParser::class)]
 class YamlConfigurationParserTest extends TestCase
 {
     private MockObject&LoggerInterface $logger;
@@ -695,9 +693,7 @@ class YamlConfigurationParserTest extends TestCase
         self::assertSame(7200, $data['when@prod']['parameters']['cache.settings']['default_ttl']);
     }
 
-    /**
-     * @dataProvider typo3YamlPatternsProvider
-     */
+    #[DataProvider('typo3YamlPatternsProvider')]
     public function testLooksLikeTypo3YamlFilePatterns(string $content, bool $expectedResult): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pattern_test_') . '.yaml';
@@ -714,7 +710,7 @@ class YamlConfigurationParserTest extends TestCase
     /**
      * @return array<string, array{string, bool}>
      */
-    public function typo3YamlPatternsProvider(): array
+    public static function typo3YamlPatternsProvider(): array
     {
         return [
             'services section' => [

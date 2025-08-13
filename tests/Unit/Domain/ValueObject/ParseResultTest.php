@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test case for ParseResult value object.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult
  */
+#[CoversClass(ParseResult::class)]
 class ParseResultTest extends TestCase
 {
     private array $sampleData;
@@ -439,9 +439,7 @@ class ParseResultTest extends TestCase
         self::assertSame(['meta' => 'value'], $result->getMetadata());
     }
 
-    /**
-     * @dataProvider specialKeyPathProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('specialKeyPathProvider')]
     public function testGetValueWithSpecialKeyPaths(string $keyPath, ?string $expectedValue, bool $shouldExist): void
     {
         $data = [
@@ -467,7 +465,7 @@ class ParseResultTest extends TestCase
     /**
      * @return array<string, array{string, mixed, bool}>
      */
-    public function specialKeyPathProvider(): array
+    public static function specialKeyPathProvider(): array
     {
         return [
             'empty key' => ['', 'empty_key_value', true],

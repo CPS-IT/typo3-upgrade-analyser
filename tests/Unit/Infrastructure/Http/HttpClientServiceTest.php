@@ -15,15 +15,14 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService
- */
+#[CoversClass(HttpClientService::class)]
 class HttpClientServiceTest extends TestCase
 {
     private HttpClientService $subject;

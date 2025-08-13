@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test case for the Version value object.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version
  */
+#[CoversClass(Version::class)]
 class VersionTest extends TestCase
 {
     public function testConstructorWithBasicVersion(): void

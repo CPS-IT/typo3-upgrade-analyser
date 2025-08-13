@@ -23,15 +23,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * Test case for GitRepositoryAnalyzer.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer
- */
+#[CoversClass(GitRepositoryAnalyzer::class)]
 class GitRepositoryAnalyzerTest extends TestCase
 {
     private GitRepositoryAnalyzer $analyzer;
@@ -56,9 +53,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         );
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithGitRepositoryUrl(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -136,9 +130,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertGreaterThan(0, $result->getHealthScore());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithoutRepositoryUrl(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -150,9 +141,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithUnsupportedRepository(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -170,9 +158,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithProviderError(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -194,9 +179,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testExtractRepositoryUrlFromEmExtConf(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -255,9 +237,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertEquals('https://github.com/user/test-ext.git', $result->getRepositoryUrl());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testExtractRepositoryUrlFromPackagist(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');
@@ -290,9 +269,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertEquals('https://github.com/vendor/test-extension', $result->getRepositoryUrl());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testExtractRepositoryUrlFromPackagistFails(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');
@@ -318,9 +294,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithComposerJson(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -358,9 +331,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertEquals($composerJson, $result->getComposerJson());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testAnalyzeExtensionWithComposerJsonError(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -398,9 +368,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertNull($result->getComposerJson());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testIsGitRepositoryWithVariousUrls(): void
     {
         // Test with direct Git URL
@@ -444,9 +411,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->assertEquals('https://bitbucket.org/user/repo', $result4->getRepositoryUrl());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testExtractRepositoryUrlWithNonGitUrl(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -459,9 +423,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testExtractRepositoryUrlFromEmConfWithInvalidUrl(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'));
@@ -476,9 +437,6 @@ class GitRepositoryAnalyzerTest extends TestCase
         $this->analyzer->analyzeExtension($extension, $targetVersion);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer::analyzeExtension
-     */
     public function testPackagistClientReturnsNonGitUrl(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', Version::fromString('1.0.0'), 'local', 'vendor/test-extension');

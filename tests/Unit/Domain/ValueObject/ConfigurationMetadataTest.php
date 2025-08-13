@@ -13,13 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for ConfigurationMetadata value object.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata
- */
+#[CoversClass(ConfigurationMetadata::class)]
 class ConfigurationMetadataTest extends TestCase
 {
     private array $sampleParseStatistics;
@@ -632,9 +630,7 @@ class ConfigurationMetadataTest extends TestCase
         self::assertFalse($analysis['is_extension_configuration']);
     }
 
-    /**
-     * @dataProvider fileSizeProvider
-     */
+    #[DataProvider('fileSizeProvider')]
     public function testFormatFileSize(int $fileSize, string $expectedFormat): void
     {
         $metadata = new ConfigurationMetadata(
@@ -654,7 +650,7 @@ class ConfigurationMetadataTest extends TestCase
     /**
      * @return array<string, array{int, string}>
      */
-    public function fileSizeProvider(): array
+    public static function fileSizeProvider(): array
     {
         return [
             'bytes' => [512, '512.00 B'],

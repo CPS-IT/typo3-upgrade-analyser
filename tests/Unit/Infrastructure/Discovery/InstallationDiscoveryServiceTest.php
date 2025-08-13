@@ -24,13 +24,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationRuleInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService
- */
+#[CoversClass(InstallationDiscoveryService::class)]
 final class InstallationDiscoveryServiceTest extends TestCase
 {
     private MockObject&LoggerInterface $logger;

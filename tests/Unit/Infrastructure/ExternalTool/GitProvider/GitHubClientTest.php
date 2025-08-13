@@ -16,16 +16,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * Test case for GitHubClient.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient
- */
+#[CoversClass(GitHubClient::class)]
 class GitHubClientTest extends TestCase
 {
     private GitHubClient $client;
@@ -47,17 +44,11 @@ class GitHubClientTest extends TestCase
         );
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getName
-     */
     public function testGetName(): void
     {
         $this->assertEquals('github', $this->client->getName());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::supports
-     */
     public function testSupportsGitHubUrls(): void
     {
         $this->assertTrue($this->client->supports('https://github.com/user/repo'));
@@ -66,17 +57,11 @@ class GitHubClientTest extends TestCase
         $this->assertFalse($this->client->supports('https://bitbucket.org/user/repo'));
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::isAvailable
-     */
     public function testIsAvailable(): void
     {
         $this->assertTrue($this->client->isAvailable());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryInfo
-     */
     public function testGetRepositoryInfo(): void
     {
         // Mock URL handler to return proper repository path
@@ -132,9 +117,6 @@ class GitHubClientTest extends TestCase
         $this->assertEquals('2024-01-15T10:00:00+00:00', $metadata->getLastUpdated()->format('c'));
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getTags
-     */
     public function testGetTags(): void
     {
         // Mock URL handler to return proper repository path
@@ -188,9 +170,6 @@ class GitHubClientTest extends TestCase
         $this->assertNull($tags[1]->getCommit());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getComposerJson
-     */
     public function testGetComposerJson(): void
     {
         // Mock URL handler to return proper repository path
@@ -227,9 +206,6 @@ class GitHubClientTest extends TestCase
         $this->assertEquals('^12.4', $composerJson['require']['typo3/cms-core']);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getComposerJson
-     */
     public function testGetComposerJsonNotFound(): void
     {
         // Mock URL handler to return proper repository path
@@ -253,9 +229,6 @@ class GitHubClientTest extends TestCase
         $this->assertNull($composerJson);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::getRepositoryHealth
-     */
     public function testGetRepositoryHealth(): void
     {
         // Mock URL handler to return proper repository path - called twice (for GraphQL and REST API)
@@ -321,9 +294,6 @@ class GitHubClientTest extends TestCase
         $this->assertEquals(4, $health->getContributorCount());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient::graphqlRequest
-     */
     public function testGraphqlErrorHandling(): void
     {
         // Mock URL handler to return proper repository path
@@ -352,9 +322,6 @@ class GitHubClientTest extends TestCase
         $this->client->getRepositoryInfo('https://github.com/user/nonexistent');
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\AbstractGitProvider::extractRepositoryPath
-     */
     public function testExtractRepositoryPath(): void
     {
         $reflection = new \ReflectionClass($this->client);
@@ -374,9 +341,6 @@ class GitHubClientTest extends TestCase
         $this->assertEquals(['host' => 'github.com', 'owner' => 'user', 'name' => 'repo'], $result);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\AbstractGitProvider::extractRepositoryPath
-     */
     public function testExtractRepositoryPathInvalid(): void
     {
         $reflection = new \ReflectionClass($this->client);

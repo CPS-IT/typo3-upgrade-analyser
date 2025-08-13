@@ -27,12 +27,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Typo3RectorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 /**
  * Test case for Typo3RectorAnalyzer.
  */
+#[CoversClass(Typo3RectorAnalyzer::class)]
 class Typo3RectorAnalyzerTest extends TestCase
 {
     private Typo3RectorAnalyzer $analyzer;

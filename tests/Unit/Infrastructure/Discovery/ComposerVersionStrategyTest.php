@@ -14,12 +14,12 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy
- */
+#[CoversClass(ComposerVersionStrategy::class)]
 final class ComposerVersionStrategyTest extends TestCase
 {
     private \PHPUnit\Framework\MockObject\MockObject $logger;
@@ -473,9 +473,7 @@ final class ComposerVersionStrategyTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider versionNormalizationProvider
-     */
+    #[DataProvider('versionNormalizationProvider')]
     public function testVersionNormalization(string $inputVersion, ?string $expectedVersion): void
     {
         $lockData = [
@@ -515,9 +513,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider constraintExtractionProvider
-     */
+    #[DataProvider('constraintExtractionProvider')]
     public function testConstraintExtraction(string $constraint, ?string $expectedVersion): void
     {
         $jsonData = [
