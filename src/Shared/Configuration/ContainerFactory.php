@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Shared\Configuration;
 
+use CPSIT\UpgradeAnalyzer\Shared\Utility\ProjectRootResolver;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
@@ -50,8 +51,8 @@ class ContainerFactory
     private static function registerCoreServices(ContainerBuilder $container): void
     {
         // Logger - register single instance for both interfaces
-        $rootDir = \dirname(__DIR__, 3);
-        $logDir = $rootDir . '/var/log';
+        $projectRoot = ProjectRootResolver::findProjectRoot();
+        $logDir = $projectRoot . '/var/log';
 
         // Ensure log directory exists
         if (!is_dir($logDir)) {
@@ -84,34 +85,22 @@ class ContainerFactory
         // Configuration parameters
         $sourceDir = \dirname(__DIR__, 3);
 
-        // For deployed packages, find the actual package directory
-        $currentWorkingDir = getcwd() ?: $sourceDir;
+        // Set both project root (for working directories) and source dir (for templates/config)
+        $container->setParameter('app.project_root', $projectRoot);
+        $container->setParameter('app.source_dir', $sourceDir);
+        $container->setParameter('app.config_dir', '%app.source_dir%/config');
+        $container->setParameter('app.resources_dir', '%app.source_dir%/resources');
 
-        // Check if we're running from a Composer installation by looking for our package
-        $packageDir = null;
-        if ($currentWorkingDir !== $sourceDir) {
-            // Look for the installed package directory
-            $vendorPackageDir = $currentWorkingDir . '/vendor/cpsit/typo3-upgrade-analyser';
-            if (is_dir($vendorPackageDir)) {
-                $packageDir = $vendorPackageDir;
-            }
-        }
-
-        // Use package directory if available, otherwise source directory
-        $actualSourceDir = $packageDir ?: $sourceDir;
-        $installDir = $packageDir ? $currentWorkingDir : $sourceDir;
-
-        $container->setParameter('app.root_dir', $actualSourceDir);
-        $container->setParameter('app.install_dir', $installDir);
-        $container->setParameter('app.config_dir', '%app.root_dir%/config');
-        $container->setParameter('app.resources_dir', '%app.root_dir%/resources');
+        // Legacy parameters for backward compatibility
+        $container->setParameter('app.root_dir', $projectRoot); // Now points to project root, not source dir
+        $container->setParameter('app.install_dir', $projectRoot);
     }
 
     private static function loadServiceDefinitions(ContainerBuilder $container): void
     {
-        $rootDir = $container->getParameter('app.root_dir');
-        \assert(\is_string($rootDir), 'app.root_dir parameter must be a string');
-        $configDir = $rootDir . '/config';
+        $sourceDir = $container->getParameter('app.source_dir');
+        \assert(\is_string($sourceDir), 'app.source_dir parameter must be a string');
+        $configDir = $sourceDir . '/config';
 
         if (file_exists($configDir . '/services.yaml')) {
             $loader = new YamlFileLoader($container, new FileLocator($configDir));
