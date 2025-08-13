@@ -1,3 +1,16 @@
+2025-08-13         [RELEASE] Release of typo3-upgrade-analyser 0.1.3 (Dirk Wenzel)
+2025-08-13 4c94db4 [TASK]  test script for TER client updated (Dirk Wenzel)
+2025-08-13 68fa9f2 [TASK] code style fixed, composer fix command corrected (Dirk Wenzel)
+2025-08-13 11ee986 [TASK] Fix AbstractCachedAnalyzerTest mock expectations and update PHPUnit to v12.3 (Dirk Wenzel)
+2025-08-13 3fd4a3b [TASK] include composer.lock, rector fixes applied (Dirk Wenzel)
+2025-08-13 358cc39 [TASK] Fix failing RectorExecutorTest after parsing refactor (Dirk Wenzel)
+2025-08-13 b7fffaa rector issue fixed (Dirk Wenzel)
+2025-08-13 114d341 [TASK] Refactor Rector output parsing into dedicated classes (Dirk Wenzel)
+2025-08-13 32f436c [TASK]  code cleanup (Dirk Wenzel)
+2025-08-13 d48abf1 [BUGFIX] fixed issue caused by invalid comment in twig template - logging improved - entities Extension and Installation now implement JsonSerializable interface (Dirk Wenzel)
+2025-08-12 e782f59 ci(deps): bump actions/checkout from 4 to 5 (dependabot[bot])
+2025-08-12 33a16b0 ci(deps): bump codecov/codecov-action from 4 to 5 (dependabot[bot])
+
 2025-08-12         [RELEASE] Release of typo3-upgrade-analyser 0.1.2 (Dirk Wenzel)
 2025-08-12 6484e90 [BUGFIX] Rector binary path corrected, segmentation fault fixed (Dirk Wenzel)
 
