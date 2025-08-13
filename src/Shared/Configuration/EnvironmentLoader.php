@@ -27,7 +27,7 @@ class EnvironmentLoader
             return;
         }
 
-        $rootDir = \dirname(__DIR__, 3);
+        $rootDir = self::findProjectRoot();
         $dotenv = new Dotenv();
 
         // Check for .env.local file first (higher priority)
@@ -57,5 +57,49 @@ class EnvironmentLoader
         self::load();
 
         return isset($_ENV[$key]) && '' !== $_ENV[$key];
+    }
+
+    /**
+     * Find the project root directory, handling both standalone and composer installations.
+     */
+    private static function findProjectRoot(): string
+    {
+        // Try to use Composer's installed packages info to find the root
+        if (class_exists('\Composer\InstalledVersions')) {
+            try {
+                $rootPackage = \Composer\InstalledVersions::getRootPackage();
+                if (isset($rootPackage['install_path'])) {
+                    return $rootPackage['install_path'];
+                }
+            } catch (\Throwable) {
+                // Fall back to manual detection if Composer info is not available
+            }
+        }
+
+        // Fallback: traverse up from current directory to find composer.json or project root
+        $searchDir = __DIR__;
+        $maxLevels = 10; // Prevent infinite loops
+
+        for ($i = 0; $i < $maxLevels; ++$i) {
+            // Check if we found a composer.json (indicates project root)
+            if (file_exists($searchDir . '/composer.json')) {
+                return $searchDir;
+            }
+
+            // Check if we found our own project structure
+            if (file_exists($searchDir . '/bin/typo3-analyzer') && file_exists($searchDir . '/src')) {
+                return $searchDir;
+            }
+
+            $parentDir = \dirname($searchDir);
+            if ($parentDir === $searchDir) {
+                // Reached filesystem root
+                break;
+            }
+            $searchDir = $parentDir;
+        }
+
+        // Ultimate fallback: use the old behavior
+        return \dirname(__DIR__, 3);
     }
 }
