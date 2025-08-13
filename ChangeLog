@@ -1,3 +1,10 @@
+2025-08-14         [RELEASE] Release of typo3-upgrade-analyser 0.1.4 (Dirk Wenzel)
+2025-08-13 de7f883 req symfony/dotenv:^7.3 (Dirk Wenzel)
+2025-08-13 b7aada6 code style fixed (Dirk Wenzel)
+2025-08-13 60c7208 [TASK] Fix path configuration and eliminate code duplication (Dirk Wenzel)
+2025-08-13 c6dab72 [BUGFIX] Fix EnvironmentLoader for composer installations (Dirk Wenzel)
+2025-07-31 9e46785 [TASK]: add renovate.json (renovate[bot])
+
 2025-08-13         [RELEASE] Release of typo3-upgrade-analyser 0.1.3 (Dirk Wenzel)
 2025-08-13 4c94db4 [TASK]  test script for TER client updated (Dirk Wenzel)
 2025-08-13 68fa9f2 [TASK] code style fixed, composer fix command corrected (Dirk Wenzel)
