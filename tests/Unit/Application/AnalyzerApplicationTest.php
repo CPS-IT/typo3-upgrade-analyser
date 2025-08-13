@@ -21,7 +21,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 
-
 #[CoversClass(AnalyzerApplication::class)]
 class AnalyzerApplicationTest extends TestCase
 {

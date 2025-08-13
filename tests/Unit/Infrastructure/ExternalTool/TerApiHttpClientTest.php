@@ -19,7 +19,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-
 #[CoversClass(TerApiHttpClient::class)]
 class TerApiHttpClientTest extends TestCase
 {

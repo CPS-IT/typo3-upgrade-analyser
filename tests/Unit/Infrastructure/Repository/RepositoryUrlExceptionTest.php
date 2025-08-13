@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(RepositoryUrlException::class)]
 class RepositoryUrlExceptionTest extends TestCase
 {

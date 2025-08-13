@@ -16,12 +16,11 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-
 
 #[CoversClass(GitHubClient::class)]
 class GitHubClientTest extends TestCase
@@ -44,10 +43,12 @@ class GitHubClientTest extends TestCase
             'test-token',
         );
     }
+
     public function testGetName(): void
     {
         $this->assertEquals('github', $this->client->getName());
     }
+
     public function testSupportsGitHubUrls(): void
     {
         $this->assertTrue($this->client->supports('https://github.com/user/repo'));
@@ -55,10 +56,12 @@ class GitHubClientTest extends TestCase
         $this->assertFalse($this->client->supports('https://gitlab.com/user/repo'));
         $this->assertFalse($this->client->supports('https://bitbucket.org/user/repo'));
     }
+
     public function testIsAvailable(): void
     {
         $this->assertTrue($this->client->isAvailable());
     }
+
     public function testGetRepositoryInfo(): void
     {
         // Mock URL handler to return proper repository path
@@ -113,6 +116,7 @@ class GitHubClientTest extends TestCase
         $this->assertEquals('main', $metadata->getDefaultBranch());
         $this->assertEquals('2024-01-15T10:00:00+00:00', $metadata->getLastUpdated()->format('c'));
     }
+
     public function testGetTags(): void
     {
         // Mock URL handler to return proper repository path
@@ -165,6 +169,7 @@ class GitHubClientTest extends TestCase
         $this->assertEquals('2024-01-01T10:00:00+00:00', $tags[1]->getDate()->format('c'));
         $this->assertNull($tags[1]->getCommit());
     }
+
     public function testGetComposerJson(): void
     {
         // Mock URL handler to return proper repository path
@@ -200,6 +205,7 @@ class GitHubClientTest extends TestCase
         $this->assertEquals('vendor/package', $composerJson['name']);
         $this->assertEquals('^12.4', $composerJson['require']['typo3/cms-core']);
     }
+
     public function testGetComposerJsonNotFound(): void
     {
         // Mock URL handler to return proper repository path
@@ -222,6 +228,7 @@ class GitHubClientTest extends TestCase
 
         $this->assertNull($composerJson);
     }
+
     public function testGetRepositoryHealth(): void
     {
         // Mock URL handler to return proper repository path - called twice (for GraphQL and REST API)
@@ -286,6 +293,7 @@ class GitHubClientTest extends TestCase
         $this->assertTrue($health->hasLicense());
         $this->assertEquals(4, $health->getContributorCount());
     }
+
     public function testGraphqlErrorHandling(): void
     {
         // Mock URL handler to return proper repository path
@@ -313,6 +321,7 @@ class GitHubClientTest extends TestCase
 
         $this->client->getRepositoryInfo('https://github.com/user/nonexistent');
     }
+
     public function testExtractRepositoryPath(): void
     {
         $reflection = new \ReflectionClass($this->client);
@@ -331,6 +340,7 @@ class GitHubClientTest extends TestCase
         $result = $method->invoke($this->client, 'https://github.com/user/repo');
         $this->assertEquals(['host' => 'github.com', 'owner' => 'user', 'name' => 'repo'], $result);
     }
+
     public function testExtractRepositoryPathInvalid(): void
     {
         $reflection = new \ReflectionClass($this->client);

@@ -18,7 +18,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(VersionExtractionResult::class)]
 final class VersionExtractionResultTest extends TestCase
 {

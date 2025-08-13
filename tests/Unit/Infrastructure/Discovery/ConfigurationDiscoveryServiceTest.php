@@ -19,11 +19,10 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-
 
 #[CoversClass(ConfigurationDiscoveryService::class)]
 final class ConfigurationDiscoveryServiceTest extends TestCase

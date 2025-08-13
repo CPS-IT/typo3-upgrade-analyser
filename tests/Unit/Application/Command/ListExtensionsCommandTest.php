@@ -23,7 +23,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -83,6 +82,7 @@ final class ListExtensionsCommandTest extends TestCase
 
         return $extension;
     }
+
     public function testCommandConfiguration(): void
     {
         $this->assertSame('list-extensions', $this->command->getName());
@@ -97,6 +97,7 @@ final class ListExtensionsCommandTest extends TestCase
         $this->assertSame('Path to custom configuration file', $configOption->getDescription());
         $this->assertSame(ConfigurationService::DEFAULT_CONFIG_PATH, $configOption->getDefault());
     }
+
     public function testExecuteWithNonExistentConfigFile(): void
     {
         $result = $this->commandTester->execute([
@@ -107,6 +108,7 @@ final class ListExtensionsCommandTest extends TestCase
         $output = $this->commandTester->getDisplay();
         $this->assertStringContainsString('Configuration file does not exist: /non/existent/config.yaml', $output);
     }
+
     public function testExecuteWithDefaultConfigPath(): void
     {
         // Create a temporary config file at the default path for this test
@@ -169,6 +171,7 @@ final class ListExtensionsCommandTest extends TestCase
             }
         }
     }
+
     public function testExecuteWithCustomConfigPath(): void
     {
         $customConfigFile = tempnam(sys_get_temp_dir(), 'custom_config_');
@@ -218,6 +221,7 @@ final class ListExtensionsCommandTest extends TestCase
             }
         }
     }
+
     public function testExecuteWithMissingInstallationPath(): void
     {
         file_put_contents($this->tempConfigFile, '');
@@ -240,6 +244,7 @@ final class ListExtensionsCommandTest extends TestCase
         $output = $this->commandTester->getDisplay();
         $this->assertStringContainsString('No installation path specified in configuration file', $output);
     }
+
     public function testExecuteWithNonExistentInstallationPath(): void
     {
         file_put_contents($this->tempConfigFile, '');
@@ -262,6 +267,7 @@ final class ListExtensionsCommandTest extends TestCase
         $output = $this->commandTester->getDisplay();
         $this->assertStringContainsString('Installation path does not exist: /non/existent/path', $output);
     }
+
     public function testExecuteWithSuccessfulInstallationDiscovery(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -318,6 +324,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithInstallationDiscoveryWarning(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -363,6 +370,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithFailedExtensionDiscovery(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -404,6 +412,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithNoExtensionsFound(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -445,6 +454,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithMultipleExtensions(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -507,6 +517,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithException(): void
     {
         file_put_contents($this->tempConfigFile, '');
@@ -535,6 +546,7 @@ final class ListExtensionsCommandTest extends TestCase
         $output = $this->commandTester->getDisplay();
         $this->assertStringContainsString('Failed to process configuration: Configuration error', $output);
     }
+
     public function testExecuteDisplaysDiscoverySummary(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -580,6 +592,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteLogsSuccessfulCompletion(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -627,6 +640,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteHandlesInstallationWithoutMetadata(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -673,6 +687,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testExecuteWithUnknownVersionInstallation(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
@@ -719,6 +734,7 @@ final class ListExtensionsCommandTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testTableFormatting(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();

@@ -22,7 +22,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
-
 #[CoversClass(InitConfigCommand::class)]
 class InitConfigCommandTest extends TestCase
 {

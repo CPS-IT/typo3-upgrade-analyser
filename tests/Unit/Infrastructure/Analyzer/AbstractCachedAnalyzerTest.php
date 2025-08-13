@@ -18,11 +18,10 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-
 
 #[CoversClass(AbstractCachedAnalyzer::class)]
 class AbstractCachedAnalyzerTest extends TestCase
@@ -55,6 +54,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('12.4.0'),
         );
     }
+
     public function testAnalyzeWithCacheDisabled(): void
     {
         // Set cache disabled in context
@@ -87,6 +87,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertSame($expectedResult, $result);
         $this->assertTrue($this->analyzer->wasDoAnalyzeCalled());
     }
+
     public function testAnalyzeWithValidCachedResult(): void
     {
         $json = json_encode([
@@ -137,6 +138,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertFalse($this->analyzer->wasDoAnalyzeCalled());
     }
+
     public function testAnalyzeWithExpiredCachedResult(): void
     {
         $cachedData = [
@@ -167,6 +169,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertSame($expectedResult, $result);
         $this->assertTrue($this->analyzer->wasDoAnalyzeCalled());
     }
+
     public function testAnalyzeWithSuccessfulResultCaching(): void
     {
         $this->cacheService->expects($this->once())
@@ -206,6 +209,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->assertSame($analysisResult, $result);
     }
+
     public function testAnalyzeWithFailedResultNoCaching(): void
     {
         $this->cacheService->expects($this->once())
@@ -224,6 +228,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertSame($analysisResult, $result);
         $this->assertFalse($result->isSuccessful());
     }
+
     public function testAnalyzeWithExceptionHandling(): void
     {
         $this->cacheService->expects($this->once())
@@ -247,6 +252,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertFalse($result->isSuccessful());
         $this->assertEquals('Analysis failed: Test analysis exception', $result->getError());
     }
+
     public function testGenerateCacheKey(): void
     {
         $extension = new Extension(
@@ -267,6 +273,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertStringStartsWith('analysis_test_cached_analyzer_', $key);
         $this->assertMatchesRegularExpression('/^analysis_test_cached_analyzer_[a-f0-9]{64}$/', $key);
     }
+
     public function testGenerateCacheKeyWithAnalyzerSpecificComponents(): void
     {
         $analyzer = new TestCachedAnalyzer($this->cacheService, $this->logger);
@@ -279,11 +286,13 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->assertNotEquals($key1, $key2);
     }
+
     public function testIsCacheEnabledDefaultTrue(): void
     {
         $context = new AnalysisContext(new Version('11.5.0'), new Version('12.4.0'));
         $this->assertTrue($this->analyzer->isCacheEnabledPublic($context));
     }
+
     public function testIsCacheEnabledWithExplicitConfig(): void
     {
         $contextEnabled = new AnalysisContext(
@@ -302,6 +311,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         );
         $this->assertFalse($this->analyzer->isCacheEnabledPublic($contextDisabled));
     }
+
     public function testGetCacheTtl(): void
     {
         // Default TTL
@@ -317,6 +327,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         );
         $this->assertEquals(7200, $this->analyzer->getCacheTtlPublic($customContext));
     }
+
     public function testSerializeResult(): void
     {
         $result = new AnalysisResult('test_analyzer', $this->extension);
@@ -340,6 +351,7 @@ class AbstractCachedAnalyzerTest extends TestCase
 
         $this->assertEquals($expected, $serialized);
     }
+
     public function testSerializeResultWithError(): void
     {
         $result = new AnalysisResult('test_analyzer', $this->extension);
@@ -352,6 +364,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertFalse($serialized['successful']);
         $this->assertEquals('Something went wrong', $serialized['error']);
     }
+
     public function testDeserializeResult(): void
     {
         $cachedData = [
@@ -371,6 +384,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertEmpty($result->getError());
     }
+
     public function testDeserializeResultWithError(): void
     {
         $cachedData = [
@@ -385,11 +399,13 @@ class AbstractCachedAnalyzerTest extends TestCase
         $this->assertFalse($result->isSuccessful());
         $this->assertEquals('Cached error message', $result->getError());
     }
+
     public function testGetDirectoryModificationTimeWithNonExistentDirectory(): void
     {
         $mtime = $this->analyzer->getDirectoryModificationTimePublic('/non/existent/directory');
         $this->assertEquals(0, $mtime);
     }
+
     public function testGetDirectoryModificationTimeWithEmptyDirectory(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid('', true);
@@ -402,6 +418,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testGetDirectoryModificationTimeWithPhpFiles(): void
     {
         $tempDir = sys_get_temp_dir() . '/test_mtime_' . uniqid('', true);
@@ -430,6 +447,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             rmdir($tempDir);
         }
     }
+
     public function testIsValidCachedResultWithValidCache(): void
     {
         $cachedData = [
@@ -440,6 +458,7 @@ class AbstractCachedAnalyzerTest extends TestCase
         $isValid = $this->analyzer->isValidCachedResultPublic($cachedData, $this->extension, $this->context);
         $this->assertTrue($isValid);
     }
+
     public function testIsValidCachedResultWithExpiredCache(): void
     {
         $cachedData = [

@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Cache;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -51,10 +50,12 @@ final class CacheServiceTest extends TestCase
         }
         rmdir($dir);
     }
+
     public function testHasReturnsFalseForNonExistentKey(): void
     {
         $this->assertFalse($this->cacheService->has('nonexistent_key'));
     }
+
     public function testHasReturnsTrueForExistingKey(): void
     {
         $key = 'test_key';
@@ -63,10 +64,12 @@ final class CacheServiceTest extends TestCase
         $this->cacheService->set($key, $data);
         $this->assertTrue($this->cacheService->has($key));
     }
+
     public function testGetReturnsNullForNonExistentKey(): void
     {
         $this->assertNull($this->cacheService->get('nonexistent_key'));
     }
+
     public function testSetAndGetWithValidData(): void
     {
         $key = 'test_key';
@@ -86,6 +89,7 @@ final class CacheServiceTest extends TestCase
         $retrievedData = $this->cacheService->get($key);
         $this->assertSame($data, $retrievedData);
     }
+
     public function testSetCreatesDirectoryIfNotExists(): void
     {
         $cacheDir = $this->tempDir . '/var/results';
@@ -98,6 +102,7 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue($result);
         $this->assertTrue(is_dir($cacheDir));
     }
+
     public function testSetWithJsonEncodingError(): void
     {
         $key = 'test_key';
@@ -112,6 +117,7 @@ final class CacheServiceTest extends TestCase
             fclose($resource);
         }
     }
+
     public function testGetWithCorruptedJsonFile(): void
     {
         $key = 'test_key';
@@ -133,6 +139,7 @@ final class CacheServiceTest extends TestCase
         $result = $this->cacheService->get($key);
         $this->assertNull($result);
     }
+
     public function testGetWithUnreadableFile(): void
     {
         $key = 'test_key';
@@ -161,11 +168,13 @@ final class CacheServiceTest extends TestCase
         // Restore permissions for cleanup
         chmod($filePath, 0o644);
     }
+
     public function testDeleteNonExistentKey(): void
     {
         $result = $this->cacheService->delete('nonexistent_key');
         $this->assertTrue($result);
     }
+
     public function testDeleteExistingKey(): void
     {
         $key = 'test_key';
@@ -182,11 +191,13 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue($result);
         $this->assertFalse($this->cacheService->has($key));
     }
+
     public function testClearWithNoDirectory(): void
     {
         $result = $this->cacheService->clear();
         $this->assertTrue($result);
     }
+
     public function testClearWithEmptyDirectory(): void
     {
         // Create empty cache directory
@@ -200,6 +211,7 @@ final class CacheServiceTest extends TestCase
         $result = $this->cacheService->clear();
         $this->assertTrue($result);
     }
+
     public function testClearWithMultipleFiles(): void
     {
         $keys = ['key1', 'key2', 'key3'];
@@ -227,6 +239,7 @@ final class CacheServiceTest extends TestCase
             $this->assertFalse($this->cacheService->has($key));
         }
     }
+
     public function testClearWithMixedFiles(): void
     {
         // Create cache directory with mixed files (some .json, some other extensions)
@@ -251,6 +264,7 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue(file_exists($cacheDir . '/other.txt'));
         $this->assertTrue(file_exists($cacheDir . '/readme.md'));
     }
+
     public function testGenerateKeyWithBasicParams(): void
     {
         $type = 'installation_discovery';
@@ -265,6 +279,7 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith($type . '_', $key1);
         $this->assertGreaterThan(\strlen($type . '_'), \strlen($key1));
     }
+
     public function testGenerateKeyWithAdditionalParams(): void
     {
         $type = 'extension_discovery';
@@ -282,6 +297,7 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith($type . '_', $key1);
         $this->assertStringStartsWith($type . '_', $key3);
     }
+
     public function testGenerateKeyWithNonExistentPath(): void
     {
         $type = 'test';
@@ -292,6 +308,7 @@ final class CacheServiceTest extends TestCase
         // Should still generate a valid key even for non-existent paths
         $this->assertStringStartsWith($type . '_', $key);
     }
+
     public function testGenerateKeyWithDifferentTypes(): void
     {
         $path = '/same/path';
@@ -303,6 +320,7 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith('type1_', $key1);
         $this->assertStringStartsWith('type2_', $key2);
     }
+
     public function testGenerateKeyWithSamePath(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'cache_test_');
@@ -323,6 +341,7 @@ final class CacheServiceTest extends TestCase
             unlink($tempFile);
         }
     }
+
     public function testSetWithWriteFailure(): void
     {
         // Create a scenario where writing fails by making the cache directory read-only
@@ -353,6 +372,7 @@ final class CacheServiceTest extends TestCase
         // Restore permissions for cleanup
         chmod($cacheDir, 0o755);
     }
+
     public function testSetWithDirectoryCreationFailure(): void
     {
         // Create a service with an invalid project root to simulate directory creation failure
@@ -368,6 +388,7 @@ final class CacheServiceTest extends TestCase
         $result = $invalidCacheService->set('test_key', ['data' => 'value']);
         $this->assertFalse($result);
     }
+
     public function testCompleteWorkflow(): void
     {
         $key = 'workflow_test';
@@ -400,6 +421,7 @@ final class CacheServiceTest extends TestCase
         $this->assertFalse($this->cacheService->has($key));
         $this->assertNull($this->cacheService->get($key));
     }
+
     public function testCacheFileExtension(): void
     {
         $key = 'test_key';
@@ -413,6 +435,7 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue(file_exists($expectedFile));
         $this->assertStringEndsWith('.json', $expectedFile);
     }
+
     public function testCacheContentFormat(): void
     {
         $key = 'format_test';

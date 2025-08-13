@@ -24,7 +24,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Twig\Environment as TwigEnvironment;
 
-
 #[CoversClass(ReportService::class)]
 class ReportServiceTest extends TestCase
 {

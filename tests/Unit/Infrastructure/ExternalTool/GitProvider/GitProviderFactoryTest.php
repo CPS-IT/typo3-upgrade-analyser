@@ -15,11 +15,10 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvid
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-
 
 #[CoversClass(GitProviderFactory::class)]
 class GitProviderFactoryTest extends TestCase
@@ -32,6 +31,7 @@ class GitProviderFactoryTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->factory = new GitProviderFactory([], $this->logger);
     }
+
     public function testCreateProviderWithSupportedUrl(): void
     {
         $provider1 = $this->createMock(GitProviderInterface::class);
@@ -50,6 +50,7 @@ class GitProviderFactoryTest extends TestCase
 
         $this->assertSame($provider2, $result);
     }
+
     public function testCreateProviderWithUnsupportedUrl(): void
     {
         $provider = $this->createMock(GitProviderInterface::class);
@@ -63,6 +64,7 @@ class GitProviderFactoryTest extends TestCase
 
         $factory->createProvider('https://custom.example.com/repo');
     }
+
     public function testCreateProviderWithUnavailableProvider(): void
     {
         $provider = $this->createMock(GitProviderInterface::class);
@@ -76,6 +78,7 @@ class GitProviderFactoryTest extends TestCase
 
         $factory->createProvider('https://github.com/user/repo');
     }
+
     public function testCreateProviderSelectsHighestPriority(): void
     {
         $lowPriorityProvider = $this->createMock(GitProviderInterface::class);
@@ -103,6 +106,7 @@ class GitProviderFactoryTest extends TestCase
 
         $this->assertSame($highPriorityProvider, $result);
     }
+
     public function testCreateProviderWithEmptyProviders(): void
     {
         $this->expectException(GitAnalysisException::class);
@@ -110,6 +114,7 @@ class GitProviderFactoryTest extends TestCase
 
         $this->factory->createProvider('https://github.com/user/repo');
     }
+
     public function testGetAvailableProviders(): void
     {
         $availableProvider = $this->createMock(GitProviderInterface::class);

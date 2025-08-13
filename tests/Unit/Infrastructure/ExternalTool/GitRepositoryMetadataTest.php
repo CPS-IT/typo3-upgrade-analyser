@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(GitRepositoryMetadata::class)]
 class GitRepositoryMetadataTest extends TestCase
 {
@@ -44,6 +43,7 @@ class GitRepositoryMetadataTest extends TestCase
         $this->assertSame($lastUpdated, $metadata->getLastUpdated());
         $this->assertEquals('main', $metadata->getDefaultBranch());
     }
+
     public function testWithEmptyDescription(): void
     {
         $metadata = new GitRepositoryMetadata(
@@ -60,6 +60,7 @@ class GitRepositoryMetadataTest extends TestCase
         $this->assertEquals('', $metadata->getDescription());
         $this->assertEquals('master', $metadata->getDefaultBranch());
     }
+
     public function testReadonlyProperties(): void
     {
         $metadata = new GitRepositoryMetadata(

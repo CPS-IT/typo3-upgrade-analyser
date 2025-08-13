@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiResponseParser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(TerApiResponseParser::class)]
 class TerApiResponseParserTest extends TestCase
 {

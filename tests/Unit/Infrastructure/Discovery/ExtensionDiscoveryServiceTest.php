@@ -18,7 +18,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -97,11 +96,13 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $content = "<?php\n\$EM_CONF['" . $extensionKey . "'] = " . var_export($config, true) . ";\n";
         file_put_contents($emconfPath, $content);
     }
+
     public function testConstructorWithoutOptionalServices(): void
     {
         $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
         $this->assertInstanceOf(ExtensionDiscoveryService::class, $service);
     }
+
     public function testDiscoverExtensionsWithEmptyInstallation(): void
     {
         // Allow any logging calls - we focus on testing functionality, not logging details
@@ -115,6 +116,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
         $this->assertCount(0, $result->getSuccessfulMethods());
     }
+
     public function testDiscoverExtensionsFromPackageStatesOnly(): void
     {
         $packages = [
@@ -173,6 +175,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('7.1.0', $addressExtension->getVersion()->toString());
         $this->assertFalse($addressExtension->isActive());
     }
+
     public function testDiscoverExtensionsFromComposerOnly(): void
     {
         $packages = [
@@ -229,6 +232,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('friendsoftypo3/tt-address', $addressExtension->getComposerName());
         $this->assertSame('tt_address', $addressExtension->getKey());
     }
+
     public function testDiscoverExtensionsFromBothSources(): void
     {
         // Package States with one extension
@@ -288,6 +292,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('news', $extensionKeys);
         $this->assertContains('composer_only', $extensionKeys);
     }
+
     public function testDiscoverExtensionsWithCustomPaths(): void
     {
         $customPaths = [
@@ -320,6 +325,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(1, $result->getExtensions());
         $this->assertSame('custom_ext', $result->getExtensions()[0]->getKey());
     }
+
     public function testDiscoverExtensionsWithCacheEnabled(): void
     {
         $this->configService->expects($this->exactly(2))
@@ -347,6 +353,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->assertTrue($result->isSuccessful());
     }
+
     public function testDiscoverExtensionsWithCacheHit(): void
     {
         $cachedData = [
@@ -395,6 +402,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(1, $result->getExtensions());
         $this->assertSame('cached_extension', $result->getExtensions()[0]->getKey());
     }
+
     public function testDiscoverExtensionsWithCacheDisabled(): void
     {
         $this->configService->expects($this->exactly(2))
@@ -414,6 +422,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->assertTrue($result->isSuccessful());
     }
+
     public function testDiscoverExtensionsWithServiceException(): void
     {
         // Create an invalid PackageStates.php that will cause parsing to fail
@@ -438,6 +447,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithInvalidPackageStates(): void
     {
         // Create invalid PackageStates.php content
@@ -454,6 +464,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithInvalidComposerInstalled(): void
     {
         // Create invalid composer installed.json content
@@ -470,6 +481,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithCorruptedJson(): void
     {
         // Create corrupted JSON file
@@ -488,6 +500,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testExtensionKeyExtractionFromComposerName(): void
     {
         $packages = [
@@ -519,6 +532,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('extension_name', $extensionKeys);
         $this->assertContains('my_awesome_ext', $extensionKeys);
     }
+
     public function testExtensionTypeDetection(): void
     {
         $packages = [
@@ -561,6 +575,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('local', $extensionsByKey['local_ext']->getType());
         $this->assertSame('composer', $extensionsByKey['composer_ext']->getType());
     }
+
     public function testHandlingMissingExtEmconfFile(): void
     {
         $packages = [
@@ -583,6 +598,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('extension_without_emconf', $extension->getTitle());
         $this->assertSame('0.0.0', $extension->getVersion()->toString());
     }
+
     public function testHandlingPackageWithoutPath(): void
     {
         $packages = [
@@ -599,6 +615,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testHandlingCorruptedExtEmconfFile(): void
     {
         $packages = [
@@ -626,6 +643,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoveryMetadataTracking(): void
     {
         $this->createPackageStatesFile(['news' => ['packagePath' => 'typo3conf/ext/news/', 'state' => 'active']]);
@@ -657,6 +675,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertFalse($composerMetadata['successful']);
         $this->assertSame(0, $composerMetadata['extensions_found']);
     }
+
     public function testServiceWithoutCachingServices(): void
     {
         $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
@@ -666,6 +685,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithInvalidInstallationPath(): void
     {
         $invalidPath = '/non/existent/path';
@@ -682,6 +702,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertStringContainsString('Installation path does not exist:', $result->getErrorMessage());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithPackageStatesUnbalancedBrackets(): void
     {
         // Create PackageStates.php with unbalanced brackets
@@ -700,6 +721,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithPackageStatesNoPhpTag(): void
     {
         // Create PackageStates.php without PHP opening tag
@@ -718,6 +740,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithUnreadablePackageStatesFile(): void
     {
         // Create PackageStates.php that cannot be read
@@ -737,6 +760,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testCreateExtensionFromPackageDataWithDifferentPathTypes(): void
     {
         $packages = [
@@ -784,6 +808,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('composer', $extensionsByKey['vendor_ext']->getType());
         $this->assertSame('local', $extensionsByKey['unknown_path']->getType());
     }
+
     public function testCreateExtensionFromComposerDataWithComplexExtensionKey(): void
     {
         $packages = [
@@ -819,6 +844,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('single_name_package', $extensionKeys);
         $this->assertContains('vendor_extension_with_multiple_slashes', $extensionKeys);
     }
+
     public function testCreateExtensionFromComposerDataMissingName(): void
     {
         $packages = [
@@ -837,6 +863,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions()); // Should be ignored
     }
+
     public function testCreateExtensionFromComposerDataWithException(): void
     {
         $packages = [
@@ -863,6 +890,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testDiscoverExtensionsWithMainDiscoveryException(): void
     {
         // Mock the configService to throw an exception during discovery
@@ -882,6 +910,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertStringContainsString('Configuration error', $result->getErrorMessage());
         $this->assertCount(0, $result->getExtensions());
     }
+
     public function testTypo3CoreExtensionsAreFilteredOut(): void
     {
         $packages = [

@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(HttpClientException::class)]
 class HttpClientExceptionTest extends TestCase
 {

@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 final class ExtensionDiscoveryResultTest extends TestCase
@@ -54,11 +53,13 @@ final class ExtensionDiscoveryResultTest extends TestCase
         );
         $this->localExtension->setActive(true);
     }
+
     public function testImplementsSerializableInterface(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
         $this->assertInstanceOf(SerializableInterface::class, $result);
     }
+
     public function testSuccessFactoryMethod(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -75,6 +76,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame($methods, $result->getSuccessfulMethods());
         $this->assertSame($metadata, $result->getDiscoveryMetadata());
     }
+
     public function testSuccessFactoryMethodWithDefaults(): void
     {
         $extensions = [$this->newsExtension];
@@ -87,6 +89,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getSuccessfulMethods());
         $this->assertSame([], $result->getDiscoveryMetadata());
     }
+
     public function testFailedFactoryMethod(): void
     {
         $errorMessage = 'Discovery failed due to file not found';
@@ -102,6 +105,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getSuccessfulMethods());
         $this->assertSame($metadata, $result->getDiscoveryMetadata());
     }
+
     public function testFailedFactoryMethodWithDefaults(): void
     {
         $errorMessage = 'Generic error';
@@ -114,6 +118,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame([], $result->getSuccessfulMethods());
         $this->assertSame([], $result->getDiscoveryMetadata());
     }
+
     public function testGetExtensionCount(): void
     {
         $result = ExtensionDiscoveryResult::success([$this->newsExtension, $this->addressExtension]);
@@ -122,6 +127,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $emptyResult = ExtensionDiscoveryResult::success([]);
         $this->assertSame(0, $emptyResult->getExtensionCount());
     }
+
     public function testHasExtensions(): void
     {
         $result = ExtensionDiscoveryResult::success([$this->newsExtension]);
@@ -130,6 +136,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $emptyResult = ExtensionDiscoveryResult::success([]);
         $this->assertFalse($emptyResult->hasExtensions());
     }
+
     public function testGetExtensionsByType(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -147,6 +154,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $systemExtensions = $result->getExtensionsByType('system');
         $this->assertCount(0, $systemExtensions);
     }
+
     public function testGetExtensionsByActiveStatus(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -161,6 +169,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertCount(1, $inactiveExtensions);
         $this->assertContains($this->addressExtension, $inactiveExtensions);
     }
+
     public function testGetExtensionByKey(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -175,6 +184,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $notFound = $result->getExtensionByKey('nonexistent');
         $this->assertNull($notFound);
     }
+
     public function testHasExtension(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -184,6 +194,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertTrue($result->hasExtension('tt_address'));
         $this->assertFalse($result->hasExtension('nonexistent'));
     }
+
     public function testGetExtensionsGroupedByType(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -199,12 +210,14 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertContains($this->addressExtension, $grouped['composer']);
         $this->assertContains($this->localExtension, $grouped['local']);
     }
+
     public function testGetExtensionsGroupedByTypeEmpty(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
         $grouped = $result->getExtensionsGroupedByType();
         $this->assertSame([], $grouped);
     }
+
     public function testGetStatistics(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -221,6 +234,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame(2, $stats['discovery_methods_used']);
         $this->assertTrue($stats['successful']);
     }
+
     public function testGetStatisticsForEmptyResult(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
@@ -234,6 +248,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame(0, $stats['discovery_methods_used']);
         $this->assertTrue($stats['successful']);
     }
+
     public function testGetStatisticsForFailedResult(): void
     {
         $result = ExtensionDiscoveryResult::failed('Discovery failed');
@@ -247,6 +262,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame(0, $stats['discovery_methods_used']);
         $this->assertFalse($stats['successful']);
     }
+
     public function testGetSummaryForSuccessfulResultWithExtensions(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension, $this->localExtension];
@@ -258,6 +274,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $expected = 'Discovered 3 extensions (2 active) using 2 methods (2 composer, 1 local)';
         $this->assertSame($expected, $summary);
     }
+
     public function testGetSummaryForSuccessfulResultWithOneExtension(): void
     {
         $methods = ['PackageStates.php'];
@@ -268,6 +285,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $expected = 'Discovered 1 extension (1 active) using 1 method';
         $this->assertSame($expected, $summary);
     }
+
     public function testGetSummaryForSuccessfulResultWithNoExtensions(): void
     {
         $result = ExtensionDiscoveryResult::success([]);
@@ -276,6 +294,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
 
         $this->assertSame('No extensions found in installation', $summary);
     }
+
     public function testGetSummaryForFailedResult(): void
     {
         $metadata = [
@@ -289,6 +308,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $expected = 'Extension discovery failed: File system error (attempted 2 methods)';
         $this->assertSame($expected, $summary);
     }
+
     public function testGetSummaryForFailedResultWithOneMethod(): void
     {
         $metadata = [
@@ -301,6 +321,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $expected = 'Extension discovery failed: File not found (attempted 1 method)';
         $this->assertSame($expected, $summary);
     }
+
     public function testGetSummaryForFailedResultWithNoMetadata(): void
     {
         $result = ExtensionDiscoveryResult::failed('Generic error');
@@ -310,6 +331,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $expected = 'Extension discovery failed: Generic error (attempted 0 methods)';
         $this->assertSame($expected, $summary);
     }
+
     public function testToArrayForSuccessfulResult(): void
     {
         $extensions = [$this->newsExtension, $this->addressExtension];
@@ -331,6 +353,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('news', $array['extensions'][0]['key']);
         $this->assertSame('tt_address', $array['extensions'][1]['key']);
     }
+
     public function testToArrayForFailedResult(): void
     {
         $errorMessage = 'Discovery failed';
@@ -347,6 +370,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertArrayHasKey('statistics', $array);
         $this->assertArrayHasKey('summary', $array);
     }
+
     public function testFromArrayForSuccessfulResult(): void
     {
         $data = [
@@ -393,6 +417,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('tt_address', $extensions[1]->getKey());
         $this->assertFalse($extensions[1]->isActive());
     }
+
     public function testFromArrayForFailedResult(): void
     {
         $data = [
@@ -410,6 +435,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
         $this->assertSame([], $result->getSuccessfulMethods());
     }
+
     public function testFromArrayWithMissingOptionalFields(): void
     {
         $data = [
@@ -439,6 +465,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertSame('simple_ext', $extension->getKey());
         $this->assertSame([], $extension->getEmConfiguration());
     }
+
     public function testFromArrayForFailedResultWithMissingErrorMessage(): void
     {
         $data = [
@@ -451,6 +478,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertFalse($result->isSuccessful());
         $this->assertSame('Unknown cached error', $result->getErrorMessage());
     }
+
     public function testSerializationRoundTrip(): void
     {
         $extensions = [$this->newsExtension, $this->localExtension];
@@ -489,6 +517,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
             $this->assertSame($origExt->isActive(), $deserExt->isActive());
         }
     }
+
     public function testReadonlyBehavior(): void
     {
         $extensions = [$this->newsExtension];
@@ -502,6 +531,7 @@ final class ExtensionDiscoveryResultTest extends TestCase
         $this->assertCount(1, $result->getExtensions());
         $this->assertNotContains($this->addressExtension, $result->getExtensions());
     }
+
     public function testComplexScenarioWithMixedExtensions(): void
     {
         // Create system extension

@@ -81,12 +81,14 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     {
         self::assertEquals('version_availability', $this->analyzer->getName());
     }
+
     public function testGetDescription(): void
     {
         $description = $this->analyzer->getDescription();
         self::assertStringContainsString('TER', $description);
         self::assertStringContainsString('Packagist', $description);
     }
+
     public function testSupportsAllExtensions(): void
     {
         self::assertTrue($this->analyzer->supports($this->extension));
@@ -94,16 +96,19 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $systemExtension = new Extension('core', 'Core', new Version('12.4.0'), 'system');
         self::assertTrue($this->analyzer->supports($systemExtension));
     }
+
     public function testGetRequiredTools(): void
     {
         $tools = $this->analyzer->getRequiredTools();
         self::assertContains('curl', $tools);
     }
+
     public function testHasRequiredTools(): void
     {
         // This test depends on the environment having curl available
         self::assertTrue($this->analyzer->hasRequiredTools());
     }
+
     public function testAnalyzeWithBothRepositoriesAvailable(): void
     {
         // Arrange
@@ -135,6 +140,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(1.5, $result->getRiskScore());
         self::assertEquals('low', $result->getRiskLevel());
     }
+
     public function testAnalyzeWithOnlyTerAvailable(): void
     {
         // Arrange
@@ -158,6 +164,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(2.5, $result->getRiskScore());
         self::assertEquals('medium', $result->getRiskLevel());
     }
+
     public function testAnalyzeWithOnlyPackagistAvailable(): void
     {
         // Arrange
@@ -185,6 +192,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('Composer', $recommendations[0]);
     }
+
     public function testAnalyzeWithNoVersionsAvailable(): void
     {
         // Arrange
@@ -213,6 +221,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('contacting author', $recommendations[0]);
     }
+
     public function testAnalyzeWithSystemExtension(): void
     {
         // Arrange
@@ -233,6 +242,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(1.0, $result->getRiskScore()); // System extensions are always "low risk"
         self::assertEquals('low', $result->getRiskLevel());
     }
+
     public function testAnalyzeWithExtensionWithoutComposerName(): void
     {
         // Arrange
@@ -252,6 +262,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('ter_available'));
         self::assertFalse($result->getMetric('packagist_available'));
     }
+
     public function testAnalyzeWithTerApiFailure(): void
     {
         // Arrange
@@ -277,6 +288,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('packagist_available'));
         self::assertTrue($result->isSuccessful()); // Analysis should still succeed
     }
+
     public function testAnalyzeWithPackagistApiFailure(): void
     {
         // Arrange
@@ -302,6 +314,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertFalse($result->getMetric('packagist_available')); // Should default to false on error
         self::assertTrue($result->isSuccessful()); // Analysis should still succeed
     }
+
     public function testAnalyzeWithCompleteFatalError(): void
     {
         // Arrange
@@ -319,6 +332,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertFalse($result->isSuccessful());
         self::assertNotEmpty($result->getError());
     }
+
     public function testAnalyzeLogsCorrectInformation(): void
     {
         // Arrange
@@ -336,6 +350,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertEquals('version_availability', $result->getAnalyzerName());
     }
+
     public function testRecommendationsForLocalExtensionWithPublicAlternatives(): void
     {
         // Arrange

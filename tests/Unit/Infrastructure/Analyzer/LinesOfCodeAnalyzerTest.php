@@ -22,7 +22,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-
 #[CoversClass(LinesOfCodeAnalyzer::class)]
 class LinesOfCodeAnalyzerTest extends TestCase
 {

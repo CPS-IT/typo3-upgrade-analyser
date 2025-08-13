@@ -14,10 +14,9 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-
 
 #[CoversClass(YamlParseException::class)]
 class YamlParseExceptionTest extends TestCase

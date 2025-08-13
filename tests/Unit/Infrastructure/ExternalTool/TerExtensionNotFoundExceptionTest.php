@@ -17,7 +17,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerExtensionNotFoundExcept
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(TerExtensionNotFoundException::class)]
 class TerExtensionNotFoundExceptionTest extends TestCase
 {

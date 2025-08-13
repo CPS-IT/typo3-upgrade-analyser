@@ -17,7 +17,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(TerApiException::class)]
 class TerApiExceptionTest extends TestCase
 {

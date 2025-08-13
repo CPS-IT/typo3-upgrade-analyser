@@ -22,7 +22,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-
 #[CoversClass(AbstractGitProvider::class)]
 final class AbstractGitProviderTest extends TestCase
 {

@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(AnalyzerException::class)]
 class AnalyzerExceptionTest extends TestCase
 {

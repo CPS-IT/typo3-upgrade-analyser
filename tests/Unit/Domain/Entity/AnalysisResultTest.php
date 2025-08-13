@@ -18,7 +18,6 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(AnalysisResult::class)]
 class AnalysisResultTest extends TestCase
 {
@@ -30,12 +29,14 @@ class AnalysisResultTest extends TestCase
         $this->extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
         $this->analysisResult = new AnalysisResult('version_availability', $this->extension);
     }
+
     public function testConstructorSetsProperties(): void
     {
         self::assertEquals('version_availability', $this->analysisResult->getAnalyzerName());
         self::assertSame($this->extension, $this->analysisResult->getExtension());
         self::assertInstanceOf(\DateTimeImmutable::class, $this->analysisResult->getExecutedAt());
     }
+
     public function testExecutedAtIsSetOnConstruction(): void
     {
         $beforeCreation = new \DateTimeImmutable();
@@ -47,6 +48,7 @@ class AnalysisResultTest extends TestCase
         self::assertGreaterThanOrEqual($beforeCreation->getTimestamp(), $executedAt->getTimestamp());
         self::assertLessThanOrEqual($afterCreation->getTimestamp(), $executedAt->getTimestamp());
     }
+
     public function testMetricManagement(): void
     {
         $this->analysisResult->addMetric('ter_available', true);
@@ -71,6 +73,7 @@ class AnalysisResultTest extends TestCase
             'version_count' => 5,
         ], $allMetrics);
     }
+
     public function testRiskScoreManagement(): void
     {
         // Test default risk score
@@ -87,6 +90,7 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals(10.0, $this->analysisResult->getRiskScore());
     }
+
     public function testRiskScoreValidation(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -94,6 +98,7 @@ class AnalysisResultTest extends TestCase
 
         $this->analysisResult->setRiskScore(11.0);
     }
+
     public function testRiskScoreValidationNegative(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -101,6 +106,7 @@ class AnalysisResultTest extends TestCase
 
         $this->analysisResult->setRiskScore(-1.0);
     }
+
     public function testRiskLevelCalculation(): void
     {
         // Test low risk
@@ -131,6 +137,7 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals('critical', $this->analysisResult->getRiskLevel());
     }
+
     public function testRecommendationManagement(): void
     {
         $recommendation1 = 'Update to latest version';
@@ -145,6 +152,7 @@ class AnalysisResultTest extends TestCase
         self::assertEquals($recommendation1, $recommendations[0]);
         self::assertEquals($recommendation2, $recommendations[1]);
     }
+
     public function testErrorHandling(): void
     {
         // Test no error initially
@@ -160,6 +168,7 @@ class AnalysisResultTest extends TestCase
         self::assertTrue($this->analysisResult->hasError());
         self::assertFalse($this->analysisResult->isSuccessful());
     }
+
     public function testToArray(): void
     {
         $this->analysisResult->addMetric('test_metric', 'test_value');
@@ -201,6 +210,7 @@ class AnalysisResultTest extends TestCase
         self::assertSame('', $array['error']);
         self::assertTrue($array['successful']);
     }
+
     public function testToArrayWithError(): void
     {
         $this->analysisResult->setError('Test error message');
@@ -210,6 +220,7 @@ class AnalysisResultTest extends TestCase
         self::assertEquals('Test error message', $array['error']);
         self::assertFalse($array['successful']);
     }
+
     public function testExecutedAtFormat(): void
     {
         $array = $this->analysisResult->toArray();
@@ -222,6 +233,7 @@ class AnalysisResultTest extends TestCase
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTime::ATOM, $executedAt);
         self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);
     }
+
     public function testMetricTypesHandling(): void
     {
         // Test various metric types

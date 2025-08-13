@@ -17,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(InstallationMode::class)]
 final class InstallationModeTest extends TestCase
 {
@@ -50,8 +49,6 @@ final class InstallationModeTest extends TestCase
         self::assertSame($expectedDescription, InstallationMode::COMPOSER->getDescription());
     }
 
-    /**
-     */
     #[DataProvider('fromValueProvider')]
     public function testFromValue(string $value, InstallationMode $expected): void
     {
@@ -68,8 +65,6 @@ final class InstallationModeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('tryFromValueProvider')]
     public function testTryFromValue(string $value, ?InstallationMode $expected): void
     {

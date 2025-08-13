@@ -65,7 +65,7 @@
     "fix": [
       "@fix:composer",
       "@fix:editorconfig",
-      "@fix:editorconfig",
+      "@fix:php",
       "@fix:rector"
     ],
     "fix:composer": "@composer normalize",

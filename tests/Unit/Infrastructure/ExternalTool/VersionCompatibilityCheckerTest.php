@@ -17,7 +17,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VersionCompatibilityChecke
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(VersionCompatibilityChecker::class)]
 class VersionCompatibilityCheckerTest extends TestCase
 {

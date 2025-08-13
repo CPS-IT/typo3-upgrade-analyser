@@ -15,10 +15,9 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Repository;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-
 
 #[CoversClass(RepositoryUrlHandler::class)]
 class RepositoryUrlHandlerTest extends TestCase

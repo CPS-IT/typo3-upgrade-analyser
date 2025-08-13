@@ -14,12 +14,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-
 
 #[CoversClass(YamlConfigurationParser::class)]
 class YamlConfigurationParserTest extends TestCase

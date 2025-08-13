@@ -17,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(ExtensionType::class)]
 final class ExtensionTypeTest extends TestCase
 {
@@ -38,8 +37,6 @@ final class ExtensionTypeTest extends TestCase
         self::assertSame('composer', ExtensionType::COMPOSER->value);
     }
 
-    /**
-     */
     #[DataProvider('isSystemExtensionProvider')]
     public function testIsSystemExtension(ExtensionType $type, bool $expected): void
     {
@@ -58,8 +55,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('isLocalExtensionProvider')]
     public function testIsLocalExtension(ExtensionType $type, bool $expected): void
     {
@@ -78,8 +73,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('isComposerExtensionProvider')]
     public function testIsComposerExtension(ExtensionType $type, bool $expected): void
     {
@@ -98,8 +91,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('getDisplayNameProvider')]
     public function testGetDisplayName(ExtensionType $type, string $expected): void
     {
@@ -118,8 +109,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('getDescriptionProvider')]
     public function testGetDescription(ExtensionType $type, string $expected): void
     {
@@ -140,8 +129,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('getTypicalPathProvider')]
     public function testGetTypicalPath(ExtensionType $type, string $basePath, string $expected): void
     {
@@ -173,8 +160,6 @@ final class ExtensionTypeTest extends TestCase
         self::assertSame('/vendor/', ExtensionType::COMPOSER->getTypicalPath());
     }
 
-    /**
-     */
     #[DataProvider('fromValueProvider')]
     public function testFromValue(string $value, ExtensionType $expected): void
     {
@@ -193,8 +178,6 @@ final class ExtensionTypeTest extends TestCase
         ];
     }
 
-    /**
-     */
     #[DataProvider('tryFromValueProvider')]
     public function testTryFromValue(string $value, ?ExtensionType $expected): void
     {

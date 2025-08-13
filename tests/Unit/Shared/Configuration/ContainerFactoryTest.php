@@ -23,7 +23,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-
 #[CoversClass(ContainerFactory::class)]
 class ContainerFactoryTest extends TestCase
 {

@@ -18,7 +18,6 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(Extension::class)]
 class ExtensionTest extends TestCase
 {

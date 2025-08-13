@@ -18,7 +18,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
