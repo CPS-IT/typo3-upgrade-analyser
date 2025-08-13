@@ -491,7 +491,7 @@ class RectorOutputParserTest extends TestCase
         $this->assertFalse($result->isSuccessful());
 
         // Verify we have findings only from file_diffs (changed_files ignored)
-        $ruleClasses = array_map(fn ($finding) => $finding->getRuleClass(), $result->findings);
+        $ruleClasses = array_map(fn ($finding): string => $finding->getRuleClass(), $result->findings);
         $this->assertContains('NewFormatRector', $ruleClasses);
         $this->assertContains('AnotherNewFormatRector', $ruleClasses);
         $this->assertNotContains('Unknown', $ruleClasses); // changed_files ignored when file_diffs present
