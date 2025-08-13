@@ -18,7 +18,7 @@
     "symfony/config": "^7.0",
     "symfony/console": "^7.0",
     "symfony/dependency-injection": "^7.0",
-    "symfony/dotenv": "^6.4",
+    "symfony/dotenv": "^7.3",
     "symfony/filesystem": "^7.0",
     "symfony/finder": "^7.0",
     "symfony/http-client": "^7.0",
