@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Shared\Configuration;
 
+use CPSIT\UpgradeAnalyzer\Shared\Utility\ProjectRootResolver;
 use Symfony\Component\Dotenv\Dotenv;
 
 /**
@@ -27,7 +28,7 @@ class EnvironmentLoader
             return;
         }
 
-        $rootDir = \dirname(__DIR__, 3);
+        $rootDir = ProjectRootResolver::findProjectRoot();
         $dotenv = new Dotenv();
 
         // Check for .env.local file first (higher priority)

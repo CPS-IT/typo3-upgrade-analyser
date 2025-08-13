@@ -97,16 +97,18 @@ class ContainerFactoryTest extends TestCase
     public function testApplicationParametersAreSet(): void
     {
         $rootDir = $this->container->getParameter('app.root_dir');
+        $sourceDir = $this->container->getParameter('app.source_dir');
         $configDir = $this->container->getParameter('app.config_dir');
         $resourcesDir = $this->container->getParameter('app.resources_dir');
 
         self::assertIsString($rootDir);
+        self::assertIsString($sourceDir);
         self::assertIsString($configDir);
         self::assertIsString($resourcesDir);
 
-        // Check parameter relationships
-        self::assertEquals($rootDir . '/config', $configDir);
-        self::assertEquals($rootDir . '/resources', $resourcesDir);
+        // Check parameter relationships - config and resources are relative to source dir
+        self::assertEquals($sourceDir . '/config', $configDir);
+        self::assertEquals($sourceDir . '/resources', $resourcesDir);
     }
 
     public function testCommandsAreRegistered(): void
@@ -226,21 +228,28 @@ class ContainerFactoryTest extends TestCase
     public function testContainerParametersAreCorrect(): void
     {
         $rootDir = $this->container->getParameter('app.root_dir');
+        $sourceDir = $this->container->getParameter('app.source_dir');
         self::assertIsString($rootDir);
+        self::assertIsString($sourceDir);
 
-        // Root dir should be the project root (3 levels up from ContainerFactory location)
-        self::assertStringEndsWith('typo3-upgrade-analyser', $rootDir);
+        // Root dir should be the project root - normalize path to handle composer scenarios
+        $normalizedRootDir = realpath($rootDir) ?: '';
+        self::assertStringEndsWith('typo3-upgrade-analyser', $normalizedRootDir);
         self::assertDirectoryExists($rootDir);
 
-        // Config dir should exist relative to root
+        // Source dir should be the source directory (3 levels up from ContainerFactory location)
+        self::assertStringEndsWith('typo3-upgrade-analyser', $sourceDir);
+        self::assertDirectoryExists($sourceDir);
+
+        // Config dir should exist relative to source dir
         $configDir = $this->container->getParameter('app.config_dir');
         self::assertIsString($configDir);
-        self::assertEquals($rootDir . '/config', $configDir);
+        self::assertEquals($sourceDir . '/config', $configDir);
 
-        // Resources dir should exist relative to root
+        // Resources dir should exist relative to source dir
         $resourcesDir = $this->container->getParameter('app.resources_dir');
         self::assertIsString($resourcesDir);
-        self::assertEquals($rootDir . '/resources', $resourcesDir);
+        self::assertEquals($sourceDir . '/resources', $resourcesDir);
     }
 
     public function testServicesSingleton(): void
