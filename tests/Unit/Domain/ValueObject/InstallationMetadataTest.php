@@ -13,11 +13,10 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata
- */
+#[CoversClass(InstallationMetadata::class)]
 final class InstallationMetadataTest extends TestCase
 {
     private \DateTimeImmutable $testDate;

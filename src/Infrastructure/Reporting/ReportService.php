@@ -60,12 +60,17 @@ class ReportService
         // Generate context for templates
         $this->logger->debug('Building report context for templates');
         $context = $this->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
+        $this->logger->debug('Report context built successfully');
 
         foreach ($formats as $format) {
             try {
                 $this->logger->debug('Generating report for format', ['format' => $format]);
                 $reportResult = $this->generateFormatReport($format, $context, $outputDirectory);
                 $reportResults[] = $reportResult;
+                $this->logger->debug(
+                    'Successfully generated report for format',
+                    ['format' => $format],
+                );
 
                 $this->logger->info('Report generated successfully', [
                     'format' => $format,
@@ -371,7 +376,9 @@ class ReportService
 
         // Ensure output directory exists
         if (!is_dir($outputPath)) {
-            mkdir($outputPath, 0o755, true);
+            if (!mkdir($outputPath, 0o755, true) && !is_dir($outputPath)) {
+                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $outputPath));
+            }
         }
 
         $result = new ReportingResult(
@@ -406,12 +413,16 @@ class ReportService
         switch ($format) {
             case 'markdown':
                 $filename = $outputPath . 'analysis-report.md';
+                $this->logger->debug('About to render markdown main report template');
                 $content = $this->twig->render('md/main-report.md.twig', $context);
+                $this->logger->debug('Markdown main report template rendered successfully');
                 break;
 
             case 'html':
                 $filename = $outputPath . 'analysis-report.html';
+                $this->logger->debug('About to render HTML main report template');
                 $content = $this->twig->render('html/main-report.html.twig', $context);
+                $this->logger->debug('HTML main report template rendered successfully');
                 break;
 
             case 'json':
@@ -419,7 +430,9 @@ class ReportService
                 $context_copy = $context;
                 // Remove extension details from main JSON to avoid duplication
                 unset($context_copy['extension_data']);
+                $this->logger->debug('About to JSON encode main report context');
                 $content = json_encode($context_copy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                $this->logger->debug('JSON main report encoded successfully');
                 break;
 
             default:

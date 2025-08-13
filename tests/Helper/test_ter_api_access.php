@@ -327,7 +327,7 @@ if ($errorCount > 0) {
 echo "\n=== API ANALYSIS ===\n";
 
 // Check if news extension was found
-$newsTest = array_filter($results, fn ($r): bool => str_contains($r['url'], '/extension/news') && !str_contains($r['url'], '/versions'));
+$newsTest = array_filter($results, fn (array $r): bool => str_contains($r['url'], '/extension/news') && !str_contains($r['url'], '/versions'));
 if (!empty($newsTest)) {
     $newsResult = reset($newsTest);
     if ($newsResult['success'] && isset($newsResult['data']['key'])) {
@@ -338,7 +338,7 @@ if (!empty($newsTest)) {
 }
 
 // Check if realurl extension was found
-$realurlTest = array_filter($results, fn ($r): bool => str_contains($r['url'], '/extension/realurl') && !str_contains($r['url'], '/versions'));
+$realurlTest = array_filter($results, fn (array $r): bool => str_contains($r['url'], '/extension/realurl') && !str_contains($r['url'], '/versions'));
 if (!empty($realurlTest)) {
     $realurlResult = reset($realurlTest);
     if ($realurlResult['success'] && isset($realurlResult['data']['key'])) {
@@ -349,7 +349,7 @@ if (!empty($realurlTest)) {
 }
 
 // Check API availability
-$successfulTests = array_filter($results, fn ($r) => $r['success']);
+$successfulTests = array_filter($results, fn (array $r) => $r['success']);
 if (\count($successfulTests) > 0) {
     echo "✓ TER API is reachable and responding\n";
 } else {

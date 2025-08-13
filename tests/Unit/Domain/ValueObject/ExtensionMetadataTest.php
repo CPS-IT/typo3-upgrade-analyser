@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata
- */
+#[CoversClass(ExtensionMetadata::class)]
 final class ExtensionMetadataTest extends TestCase
 {
     private \DateTimeImmutable $testDate;
@@ -77,9 +77,7 @@ final class ExtensionMetadataTest extends TestCase
         self::assertSame([], $metadata->getAdditionalData());
     }
 
-    /**
-     * @dataProvider hasKeywordProvider
-     */
+    #[DataProvider('hasKeywordProvider')]
     public function testHasKeyword(array $keywords, string $searchKeyword, bool $expected): void
     {
         $metadata = new ExtensionMetadata(
@@ -111,9 +109,7 @@ final class ExtensionMetadataTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider supportsPhpVersionProvider
-     */
+    #[DataProvider('supportsPhpVersionProvider')]
     public function testSupportsPhpVersion(array $supportedVersions, string $testVersion, bool $expected): void
     {
         $metadata = new ExtensionMetadata(
@@ -144,9 +140,7 @@ final class ExtensionMetadataTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider supportsTypo3VersionProvider
-     */
+    #[DataProvider('supportsTypo3VersionProvider')]
     public function testSupportsTypo3Version(array $supportedVersions, string $testVersion, bool $expected): void
     {
         $metadata = new ExtensionMetadata(

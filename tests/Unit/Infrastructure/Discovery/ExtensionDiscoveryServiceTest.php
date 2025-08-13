@@ -97,18 +97,12 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         file_put_contents($emconfPath, $content);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::__construct
-     */
     public function testConstructorWithoutOptionalServices(): void
     {
         $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
         $this->assertInstanceOf(ExtensionDiscoveryService::class, $service);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithEmptyInstallation(): void
     {
         // Allow any logging calls - we focus on testing functionality, not logging details
@@ -123,9 +117,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getSuccessfulMethods());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsFromPackageStatesOnly(): void
     {
         $packages = [
@@ -185,9 +176,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertFalse($addressExtension->isActive());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsFromComposerOnly(): void
     {
         $packages = [
@@ -245,9 +233,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('tt_address', $addressExtension->getKey());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsFromBothSources(): void
     {
         // Package States with one extension
@@ -308,9 +293,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('composer_only', $extensionKeys);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithCustomPaths(): void
     {
         $customPaths = [
@@ -344,9 +326,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('custom_ext', $result->getExtensions()[0]->getKey());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithCacheEnabled(): void
     {
         $this->configService->expects($this->exactly(2))
@@ -375,9 +354,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithCacheHit(): void
     {
         $cachedData = [
@@ -427,9 +403,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('cached_extension', $result->getExtensions()[0]->getKey());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithCacheDisabled(): void
     {
         $this->configService->expects($this->exactly(2))
@@ -450,9 +423,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithServiceException(): void
     {
         // Create an invalid PackageStates.php that will cause parsing to fail
@@ -478,9 +448,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithInvalidPackageStates(): void
     {
         // Create invalid PackageStates.php content
@@ -498,9 +465,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithInvalidComposerInstalled(): void
     {
         // Create invalid composer installed.json content
@@ -518,9 +482,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithCorruptedJson(): void
     {
         // Create corrupted JSON file
@@ -540,9 +501,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testExtensionKeyExtractionFromComposerName(): void
     {
         $packages = [
@@ -575,9 +533,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('my_awesome_ext', $extensionKeys);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testExtensionTypeDetection(): void
     {
         $packages = [
@@ -621,9 +576,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('composer', $extensionsByKey['composer_ext']->getType());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testHandlingMissingExtEmconfFile(): void
     {
         $packages = [
@@ -647,9 +599,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('0.0.0', $extension->getVersion()->toString());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testHandlingPackageWithoutPath(): void
     {
         $packages = [
@@ -667,9 +616,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testHandlingCorruptedExtEmconfFile(): void
     {
         $packages = [
@@ -698,9 +644,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoveryMetadataTracking(): void
     {
         $this->createPackageStatesFile(['news' => ['packagePath' => 'typo3conf/ext/news/', 'state' => 'active']]);
@@ -733,9 +676,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame(0, $composerMetadata['extensions_found']);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testServiceWithoutCachingServices(): void
     {
         $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
@@ -746,9 +686,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithInvalidInstallationPath(): void
     {
         $invalidPath = '/non/existent/path';
@@ -766,9 +703,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithPackageStatesUnbalancedBrackets(): void
     {
         // Create PackageStates.php with unbalanced brackets
@@ -788,9 +722,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithPackageStatesNoPhpTag(): void
     {
         // Create PackageStates.php without PHP opening tag
@@ -810,9 +741,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithUnreadablePackageStatesFile(): void
     {
         // Create PackageStates.php that cannot be read
@@ -833,9 +761,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testCreateExtensionFromPackageDataWithDifferentPathTypes(): void
     {
         $packages = [
@@ -884,9 +809,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertSame('local', $extensionsByKey['unknown_path']->getType());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testCreateExtensionFromComposerDataWithComplexExtensionKey(): void
     {
         $packages = [
@@ -923,9 +845,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertContains('vendor_extension_with_multiple_slashes', $extensionKeys);
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testCreateExtensionFromComposerDataMissingName(): void
     {
         $packages = [
@@ -945,9 +864,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions()); // Should be ignored
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testCreateExtensionFromComposerDataWithException(): void
     {
         $packages = [
@@ -975,9 +891,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testDiscoverExtensionsWithMainDiscoveryException(): void
     {
         // Mock the configService to throw an exception during discovery
@@ -998,9 +911,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertCount(0, $result->getExtensions());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverExtensions
-     */
     public function testTypo3CoreExtensionsAreFilteredOut(): void
     {
         $packages = [

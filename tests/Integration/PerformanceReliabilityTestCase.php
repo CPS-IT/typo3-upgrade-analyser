@@ -274,7 +274,7 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
         }
 
         foreach ($extensionResults as $extension => $iterationResults) {
-            $riskScores = array_map(fn ($r): float => $r['result']->getRiskScore(), $iterationResults);
+            $riskScores = array_map(fn (array $r): float => $r['result']->getRiskScore(), $iterationResults);
             $avgRisk = array_sum($riskScores) / \count($riskScores);
 
             // Risk scores should be consistent across iterations
@@ -459,7 +459,7 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
         }
 
         // At least one condition should succeed
-        $successCount = \count(array_filter($results, fn ($r): bool => $r['success']));
+        $successCount = \count(array_filter($results, fn (array $r): bool => $r['success']));
         $this->assertGreaterThan(0, $successCount, 'Should succeed under at least one network condition');
     }
 

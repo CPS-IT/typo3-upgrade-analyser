@@ -18,7 +18,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 /**
  * Represents a TYPO3 extension.
  */
-class Extension
+class Extension implements \JsonSerializable
 {
     private array $dependencies = [];
     private array $files = [];
@@ -234,6 +234,21 @@ class Extension
             'em_configuration' => $this->emConfiguration,
             'metadata' => $this->metadata?->toArray(),
             'is_active' => $this->isActive,
+        ];
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'key' => $this->key,
+            'title' => $this->title,
+            'version' => $this->version->toString(),
+            'type' => $this->type,
+            'composer_name' => $this->composerName,
+            'is_active' => $this->isActive,
+            'dependencies_count' => \count($this->dependencies),
+            'files_count' => \count($this->files),
+            'has_repository_url' => $this->hasRepositoryUrl(),
         ];
     }
 }

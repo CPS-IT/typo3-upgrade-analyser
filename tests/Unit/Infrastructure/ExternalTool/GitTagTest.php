@@ -13,18 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for GitTag.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag
- */
+#[CoversClass(GitTag::class)]
 class GitTagTest extends TestCase
 {
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
-     */
     public function testGetSemanticVersionFromVersionPrefix(): void
     {
         $tag = new GitTag('v1.2.3');
@@ -33,9 +27,6 @@ class GitTagTest extends TestCase
         $this->assertTrue($tag->isSemanticVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
-     */
     public function testGetSemanticVersionFromReleasePrefix(): void
     {
         $tag = new GitTag('release-2.1.0');
@@ -44,9 +35,6 @@ class GitTagTest extends TestCase
         $this->assertTrue($tag->isSemanticVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
-     */
     public function testGetSemanticVersionWithPreRelease(): void
     {
         $tag = new GitTag('v1.2.3-beta.1');
@@ -56,9 +44,6 @@ class GitTagTest extends TestCase
         $this->assertTrue($tag->isPreRelease());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
-     */
     public function testGetSemanticVersionWithoutPrefix(): void
     {
         $tag = new GitTag('1.2.3');
@@ -67,9 +52,6 @@ class GitTagTest extends TestCase
         $this->assertTrue($tag->isSemanticVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getSemanticVersion
-     */
     public function testGetSemanticVersionWithNonSemantic(): void
     {
         $tag = new GitTag('main');
@@ -79,9 +61,6 @@ class GitTagTest extends TestCase
         $this->assertFalse($tag->isPreRelease());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMajorVersion
-     */
     public function testGetMajorVersion(): void
     {
         $tag = new GitTag('v12.4.5');
@@ -89,9 +68,6 @@ class GitTagTest extends TestCase
         $this->assertEquals(12, $tag->getMajorVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMinorVersion
-     */
     public function testGetMinorVersion(): void
     {
         $tag = new GitTag('v12.4.5');
@@ -99,10 +75,6 @@ class GitTagTest extends TestCase
         $this->assertEquals(4, $tag->getMinorVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMajorVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getMinorVersion
-     */
     public function testGetVersionsWithNonSemantic(): void
     {
         $tag = new GitTag('main');
@@ -111,9 +83,6 @@ class GitTagTest extends TestCase
         $this->assertNull($tag->getMinorVersion());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::isNewerThan
-     */
     public function testIsNewerThanWithDates(): void
     {
         $newerTag = new GitTag('v1.2.0', new \DateTimeImmutable('2024-02-01'));
@@ -123,9 +92,6 @@ class GitTagTest extends TestCase
         $this->assertFalse($olderTag->isNewerThan($newerTag));
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::isNewerThan
-     */
     public function testIsNewerThanWithoutDates(): void
     {
         $newerTag = new GitTag('v1.2.0');
@@ -136,11 +102,6 @@ class GitTagTest extends TestCase
         $this->assertFalse($olderTag->isNewerThan($newerTag));
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getName
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getDate
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getCommit
-     */
     public function testGettersWithAllData(): void
     {
         $date = new \DateTimeImmutable('2024-01-15T10:00:00Z');
@@ -151,11 +112,6 @@ class GitTagTest extends TestCase
         $this->assertEquals('abc123', $tag->getCommit());
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getName
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getDate
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::getCommit
-     */
     public function testGettersWithMinimalData(): void
     {
         $tag = new GitTag('v1.2.3');

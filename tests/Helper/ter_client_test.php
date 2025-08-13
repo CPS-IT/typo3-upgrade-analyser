@@ -9,7 +9,7 @@ declare(strict_types=1);
  * Tests common extensions with different TYPO3 versions.
  */
 
-require_once \dirname(__DIR__, 1) . '/vendor/autoload.php';
+require_once \dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;

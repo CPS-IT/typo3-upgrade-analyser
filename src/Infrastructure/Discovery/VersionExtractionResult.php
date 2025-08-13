@@ -148,7 +148,7 @@ final class VersionExtractionResult
         }
 
         $attemptedCount = \count($this->attemptedStrategies);
-        $supportedCount = \count(array_filter($this->attemptedStrategies, fn ($attempt): mixed => $attempt['supported'] ?? false));
+        $supportedCount = \count(array_filter($this->attemptedStrategies, fn (array $attempt): mixed => $attempt['supported'] ?? false));
 
         return \sprintf(
             'Version extraction failed: %s (attempted %d strategies, %d supported)',

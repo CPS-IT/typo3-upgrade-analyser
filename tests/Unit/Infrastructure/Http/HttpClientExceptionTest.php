@@ -13,11 +13,10 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException
- */
+#[CoversClass(HttpClientException::class)]
 class HttpClientExceptionTest extends TestCase
 {
     public function testExceptionExtendsBaseException(): void

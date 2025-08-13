@@ -13,13 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for ParseException.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException
- */
+#[CoversClass(ParseException::class)]
 class ParseExceptionTest extends TestCase
 {
     public function testBasicExceptionCreation(): void
@@ -305,9 +303,7 @@ class ParseExceptionTest extends TestCase
         self::assertSame('default', $exception->getContextValue('nonexistent_key', 'default'));
     }
 
-    /**
-     * @dataProvider formatProvider
-     */
+    #[DataProvider('formatProvider')]
     public function testFormatCapitalizationInMessage(string $format, string $expectedCapitalized): void
     {
         $exception = new ParseException('Test error', '/path/to/file', $format);
@@ -319,7 +315,7 @@ class ParseExceptionTest extends TestCase
     /**
      * @return array<string, array{string, string}>
      */
-    public function formatProvider(): array
+    public static function formatProvider(): array
     {
         return [
             'php format' => ['php', 'Php'],

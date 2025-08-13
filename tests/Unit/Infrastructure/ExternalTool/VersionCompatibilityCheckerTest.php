@@ -14,11 +14,10 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VersionCompatibilityChecker;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VersionCompatibilityChecker
- */
+#[CoversClass(VersionCompatibilityChecker::class)]
 class VersionCompatibilityCheckerTest extends TestCase
 {
     private VersionCompatibilityChecker $checker;
