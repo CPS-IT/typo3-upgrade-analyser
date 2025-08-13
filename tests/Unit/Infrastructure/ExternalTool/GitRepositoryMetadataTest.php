@@ -13,26 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for GitRepositoryMetadata.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata
- */
+
+#[CoversClass(GitRepositoryMetadata::class)]
 class GitRepositoryMetadataTest extends TestCase
 {
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getName
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDescription
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::isArchived
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::isFork
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getStarCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getForkCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getLastUpdated
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDefaultBranch
-     */
     public function testConstructorAndGetters(): void
     {
         $lastUpdated = new \DateTimeImmutable('2024-01-15T10:00:00Z');
@@ -57,12 +44,6 @@ class GitRepositoryMetadataTest extends TestCase
         $this->assertSame($lastUpdated, $metadata->getLastUpdated());
         $this->assertEquals('main', $metadata->getDefaultBranch());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDescription
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::getDefaultBranch
-     */
     public function testWithEmptyDescription(): void
     {
         $metadata = new GitRepositoryMetadata(
@@ -79,10 +60,6 @@ class GitRepositoryMetadataTest extends TestCase
         $this->assertEquals('', $metadata->getDescription());
         $this->assertEquals('master', $metadata->getDefaultBranch());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::__construct
-     */
     public function testReadonlyProperties(): void
     {
         $metadata = new GitRepositoryMetadata(

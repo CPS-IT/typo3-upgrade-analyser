@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -21,11 +22,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
-/**
- * Test case for the InitConfigCommand.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand
- */
+
+#[CoversClass(InitConfigCommand::class)]
 class InitConfigCommandTest extends TestCase
 {
     private InitConfigCommand $command;

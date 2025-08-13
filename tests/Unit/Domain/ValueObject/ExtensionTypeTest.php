@@ -13,11 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionType
- */
+
+#[CoversClass(ExtensionType::class)]
 final class ExtensionTypeTest extends TestCase
 {
     public function testEnumCases(): void
@@ -38,8 +39,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider isSystemExtensionProvider
      */
+    #[DataProvider('isSystemExtensionProvider')]
     public function testIsSystemExtension(ExtensionType $type, bool $expected): void
     {
         self::assertSame($expected, $type->isSystemExtension());
@@ -58,8 +59,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider isLocalExtensionProvider
      */
+    #[DataProvider('isLocalExtensionProvider')]
     public function testIsLocalExtension(ExtensionType $type, bool $expected): void
     {
         self::assertSame($expected, $type->isLocalExtension());
@@ -78,8 +79,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider isComposerExtensionProvider
      */
+    #[DataProvider('isComposerExtensionProvider')]
     public function testIsComposerExtension(ExtensionType $type, bool $expected): void
     {
         self::assertSame($expected, $type->isComposerExtension());
@@ -98,8 +99,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider getDisplayNameProvider
      */
+    #[DataProvider('getDisplayNameProvider')]
     public function testGetDisplayName(ExtensionType $type, string $expected): void
     {
         self::assertSame($expected, $type->getDisplayName());
@@ -118,8 +119,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider getDescriptionProvider
      */
+    #[DataProvider('getDescriptionProvider')]
     public function testGetDescription(ExtensionType $type, string $expected): void
     {
         self::assertSame($expected, $type->getDescription());
@@ -140,8 +141,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider getTypicalPathProvider
      */
+    #[DataProvider('getTypicalPathProvider')]
     public function testGetTypicalPath(ExtensionType $type, string $basePath, string $expected): void
     {
         self::assertSame($expected, $type->getTypicalPath($basePath));
@@ -173,8 +174,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider fromValueProvider
      */
+    #[DataProvider('fromValueProvider')]
     public function testFromValue(string $value, ExtensionType $expected): void
     {
         self::assertSame($expected, ExtensionType::from($value));
@@ -193,8 +194,8 @@ final class ExtensionTypeTest extends TestCase
     }
 
     /**
-     * @dataProvider tryFromValueProvider
      */
+    #[DataProvider('tryFromValueProvider')]
     public function testTryFromValue(string $value, ?ExtensionType $expected): void
     {
         self::assertSame($expected, ExtensionType::tryFrom($value));

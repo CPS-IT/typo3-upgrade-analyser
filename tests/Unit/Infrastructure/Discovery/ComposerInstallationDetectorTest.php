@@ -18,13 +18,14 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector
- */
+
+#[CoversClass(ComposerInstallationDetector::class)]
 final class ComposerInstallationDetectorTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
@@ -153,9 +154,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
-    /**
-     * @dataProvider typo3PackageProvider
-     */
+    #[DataProvider('typo3PackageProvider')]
     public function testSupportsWithDifferentTypo3Packages(string $packageName): void
     {
         $this->createFullTypo3Directory();

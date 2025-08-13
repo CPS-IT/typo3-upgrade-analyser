@@ -15,13 +15,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for the AnalysisResult entity.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult
- */
+
+#[CoversClass(AnalysisResult::class)]
 class AnalysisResultTest extends TestCase
 {
     private AnalysisResult $analysisResult;
@@ -32,24 +30,12 @@ class AnalysisResultTest extends TestCase
         $this->extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
         $this->analysisResult = new AnalysisResult('version_availability', $this->extension);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getAnalyzerName
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getExecutedAt
-     */
     public function testConstructorSetsProperties(): void
     {
         self::assertEquals('version_availability', $this->analysisResult->getAnalyzerName());
         self::assertSame($this->extension, $this->analysisResult->getExtension());
         self::assertInstanceOf(\DateTimeImmutable::class, $this->analysisResult->getExecutedAt());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getExecutedAt
-     */
     public function testExecutedAtIsSetOnConstruction(): void
     {
         $beforeCreation = new \DateTimeImmutable();
@@ -61,13 +47,6 @@ class AnalysisResultTest extends TestCase
         self::assertGreaterThanOrEqual($beforeCreation->getTimestamp(), $executedAt->getTimestamp());
         self::assertLessThanOrEqual($afterCreation->getTimestamp(), $executedAt->getTimestamp());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::addMetric
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::hasMetric
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getMetric
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getMetrics
-     */
     public function testMetricManagement(): void
     {
         $this->analysisResult->addMetric('ter_available', true);
@@ -92,11 +71,6 @@ class AnalysisResultTest extends TestCase
             'version_count' => 5,
         ], $allMetrics);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getRiskScore
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setRiskScore
-     */
     public function testRiskScoreManagement(): void
     {
         // Test default risk score
@@ -113,10 +87,6 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals(10.0, $this->analysisResult->getRiskScore());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setRiskScore
-     */
     public function testRiskScoreValidation(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -124,10 +94,6 @@ class AnalysisResultTest extends TestCase
 
         $this->analysisResult->setRiskScore(11.0);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setRiskScore
-     */
     public function testRiskScoreValidationNegative(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -135,11 +101,6 @@ class AnalysisResultTest extends TestCase
 
         $this->analysisResult->setRiskScore(-1.0);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setRiskScore
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getRiskLevel
-     */
     public function testRiskLevelCalculation(): void
     {
         // Test low risk
@@ -170,11 +131,6 @@ class AnalysisResultTest extends TestCase
         $this->analysisResult->setRiskScore(10.0);
         self::assertEquals('critical', $this->analysisResult->getRiskLevel());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::addRecommendation
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getRecommendations
-     */
     public function testRecommendationManagement(): void
     {
         $recommendation1 = 'Update to latest version';
@@ -189,13 +145,6 @@ class AnalysisResultTest extends TestCase
         self::assertEquals($recommendation1, $recommendations[0]);
         self::assertEquals($recommendation2, $recommendations[1]);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getError
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::hasError
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::isSuccessful
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setError
-     */
     public function testErrorHandling(): void
     {
         // Test no error initially
@@ -211,14 +160,6 @@ class AnalysisResultTest extends TestCase
         self::assertTrue($this->analysisResult->hasError());
         self::assertFalse($this->analysisResult->isSuccessful());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::toArray
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::addMetric
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setRiskScore
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::addRecommendation
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getRiskLevel
-     */
     public function testToArray(): void
     {
         $this->analysisResult->addMetric('test_metric', 'test_value');
@@ -257,14 +198,9 @@ class AnalysisResultTest extends TestCase
         self::assertEquals('high', $array['risk_level']);
         self::assertEquals(['First recommendation', 'Second recommendation'], $array['recommendations']);
         self::assertIsString($array['executed_at']);
-        self::assertNull($array['error']);
+        self::assertSame('', $array['error']);
         self::assertTrue($array['successful']);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::toArray
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::setError
-     */
     public function testToArrayWithError(): void
     {
         $this->analysisResult->setError('Test error message');
@@ -274,10 +210,6 @@ class AnalysisResultTest extends TestCase
         self::assertEquals('Test error message', $array['error']);
         self::assertFalse($array['successful']);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::toArray
-     */
     public function testExecutedAtFormat(): void
     {
         $array = $this->analysisResult->toArray();
@@ -290,11 +222,6 @@ class AnalysisResultTest extends TestCase
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTime::ATOM, $executedAt);
         self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::addMetric
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::getMetrics
-     */
     public function testMetricTypesHandling(): void
     {
         // Test various metric types

@@ -17,13 +17,11 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for the Installation entity.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation
- */
+
+#[CoversClass(Installation::class)]
 class InstallationTest extends TestCase
 {
     private Installation $installation;
@@ -34,33 +32,17 @@ class InstallationTest extends TestCase
         $this->version = new Version('12.4.8');
         $this->installation = new Installation('/path/to/typo3', $this->version, 'composer');
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getPath
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getType
-     */
     public function testConstructorSetsProperties(): void
     {
         self::assertEquals('/path/to/typo3', $this->installation->getPath());
         self::assertSame($this->version, $this->installation->getVersion());
         self::assertEquals('composer', $this->installation->getType());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getType
-     */
     public function testDefaultTypeIsComposer(): void
     {
         $installation = new Installation('/path/to/typo3', $this->version);
         self::assertEquals('composer', $installation->getType());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isComposerMode
-     */
     public function testIsComposerMode(): void
     {
         self::assertTrue($this->installation->isComposerMode());
@@ -68,10 +50,6 @@ class InstallationTest extends TestCase
         $legacyInstallation = new Installation('/path/to/typo3', $this->version, 'legacy');
         self::assertFalse($legacyInstallation->isComposerMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isLegacyMode
-     */
     public function testIsLegacyMode(): void
     {
         self::assertFalse($this->installation->isLegacyMode());
@@ -79,12 +57,6 @@ class InstallationTest extends TestCase
         $legacyInstallation = new Installation('/path/to/typo3', $this->version, 'legacy');
         self::assertTrue($legacyInstallation->isLegacyMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::hasExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtension
-     */
     public function testAddAndGetExtension(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'));
@@ -94,20 +66,11 @@ class InstallationTest extends TestCase
         self::assertTrue($this->installation->hasExtension('test_ext'));
         self::assertSame($extension, $this->installation->getExtension('test_ext'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::hasExtension
-     */
     public function testGetExtensionReturnsNullForNonExistentExtension(): void
     {
         self::assertNull($this->installation->getExtension('non_existent'));
         self::assertFalse($this->installation->hasExtension('non_existent'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addExtension
-     */
     public function testGetExtensions(): void
     {
         $extension1 = new Extension('ext1', 'Extension 1', new Version('1.0.0'));
@@ -120,11 +83,6 @@ class InstallationTest extends TestCase
         self::assertSame($extension1, $this->installation->getExtension('ext1'));
         self::assertSame($extension2, $this->installation->getExtension('ext2'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getConfiguration
-     */
     public function testSetAndGetConfiguration(): void
     {
         $config = [
@@ -145,11 +103,6 @@ class InstallationTest extends TestCase
 
         self::assertEquals($config, $this->installation->getConfiguration());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getConfigurationValue
-     */
     public function testGetConfigurationValue(): void
     {
         $config = [
@@ -180,20 +133,11 @@ class InstallationTest extends TestCase
         // Test partial path that exists
         self::assertEquals(['transport' => 'smtp'], $this->installation->getConfigurationValue('MAIL'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getConfigurationValue
-     */
     public function testGetConfigurationValueWithEmptyConfiguration(): void
     {
         self::assertNull($this->installation->getConfigurationValue('ANY.PATH'));
         self::assertEquals('default', $this->installation->getConfigurationValue('ANY.PATH', 'default'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getConfigurationValue
-     */
     public function testGetConfigurationValueWithNonArrayValue(): void
     {
         $this->installation->setConfiguration(['key' => 'value']);
@@ -202,11 +146,6 @@ class InstallationTest extends TestCase
         self::assertNull($this->installation->getConfigurationValue('key.nested'));
         self::assertEquals('default', $this->installation->getConfigurationValue('key.nested', 'default'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addExtension
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getExtension
-     */
     public function testAddExtensionOverwritesExistingExtension(): void
     {
         $extension1 = new Extension('test_ext', 'Test Extension 1', new Version('1.0.0'));
@@ -218,21 +157,12 @@ class InstallationTest extends TestCase
         // But the second extension should overwrite the first
         self::assertSame($extension2, $this->installation->getExtension('test_ext'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getConfiguration
-     */
     public function testEmptyConfigurationReturnsEmptyArray(): void
     {
         self::assertEquals([], $this->installation->getConfiguration());
     }
 
     // Tests for new discovery system methods
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setMode
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getMode
-     */
     public function testSetAndGetMode(): void
     {
         self::assertNull($this->installation->getMode());
@@ -242,11 +172,6 @@ class InstallationTest extends TestCase
 
         self::assertSame($mode, $this->installation->getMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::setMetadata
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getMetadata
-     */
     public function testSetAndGetMetadata(): void
     {
         self::assertNull($this->installation->getMetadata());
@@ -263,10 +188,6 @@ class InstallationTest extends TestCase
 
         self::assertSame($metadata, $this->installation->getMetadata());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getSystemExtensions
-     */
     public function testGetSystemExtensions(): void
     {
         $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
@@ -284,10 +205,6 @@ class InstallationTest extends TestCase
         self::assertNotContains($localExt, $systemExtensions);
         self::assertNotContains($composerExt, $systemExtensions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getLocalExtensions
-     */
     public function testGetLocalExtensions(): void
     {
         $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
@@ -308,10 +225,6 @@ class InstallationTest extends TestCase
         self::assertNotContains($systemExt, $localExtensions);
         self::assertNotContains($composerExt, $localExtensions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getComposerExtensions
-     */
     public function testGetComposerExtensions(): void
     {
         $systemExt = new Extension('core', 'Core', new Version('12.4.0'), 'system');
@@ -332,10 +245,6 @@ class InstallationTest extends TestCase
         self::assertNotContains($systemExt, $composerExtensions);
         self::assertNotContains($localExt, $composerExtensions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
-     */
     public function testIsMixedModeWithBothLocalAndComposerExtensions(): void
     {
         $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
@@ -346,10 +255,6 @@ class InstallationTest extends TestCase
 
         self::assertTrue($this->installation->isMixedMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
-     */
     public function testIsMixedModeWithOnlyLocalExtensions(): void
     {
         $localExt = new Extension('my_ext', 'My Extension', new Version('1.0.0'), 'local');
@@ -358,10 +263,6 @@ class InstallationTest extends TestCase
 
         self::assertFalse($this->installation->isMixedMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
-     */
     public function testIsMixedModeWithOnlyComposerExtensions(): void
     {
         $composerExt = new Extension('vendor_ext', 'Vendor Extension', new Version('2.0.0'), 'composer', 'vendor/extension');
@@ -370,20 +271,10 @@ class InstallationTest extends TestCase
 
         self::assertFalse($this->installation->isMixedMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isMixedMode
-     */
     public function testIsMixedModeWithNoExtensions(): void
     {
         self::assertFalse($this->installation->isMixedMode());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::markAsInvalid
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
-     */
     public function testMarkAsInvalid(): void
     {
         self::assertTrue($this->installation->isValid());
@@ -394,12 +285,6 @@ class InstallationTest extends TestCase
         self::assertFalse($this->installation->isValid());
         self::assertSame(['Missing composer.json'], $this->installation->getValidationErrors());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addValidationError
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
-     */
     public function testAddValidationError(): void
     {
         self::assertTrue($this->installation->isValid());
@@ -414,12 +299,6 @@ class InstallationTest extends TestCase
         self::assertFalse($this->installation->isValid());
         self::assertSame(['First error', 'Second error'], $this->installation->getValidationErrors());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::clearValidationErrors
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::isValid
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::getValidationErrors
-     */
     public function testClearValidationErrors(): void
     {
         $this->installation->addValidationError('Some error');
@@ -433,10 +312,6 @@ class InstallationTest extends TestCase
         self::assertTrue($this->installation->isValid());
         self::assertEmpty($this->installation->getValidationErrors());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation::addValidationError
-     */
     public function testAddValidationErrorWhenAlreadyInvalid(): void
     {
         $this->installation->markAsInvalid('First error');

@@ -17,12 +17,12 @@ use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Application\AnalyzerApplication
- */
+
+#[CoversClass(AnalyzerApplication::class)]
 class AnalyzerApplicationTest extends TestCase
 {
     private AnalyzerApplication $subject;

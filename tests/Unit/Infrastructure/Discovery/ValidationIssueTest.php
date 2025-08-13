@@ -14,11 +14,12 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue
- */
+
+#[CoversClass(ValidationIssue::class)]
 final class ValidationIssueTest extends TestCase
 {
     public function testConstructorSetsAllProperties(): void
@@ -90,9 +91,7 @@ final class ValidationIssueTest extends TestCase
         self::assertNull($issue->getContextValue('nonexistent_key'));
     }
 
-    /**
-     * @dataProvider isBlockingAnalysisProvider
-     */
+    #[DataProvider('isBlockingAnalysisProvider')]
     public function testIsBlockingAnalysis(ValidationSeverity $severity, bool $expected): void
     {
         $issue = new ValidationIssue(

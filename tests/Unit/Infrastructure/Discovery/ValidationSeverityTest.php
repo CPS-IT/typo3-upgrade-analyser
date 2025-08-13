@@ -13,11 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity
- */
+
+#[CoversClass(ValidationSeverity::class)]
 final class ValidationSeverityTest extends TestCase
 {
     public function testEnumCases(): void
@@ -39,9 +40,7 @@ final class ValidationSeverityTest extends TestCase
         self::assertSame('critical', ValidationSeverity::CRITICAL->value);
     }
 
-    /**
-     * @dataProvider getDisplayNameProvider
-     */
+    #[DataProvider('getDisplayNameProvider')]
     public function testGetDisplayName(ValidationSeverity $severity, string $expected): void
     {
         self::assertSame($expected, $severity->getDisplayName());
@@ -60,9 +59,7 @@ final class ValidationSeverityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getDescriptionProvider
-     */
+    #[DataProvider('getDescriptionProvider')]
     public function testGetDescription(ValidationSeverity $severity, string $expected): void
     {
         self::assertSame($expected, $severity->getDescription());
@@ -81,9 +78,7 @@ final class ValidationSeverityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getNumericValueProvider
-     */
+    #[DataProvider('getNumericValueProvider')]
     public function testGetNumericValue(ValidationSeverity $severity, int $expected): void
     {
         self::assertSame($expected, $severity->getNumericValue());
@@ -102,9 +97,7 @@ final class ValidationSeverityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider isBlockingAnalysisProvider
-     */
+    #[DataProvider('isBlockingAnalysisProvider')]
     public function testIsBlockingAnalysis(ValidationSeverity $severity, bool $expected): void
     {
         self::assertSame($expected, $severity->isBlockingAnalysis());
@@ -123,9 +116,7 @@ final class ValidationSeverityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider fromNumericValueProvider
-     */
+    #[DataProvider('fromNumericValueProvider')]
     public function testFromNumericValue(int $value, ValidationSeverity $expected): void
     {
         self::assertSame($expected, ValidationSeverity::fromNumericValue($value));
@@ -144,9 +135,7 @@ final class ValidationSeverityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider fromNumericValueInvalidProvider
-     */
+    #[DataProvider('fromNumericValueInvalidProvider')]
     public function testFromNumericValueWithInvalidValue(int $value): void
     {
         $this->expectException(\InvalidArgumentException::class);

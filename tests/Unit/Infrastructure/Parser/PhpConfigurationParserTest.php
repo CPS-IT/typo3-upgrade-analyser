@@ -16,16 +16,15 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
  * Test case for PhpConfigurationParser.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationExtractor
- */
+ * */
 class PhpConfigurationParserTest extends TestCase
 {
     private MockObject&LoggerInterface $logger;
@@ -643,9 +642,7 @@ class PhpConfigurationParserTest extends TestCase
         self::assertStringContainsString('FuncCall', $data['function_call']);
     }
 
-    /**
-     * @dataProvider typo3ConfigurationPatternsProvider
-     */
+    #[DataProvider('typo3ConfigurationPatternsProvider')]
     public function testLooksLikeConfigurationFilePatterns(string $content, bool $expectedResult): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pattern_test_') . '.php';
@@ -662,7 +659,7 @@ class PhpConfigurationParserTest extends TestCase
     /**
      * @return array<string, array{string, bool}>
      */
-    public function typo3ConfigurationPatternsProvider(): array
+    public static function typo3ConfigurationPatternsProvider(): array
     {
         return [
             'TYPO3_CONF_VARS access' => [

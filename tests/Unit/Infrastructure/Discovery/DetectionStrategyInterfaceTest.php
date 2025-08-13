@@ -19,9 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests the DetectionStrategyInterface contract with a mock implementation.
- *
- * @coversNothing
- */
+ * */
 final class DetectionStrategyInterfaceTest extends TestCase
 {
     public function testInterfaceContractsWorkCorrectly(): void

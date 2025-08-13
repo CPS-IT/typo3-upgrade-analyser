@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Cache;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -50,19 +51,10 @@ final class CacheServiceTest extends TestCase
         }
         rmdir($dir);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::has
-     */
     public function testHasReturnsFalseForNonExistentKey(): void
     {
         $this->assertFalse($this->cacheService->has('nonexistent_key'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::has
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     */
     public function testHasReturnsTrueForExistingKey(): void
     {
         $key = 'test_key';
@@ -71,22 +63,10 @@ final class CacheServiceTest extends TestCase
         $this->cacheService->set($key, $data);
         $this->assertTrue($this->cacheService->has($key));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::get
-     */
     public function testGetReturnsNullForNonExistentKey(): void
     {
         $this->assertNull($this->cacheService->get('nonexistent_key'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::get
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::ensureCacheDirectoryExists
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheFilePath
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
-     */
     public function testSetAndGetWithValidData(): void
     {
         $key = 'test_key';
@@ -106,12 +86,6 @@ final class CacheServiceTest extends TestCase
         $retrievedData = $this->cacheService->get($key);
         $this->assertSame($data, $retrievedData);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::ensureCacheDirectoryExists
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
-     */
     public function testSetCreatesDirectoryIfNotExists(): void
     {
         $cacheDir = $this->tempDir . '/var/results';
@@ -124,10 +98,6 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue($result);
         $this->assertTrue(is_dir($cacheDir));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     */
     public function testSetWithJsonEncodingError(): void
     {
         $key = 'test_key';
@@ -142,10 +112,6 @@ final class CacheServiceTest extends TestCase
             fclose($resource);
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::get
-     */
     public function testGetWithCorruptedJsonFile(): void
     {
         $key = 'test_key';
@@ -167,10 +133,6 @@ final class CacheServiceTest extends TestCase
         $result = $this->cacheService->get($key);
         $this->assertNull($result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::get
-     */
     public function testGetWithUnreadableFile(): void
     {
         $key = 'test_key';
@@ -199,21 +161,11 @@ final class CacheServiceTest extends TestCase
         // Restore permissions for cleanup
         chmod($filePath, 0o644);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::delete
-     */
     public function testDeleteNonExistentKey(): void
     {
         $result = $this->cacheService->delete('nonexistent_key');
         $this->assertTrue($result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::delete
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::has
-     */
     public function testDeleteExistingKey(): void
     {
         $key = 'test_key';
@@ -230,21 +182,11 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue($result);
         $this->assertFalse($this->cacheService->has($key));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::clear
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
-     */
     public function testClearWithNoDirectory(): void
     {
         $result = $this->cacheService->clear();
         $this->assertTrue($result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::clear
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
-     */
     public function testClearWithEmptyDirectory(): void
     {
         // Create empty cache directory
@@ -258,12 +200,6 @@ final class CacheServiceTest extends TestCase
         $result = $this->cacheService->clear();
         $this->assertTrue($result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::clear
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::has
-     */
     public function testClearWithMultipleFiles(): void
     {
         $keys = ['key1', 'key2', 'key3'];
@@ -291,11 +227,6 @@ final class CacheServiceTest extends TestCase
             $this->assertFalse($this->cacheService->has($key));
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::clear
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheDirectory
-     */
     public function testClearWithMixedFiles(): void
     {
         // Create cache directory with mixed files (some .json, some other extensions)
@@ -320,10 +251,6 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue(file_exists($cacheDir . '/other.txt'));
         $this->assertTrue(file_exists($cacheDir . '/readme.md'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::generateKey
-     */
     public function testGenerateKeyWithBasicParams(): void
     {
         $type = 'installation_discovery';
@@ -338,10 +265,6 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith($type . '_', $key1);
         $this->assertGreaterThan(\strlen($type . '_'), \strlen($key1));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::generateKey
-     */
     public function testGenerateKeyWithAdditionalParams(): void
     {
         $type = 'extension_discovery';
@@ -359,10 +282,6 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith($type . '_', $key1);
         $this->assertStringStartsWith($type . '_', $key3);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::generateKey
-     */
     public function testGenerateKeyWithNonExistentPath(): void
     {
         $type = 'test';
@@ -373,10 +292,6 @@ final class CacheServiceTest extends TestCase
         // Should still generate a valid key even for non-existent paths
         $this->assertStringStartsWith($type . '_', $key);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::generateKey
-     */
     public function testGenerateKeyWithDifferentTypes(): void
     {
         $path = '/same/path';
@@ -388,10 +303,6 @@ final class CacheServiceTest extends TestCase
         $this->assertStringStartsWith('type1_', $key1);
         $this->assertStringStartsWith('type2_', $key2);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::generateKey
-     */
     public function testGenerateKeyWithSamePath(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'cache_test_');
@@ -412,10 +323,6 @@ final class CacheServiceTest extends TestCase
             unlink($tempFile);
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     */
     public function testSetWithWriteFailure(): void
     {
         // Create a scenario where writing fails by making the cache directory read-only
@@ -446,11 +353,6 @@ final class CacheServiceTest extends TestCase
         // Restore permissions for cleanup
         chmod($cacheDir, 0o755);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::ensureCacheDirectoryExists
-     */
     public function testSetWithDirectoryCreationFailure(): void
     {
         // Create a service with an invalid project root to simulate directory creation failure
@@ -466,13 +368,6 @@ final class CacheServiceTest extends TestCase
         $result = $invalidCacheService->set('test_key', ['data' => 'value']);
         $this->assertFalse($result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::get
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::has
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::delete
-     */
     public function testCompleteWorkflow(): void
     {
         $key = 'workflow_test';
@@ -505,11 +400,6 @@ final class CacheServiceTest extends TestCase
         $this->assertFalse($this->cacheService->has($key));
         $this->assertNull($this->cacheService->get($key));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheFilePath
-     */
     public function testCacheFileExtension(): void
     {
         $key = 'test_key';
@@ -523,11 +413,6 @@ final class CacheServiceTest extends TestCase
         $this->assertTrue(file_exists($expectedFile));
         $this->assertStringEndsWith('.json', $expectedFile);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService::getCacheFilePath
-     */
     public function testCacheContentFormat(): void
     {
         $key = 'format_test';

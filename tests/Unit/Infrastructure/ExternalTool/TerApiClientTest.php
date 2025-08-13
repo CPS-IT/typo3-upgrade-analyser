@@ -17,15 +17,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * Test case for the refactored TerApiClient.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient
- */
+
+#[CoversClass(TerApiClient::class)]
 class TerApiClientTest extends TestCase
 {
     private TerApiClient $client;

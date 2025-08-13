@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
- */
+
+#[CoversClass(AnalyzerException::class)]
 class AnalyzerExceptionTest extends TestCase
 {
     public function testExceptionExtendsBaseException(): void

@@ -20,15 +20,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * Test case for the PackagistClient.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient
- */
+
+#[CoversClass(PackagistClient::class)]
 class PackagistClientTest extends TestCase
 {
     private PackagistClient $client;

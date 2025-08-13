@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiResponseParser;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiResponseParser
- */
+
+#[CoversClass(TerApiResponseParser::class)]
 class TerApiResponseParserTest extends TestCase
 {
     private TerApiResponseParser $parser;

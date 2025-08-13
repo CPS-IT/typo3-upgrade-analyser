@@ -16,14 +16,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * Test case for GitProviderFactory.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory
- */
+
+#[CoversClass(GitProviderFactory::class)]
 class GitProviderFactoryTest extends TestCase
 {
     private GitProviderFactory $factory;
@@ -34,10 +32,6 @@ class GitProviderFactoryTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->factory = new GitProviderFactory([], $this->logger);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
-     */
     public function testCreateProviderWithSupportedUrl(): void
     {
         $provider1 = $this->createMock(GitProviderInterface::class);
@@ -56,10 +50,6 @@ class GitProviderFactoryTest extends TestCase
 
         $this->assertSame($provider2, $result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
-     */
     public function testCreateProviderWithUnsupportedUrl(): void
     {
         $provider = $this->createMock(GitProviderInterface::class);
@@ -73,10 +63,6 @@ class GitProviderFactoryTest extends TestCase
 
         $factory->createProvider('https://custom.example.com/repo');
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
-     */
     public function testCreateProviderWithUnavailableProvider(): void
     {
         $provider = $this->createMock(GitProviderInterface::class);
@@ -90,10 +76,6 @@ class GitProviderFactoryTest extends TestCase
 
         $factory->createProvider('https://github.com/user/repo');
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
-     */
     public function testCreateProviderSelectsHighestPriority(): void
     {
         $lowPriorityProvider = $this->createMock(GitProviderInterface::class);
@@ -121,10 +103,6 @@ class GitProviderFactoryTest extends TestCase
 
         $this->assertSame($highPriorityProvider, $result);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::createProvider
-     */
     public function testCreateProviderWithEmptyProviders(): void
     {
         $this->expectException(GitAnalysisException::class);
@@ -132,10 +110,6 @@ class GitProviderFactoryTest extends TestCase
 
         $this->factory->createProvider('https://github.com/user/repo');
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory::getAvailableProviders
-     */
     public function testGetAvailableProviders(): void
     {
         $availableProvider = $this->createMock(GitProviderInterface::class);

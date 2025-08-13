@@ -17,13 +17,11 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for GitVersionParser.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser
- */
+
+#[CoversClass(GitVersionParser::class)]
 class GitVersionParserTest extends TestCase
 {
     private GitVersionParser $parser;
@@ -34,10 +32,6 @@ class GitVersionParserTest extends TestCase
         $this->constraintChecker = $this->createMock(ComposerConstraintCheckerInterface::class);
         $this->parser = new GitVersionParser($this->constraintChecker);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsWithSemanticTags(): void
     {
         $tags = [
@@ -73,10 +67,6 @@ class GitVersionParserTest extends TestCase
             $this->assertFalse($tag->isPreRelease());
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsWithNonSemanticTags(): void
     {
         $tags = [
@@ -90,10 +80,6 @@ class GitVersionParserTest extends TestCase
         // Should return empty array for non-semantic versions without composer analysis
         $this->assertEmpty($compatibleVersions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithCaretConstraint(): void
     {
         $composerJson = [
@@ -113,10 +99,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertTrue($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithTildeConstraint(): void
     {
         $composerJson = [
@@ -136,10 +118,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertTrue($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithIncompatibleVersion(): void
     {
         $composerJson = [
@@ -159,10 +137,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertFalse($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithoutTypo3Requirements(): void
     {
         $composerJson = [
@@ -182,10 +156,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertFalse($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithNullInput(): void
     {
         $targetVersion = Version::fromString('12.4.0');
@@ -199,10 +169,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertFalse($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsWithIncompatibleComposerJson(): void
     {
         $tags = [
@@ -229,10 +195,6 @@ class GitVersionParserTest extends TestCase
         // Should return empty array due to incompatible composer.json
         $this->assertEmpty($compatibleVersions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsWithMultipleTypo3Requirements(): void
     {
         $tags = [
@@ -261,10 +223,6 @@ class GitVersionParserTest extends TestCase
         // Should return tags because at least one TYPO3 requirement is compatible
         $this->assertCount(2, $compatibleVersions);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithRangeConstraint(): void
     {
         $composerJson = [
@@ -284,10 +242,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertTrue($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::isComposerCompatible
-     */
     public function testIsComposerCompatibleWithExactVersion(): void
     {
         $composerJson = [
@@ -307,10 +261,6 @@ class GitVersionParserTest extends TestCase
 
         $this->assertTrue($isCompatible);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsSortsByDate(): void
     {
         $tags = [
@@ -342,10 +292,6 @@ class GitVersionParserTest extends TestCase
         $this->assertContains('v12.4.1', $tagNames);
         $this->assertContains('v12.4.2', $tagNames);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser::findCompatibleVersions
-     */
     public function testFindCompatibleVersionsExcludesPreReleases(): void
     {
         $tags = [

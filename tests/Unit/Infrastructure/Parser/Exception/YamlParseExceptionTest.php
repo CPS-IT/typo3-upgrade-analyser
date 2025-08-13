@@ -14,13 +14,12 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for YamlParseException.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException
- */
+
+#[CoversClass(YamlParseException::class)]
 class YamlParseExceptionTest extends TestCase
 {
     public function testBasicYamlParseExceptionCreation(): void
@@ -343,9 +342,7 @@ class YamlParseExceptionTest extends TestCase
         self::assertSame('strict', $exception->getContextValue('validation_mode'));
     }
 
-    /**
-     * @dataProvider lineExtractionProvider
-     */
+    #[DataProvider('lineExtractionProvider')]
     public function testLineExtractionFromMessage(string $message, ?int $expectedLine): void
     {
         $original = new \Exception($message);
@@ -357,7 +354,7 @@ class YamlParseExceptionTest extends TestCase
     /**
      * @return array<string, array{string, int|null}>
      */
-    public function lineExtractionProvider(): array
+    public static function lineExtractionProvider(): array
     {
         return [
             'no line number' => ['Simple error message', null],

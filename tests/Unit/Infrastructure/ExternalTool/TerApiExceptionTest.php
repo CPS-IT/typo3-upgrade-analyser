@@ -14,11 +14,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException
- */
+
+#[CoversClass(TerApiException::class)]
 class TerApiExceptionTest extends TestCase
 {
     public function testExceptionInheritsFromExternalToolException(): void

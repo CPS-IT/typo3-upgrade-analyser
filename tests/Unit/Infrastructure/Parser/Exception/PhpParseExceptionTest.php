@@ -14,13 +14,12 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for PhpParseException.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException
- */
+
+#[CoversClass(PhpParseException::class)]
 class PhpParseExceptionTest extends TestCase
 {
     public function testBasicPhpParseExceptionCreation(): void
@@ -330,9 +329,7 @@ class PhpParseExceptionTest extends TestCase
         self::assertSame('UTF-8', $exception->getContextValue('encoding'));
     }
 
-    /**
-     * @dataProvider astErrorsProvider
-     */
+    #[DataProvider('astErrorsProvider')]
     public function testAstErrorsHandling(array $astErrors, bool $expectedHasErrors, ?string $expectedFirstError): void
     {
         $exception = new PhpParseException('Test', '/path/to/file.php', $astErrors);
@@ -345,7 +342,7 @@ class PhpParseExceptionTest extends TestCase
     /**
      * @return array<string, array{array<string>, bool, string|null}>
      */
-    public function astErrorsProvider(): array
+    public static function astErrorsProvider(): array
     {
         return [
             'empty array' => [[], false, null],

@@ -22,15 +22,15 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
  * Test case for the VersionAvailabilityAnalyzer.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer
  */
+#[CoversClass(VersionAvailabilityAnalyzer::class)]
 class VersionAvailabilityAnalyzerTest extends TestCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
@@ -77,31 +77,16 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         );
     }
 
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::getName
-     */
     public function testGetName(): void
     {
         self::assertEquals('version_availability', $this->analyzer->getName());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::getDescription
-     *
-     * @uses \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension
-     * @uses \CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext
-     * @uses \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version
-     */
     public function testGetDescription(): void
     {
         $description = $this->analyzer->getDescription();
         self::assertStringContainsString('TER', $description);
         self::assertStringContainsString('Packagist', $description);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::supports
-     */
     public function testSupportsAllExtensions(): void
     {
         self::assertTrue($this->analyzer->supports($this->extension));
@@ -109,28 +94,16 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $systemExtension = new Extension('core', 'Core', new Version('12.4.0'), 'system');
         self::assertTrue($this->analyzer->supports($systemExtension));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::getRequiredTools
-     */
     public function testGetRequiredTools(): void
     {
         $tools = $this->analyzer->getRequiredTools();
         self::assertContains('curl', $tools);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::hasRequiredTools
-     */
     public function testHasRequiredTools(): void
     {
         // This test depends on the environment having curl available
         self::assertTrue($this->analyzer->hasRequiredTools());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithBothRepositoriesAvailable(): void
     {
         // Arrange
@@ -162,10 +135,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(1.5, $result->getRiskScore());
         self::assertEquals('low', $result->getRiskLevel());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithOnlyTerAvailable(): void
     {
         // Arrange
@@ -189,10 +158,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(2.5, $result->getRiskScore());
         self::assertEquals('medium', $result->getRiskLevel());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithOnlyPackagistAvailable(): void
     {
         // Arrange
@@ -220,10 +185,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('Composer', $recommendations[0]);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithNoVersionsAvailable(): void
     {
         // Arrange
@@ -252,10 +213,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertNotEmpty($recommendations);
         self::assertStringContainsString('contacting author', $recommendations[0]);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithSystemExtension(): void
     {
         // Arrange
@@ -276,10 +233,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals(1.0, $result->getRiskScore()); // System extensions are always "low risk"
         self::assertEquals('low', $result->getRiskLevel());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithExtensionWithoutComposerName(): void
     {
         // Arrange
@@ -299,10 +252,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('ter_available'));
         self::assertFalse($result->getMetric('packagist_available'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithTerApiFailure(): void
     {
         // Arrange
@@ -328,10 +277,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('packagist_available'));
         self::assertTrue($result->isSuccessful()); // Analysis should still succeed
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithPackagistApiFailure(): void
     {
         // Arrange
@@ -357,10 +302,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertFalse($result->getMetric('packagist_available')); // Should default to false on error
         self::assertTrue($result->isSuccessful()); // Analysis should still succeed
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeWithCompleteFatalError(): void
     {
         // Arrange
@@ -378,10 +319,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertFalse($result->isSuccessful());
         self::assertNotEmpty($result->getError());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testAnalyzeLogsCorrectInformation(): void
     {
         // Arrange
@@ -399,10 +336,6 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertEquals('version_availability', $result->getAnalyzerName());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer::analyze
-     */
     public function testRecommendationsForLocalExtensionWithPublicAlternatives(): void
     {
         // Arrange

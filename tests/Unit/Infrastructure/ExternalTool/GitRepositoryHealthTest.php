@@ -13,27 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for GitRepositoryHealth.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth
- */
+
+#[CoversClass(GitRepositoryHealth::class)]
 class GitRepositoryHealthTest extends TestCase
 {
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getLastCommitDate
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getStarCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getForkCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getOpenIssuesCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getClosedIssuesCount
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::isArchived
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::hasReadme
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::hasLicense
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getContributorCount
-     */
     public function testConstructorAndGetters(): void
     {
         $lastCommitDate = new \DateTimeImmutable('2024-01-15T10:00:00Z');
@@ -60,10 +46,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertTrue($health->hasLicense());
         $this->assertEquals(8, $health->getContributorCount());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
-     */
     public function testCalculateHealthScoreHealthyRepository(): void
     {
         $health = new GitRepositoryHealth(
@@ -84,10 +66,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertGreaterThan(0.8, $score);
         $this->assertLessThanOrEqual(1.0, $score);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
-     */
     public function testCalculateHealthScoreArchivedRepository(): void
     {
         $health = new GitRepositoryHealth(
@@ -108,10 +86,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertLessThan(0.4, $score);
         $this->assertGreaterThanOrEqual(0.0, $score);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
-     */
     public function testCalculateHealthScoreInactiveRepository(): void
     {
         $health = new GitRepositoryHealth(
@@ -132,10 +106,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertLessThan(0.4, $score);
         $this->assertGreaterThanOrEqual(0.0, $score);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
-     */
     public function testCalculateHealthScoreModerateRepository(): void
     {
         $health = new GitRepositoryHealth(
@@ -156,10 +126,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertGreaterThan(0.3, $score);
         $this->assertLessThan(0.8, $score);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::calculateHealthScore
-     */
     public function testCalculateHealthScoreWithNullLastCommit(): void
     {
         $health = new GitRepositoryHealth(
@@ -181,10 +147,6 @@ class GitRepositoryHealthTest extends TestCase
         $this->assertLessThanOrEqual(1.0, $score);
         $this->assertLessThan(0.6, $score); // Penalized for no activity info
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getTotalIssuesCount
-     */
     public function testGetTotalIssuesCount(): void
     {
         $health = new GitRepositoryHealth(
@@ -201,10 +163,6 @@ class GitRepositoryHealthTest extends TestCase
 
         $this->assertEquals(20, $health->getTotalIssuesCount());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getIssueResolutionRate
-     */
     public function testGetIssueResolutionRate(): void
     {
         $health = new GitRepositoryHealth(
@@ -221,10 +179,6 @@ class GitRepositoryHealthTest extends TestCase
 
         $this->assertEquals(0.75, $health->getIssueResolutionRate()); // 15/20 = 0.75
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::getIssueResolutionRate
-     */
     public function testGetIssueResolutionRateWithNoIssues(): void
     {
         $health = new GitRepositoryHealth(
@@ -241,10 +195,6 @@ class GitRepositoryHealthTest extends TestCase
 
         $this->assertEquals(1.0, $health->getIssueResolutionRate()); // Perfect score when no issues
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth::__construct
-     */
     public function testReadonlyProperties(): void
     {
         $health = new GitRepositoryHealth(

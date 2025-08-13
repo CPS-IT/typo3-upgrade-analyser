@@ -13,11 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Repository;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException
- */
+
+#[CoversClass(RepositoryUrlException::class)]
 class RepositoryUrlExceptionTest extends TestCase
 {
     public function testExceptionExtendsBaseException(): void

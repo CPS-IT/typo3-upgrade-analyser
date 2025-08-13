@@ -16,14 +16,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorOutputParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * Test case for RectorOutputParser.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorOutputParser
- */
+
+#[CoversClass(RectorOutputParser::class)]
 class RectorOutputParserTest extends TestCase
 {
     private RectorOutputParser $parser;

@@ -14,11 +14,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerExtensionNotFoundException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerExtensionNotFoundException
- */
+
+#[CoversClass(TerExtensionNotFoundException::class)]
 class TerExtensionNotFoundExceptionTest extends TestCase
 {
     public function testExceptionInheritsFromTerApiException(): void

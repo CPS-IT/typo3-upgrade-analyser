@@ -31,17 +31,17 @@
     "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
     "phpstan/phpstan": "^2.0",
-    "phpunit/phpunit": "^10.5",
+    "phpunit/phpunit": "^12.3",
     "roave/security-advisories": "dev-latest"
   },
   "autoload": {
     "psr-4": {
-      "CPSIT\\UpgradeAnalyzer\\": "src/"
+      "CPSIT\\UpgradeAnalyzer\\": "src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "CPSIT\\UpgradeAnalyzer\\Tests\\": "tests/"
+      "CPSIT\\UpgradeAnalyzer\\Tests\\": "tests"
     }
   },
   "bin": [
@@ -62,6 +62,12 @@
     }
   },
   "scripts": {
+    "fix": [
+      "@fix:composer",
+      "@fix:editorconfig",
+      "@fix:editorconfig",
+      "@fix:rector"
+    ],
     "fix:composer": "@composer normalize",
     "fix:editorconfig": "ec --fix",
     "fix:php": "php-cs-fixer fix",
@@ -80,7 +86,7 @@
       "@sca:php"
     ],
     "sca:php": "phpstan analyse --memory-limit=2G",
-    "test": "phpunit --exclude-group=integration,real-world,github-api,ter-api,performance",
+    "test": "phpunit --testsuite=Unit --no-coverage",
     "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
     "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional",
     "test:functional": "phpunit --testsuite=Functional",

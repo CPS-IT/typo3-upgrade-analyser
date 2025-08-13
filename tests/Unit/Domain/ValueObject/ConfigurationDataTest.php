@@ -13,13 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for ConfigurationData value object.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData
- */
+
+#[CoversClass(ConfigurationData::class)]
 class ConfigurationDataTest extends TestCase
 {
     private array $sampleData;
@@ -490,9 +489,7 @@ class ConfigurationDataTest extends TestCase
         self::assertSame(['meta' => 'value'], $config->getMetadata());
     }
 
-    /**
-     * @dataProvider specialKeyPathProvider
-     */
+    #[DataProvider('specialKeyPathProvider')]
     public function testGetValueWithSpecialKeyPaths(string $keyPath, ?string $expectedValue, bool $shouldExist): void
     {
         $data = [
@@ -518,7 +515,7 @@ class ConfigurationDataTest extends TestCase
     /**
      * @return array<string, array{string, mixed, bool}>
      */
-    public function specialKeyPathProvider(): array
+    public static function specialKeyPathProvider(): array
     {
         return [
             'empty key' => ['', 'empty_key_value', true],

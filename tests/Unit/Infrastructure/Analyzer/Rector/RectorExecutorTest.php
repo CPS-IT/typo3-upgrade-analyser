@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -78,9 +79,7 @@ class RectorExecutorTest extends TestCase
         $this->assertNull($version);
     }
 
-    /**
-     * @dataProvider buildCommandDataProvider
-     */
+    #[DataProvider('buildCommandDataProvider')]
     public function testBuildCommand(string $configPath, string $targetPath, array $options, array $expectedInCommand): void
     {
         $executor = new RectorExecutor('/usr/bin/rector', $this->logger, 300);

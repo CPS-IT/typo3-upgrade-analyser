@@ -15,13 +15,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test case for the Extension entity.
- *
- * @covers \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension
- */
+
+#[CoversClass(Extension::class)]
 class ExtensionTest extends TestCase
 {
     private Extension $extension;

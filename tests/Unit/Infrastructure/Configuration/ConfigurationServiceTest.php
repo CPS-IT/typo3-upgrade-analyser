@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Configuration;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -35,14 +36,6 @@ final class ConfigurationServiceTest extends TestCase
             unlink($this->tempConfigFile);
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::isResultCacheEnabled
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getResultCacheTtl
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getInstallationPath
-     */
     public function testConstructorWithDefaultPath(): void
     {
         $service = new ConfigurationService($this->logger, '/non/existent/config.yaml');
@@ -54,15 +47,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertSame(3600, $service->getResultCacheTtl());
         $this->assertNull($service->getInstallationPath());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getInstallationPath
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::isResultCacheEnabled
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getResultCacheTtl
-     */
     public function testConstructorWithValidConfigFile(): void
     {
         $config = [
@@ -85,14 +69,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertTrue($service->isResultCacheEnabled());
         $this->assertSame(7200, $service->getResultCacheTtl());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getDefaultConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::isResultCacheEnabled
-     */
     public function testConstructorWithMissingConfigFile(): void
     {
         $nonExistentFile = '/non/existent/config.yaml';
@@ -108,13 +84,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertSame('13.4', $service->getTargetVersion());
         $this->assertTrue($service->isResultCacheEnabled());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getDefaultConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     */
     public function testConstructorWithInvalidYamlSyntax(): void
     {
         file_put_contents($this->tempConfigFile, 'invalid: yaml: syntax: [');
@@ -130,12 +99,6 @@ final class ConfigurationServiceTest extends TestCase
         // Should fall back to default configuration
         $this->assertSame('13.4', $service->getTargetVersion());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     */
     public function testConstructorWithEmptyConfigFile(): void
     {
         file_put_contents($this->tempConfigFile, '');
@@ -149,12 +112,6 @@ final class ConfigurationServiceTest extends TestCase
         // Should handle empty config and return method defaults (not service defaults)
         $this->assertSame('13.4', $service->getTargetVersion());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     */
     public function testConstructorWithNonArrayYamlContent(): void
     {
         file_put_contents($this->tempConfigFile, 'just_a_string');
@@ -164,10 +121,6 @@ final class ConfigurationServiceTest extends TestCase
         // Should handle non-array content and return method defaults
         $this->assertSame('13.4', $service->getTargetVersion());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetWithSimpleKey(): void
     {
         $config = ['key' => 'value'];
@@ -179,10 +132,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertNull($service->get('nonexistent'));
         $this->assertSame('default', $service->get('nonexistent', 'default'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetWithNestedKey(): void
     {
         $config = [
@@ -200,10 +149,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertNull($service->get('level1.level2.nonexistent'));
         $this->assertSame('default', $service->get('level1.nonexistent.level3', 'default'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetWithNonArrayIntermediateValue(): void
     {
         $config = [
@@ -216,11 +161,6 @@ final class ConfigurationServiceTest extends TestCase
         // Should return default when trying to access nested key on non-array value
         $this->assertSame('default', $service->get('level1.level2', 'default'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testSetWithSimpleKey(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -229,11 +169,6 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame('new_value', $service->get('new_key'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testSetWithNestedKey(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -244,11 +179,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertIsArray($service->get('level1'));
         $this->assertIsArray($service->get('level1.level2'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testSetOverwritesExistingValue(): void
     {
         $config = ['existing' => 'old_value'];
@@ -260,11 +190,6 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame('new_value', $service->get('existing'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::set
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testSetCreatesNestedStructureFromScalar(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -276,10 +201,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertSame('nested_value', $service->get('scalar.nested'));
         $this->assertIsArray($service->get('scalar'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getAll
-     */
     public function testGetAll(): void
     {
         $config = [
@@ -292,11 +213,6 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame($config, $service->getAll());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getAll
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::set
-     */
     public function testGetAllAfterModification(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -307,12 +223,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertArrayHasKey('new_key', $all);
         $this->assertSame('new_value', $all['new_key']);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::reload
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testReload(): void
     {
         $initialConfig = ['key' => 'initial_value'];
@@ -328,14 +238,6 @@ final class ConfigurationServiceTest extends TestCase
         $service->reload();
         $this->assertSame('updated_value', $service->get('key'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::reload
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getDefaultConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testReloadWithDeletedFile(): void
     {
         $config = ['key' => 'value'];
@@ -357,11 +259,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertSame('13.4', $service->getTargetVersion());
         $this->assertNull($service->get('key'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::withConfigPath
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testWithConfigPath(): void
     {
         $config1 = ['key' => 'value1'];
@@ -387,11 +284,6 @@ final class ConfigurationServiceTest extends TestCase
             unlink($tempFile2);
         }
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::isResultCacheEnabled
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testIsResultCacheEnabled(): void
     {
         $config = [
@@ -405,22 +297,12 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertTrue($service->isResultCacheEnabled());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::isResultCacheEnabled
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testIsResultCacheEnabledDefault(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         $this->assertTrue($service->isResultCacheEnabled());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getResultCacheTtl
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetResultCacheTtl(): void
     {
         $config = [
@@ -434,22 +316,12 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame(1800, $service->getResultCacheTtl());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getResultCacheTtl
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetResultCacheTtlDefault(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         $this->assertSame(3600, $service->getResultCacheTtl());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getInstallationPath
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetInstallationPath(): void
     {
         $config = [
@@ -463,22 +335,12 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame('/custom/path', $service->getInstallationPath());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getInstallationPath
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetInstallationPathDefault(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
         $this->assertNull($service->getInstallationPath());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetTargetVersion(): void
     {
         $config = [
@@ -492,11 +354,6 @@ final class ConfigurationServiceTest extends TestCase
 
         $this->assertSame('11.5', $service->getTargetVersion());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getTargetVersion
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetTargetVersionDefault(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -504,10 +361,6 @@ final class ConfigurationServiceTest extends TestCase
         // When config file is empty, analysis.targetVersion doesn't exist, so it uses method default
         $this->assertSame('13.4', $service->getTargetVersion());
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testGetTargetVersionFallbackToMethodDefault(): void
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
@@ -515,13 +368,6 @@ final class ConfigurationServiceTest extends TestCase
         // Should use method's default parameter, not the service default
         $this->assertSame('12.4', $service->get('analysis.targetVersion', '12.4'));
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::__construct
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::loadConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getDefaultConfiguration
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::getAll
-     */
     public function testDefaultConfigurationStructure(): void
     {
         $service = new ConfigurationService($this->logger, '/non/existent/file.yaml');
@@ -540,10 +386,6 @@ final class ConfigurationServiceTest extends TestCase
         $this->assertTrue($config['analysis']['resultCache']['enabled']);
         $this->assertSame(3600, $config['analysis']['resultCache']['ttl']);
     }
-
-    /**
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::get
-     */
     public function testComplexNestedConfiguration(): void
     {
         $config = [

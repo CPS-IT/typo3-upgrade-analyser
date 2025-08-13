@@ -19,13 +19,13 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\ReportingResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Twig\Environment as TwigEnvironment;
 
-/**
- * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService
- */
+
+#[CoversClass(ReportService::class)]
 class ReportServiceTest extends TestCase
 {
     private ReportService $subject;

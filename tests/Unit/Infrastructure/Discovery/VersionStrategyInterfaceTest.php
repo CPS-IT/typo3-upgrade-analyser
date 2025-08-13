@@ -18,9 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests the VersionStrategyInterface contract with a mock implementation.
- *
- * @coversNothing
- */
+ * */
 final class VersionStrategyInterfaceTest extends TestCase
 {
     public function testInterfaceContractsWorkCorrectly(): void
