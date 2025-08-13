@@ -26,6 +26,7 @@ class ProjectRootResolver
         if (class_exists('\\Composer\\InstalledVersions')) {
             try {
                 $rootPackage = \Composer\InstalledVersions::getRootPackage();
+
                 return $rootPackage['install_path'];
             } catch (\Throwable) {
                 // Fall back to manual detection if Composer info is not available
