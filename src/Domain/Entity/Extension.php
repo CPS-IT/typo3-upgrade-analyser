@@ -246,8 +246,8 @@ class Extension implements \JsonSerializable
             'type' => $this->type,
             'composer_name' => $this->composerName,
             'is_active' => $this->isActive,
-            'dependencies_count' => count($this->dependencies),
-            'files_count' => count($this->files),
+            'dependencies_count' => \count($this->dependencies),
+            'files_count' => \count($this->files),
             'has_repository_url' => $this->hasRepositoryUrl(),
         ];
     }

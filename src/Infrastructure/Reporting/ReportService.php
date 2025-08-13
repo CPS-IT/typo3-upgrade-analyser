@@ -377,7 +377,7 @@ class ReportService
         // Ensure output directory exists
         if (!is_dir($outputPath)) {
             if (!mkdir($outputPath, 0o755, true) && !is_dir($outputPath)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $outputPath));
+                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $outputPath));
             }
         }
 

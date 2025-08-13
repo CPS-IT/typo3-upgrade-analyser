@@ -58,7 +58,8 @@ class RectorConfigGenerator
      * Generate minimal configuration with specific sets.
      *
      * @param array<string> $setNames
-     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
+     *
+     * @throws AnalyzerException
      */
     public function generateMinimalConfig(array $setNames, string $targetPath): string
     {

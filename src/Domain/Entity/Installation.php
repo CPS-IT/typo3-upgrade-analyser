@@ -460,7 +460,7 @@ final class Installation implements SerializableInterface, \JsonSerializable
             'version' => $this->version->toString(),
             'type' => $this->type,
             'is_valid' => $this->isValid,
-            'extensions_count' => count($this->extensions),
+            'extensions_count' => \count($this->extensions),
             'has_configuration' => !empty($this->configuration),
         ];
     }
