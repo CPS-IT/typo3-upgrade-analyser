@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface as CSI;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -65,7 +66,7 @@ class InitConfigCommand extends Command
 
         $outputFile = $input->getOption('output');
 
-        // Check if file exists and ask for confirmation before overwriting
+        // Check if the file exists and ask for confirmation before overwriting
         if (file_exists($outputFile)) {
             if (!$io->confirm(\sprintf('Configuration file "%s" already exists. Overwrite?', $outputFile), false)) {
                 $io->note('Configuration generation cancelled.');
@@ -83,40 +84,57 @@ class InitConfigCommand extends Command
         }
 
         $io->success(\sprintf('Configuration file generated: %s', $outputFile));
+        if (empty($config[CSI::KEY_ANALYSIS][CSI::KEY_INSTALLATION_PATH])) {
+            $io->note('Make sure the analysis.installationPath is set to the root of your TYPO3 installation.');
+        }
+        $io->note('Edit the configuration file to customize the analysis.');
+        $io->text('You can now run the analyze command with the --config option.');
 
         return Command::SUCCESS;
     }
 
     private function runInteractiveConfiguration(SymfonyStyle $io, array $config): array
     {
+        // Installation path
+        $installationPath = $io->ask(
+            'Path to TYPO3 installation (relative or absolute, e.g. /var/www/html/typo3)',
+        );
+        $config[CSI::KEY_ANALYSIS][CSI::KEY_INSTALLATION_PATH] = $installationPath;
         // Target version
         $targetVersion = $io->ask(
             'Target TYPO3 version',
-            $config['analysis']['target_version'],
+            $this->configurationService->getTargetVersion(),
         );
-        $config['analysis']['target_version'] = $targetVersion;
+        $config[CSI::KEY_ANALYSIS][CSI::KEY_TARGET_VERSION] = $targetVersion;
 
         // PHP versions
         $phpVersions = $io->ask(
             'Supported PHP versions (comma-separated)',
-            implode(', ', $config['analysis']['php_versions']),
+            implode(', ', $this->configurationService->get(CSI::CONFIG_ANALYSIS_PHP_VERSIONS)),
         );
-        $config['analysis']['php_versions'] = array_map('trim', explode(',', $phpVersions));
+        $config[CSI::KEY_ANALYSIS][CSI::KEY_PHP_VERSIONS] = array_map('trim', explode(',', $phpVersions));
 
         // Output directory
         $outputDir = $io->ask(
             'Output directory for reports',
-            $config['reporting']['output_directory'],
+            $this->configurationService->get(CSI::CONFIG_REPORTING_OUTPUT_DIRECTORY),
         );
-        $config['reporting']['output_directory'] = $outputDir;
+        $config[CSI::KEY_REPORTING][CSI::KEY_OUTPUT_DIRECTORY] = $outputDir;
 
         // Report formats
         $formats = $io->choice(
-            'Report formats (multiple selection allowed)',
-            ['html', 'json', 'csv', 'markdown'],
-            $config['reporting']['formats'][0] ?? 'html',
+            question: 'Report formats (multiple selection allowed)',
+            choices: ConfigurationService::AVAILABLE_REPORT_FORMATS,
+            default: 'html',
+            /*
+            $this->configurationService->get(
+                CSI::CONFIG_REPORTING_FORMATS,
+                ConfigurationService::DEFAULT_REPORT_FORMATS,
+            ),
+            */
+            multiSelect: true,
         );
-        $config['reporting']['formats'] = \is_array($formats) ? $formats : [$formats];
+        $config[CSI::KEY_REPORTING][CSI::KEY_FORMATS] = \is_array($formats) ? $formats : [$formats];
 
         return $config;
     }

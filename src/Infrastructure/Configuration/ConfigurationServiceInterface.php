@@ -18,6 +18,14 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Configuration;
 interface ConfigurationServiceInterface
 {
     // Configuration keys as constants
+    public const string KEY_ANALYSIS = 'analysis';
+    public const string KEY_REPORTING = 'reporting';
+    public const string KEY_EXTERNAL_TOOLS = 'externalTools';
+    public const string KEY_TARGET_VERSION = 'targetVersion';
+    public const string KEY_PHP_VERSIONS = 'phpVersions';
+    public const string KEY_INSTALLATION_PATH = 'installationPath';
+    public const string KEY_FORMATS = 'formats';
+    public const string KEY_OUTPUT_DIRECTORY = 'output_directory';
     public const string CONFIG_ANALYSIS_INSTALLATION_PATH = 'analysis.installationPath';
     public const string CONFIG_ANALYSIS_TARGET_VERSION = 'analysis.targetVersion';
     public const string CONFIG_ANALYSIS_RESULT_CACHE_ENABLED = 'analysis.resultCache.enabled';

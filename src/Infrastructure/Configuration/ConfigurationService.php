@@ -22,6 +22,7 @@ class ConfigurationService implements ConfigurationServiceInterface
     // Default configuration values based on documentation/configuration.example.yaml
     public const string DEFAULT_TARGET_VERSION = '13.4';
     public const array DEFAULT_PHP_VERSIONS = ['8.3', '8.4'];
+    public const array AVAILABLE_REPORT_FORMATS = ['html', 'json', 'markdown'];
     public const array DEFAULT_REPORT_FORMATS = ['markdown'];
     public const string DEFAULT_OUTPUT_DIRECTORY = 'var/reports/';
     public const bool DEFAULT_RESULT_CACHE_ENABLED = true;
