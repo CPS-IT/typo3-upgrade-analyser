@@ -64,6 +64,9 @@
     }
   },
   "scripts": {
+    "post-update-cmd": [
+      "@sbom"
+    ],
     "fix": [
       "@fix:composer",
       "@fix:editorconfig",
