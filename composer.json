@@ -28,6 +28,7 @@
   },
   "require-dev": {
     "armin/editorconfig-cli": "^2.1",
+    "cyclonedx/cyclonedx-php-composer": "^5.2",
     "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
     "phpstan/phpstan": "^2.0",
@@ -49,6 +50,7 @@
   ],
   "config": {
     "allow-plugins": {
+      "cyclonedx/cyclonedx-php-composer": true,
       "ergebnis/composer-normalize": true
     },
     "platform": {
@@ -82,6 +84,7 @@
     "lint:editorconfig": "ec",
     "lint:php": "php-cs-fixer fix --dry-run",
     "lint:rector": "rector process --dry-run",
+    "sbom": "@composer CycloneDX:make-sbom --output-file=sbom.json --output-format=JSON --validate",
     "sca": [
       "@sca:php"
     ],
@@ -107,6 +110,7 @@
     "lint:editorconfig": "Check EditorConfig compliance without modifying files",
     "lint:php": "Check PHP coding style without modifying files",
     "lint:rector": "Check Rector rules without applying changes",
+    "sbom": "Create a software bill of material",
     "sca": "Run static code analysis (PHPStan)",
     "sca:php": "Run PHPStan static analysis with 2GB memory limit",
     "test": "Run unit tests only (excludes integration, real-world, API, and performance tests)",
