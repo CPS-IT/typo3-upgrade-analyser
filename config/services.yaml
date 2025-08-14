@@ -25,6 +25,12 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService'
       - !tagged_iterator 'analyzer'
 
+  # Override ListAnalyzersCommand to inject analyzers
+  CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand:
+    public: true
+    arguments:
+      - !tagged_iterator 'analyzer'
+
   # Infrastructure services
 
   # Shared HTTP client service
