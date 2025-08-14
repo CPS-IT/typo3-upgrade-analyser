@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -27,7 +29,14 @@ class ListAnalyzersCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->command = new ListAnalyzersCommand();
+        // Create mock analyzers
+        $mockAnalyzers = [
+            $this->createMockAnalyzer('version_availability', 'Checks if compatible versions exist in TER, Packagist, or Git repositories', true, ['curl']),
+            $this->createMockAnalyzer('lines_of_code', 'Analyzes lines of code in extension files to assess codebase size and complexity', true, []),
+            $this->createMockAnalyzer('typo3_rector', 'Uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements', false, ['php', 'rector']),
+        ];
+
+        $this->command = new ListAnalyzersCommand($mockAnalyzers);
 
         $application = new Application();
         $application->add($this->command);
@@ -35,10 +44,21 @@ class ListAnalyzersCommandTest extends TestCase
         $this->commandTester = new CommandTester($this->command);
     }
 
+    private function createMockAnalyzer(string $name, string $description, bool $hasTools, array $requiredTools): MockObject&AnalyzerInterface
+    {
+        $mock = $this->createMock(AnalyzerInterface::class);
+        $mock->method('getName')->willReturn($name);
+        $mock->method('getDescription')->willReturn($description);
+        $mock->method('hasRequiredTools')->willReturn($hasTools);
+        $mock->method('getRequiredTools')->willReturn($requiredTools);
+
+        return $mock;
+    }
+
     public function testCommandConfiguration(): void
     {
         self::assertEquals('list-analyzers', $this->command->getName());
-        self::assertEquals('List all available analyzers', $this->command->getDescription());
+        self::assertEquals('List all registered analyzers', $this->command->getDescription());
 
         $definition = $this->command->getDefinition();
 
@@ -56,15 +76,21 @@ class ListAnalyzersCommandTest extends TestCase
         $display = $this->commandTester->getDisplay();
 
         // Check title
-        self::assertStringContainsString('Available Analyzers', $display);
+        self::assertStringContainsString('Registered Analyzers', $display);
 
         // Check table headers
         self::assertStringContainsString('Name', $display);
         self::assertStringContainsString('Description', $display);
-        self::assertStringContainsString('Status', $display);
+        self::assertStringContainsString('OK', $display);
+        self::assertStringContainsString('Tools', $display);
 
         // Check note about usage
         self::assertStringContainsString('Use the --analyzers option with the analyze command', $display);
+
+        // Check that our mock analyzers are displayed
+        self::assertStringContainsString('version_availability', $display);
+        self::assertStringContainsString('lines_of_code', $display);
+        self::assertStringContainsString('typo3_rector', $display);
     }
 
     public function testDisplaysExpectedAnalyzers(): void
@@ -72,18 +98,11 @@ class ListAnalyzersCommandTest extends TestCase
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
 
-        // Test for expected analyzers that should be listed
+        // Test for mock analyzers that should be listed
         $expectedAnalyzers = [
-            'Version Availability',
-            'Static Analysis',
-            'Lines of Code',
-            'PHP Compatibility',
-            'Deprecation Scanner',
-            'TCA Migration',
-            'Rector Analysis',
-            'Fractor Analysis',
-            'TypoScript Lint',
-            'Test Coverage',
+            'version_availability',
+            'lines_of_code',
+            'typo3_rector',
         ];
 
         foreach ($expectedAnalyzers as $analyzer) {
@@ -96,18 +115,11 @@ class ListAnalyzersCommandTest extends TestCase
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
 
-        // Test for expected descriptions
+        // Test for truncated mock analyzer descriptions
         $expectedDescriptions = [
-            'Checks if compatible versions exist in TER, Packagist, or Git',
-            'Runs PHPStan and other static analysis tools',
-            'Counts lines of code and calculates complexity metrics',
-            'Checks PHP version compatibility',
-            'Scans for deprecated TYPO3 API usage',
-            'Checks for required TCA migrations',
-            'Checks for available Rector migration rules',
-            'Analyzes TypoScript for modernization opportunities',
-            'Validates TypoScript configuration',
-            'Analyzes existing test coverage',
+            'Checks if compatible versions exist in TER, Pac...',
+            'Analyzes lines of code in extension files to as...',
+            'Uses TYPO3 Rector to detect deprecated code pat...',
         ];
 
         foreach ($expectedDescriptions as $description) {
@@ -121,8 +133,8 @@ class ListAnalyzersCommandTest extends TestCase
         $display = $this->commandTester->getDisplay();
 
         // Check that status information is displayed
-        self::assertStringContainsString('Available', $display);
-        self::assertStringContainsString('Planned', $display);
+        self::assertStringContainsString('✅', $display);
+        self::assertStringContainsString('❌', $display);
     }
 
     public function testShowsAvailableAnalyzersFirst(): void
@@ -130,14 +142,10 @@ class ListAnalyzersCommandTest extends TestCase
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
 
-        // These analyzers should be marked as "Available"
+        // These mock analyzers should be marked as "Available"
         $availableAnalyzers = [
-            'Version Availability',
-            'Static Analysis',
-            'Lines of Code',
-            'PHP Compatibility',
-            'Deprecation Scanner',
-            'TCA Migration',
+            'version_availability',
+            'lines_of_code',
         ];
 
         foreach ($availableAnalyzers as $analyzer) {
@@ -145,33 +153,30 @@ class ListAnalyzersCommandTest extends TestCase
             $analyzerPos = strpos($display, $analyzer);
             self::assertNotFalse($analyzerPos, "Analyzer '$analyzer' not found in output");
 
-            // Look for "Available" status after the analyzer name
-            $statusPos = strpos($display, 'Available', $analyzerPos);
+            // Look for "✅" status after the analyzer name
+            $statusPos = strpos($display, '✅', $analyzerPos);
             self::assertNotFalse($statusPos, "Available status not found for analyzer '$analyzer'");
         }
     }
 
-    public function testShowsPlannedAnalyzersLast(): void
+    public function testShowsAnalyzersWithMissingTools(): void
     {
         $this->commandTester->execute([]);
         $display = $this->commandTester->getDisplay();
 
-        // These analyzers should be marked as "Planned"
-        $plannedAnalyzers = [
-            'Rector Analysis',
-            'Fractor Analysis',
-            'TypoScript Lint',
-            'Test Coverage',
+        // This mock analyzer should be marked as "Missing tools"
+        $unavailableAnalyzers = [
+            'typo3_rector',
         ];
 
-        foreach ($plannedAnalyzers as $analyzer) {
+        foreach ($unavailableAnalyzers as $analyzer) {
             // Find the analyzer name in the output
             $analyzerPos = strpos($display, $analyzer);
             self::assertNotFalse($analyzerPos, "Analyzer '$analyzer' not found in output");
 
-            // Look for "Planned" status after the analyzer name
-            $statusPos = strpos($display, 'Planned', $analyzerPos);
-            self::assertNotFalse($statusPos, "Planned status not found for analyzer '$analyzer'");
+            // Look for "❌" status after the analyzer name
+            $statusPos = strpos($display, '❌', $analyzerPos);
+            self::assertNotFalse($statusPos, "Missing tools status not found for analyzer '$analyzer'");
         }
     }
 
@@ -188,7 +193,7 @@ class ListAnalyzersCommandTest extends TestCase
         $contentLines = array_filter($lines, fn ($line): bool => !empty(trim($line)));
 
         // Should have multiple lines of content (title, headers, analyzers, etc.)
-        self::assertGreaterThanOrEqual(15, \count($contentLines));
+        self::assertGreaterThanOrEqual(8, \count($contentLines));
     }
 
     public function testCommandHelpText(): void
