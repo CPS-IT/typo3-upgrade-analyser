@@ -1,0 +1,143 @@
+            <div class="section" id="fractor-analysis">
+                <h2>Fractor Analysis</h2>
+
+                {% if extension_data.fractor_analysis %}
+                {% set fractor_analysis = extension_data.fractor_analysis %}
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Code Modernization Assessment</h3>
+                        <p><strong>Files with Changes:</strong> {{ fractor_analysis.files_changed }}</p>
+                        <p><strong>Change Blocks:</strong> {{ fractor_analysis.change_blocks }}</p>
+                        <p><strong>Changed Lines:</strong> {{ fractor_analysis.changed_lines }}</p>
+                        <p><strong>Rules Applied:</strong> {{ fractor_analysis.rules_applied }}</p>
+                        <p><strong>Has Modernization Opportunities:</strong>
+                            {% if not fractor_analysis.analysis_successful %}
+                                <span style="color: #6c757d;">❓ Unknown (Analysis Failed)</span>
+                            {% elseif fractor_analysis.has_findings %}
+                                <span style="color: #ffc107;">📋 Yes</span>
+                            {% else %}
+                                <span style="color: #28a745;">✅ No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Analysis Status</h3>
+                        <p><strong>Analysis Result:</strong>
+                            {% if fractor_analysis.analysis_successful %}
+                                <span style="color: #28a745;">✅ Successful</span>
+                            {% else %}
+                                <span style="color: #dc3545;">❌ Failed</span>
+                            {% endif %}
+                        </p>
+                        {% if fractor_analysis.error_message %}
+                        <p><strong>Error:</strong> <span style="color: #dc3545;">{{ fractor_analysis.error_message }}</span></p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}
+                <div class="info-card">
+                    <h3>Affected Files</h3>
+                    <ul>
+                        {% for file_path in fractor_analysis.file_paths|slice(0, 8) %}
+                        <li><code>{{ file_path }}</code></li>
+                        {% endfor %}
+                        {% if fractor_analysis.file_paths|length > 8 %}
+                        <li><em>... and {{ fractor_analysis.file_paths|length - 8 }} more files</em></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if fractor_analysis.applied_rules and fractor_analysis.applied_rules is not empty %}
+                <div class="info-card">
+                    <h3>Applied Fractor Rules</h3>
+                    <ul>
+                        {% for rule in fractor_analysis.applied_rules|slice(0, 5) %}
+                        <li><code>{{ rule }}</code></li>
+                        {% endfor %}
+                        {% if fractor_analysis.applied_rules|length > 5 %}
+                        <li><em>... and {{ fractor_analysis.applied_rules|length - 5 }} more rules</em></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if fractor_analysis.findings and fractor_analysis.findings is not empty %}
+                <div class="info-card">
+                    <h3>Sample Changes</h3>
+                    <ul>
+                        {% for finding in fractor_analysis.findings|slice(0, 10) %}
+                        <li><code>{{ finding }}</code></li>
+                        {% endfor %}
+                        {% if fractor_analysis.findings|length > 10 %}
+                        <li><em>... and {{ fractor_analysis.findings|length - 10 }} more changes</em></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Modernization Assessment</h3>
+                        <p><strong>Risk Score:</strong> {{ "%.1f"|format(fractor_analysis.risk_score) }}/10.0</p>
+                        <div class="risk-bar">
+                            <div class="risk-fill" style="width: {{ (fractor_analysis.risk_score / 10 * 100)|round }}%;
+                                 background-color: {% if fractor_analysis.risk_score < 3 %}#28a745{% elseif fractor_analysis.risk_score < 7 %}#ffc107{% else %}#dc3545{% endif %};"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Code Quality Impact</h3>
+                        {% if not fractor_analysis.analysis_successful %}
+                        <p><strong>Status:</strong> <span style="color: #6c757d;">❓ N/A (Analysis Failed)</span></p>
+                        {% elseif fractor_analysis.rules_applied > 0 %}
+                        <p><strong>Improvement Potential:</strong>
+                            {% if fractor_analysis.rules_applied > 20 %}
+                                <span style="color: #ffc107;">High</span>
+                            {% elseif fractor_analysis.rules_applied > 5 %}
+                                <span style="color: #17a2b8;">Medium</span>
+                            {% else %}
+                                <span style="color: #28a745;">Low</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Estimated Effort:</strong>
+                            {% set effort_hours = (fractor_analysis.rules_applied * 0.25)|round(1) %}
+                            {% if effort_hours < 1 %}
+                                < 1 hour
+                            {% else %}
+                                {{ effort_hours }} hours
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <p><strong>Status:</strong> <span style="color: #28a745;">Code already modern</span></p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if fractor_analysis.recommendations %}
+                <div class="recommendations">
+                    <h3>Fractor Recommendations</h3>
+                    <ul>
+                        {% for recommendation in fractor_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="error-card">
+                    <h3>❌ Analysis Not Available</h3>
+                    <p>Fractor analysis was not performed for this extension. This may occur when:</p>
+                    <ul>
+                        <li>Fractor binary is not available</li>
+                        <li>No PHP files were found to analyze</li>
+                        <li>The extension path could not be resolved</li>
+                        <li>Analysis failed due to configuration issues</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
