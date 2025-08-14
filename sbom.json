@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:fb0fbf46-59f4-4cec-bd27-eb6582b23a49",
+    "serialNumber": "urn:uuid:d5574b7b-a2be-43b8-8f31-8f95dcb6155d",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-08-14T12:04:25Z",
+        "timestamp": "2025-08-14T12:36:26Z",
         "tools": [
             {
                 "name": "composer",
@@ -100,11 +100,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "073baf2a40b0bdb12978750689ec707d660f97a4"
+                    "value": "04d5ece892ecd11d2e95f53b13e04ec12077fe8c"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "073baf2a40b0bdb12978750689ec707d660f97a4"
+                    "value": "04d5ece892ecd11d2e95f53b13e04ec12077fe8c"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1066,10 +1066,10 @@
             ]
         },
         {
-            "bom-ref": "fidry/cpu-core-counter-1.2.0.0",
+            "bom-ref": "fidry/cpu-core-counter-1.3.0.0",
             "type": "library",
             "name": "cpu-core-counter",
-            "version": "1.2.0",
+            "version": "1.3.0",
             "group": "fidry",
             "description": "Tiny utility to get the number of CPU cores.",
             "author": "Th\u00e9o FIDRY",
@@ -1080,17 +1080,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/fidry/cpu-core-counter@1.2.0",
+            "purl": "pkg:composer/fidry/cpu-core-counter@1.3.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/theofidry/cpu-core-counter/zipball/8520451a140d3f46ac33042715115e290cf5785f",
-                    "comment": "dist reference: 8520451a140d3f46ac33042715115e290cf5785f"
+                    "url": "https://api.github.com/repos/theofidry/cpu-core-counter/zipball/db9508f7b1474469d9d3c53b86f817e344732678",
+                    "comment": "dist reference: db9508f7b1474469d9d3c53b86f817e344732678"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/theofidry/cpu-core-counter.git",
-                    "comment": "source reference: 8520451a140d3f46ac33042715115e290cf5785f"
+                    "comment": "source reference: db9508f7b1474469d9d3c53b86f817e344732678"
                 },
                 {
                     "type": "issue-tracker",
@@ -1099,18 +1099,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/theofidry/cpu-core-counter/tree/1.2.0",
+                    "url": "https://github.com/theofidry/cpu-core-counter/tree/1.3.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "8520451a140d3f46ac33042715115e290cf5785f"
+                    "value": "db9508f7b1474469d9d3c53b86f817e344732678"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "8520451a140d3f46ac33042715115e290cf5785f"
+                    "value": "db9508f7b1474469d9d3c53b86f817e344732678"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1123,10 +1123,10 @@
             ]
         },
         {
-            "bom-ref": "friendsofphp/php-cs-fixer-3.85.1.0",
+            "bom-ref": "friendsofphp/php-cs-fixer-3.86.0.0",
             "type": "library",
             "name": "php-cs-fixer",
-            "version": "v3.85.1",
+            "version": "v3.86.0",
             "group": "friendsofphp",
             "description": "A tool to automatically fix PHP code style",
             "author": "Fabien Potencier, Dariusz Rumi\u0144ski",
@@ -1137,17 +1137,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/friendsofphp/php-cs-fixer@v3.85.1",
+            "purl": "pkg:composer/friendsofphp/php-cs-fixer@v3.86.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/2fb6d7f6c3398dca5786a1635b27405d73a417ba",
-                    "comment": "dist reference: 2fb6d7f6c3398dca5786a1635b27405d73a417ba"
+                    "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/4a952bd19dc97879b0620f495552ef09b55f7d36",
+                    "comment": "dist reference: 4a952bd19dc97879b0620f495552ef09b55f7d36"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                    "comment": "source reference: 2fb6d7f6c3398dca5786a1635b27405d73a417ba"
+                    "comment": "source reference: 4a952bd19dc97879b0620f495552ef09b55f7d36"
                 },
                 {
                     "type": "issue-tracker",
@@ -1156,18 +1156,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.85.1",
+                    "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.86.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "2fb6d7f6c3398dca5786a1635b27405d73a417ba"
+                    "value": "4a952bd19dc97879b0620f495552ef09b55f7d36"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "2fb6d7f6c3398dca5786a1635b27405d73a417ba"
+                    "value": "4a952bd19dc97879b0620f495552ef09b55f7d36"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3688,7 +3688,7 @@
             "bom-ref": "roave/security-advisories-dev-latest",
             "type": "library",
             "name": "security-advisories",
-            "version": "dev-latest 0479005",
+            "version": "dev-latest 3aed1e8",
             "group": "roave",
             "description": "Prevents installation of composer packages with known security vulnerabilities: no API, simply require it",
             "author": "Marco Pivetta, Ilya Tribusean",
@@ -3699,17 +3699,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/roave/security-advisories@dev-latest%200479005",
+            "purl": "pkg:composer/roave/security-advisories@dev-latest%203aed1e8",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/0479005335290f5c772337cf359599dad65bb63f",
-                    "comment": "dist reference: 0479005335290f5c772337cf359599dad65bb63f"
+                    "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/3aed1e89d8a5e2b6d350f0fdd21db0e7f49ab9dc",
+                    "comment": "dist reference: 3aed1e89d8a5e2b6d350f0fdd21db0e7f49ab9dc"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/Roave/SecurityAdvisories.git",
-                    "comment": "source reference: 0479005335290f5c772337cf359599dad65bb63f"
+                    "comment": "source reference: 3aed1e89d8a5e2b6d350f0fdd21db0e7f49ab9dc"
                 },
                 {
                     "type": "issue-tracker",
@@ -3725,11 +3725,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "0479005335290f5c772337cf359599dad65bb63f"
+                    "value": "3aed1e89d8a5e2b6d350f0fdd21db0e7f49ab9dc"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "0479005335290f5c772337cf359599dad65bb63f"
+                    "value": "3aed1e89d8a5e2b6d350f0fdd21db0e7f49ab9dc"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -6395,15 +6395,15 @@
             "ref": "evenement/evenement-3.0.2.0"
         },
         {
-            "ref": "fidry/cpu-core-counter-1.2.0.0"
+            "ref": "fidry/cpu-core-counter-1.3.0.0"
         },
         {
-            "ref": "friendsofphp/php-cs-fixer-3.85.1.0",
+            "ref": "friendsofphp/php-cs-fixer-3.86.0.0",
             "dependsOn": [
                 "clue/ndjson-react-1.3.0.0",
                 "composer/semver-3.4.3.0",
                 "composer/xdebug-handler-3.0.5.0",
-                "fidry/cpu-core-counter-1.2.0.0",
+                "fidry/cpu-core-counter-1.3.0.0",
                 "react/child-process-0.6.6.0",
                 "react/event-loop-1.5.0.0",
                 "react/promise-3.2.0.0",
@@ -6912,7 +6912,7 @@
                 "armin/editorconfig-cli-2.1.1.0",
                 "cyclonedx/cyclonedx-php-composer-5.2.3.0",
                 "ergebnis/composer-normalize-2.47.0.0",
-                "friendsofphp/php-cs-fixer-3.85.1.0",
+                "friendsofphp/php-cs-fixer-3.86.0.0",
                 "phpstan/phpstan-2.1.22.0",
                 "phpunit/phpunit-12.3.4.0",
                 "roave/security-advisories-dev-latest"
