@@ -1,0 +1,82 @@
+## Fractor Analysis
+
+{% if extension_data.fractor_analysis %}
+{% set fractor_analysis = extension_data.fractor_analysis %}
+
+### Code Modernization Assessment
+- **Files with Changes:** {{ fractor_analysis.files_changed }}
+- **Change Blocks:** {{ fractor_analysis.change_blocks }}
+- **Changed Lines:** {{ fractor_analysis.changed_lines }}
+- **Rules Applied:** {{ fractor_analysis.rules_applied }}
+- **Has Modernization Opportunities:** {% if not fractor_analysis.analysis_successful %}❓ Unknown (Analysis Failed){% elseif fractor_analysis.has_findings %}📋 Yes{% else %}✅ No{% endif %}
+
+### Analysis Status
+- **Analysis Result:** {{ fractor_analysis.analysis_successful ? '✅ Successful' : '❌ Failed' }}
+{% if fractor_analysis.error_message %}
+- **Error:** {{ fractor_analysis.error_message }}
+{% endif %}
+
+### Affected Files
+{% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}
+{% for file_path in fractor_analysis.file_paths|slice(0, 8) %}
+- `{{ file_path }}`
+{% endfor %}
+{% if fractor_analysis.file_paths|length > 8 %}
+*... and {{ fractor_analysis.file_paths|length - 8 }} more files*
+{% endif %}
+{% else %}
+No affected files found.
+{% endif %}
+
+### Applied Fractor Rules
+{% if fractor_analysis.applied_rules and fractor_analysis.applied_rules is not empty %}
+{% for rule in fractor_analysis.applied_rules|slice(0, 5) %}
+- `{{ rule }}`
+{% endfor %}
+{% if fractor_analysis.applied_rules|length > 5 %}
+*... and {{ fractor_analysis.applied_rules|length - 5 }} more rules*
+{% endif %}
+{% else %}
+No rules applied.
+{% endif %}
+
+### Sample Changes
+{% if fractor_analysis.findings and fractor_analysis.findings is not empty %}
+{% for finding in fractor_analysis.findings|slice(0, 10) %}
+- `{{ finding }}`
+{% endfor %}
+{% if fractor_analysis.findings|length > 10 %}
+*... and {{ fractor_analysis.findings|length - 10 }} more changes*
+{% endif %}
+{% else %}
+No sample changes available.
+{% endif %}
+
+### Modernization Assessment
+- **Risk Score:** {{ "%.1f"|format(fractor_analysis.risk_score) }}/10.0
+- **Code Quality Impact:** {% if fractor_analysis.rules_applied > 20 %}High{% elseif fractor_analysis.rules_applied > 5 %}Medium{% else %}Low{% endif %}
+
+{% if not fractor_analysis.analysis_successful %}
+- **Status:** ❓ N/A (Analysis Failed)
+{% elseif fractor_analysis.rules_applied > 0 %}
+- **Estimated Effort:** {% set effort_hours = (fractor_analysis.rules_applied * 0.25)|round(1) %}{% if effort_hours < 1 %}< 1 hour{% else %}{{ effort_hours }} hours{% endif %}
+{% else %}
+- **Status:** Code already modern ✅
+{% endif %}
+
+### Recommendations
+{% if fractor_analysis.recommendations %}
+{% for recommendation in fractor_analysis.recommendations %}
+- {{ recommendation }}
+{% endfor %}
+{% else %}
+No specific Fractor recommendations available.
+{% endif %}
+
+{% else %}
+❌ **Fractor analysis was not performed for this extension.** This may occur when:
+- Fractor binary is not available
+- No PHP files were found to analyze
+- The extension path could not be resolved
+- Analysis failed due to configuration issues
+{% endif %}

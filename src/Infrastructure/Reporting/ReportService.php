@@ -161,6 +161,7 @@ class ReportService
                 'version_analysis' => $this->extractVersionAnalysis($extensionResults),
                 'loc_analysis' => $this->extractLinesOfCodeAnalysis($extensionResults),
                 'rector_analysis' => $this->extractRectorAnalysis($extensionResults),
+                'fractor_analysis' => $this->extractFractorAnalysis($extensionResults),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
             ];
         }
@@ -292,6 +293,45 @@ class ReportService
 
     /**
      * @param array<ResultInterface> $results
+     *
+     * @return array<string, mixed>|null
+     */
+    private function extractFractorAnalysis(array $results): ?array
+    {
+        $fractorResult = array_filter(
+            $results,
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'fractor' === $r->getAnalyzerName(),
+        );
+
+        if (empty($fractorResult)) {
+            return null;
+        }
+
+        /** @var AnalysisResult $result */
+        $result = reset($fractorResult);
+
+        return [
+            'files_scanned' => $result->getMetric('files_scanned'),
+            'files_changed' => $result->getMetric('files_changed'),
+            'rules_applied' => $result->getMetric('rules_applied'),
+            'total_issues' => $result->getMetric('total_issues'),
+            'has_findings' => $result->getMetric('has_findings'),
+            'analysis_successful' => $result->getMetric('analysis_successful'),
+            'change_blocks' => $result->getMetric('change_blocks'),
+            'changed_lines' => $result->getMetric('changed_lines'),
+            'file_paths' => $result->getMetric('file_paths'),
+            'applied_rules' => $result->getMetric('applied_rules'),
+            'findings' => $result->getMetric('findings'),
+            'risk_score' => $result->getRiskScore(),
+            'recommendations' => $result->getRecommendations(),
+            'error_message' => $result->getMetric('error_message'),
+            'execution_failed' => $result->getMetric('execution_failed'),
+            'analysis_error' => $result->getMetric('analysis_error'),
+        ];
+    }
+
+    /**
+     * @param array<ResultInterface> $results
      */
     private function calculateExtensionRiskSummary(array $results): array
     {
@@ -372,12 +412,15 @@ class ReportService
 
     private function generateFormatReport(string $format, array $context, string $outputDirectory): ReportingResult
     {
-        $outputPath = rtrim($outputDirectory, '/') . '/';
+        $baseOutputPath = rtrim($outputDirectory, '/') . '/';
 
-        // Ensure output directory exists
-        if (!is_dir($outputPath)) {
-            if (!mkdir($outputPath, 0o755, true) && !is_dir($outputPath)) {
-                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $outputPath));
+        // Create format-specific subdirectory (html/ or md/)
+        $formatOutputPath = $baseOutputPath . $format . '/';
+
+        // Ensure format-specific output directory exists
+        if (!is_dir($formatOutputPath)) {
+            if (!mkdir($formatOutputPath, 0o755, true) && !is_dir($formatOutputPath)) {
+                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $formatOutputPath));
             }
         }
 
@@ -390,11 +433,11 @@ class ReportService
 
         // Generate main report
         $this->logger->debug('Generating main report', ['format' => $format]);
-        $mainReportFiles = $this->generateMainReport($format, $context, $outputPath);
+        $mainReportFiles = $this->generateMainReport($format, $context, $formatOutputPath);
         $this->logger->debug('Main report generated successfully', ['files_count' => \count($mainReportFiles)]);
 
         // Generate individual extension reports
-        $extensionReportFiles = $this->generateExtensionReports($format, $context, $outputPath);
+        $extensionReportFiles = $this->generateExtensionReports($format, $context, $formatOutputPath);
 
         // Combine all generated files
         $allFiles = array_merge($mainReportFiles, $extensionReportFiles);

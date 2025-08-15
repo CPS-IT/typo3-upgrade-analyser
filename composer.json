@@ -10,6 +10,7 @@
   ],
   "require": {
     "php": "^8.3",
+    "a9f/typo3-fractor": "^0.5.6",
     "composer/semver": "^3.4",
     "guzzlehttp/guzzle": "^7.8",
     "monolog/monolog": "^3.5",
@@ -28,8 +29,10 @@
   },
   "require-dev": {
     "armin/editorconfig-cli": "^2.1",
+    "cyclonedx/cyclonedx-php-composer": "^5.2",
     "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
+    "mikey179/vfsstream": "^1.6",
     "phpstan/phpstan": "^2.0",
     "phpunit/phpunit": "^12.3",
     "roave/security-advisories": "dev-latest"
@@ -49,6 +52,8 @@
   ],
   "config": {
     "allow-plugins": {
+      "a9f/fractor-extension-installer": true,
+      "cyclonedx/cyclonedx-php-composer": true,
       "ergebnis/composer-normalize": true
     },
     "platform": {
@@ -62,6 +67,9 @@
     }
   },
   "scripts": {
+    "post-update-cmd": [
+      "@sbom"
+    ],
     "fix": [
       "@fix:composer",
       "@fix:editorconfig",
@@ -82,6 +90,7 @@
     "lint:editorconfig": "ec",
     "lint:php": "php-cs-fixer fix --dry-run",
     "lint:rector": "rector process --dry-run",
+    "sbom": "@composer CycloneDX:make-sbom --output-file=sbom.json --output-format=JSON --validate",
     "sca": [
       "@sca:php"
     ],
@@ -107,6 +116,7 @@
     "lint:editorconfig": "Check EditorConfig compliance without modifying files",
     "lint:php": "Check PHP coding style without modifying files",
     "lint:rector": "Check Rector rules without applying changes",
+    "sbom": "Create a software bill of material",
     "sca": "Run static code analysis (PHPStan)",
     "sca:php": "Run PHPStan static analysis with 2GB memory limit",
     "test": "Run unit tests only (excludes integration, real-world, API, and performance tests)",

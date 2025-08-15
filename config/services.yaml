@@ -3,6 +3,10 @@ parameters:
   rector.binary_path: '%app.root_dir%/vendor/bin/rector'  # Use project root directory for binary
   rector.timeout_seconds: 300
 
+  # Fractor configuration parameters
+  fractor.binary_path: '%app.root_dir%/vendor/bin/fractor'
+  fractor.timeout_seconds: 300
+
 services:
   _defaults:
     autowire: true
@@ -23,6 +27,12 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService'
+      - !tagged_iterator 'analyzer'
+
+  # Override ListAnalyzersCommand to inject analyzers
+  CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand:
+    public: true
+    arguments:
       - !tagged_iterator 'analyzer'
 
   # Infrastructure services
@@ -112,6 +122,31 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+    tags: ['analyzer']
+
+  # Fractor Analyzer and supporting services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor:
+    arguments:
+      - '%fractor.binary_path%'
+      - '@logger'
+      - '%fractor.timeout_seconds%'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator:
+    arguments:
+      - '%app.root_dir%/var/temp'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser:
+    arguments:
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer:
+    public: true
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser'
     tags: ['analyzer']
 
   # Shared services

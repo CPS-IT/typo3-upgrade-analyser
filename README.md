@@ -2,6 +2,24 @@
 
 A standalone tool for analyzing TYPO3 installations for upgrade readiness to the next major version.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Available Analyzers](#available-analyzers)
+- [Development](#development)
+- [Architecture](#architecture)
+- [Contributing](#contributing)
+
+## Documentation
+
+- 📖 **[Installation Guide](documentation/INSTALLATION.md)** - Detailed installation instructions for all environments
+- 📖 **[Usage Guide](documentation/USAGE.md)** - Comprehensive command reference and configuration
+- 📖 **[Contributing Guide](CONTRIBUTING.md)** - Development workflow and contribution guidelines
+
 ## Overview
 
 The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installations externally without requiring installation into the target system. It provides objective risk measures and effort estimates through automated analysis.
@@ -11,109 +29,128 @@ The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installa
 - **Standalone Operation**: Operates completely independently of target TYPO3 installation
 - **Cross-Version Compatibility**: Works with TYPO3 versions 6.x through 13.x
 - **Comprehensive Analysis**: Multiple analyzer types for thorough evaluation
-- **Multiple Output Formats**: HTML, JSON, CSV, and Markdown reports
-- **Modular Architecture**: Extensible plugin system for custom analyzers
+- **Multiple Output Formats**: HTML and Markdown reports
+- **Clean Architecture**: Follows clean architecture principles with strict separation of concerns
+- **Modular Analyzer System**: Dynamic analyzer discovery with pluggable implementations
+- **Advanced Static Analysis**: Integrates TYPO3 Rector and Fractor for code modernization analysis
+- **External API Integration**: Checks TYPO3 Extension Repository, Packagist, and Git repositories
+- **Caching Support**: Built-in caching for improved performance on repeated analyses
+
+## Requirements
+
+- **PHP 8.3** or higher
+- **Composer** for dependency management
+- **External Tools** (automatically managed via Composer):
+  - `ssch/typo3-rector` for TYPO3-specific code analysis
+  - `a9f/typo3-fractor` for TypoScript modernization
+  - Network access for external API calls (TER, Packagist, GitHub)
 
 ## Installation
 
-### Via Composer (Global)
+### Via Composer (Recommended)
 
 ```bash
+# For development/local use
+composer require --dev cpsit/typo3-upgrade-analyser
+
+# For global installation
 composer global require cpsit/typo3-upgrade-analyser
 ```
 
-### Via Composer (Local)
+### From Source
 
 ```bash
-composer require --dev cpsit/typo3-upgrade-analyser
+git clone https://github.com/cpsit/typo3-upgrade-analyser.git
+cd typo3-upgrade-analyser
+composer install
 ```
 
-### Via PHAR (Coming Soon)
+## Quick Start
 
-```bash
-wget https://github.com/cpsit/typo3-upgrade-analyser/releases/latest/typo3-analyzer.phar
-chmod +x typo3-analyzer.phar
-```
+1. **Create Configuration File**:
+   ```bash
+   ./bin/typo3-analyzer init-config
+   ```
 
-## Usage
+2. **Analyze TYPO3 Installation**:
+   ```bash
+   ./bin/typo3-analyzer analyze
+   ```
 
-### Basic Analysis
+3. **View Results**: Check the `var/reports/` directory for HTML and Markdown reports.
 
-```bash
-# Analyze a TYPO3 installation
-typo3-analyzer analyze /path/to/typo3
-
-# Analyze for specific target version
-typo3-analyzer analyze /path/to/typo3 --target-version=13.0
-
-# Generate specific report formats
-typo3-analyzer analyze /path/to/typo3 --format=json --format=html
-```
-
-### Configuration
-
-```bash
-# Generate a configuration file
-typo3-analyzer init-config
-
-# Generate configuration interactively
-typo3-analyzer init-config --interactive
-
-# Use custom configuration
-typo3-analyzer analyze /path/to/typo3 --config=custom-config.yaml
-```
-
-### Validation
-
-```bash
-# Validate TYPO3 installation
-typo3-analyzer validate /path/to/typo3
-
-# List available analyzers
-typo3-analyzer list-analyzers
-```
+For detailed usage instructions, see the **[Usage Guide](documentation/USAGE.md)**.
 
 ## Available Analyzers
 
-- **Version Availability**: Checks if compatible versions exist in TER, Packagist, or Git
-- **Static Analysis**: Runs PHPStan and other static analysis tools
-- **Lines of Code**: Counts lines of code and calculates complexity metrics
-- **PHP Compatibility**: Checks PHP version compatibility
-- **Deprecation Scanner**: Scans for deprecated TYPO3 API usage
-- **TCA Migration**: Checks for required TCA migrations
-- **Rector Analysis**: Checks for available Rector migration rules
-- **Fractor Analysis**: Analyzes TypoScript for modernization opportunities
-- **TypoScript Lint**: Validates TypoScript configuration
-- **Test Coverage**: Analyzes existing test coverage
+### Currently Implemented
+
+- **Version Availability Analyzer** (`version_availability`)
+  - Checks extension compatibility across TER, Packagist, and Git repositories
+  - Analyzes version constraints and upgrade paths
+  - Provides risk scoring based on availability
+
+- **TYPO3 Rector Analyzer** (`typo3_rector`)
+  - Uses `ssch/typo3-rector` for TYPO3-specific code analysis
+  - Detects deprecated API usage and required migrations
+  - Provides automated refactoring suggestions
+
+- **Fractor Analyzer** (`fractor`)
+  - Uses `a9f/typo3-fractor` for TypoScript modernization
+  - Analyzes TypoScript patterns and suggests improvements
+  - Detects outdated TypoScript syntax
+
+- **Lines of Code Analyzer** (`lines_of_code`)
+  - Counts total lines of code, comments, and blank lines
+  - Calculates code complexity metrics
+  - Provides maintenance effort estimates
+
+### Analyzer Features
+
+- **Dynamic Discovery**: All analyzers are automatically discovered and registered
+- **Caching Support**: Results are cached to improve performance on repeated runs
+- **Configurable**: Each analyzer can be enabled/disabled and configured independently
+- **Extensible**: New analyzers can be added by implementing `AnalyzerInterface`
 
 ## Output Structure
 
+The analyzer creates a comprehensive output structure in the configured output directory:
+
 ```
-tests/upgradeAnalysis/
-├── configuration/
-│   ├── extensions.json        # Discovered extensions
-│   ├── installation.json      # Installation metadata
-│   └── analysis-config.yaml   # Used configuration
-├── results/
-│   ├── raw/                   # Raw analyzer results
-│   ├── processed/             # Processed results with scores
-│   └── summary.json           # Overall results summary
+var/
+├── log/
+│   └── typo3-upgrade-analyzer.log      # Detailed execution logs
 ├── reports/
-│   ├── html/                  # Interactive HTML reports
-│   ├── json/                  # Machine-readable reports
-│   ├── markdown/              # Documentation format
-│   └── csv/                   # Spreadsheet exports
-└── logs/
-    ├── analysis.log           # Detailed execution log
-    └── errors.log             # Errors and warnings
+│   ├── html/                  # HTML reports with interactive features
+│   │   ├── analysis-report.html        # Main overview report
+│   │   └── extensions/                 # Individual extension reports
+│   │       ├── extension1.html
+│   │       └── extension2.html
+│   └── md/                    # Markdown reports
+│       ├── analysis-report.md          # Main overview in Markdown
+│       └── extensions/                 # Individual extension reports
+│           ├── extension1.md
+│           └── extension2.md
+├── results/                   # Cached analysis results
+└── temp/                      # Temporary files (Rector/Fractor configs)
 ```
+
+### Report Contents
+
+- **Main Report**: High-level overview with summary statistics and risk assessment
+- **Detailed Report**: Comprehensive analysis results for each extension including:
+  - Version availability across repositories
+  - Code quality metrics and complexity
+  - Required migrations and refactoring opportunities
+  - Risk scores and upgrade recommendations
 
 ## Development
 
 ### Requirements
 
-- PHP 8.1 or higher
-- Composer
+- **PHP 8.3** or higher
+- **Composer** for dependency management
+- **Git** for version control
 
 ### Setup
 
@@ -123,31 +160,37 @@ cd typo3-upgrade-analyser
 composer install
 ```
 
-### Testing
+### Available Scripts
 
 ```bash
-# Run all tests
-composer test
+# Testing
+composer test              # Run unit tests only (fast)
+composer test:unit         # Run unit tests
+composer test:integration  # Run integration tests
+composer test:functional   # Run functional tests
+composer test:coverage     # Generate coverage report
 
-# Run specific test suite
-vendor/bin/phpunit tests/Unit
+# External API tests (require network access)
+composer test:ter-api      # Test TER API integration
+composer test:github-api   # Test GitHub API integration
+composer test:real-world   # Test with real TYPO3 installations
 
-# Generate coverage report
-vendor/bin/phpunit --coverage-html var/coverage
+# Code Quality
+composer lint              # Run all linting checks
+composer lint:php          # Check PHP coding standards
+composer lint:composer     # Check composer.json format
+composer fix               # Fix all code quality issues
+composer fix:php           # Fix PHP coding standards
+composer sca:php           # Run PHPStan static analysis (Level 8)
 ```
 
-### Code Quality
+### Testing Strategy
 
-```bash
-# Check code style
-composer cs:check
-
-# Fix code style
-composer cs:fix
-
-# Run static analysis
-composer static-analysis
-```
+- **Unit Tests**: Fast, isolated tests with mocking and VFS (Virtual File System)
+- **Integration Tests**: Test component interactions with real dependencies
+- **Functional Tests**: End-to-end testing of complete workflows
+- **API Tests**: Real-world testing against external APIs (TER, Packagist, GitHub)
+- **Performance Tests**: Benchmark critical operations
 
 ## Architecture
 
@@ -172,7 +215,5 @@ The tool follows a clean architecture with clear separation of concerns:
 This project is licensed under the GPL-2.0-or-later license. See the LICENSE file for details.
 
 ## Support
-
-- [Documentation](https://docs.cpsit.de/typo3-upgrade-analyser/)
+-
 - [Issue Tracker](https://github.com/cpsit/typo3-upgrade-analyser/issues)
-- [TYPO3 Community](https://typo3.org/community)
