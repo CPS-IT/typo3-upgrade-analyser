@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:06e602a3-70f0-48ec-a1c9-c5d3c73a74d0",
+    "serialNumber": "urn:uuid:748b5ea8-d53a-4cd2-922b-7d36d82c9ad3",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-08-14T16:05:13Z",
+        "timestamp": "2025-08-15T09:50:13Z",
         "tools": [
             {
                 "name": "composer",
@@ -100,11 +100,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "c4823812e3b0b3f67a23becdbf48389a86e67d37"
+                    "value": "317925b2c43ddeb78d470b9a59daa9a42a895245"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "c4823812e3b0b3f67a23becdbf48389a86e67d37"
+                    "value": "317925b2c43ddeb78d470b9a59daa9a42a895245"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2224,6 +2224,73 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "7159809e5cfa041dca28e61f7f7ae58063aae8ed"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                },
+                {
+                    "name": "cdx:composer:package:isDevRequirement",
+                    "value": "true"
+                }
+            ]
+        },
+        {
+            "bom-ref": "mikey179/vfsstream-1.6.12.0",
+            "type": "library",
+            "name": "vfsstream",
+            "version": "v1.6.12",
+            "group": "mikey179",
+            "description": "Virtual file system to mock the real file system in unit tests.",
+            "author": "Frank Kleine",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/mikey179/vfsstream@v1.6.12",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/bovigo/vfsStream/zipball/fe695ec993e0a55c3abdda10a9364eb31c6f1bf0",
+                    "comment": "dist reference: fe695ec993e0a55c3abdda10a9364eb31c6f1bf0"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/bovigo/vfsStream.git",
+                    "comment": "source reference: fe695ec993e0a55c3abdda10a9364eb31c6f1bf0"
+                },
+                {
+                    "type": "website",
+                    "url": "http://vfs.bovigo.org/",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/bovigo/vfsStream/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/bovigo/vfsStream/tree/master",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                },
+                {
+                    "type": "other",
+                    "url": "https://github.com/bovigo/vfsStream/wiki",
+                    "comment": "as detected from Composer manifest 'support.wiki'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "fe695ec993e0a55c3abdda10a9364eb31c6f1bf0"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "fe695ec993e0a55c3abdda10a9364eb31c6f1bf0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -7233,6 +7300,9 @@
             "ref": "marc-mabe/php-enum-4.7.1.0"
         },
         {
+            "ref": "mikey179/vfsstream-1.6.12.0"
+        },
+        {
             "ref": "monolog/monolog-3.9.0.0",
             "dependsOn": [
                 "psr/log-3.0.2.0"
@@ -7681,6 +7751,7 @@
                 "cyclonedx/cyclonedx-php-composer-5.2.3.0",
                 "ergebnis/composer-normalize-2.47.0.0",
                 "friendsofphp/php-cs-fixer-3.86.0.0",
+                "mikey179/vfsstream-1.6.12.0",
                 "phpstan/phpstan-2.1.22.0",
                 "phpunit/phpunit-12.3.4.0",
                 "roave/security-advisories-dev-latest"
