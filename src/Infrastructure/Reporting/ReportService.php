@@ -412,12 +412,15 @@ class ReportService
 
     private function generateFormatReport(string $format, array $context, string $outputDirectory): ReportingResult
     {
-        $outputPath = rtrim($outputDirectory, '/') . '/';
+        $baseOutputPath = rtrim($outputDirectory, '/') . '/';
 
-        // Ensure output directory exists
-        if (!is_dir($outputPath)) {
-            if (!mkdir($outputPath, 0o755, true) && !is_dir($outputPath)) {
-                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $outputPath));
+        // Create format-specific subdirectory (html/ or md/)
+        $formatOutputPath = $baseOutputPath . $format . '/';
+
+        // Ensure format-specific output directory exists
+        if (!is_dir($formatOutputPath)) {
+            if (!mkdir($formatOutputPath, 0o755, true) && !is_dir($formatOutputPath)) {
+                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $formatOutputPath));
             }
         }
 
@@ -430,11 +433,11 @@ class ReportService
 
         // Generate main report
         $this->logger->debug('Generating main report', ['format' => $format]);
-        $mainReportFiles = $this->generateMainReport($format, $context, $outputPath);
+        $mainReportFiles = $this->generateMainReport($format, $context, $formatOutputPath);
         $this->logger->debug('Main report generated successfully', ['files_count' => \count($mainReportFiles)]);
 
         // Generate individual extension reports
-        $extensionReportFiles = $this->generateExtensionReports($format, $context, $outputPath);
+        $extensionReportFiles = $this->generateExtensionReports($format, $context, $formatOutputPath);
 
         // Combine all generated files
         $allFiles = array_merge($mainReportFiles, $extensionReportFiles);
