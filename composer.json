@@ -32,6 +32,7 @@
     "cyclonedx/cyclonedx-php-composer": "^5.2",
     "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
+    "mikey179/vfsstream": "^1.6",
     "phpstan/phpstan": "^2.0",
     "phpunit/phpunit": "^12.3",
     "roave/security-advisories": "dev-latest"
