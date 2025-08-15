@@ -62,6 +62,8 @@
 
 {% include 'md/partials/main-report/rector-analysis-table.md.twig' %}
 
+{% include 'md/partials/main-report/fractor-analysis-table.md.twig' %}
+
 ---
 
 ## Detailed Extension Reports
@@ -102,6 +104,11 @@ Individual detailed reports have been generated for each extension:
 {% endif %}
 {% if data.rector_analysis and data.rector_analysis.recommendations %}
   {% for recommendation in data.rector_analysis.recommendations %}
+  - {{ recommendation }}
+  {% endfor %}
+{% endif %}
+{% if data.fractor_analysis and data.fractor_analysis.recommendations %}
+  {% for recommendation in data.fractor_analysis.recommendations %}
   - {{ recommendation }}
   {% endfor %}
 {% endif %}

@@ -1,0 +1,130 @@
+7 files with changes
+====================
+
+1) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Contact/Edit.html:10
+
+    ---------- begin diff ----------
+@@ @@
+             object="{contact}"
+             controller="Contact"
+             arguments="{contact: contact, reservation: '{contact.reservation}'}"
+-            noCacheHash="TRUE">
++           >
+         <f:render
+                 partial="Contact/FormFields"
+                 arguments="{contact: contact}" />
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+2) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Contact/New.html:9
+
+    ---------- begin diff ----------
+@@ @@
+             name="contact"
+             object="{contact}"
+             controller="Contact"
+-            noCacheHash="TRUE">
++           >
+         <f:form.hidden property="reservation" value="reservation" />
+         <f:render
+                 partial="Contact/FormFields"
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+3) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Participant/Edit.html:10
+
+    ---------- begin diff ----------
+@@ @@
+             object="{participant}"
+             controller="Participant"
+             arguments="{participant: participant, reservation: '{participant.reservation}'}"
+-            noCacheHash="TRUE">
++           >
+         <f:render
+                 partial="Participant/FormFields"
+                 arguments="{participant: participant}" />
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+4) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Reservation/Edit.html:9
+
+    ---------- begin diff ----------
+@@ @@
+         action="editBillingAddress"
+         arguments="{reservation: reservation}">
+         {f:translate(key: 'button.editBillingAddress', default:'button.editBillingAddress')}</f:link.action>
+-	<f:form action="checkout" name="reservation" object="{reservation}" noCacheHash="TRUE">
++	<f:form action="checkout" name="reservation" object="{reservation}">
+         <f:render partial="Reservation/FormFields" arguments="{reservation:reservation}" />
+         <f:form.submit value="{f:translate(key: 'button.checkout', default: 'check out')}" />
+     </f:form>
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+5) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Reservation/EditBillingAddress.html:5
+
+    ---------- begin diff ----------
+@@ @@
+     <f:flashMessages />
+     <f:render partial="FormErrors" arguments="{object: 'Reservation'}" />
+
+-	<f:form action="update" name="reservation" object="{reservation}" noCacheHash="TRUE">
++	<f:form action="update" name="reservation" object="{reservation}">
+         <f:render partial="BillingAddress/FormFields"
+                   arguments="{prefixFieldName: 'event_registration_billing_address', prefixProperty: 'billingAddress.'}"
+         />
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+6) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Reservation/New.html:8
+
+    ---------- begin diff ----------
+@@ @@
+         <f:if condition="{lesson.freePlaces} > 0">
+             <f:then>
+                 <f:render partial="FormErrors" arguments="{object: 'Reservation'}" />
+-				<f:form action="create" name="newReservation" object="{newReservation}" noCacheHash="TRUE">
++				<f:form action="create" name="newReservation" object="{newReservation}">
+                     <f:render partial="Reservation/FormFields" arguments="{lesson: lesson}" />
+                     <div class="section">
+                         <f:form.submit class="button" value="{f:translate(key: 'button.proceed')}" />
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+7) ../ihkof-bundle/app/web/typo3conf/ext/t3events_reservation/Resources/Private/Templates/Reservation/NewBillingAddress.html:5
+
+    ---------- begin diff ----------
+@@ @@
+     <f:flashMessages />
+     <f:render partial="FormErrors" arguments="{object: 'Reservation'}" />
+
+-    <f:form action="update" name="reservation" object="{reservation}" noCacheHash="TRUE">
++    <f:form action="update" name="reservation" object="{reservation}">
+         <f:render partial="BillingAddress/FormFields"
+                   arguments="{prefixFieldName: 'event_registration_billing_address', prefixProperty: 'billingAddress.'}"
+         />
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNoCacheHashAndUseCacheHashAttributeFluidFractor (https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/10.0/Deprecation-88406-SetCacheHashnoCacheHashOptionsInViewHelpersAndUriBuilder.html)
+
+
+ [OK] 7 files would have been changed (dry-run) by Fractor
