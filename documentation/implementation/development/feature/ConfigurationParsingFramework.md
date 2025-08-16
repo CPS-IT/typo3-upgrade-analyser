@@ -1,5 +1,10 @@
 # Configuration Parsing Framework - Feature Plan
 
+|-----------------------|-------------------------------------------------|
+| **Status**           | partially implemented |
+| **Priority**         | low |
+| **Dependencies**     | Core Analyzer System, External Tool Integration |
+
 ## Feature Overview
 
 The Configuration Parsing Framework is a critical component of the TYPO3 Upgrade Analyzer that enables safe parsing and analysis of TYPO3 configuration files without requiring TYPO3 to be loaded or operational. This framework operates as a standalone service that can interpret various TYPO3 configuration formats, extract meaningful data, and provide structured access to configuration information for analysis purposes.

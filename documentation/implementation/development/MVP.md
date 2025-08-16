@@ -1,5 +1,9 @@
 # TYPO3 Upgrade Analyzer - Minimal Viable Product (MVP)
 
+## Status
+
+* [x] completed
+
 ## User Story
 
 **As a developer I want to generate a list of extensions in a given TYPO3 installation with their current versions.**
