@@ -1,14 +1,15 @@
 # Feature Specification: PHPStan Analyzer
 
-**Status**: Planning
-**Priority**: Medium
-**Estimated Effort**: 8-12 hours
-**Target Version**: 0.2
-**Dependencies**: Core Analyzer System, External Tool Integration
+|-----------------------|-------------------------------------------------|
+| **Status**           | Planning |
+| **Priority**         | Medium |
+| **Estimated Effort** | 8-12 hours |
+| **Dependencies**     | Core Analyzer System, External Tool Integration |
 
 ## Overview
 
-The PHPStan Analyzer provides static code analysis capabilities for TYPO3 extensions using PHPStan. It identifies potential runtime errors, type mismatches, and code quality issues before they manifest in production environments.
+The PHPStan Analyzer provides static code analysis capabilities for TYPO3 extensions using PHPStan. It identifies
+potential runtime errors, type mismatches, and code quality issues before they manifest in production environments.
 
 ### Business Value
 
@@ -32,12 +33,14 @@ The PHPStan Analyzer integrates PHPStan static analysis into the TYPO3 Upgrade A
 ### Key Features
 
 #### 1. Intelligent Extension Analysis
+
 - **Context-Aware Scanning**: Understands TYPO3 extension structure and conventions
 - **Dependency Resolution**: Includes TYPO3 core and extension dependencies in analysis
 - **Configuration Integration**: Uses extension-specific PHPStan configurations when present
 - **Incremental Analysis**: Supports analyzing only changed files for performance
 
 #### 2. Issue Classification System
+
 ```
 Critical Issues (Risk Score: 8-10)
 ├── Runtime Errors (method.notFound, class.notFound)
@@ -61,12 +64,14 @@ Low Priority Issues (Risk Score: 1-3)
 ```
 
 #### 3. TYPO3-Specific Rule Sets
+
 - **Core API Validation**: Checks against TYPO3 API compatibility
 - **Extension Standards**: Validates extension development best practices
 - **Version Compatibility**: Identifies version-specific compatibility issues
 - **Security Patterns**: Detects common security anti-patterns
 
 #### 4. Advanced Reporting
+
 - **Executive Summary**: High-level code quality assessment
 - **Detailed Issue Breakdown**: Categorized and prioritized issue lists
 - **File-Level Analysis**: Per-file quality metrics and issues
@@ -104,6 +109,7 @@ PhpstanAnalyzer
 ### Integration Points
 
 #### 1. Analyzer Interface Implementation
+
 ```php
 class PhpstanAnalyzer extends AbstractCachedAnalyzer
 {
@@ -135,6 +141,7 @@ class PhpstanAnalyzer extends AbstractCachedAnalyzer
 ```
 
 #### 2. Configuration Generation
+
 ```php
 class PhpstanConfigGenerator
 {
@@ -160,6 +167,7 @@ class PhpstanConfigGenerator
 ```
 
 #### 3. Result Processing
+
 ```php
 class PhpstanResultParser
 {
@@ -188,6 +196,7 @@ class PhpstanResultParser
 ### Data Structures
 
 #### PhpstanIssue Value Object
+
 ```php
 readonly class PhpstanIssue
 {
@@ -204,6 +213,7 @@ readonly class PhpstanIssue
 ```
 
 #### Analysis Result Enhancement
+
 ```php
 class PhpstanAnalysisResult extends AnalysisResult
 {
@@ -226,105 +236,111 @@ class PhpstanAnalysisResult extends AnalysisResult
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure (4-5 hours)
+
 1. **Basic Analyzer Implementation**
-   - Create PhpstanAnalyzer class extending AbstractCachedAnalyzer
-   - Implement PHPStan execution wrapper
-   - Add basic result parsing
+    - Create PhpstanAnalyzer class extending AbstractCachedAnalyzer
+    - Implement PHPStan execution wrapper
+    - Add basic result parsing
 
 2. **Configuration Management**
-   - Implement dynamic PHPStan configuration generation
-   - Add TYPO3-specific include paths and stubs
-   - Create base rule set configuration
+    - Implement dynamic PHPStan configuration generation
+    - Add TYPO3-specific include paths and stubs
+    - Create base rule set configuration
 
 3. **Integration Testing**
-   - Add unit tests for core components
-   - Create integration tests with sample extensions
-   - Verify PHPStan tool detection and execution
+    - Add unit tests for core components
+    - Create integration tests with sample extensions
+    - Verify PHPStan tool detection and execution
 
 ### Phase 2: Issue Classification (3-4 hours)
+
 1. **Issue Categorization**
-   - Implement issue classifier based on PHPStan error identifiers
-   - Create severity mapping from PHPStan messages
-   - Add risk scoring algorithms
+    - Implement issue classifier based on PHPStan error identifiers
+    - Create severity mapping from PHPStan messages
+    - Add risk scoring algorithms
 
 2. **TYPO3-Specific Rules**
-   - Develop extension-specific rule sets
-   - Add TYPO3 core API compatibility checks
-   - Implement version-specific validation rules
+    - Develop extension-specific rule sets
+    - Add TYPO3 core API compatibility checks
+    - Implement version-specific validation rules
 
 3. **Quality Metrics**
-   - Create code quality scoring system
-   - Implement trend analysis capabilities
-   - Add comparative analysis features
+    - Create code quality scoring system
+    - Implement trend analysis capabilities
+    - Add comparative analysis features
 
 ### Phase 3: Advanced Features (2-3 hours)
+
 1. **Enhanced Reporting**
-   - Implement detailed issue breakdowns
-   - Add file-level analysis summaries
-   - Create actionable recommendation system
+    - Implement detailed issue breakdowns
+    - Add file-level analysis summaries
+    - Create actionable recommendation system
 
 2. **Performance Optimization**
-   - Add incremental analysis support
-   - Implement intelligent caching strategies
-   - Optimize for large extension analysis
+    - Add incremental analysis support
+    - Implement intelligent caching strategies
+    - Optimize for large extension analysis
 
 3. **User Experience**
-   - Add progress reporting for long-running analysis
-   - Implement configurable analysis levels
-   - Add interactive issue filtering
+    - Add progress reporting for long-running analysis
+    - Implement configurable analysis levels
+    - Add interactive issue filtering
 
 ## Configuration Options
 
 ### Analysis Configuration
+
 ```yaml
 analyzers:
-  phpstan:
-    enabled: true
-    level: auto              # auto, 0-9, or max
-    timeout: 300             # seconds
-    memory_limit: '1G'       # PHPStan memory limit
-    include_tests: false     # analyze test files
-    custom_config: null      # path to custom phpstan.neon
+    phpstan:
+        enabled: true
+        level: auto              # auto, 0-9, or max
+        timeout: 300             # seconds
+        memory_limit: '1G'       # PHPStan memory limit
+        include_tests: false     # analyze test files
+        custom_config: null      # path to custom phpstan.neon
 
-    rules:
-      typo3_core: true       # TYPO3 core API rules
-      extension_standards: true  # Extension development standards
-      security: true         # Security-focused rules
-      compatibility: true    # Version compatibility rules
+        rules:
+            typo3_core: true       # TYPO3 core API rules
+            extension_standards: true  # Extension development standards
+            security: true         # Security-focused rules
+            compatibility: true    # Version compatibility rules
 
-    reporting:
-      include_context: true  # include code context in reports
-      group_by_severity: true
-      max_issues_per_file: 50
+        reporting:
+            include_context: true  # include code context in reports
+            group_by_severity: true
+            max_issues_per_file: 50
 
-    cache:
-      enabled: true
-      ttl: 7200              # 2 hours cache
-      invalidate_on_change: true
+        cache:
+            enabled: true
+            ttl: 7200              # 2 hours cache
+            invalidate_on_change: true
 ```
 
 ### Rule Set Configuration
+
 ```yaml
 phpstan_rules:
-  typo3_core:
-    deprecated_api: error
-    removed_api: error
-    incompatible_types: error
+    typo3_core:
+        deprecated_api: error
+        removed_api: error
+        incompatible_types: error
 
-  extension_standards:
-    missing_docblocks: warning
-    naming_conventions: warning
-    file_structure: info
+    extension_standards:
+        missing_docblocks: warning
+        naming_conventions: warning
+        file_structure: info
 
-  security:
-    sql_injection: error
-    xss_vulnerability: error
-    unsafe_file_access: error
+    security:
+        sql_injection: error
+        xss_vulnerability: error
+        unsafe_file_access: error
 ```
 
 ## Expected Output
 
 ### Analysis Result Structure
+
 ```php
 [
     'analyzer' => 'phpstan',
@@ -371,6 +387,7 @@ phpstan_rules:
 ### Report Templates
 
 #### Executive Summary
+
 ```
 PHPStan Analysis: example_extension v2.1.0
 ═══════════════════════════════════════════
@@ -391,6 +408,7 @@ Top Recommendations:
 ```
 
 #### Detailed Issue Breakdown
+
 ```
 Critical Issues (3)
 ═══════════════════
@@ -409,18 +427,21 @@ Critical Issues (3)
 ## Testing Strategy
 
 ### Unit Tests
+
 - **Analyzer Core**: Test PHPStan execution and result parsing
 - **Issue Classification**: Verify categorization and risk scoring
 - **Configuration Generation**: Test TYPO3-specific config creation
 - **Report Generation**: Validate output formatting and structure
 
 ### Integration Tests
+
 - **Real Extension Analysis**: Test with actual TYPO3 extensions
 - **TYPO3 Version Compatibility**: Verify across different TYPO3 versions
 - **Large Extension Handling**: Performance testing with complex extensions
 - **Error Handling**: Test behavior with malformed or problematic code
 
 ### Performance Tests
+
 - **Execution Time**: Measure analysis duration for various extension sizes
 - **Memory Usage**: Monitor memory consumption during analysis
 - **Cache Effectiveness**: Verify caching improves performance
@@ -429,18 +450,21 @@ Critical Issues (3)
 ## Benefits and Use Cases
 
 ### For Extension Developers
+
 - **Pre-Release Quality Assurance**: Identify issues before publication
 - **Continuous Integration**: Automated code quality checking
 - **Refactoring Guidance**: Understand technical debt and improvement opportunities
 - **TYPO3 Best Practices**: Learn and apply framework conventions
 
 ### For System Administrators
+
 - **Upgrade Risk Assessment**: Evaluate extension quality before upgrading TYPO3
 - **Extension Selection**: Compare code quality when choosing between alternatives
 - **Maintenance Planning**: Prioritize extensions needing attention
 - **Security Assessment**: Identify potential security vulnerabilities
 
 ### For Agencies and Consultants
+
 - **Project Planning**: Estimate effort required for extension updates
 - **Client Communication**: Provide objective quality assessments
 - **Code Review**: Systematic analysis of client extension code
@@ -449,12 +473,14 @@ Critical Issues (3)
 ## Future Enhancements
 
 ### Version 2.1 Enhancements
+
 - **Custom Rule Development**: Allow users to define extension-specific rules
 - **IDE Integration**: Export issues in formats compatible with popular IDEs
 - **Automated Fixes**: Suggest and apply simple automated corrections
 - **Baseline Support**: Track quality improvements over time
 
 ### Version 2.2 Enhancements
+
 - **Machine Learning**: Use ML to improve issue prioritization
 - **Cross-Extension Analysis**: Analyze extension interactions and dependencies
 - **Performance Profiling**: Integrate static analysis with performance insights
@@ -463,15 +489,18 @@ Critical Issues (3)
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Analysis Accuracy**: >95% of critical issues are valid problems
 - **Performance**: Analyze medium extensions (<100 files) in <30 seconds
 - **Coverage**: Successfully analyze >90% of common extension patterns
 - **Cache Effectiveness**: >80% cache hit rate for repeated analysis
 
 ### User Experience Metrics
+
 - **Actionability**: >80% of recommendations are considered useful
 - **Integration Success**: <15 minutes to add to existing analysis workflows
 - **Error Rate**: <5% of analyses fail due to tool issues
 - **User Satisfaction**: >8/10 rating for usefulness and accuracy
 
-This PHPStan Analyzer would provide significant value in assessing extension quality and upgrade risks, making it an essential component of comprehensive TYPO3 upgrade analysis.
+This PHPStan Analyzer would provide significant value in assessing extension quality and upgrade risks, making it an
+essential component of comprehensive TYPO3 upgrade analysis.
