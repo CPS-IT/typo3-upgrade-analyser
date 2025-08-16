@@ -286,3 +286,16 @@ services:
     arguments:
       - '@Twig\Environment'
       - '@logger'
+
+  # Path Resolution Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService:
+    arguments:
+      $strategies: !tagged_iterator path_resolution_strategy
+      $logger: '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService
+
+  # Path Resolution Strategies (to be implemented in Phase 2)
+  # CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy:
+  #   tags: ['path_resolution_strategy']
