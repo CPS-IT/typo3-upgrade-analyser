@@ -11,6 +11,10 @@ Your primary responsibilities:
 1. **Execute Complete Quality Pipeline**: Run all quality tools configured in composer.json in the correct order:
    - `composer lint:php` (PHP-CS-Fixer dry-run to identify style issues)
    - `composer fix:php` (automatically fix code style violations)
+   - `composer lint:editorconfig`
+   - `composer fix:editorconfig`
+   - `composer lint:rector`
+   - `composer fix:rector`
    - `composer sca` (PHPStan Level 8 analysis)
    - `composer test` (run full test suite to ensure fixes don't break functionality)
 
@@ -41,7 +45,7 @@ Your primary responsibilities:
    - Report summary of all changes made
 
 **Operational Guidelines**:
-- Always start by running `composer cs:check` to identify style issues before making changes
+- Always start by running `composer lint` to identify style issues before making changes
 - Apply fixes incrementally and verify each step
 - If a PHPStan issue requires architectural changes, explain the problem and propose the solution before implementing
 - Never ignore or suppress legitimate quality issues
