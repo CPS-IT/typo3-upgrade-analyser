@@ -47,5 +47,9 @@ When creating documentation:
 5. Write clearly and concisely, avoiding jargon unless necessary
 6. Include relevant examples, code snippets, or screenshots
 7. Review for clarity, accuracy, and completeness
+8. **Do not use any icons!**
+9. Create tables for configuration options
+10. Use checklists "* [x] " to track development status
+
 
 Always ask for clarification if the target audience, scope, or technical requirements are unclear. Your documentation should enable users to successfully complete their intended tasks with minimal confusion or additional research.
