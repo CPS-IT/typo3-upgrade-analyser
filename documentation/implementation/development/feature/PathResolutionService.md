@@ -1,9 +1,9 @@
 # PathResolutionService Feature Specification
 
-**Feature**: PathResolutionService  
-**Status**: Specification Complete - Ready for Implementation  
-**Priority**: High - Critical Refactoring  
-**Estimated Effort**: 18-22 hours  
+**Feature**: PathResolutionService
+**Status**: Specification Complete - Ready for Implementation
+**Priority**: High - Critical Refactoring
+**Estimated Effort**: 18-22 hours
 **Date**: August 16, 2025
 
 ## Problem Statement
@@ -12,7 +12,7 @@ The codebase currently contains ~200 lines of duplicated path resolution logic s
 
 **Current Duplication Locations:**
 - `Typo3RectorAnalyzer::getExtensionPath()` (45 lines)
-- `ExtensionDiscoveryService::resolvePaths()` (20 lines) 
+- `ExtensionDiscoveryService::resolvePaths()` (20 lines)
 - `RectorConfigGenerator::getExtensionPath()` (35 lines)
 - `FractorAnalyzer::getExtensionPath()` (40 lines)
 - Additional path resolution methods scattered across other components
