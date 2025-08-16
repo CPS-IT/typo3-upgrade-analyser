@@ -40,6 +40,60 @@ The analyzer requires internet access for:
 - **Packagist**: Composer package availability
 - **GitHub API**: Git repository analysis (optional, but recommended)
 
+#### API Token Configuration
+
+For enhanced functionality and to avoid rate limiting, configure API tokens using environment files.
+
+The analyzer supports two environment files (loaded in priority order):
+1. **`.env.local`** (highest priority, for local overrides)
+2. **`.env`** (fallback, typically copied from `.env.example`)
+
+**Setup Environment Configuration**:
+```bash
+# Copy example configuration (provides all available options)
+cp .env.example .env
+
+# For local development overrides (optional)
+cp .env.example .env.local
+```
+
+**Configure API Tokens**:
+
+Edit your environment file (`.env` or `.env.local`) with your API tokens:
+
+**GitHub API Token** (Optional but recommended):
+```bash
+GITHUB_API_TOKEN=your_github_personal_access_token
+```
+
+To create a GitHub Personal Access Token:
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate new token with `public_repo` scope
+3. Copy the token to your environment file
+
+**TYPO3 Extension Repository (TER) Token** (Optional):
+```bash
+TER_ACCESS_TOKEN=your_ter_access_token
+```
+
+**Additional API Configuration**:
+```bash
+# Enable/disable API calls (useful for testing)
+ENABLE_REAL_API_CALLS=true
+
+# Timeout settings (seconds)
+API_REQUEST_TIMEOUT=10
+INTEGRATION_TEST_TIMEOUT=30
+
+# Rate limiting delay between requests
+API_RATE_LIMIT_DELAY=1
+```
+
+**Note**: The analyzer will work without API tokens but may experience:
+- GitHub API rate limiting (60 requests/hour without token, 5000/hour with token)
+- Limited access to private repository information
+- Reduced functionality for git repository analysis
+
 ## Installation Methods
 
 ### Method 1: Composer (Recommended)
