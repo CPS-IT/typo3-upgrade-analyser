@@ -290,12 +290,42 @@ services:
   # Path Resolution Service
   CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService:
     arguments:
-      $strategies: !tagged_iterator path_resolution_strategy
-      $logger: '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\PathResolutionCacheInterface'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager'
+      - '@logger'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface:
     alias: CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService
 
-  # Path Resolution Strategies (to be implemented in Phase 2)
-  # CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy:
-  #   tags: ['path_resolution_strategy']
+  # Path Resolution Strategy Registry
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry:
+    arguments:
+      $strategies: !tagged_iterator path_resolution_strategy
+      $logger: '@logger'
+
+  # Path Resolution Validator
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator:
+    arguments:
+      - '@logger'
+
+  # Path Resolution Cache
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\PathResolutionCacheInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache:
+    arguments:
+      - '@logger'
+      - 1000 # maxMemoryEntries
+      - 300  # defaultTtl
+
+  # Error Recovery Manager
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager:
+    arguments:
+      - '@logger'
+
+  # Path Resolution Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']
