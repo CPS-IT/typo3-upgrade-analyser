@@ -1,7 +1,7 @@
 # Architecture Review: TYPO3 Upgrade Analyzer
 
-**Date:** 2025-08-16  
-**Reviewer:** Claude Code  
+**Date:** 2025-08-16
+**Reviewer:** Claude Code
 **Focus:** Simplicity, DRY principle, proper encapsulation and separation of concerns
 
 ## Executive Summary
@@ -19,7 +19,7 @@ The TYPO3 Upgrade Analyzer demonstrates **good adherence to clean architecture p
 
 **Critical Issues:**
 - Significant code duplication in path resolution logic across multiple analyzers
-- Several oversized classes exceeding 400-500 lines with too many responsibilities  
+- Several oversized classes exceeding 400-500 lines with too many responsibilities
 - Complex conditional logic that could be simplified using early returns
 - Missing abstractions for common patterns (especially around external tool management)
 - Inconsistent caching patterns across different services
@@ -33,7 +33,7 @@ The TYPO3 Upgrade Analyzer demonstrates **good adherence to clean architecture p
 The project demonstrates strong adherence to clean architecture principles:
 
 **Application Layer** (`src/Application/`): Well-isolated console commands with minimal business logic
-**Domain Layer** (`src/Domain/`): Pure business entities and value objects without external dependencies  
+**Domain Layer** (`src/Domain/`): Pure business entities and value objects without external dependencies
 **Infrastructure Layer** (`src/Infrastructure/`): Proper encapsulation of external integrations
 **Shared Layer** (`src/Shared/`): Appropriate common utilities
 
@@ -179,10 +179,10 @@ Create a dedicated `PathResolutionService` to eliminate duplication across analy
 
 **Impact:** Reduces code duplication by ~200 lines and centralizes critical path logic.
 
-### 2. Refactor ReportService (Critical Priority)  
+### 2. Refactor ReportService (Critical Priority)
 Break down the 558-line `ReportService` into:
 - `ReportContextBuilder`
-- `TemplateRenderer` 
+- `TemplateRenderer`
 - `ReportFileManager`
 
 **Impact:** Improves testability and maintainability significantly.
@@ -190,7 +190,7 @@ Break down the 558-line `ReportService` into:
 ### 3. Simplify Complex Conditional Logic (Medium Priority)
 Replace nested if/else chains with early returns across:
 - Configuration parsers
-- Discovery services  
+- Discovery services
 - Analyzers
 
 **Impact:** Reduces cognitive complexity and improves readability.
@@ -208,7 +208,7 @@ Move large data structures (like in `RectorRuleRegistry`) to external configurat
 ## Implementation Priority
 
 1. **Critical (Week 1):** Path resolution service extraction + ReportService refactoring
-2. **High (Week 2):** Complex conditional logic simplification  
+2. **High (Week 2):** Complex conditional logic simplification
 3. **Medium (Week 3-4):** ExternalToolManager creation + analyzer refactoring
 4. **Low (Ongoing):** Data structure externalization + minor cleanups
 
