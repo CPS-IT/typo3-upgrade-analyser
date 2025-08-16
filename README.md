@@ -33,7 +33,7 @@ The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installa
 - **Clean Architecture**: Follows clean architecture principles with strict separation of concerns
 - **Modular Analyzer System**: Dynamic analyzer discovery with pluggable implementations
 - **Advanced Static Analysis**: Integrates TYPO3 Rector and Fractor for code modernization analysis
-- **External API Integration**: Checks TYPO3 Extension Repository, Packagist, and Git repositories
+- **External API Integration**: Checks TYPO3 Extension Repository, Packagist, and Git repositories (requires API token )
 - **Caching Support**: Built-in caching for improved performance on repeated analyses
 
 ## Requirements
