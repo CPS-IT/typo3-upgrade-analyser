@@ -321,7 +321,7 @@ class LinesOfCodeAnalyzerTest extends TestCase
         // Mock PathResolutionService to return the created extension path
         $this->pathResolutionService
             ->method('resolvePath')
-            ->willReturnCallback(function () use ($extensionPath): \CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse {
+            ->willReturnCallback(function () use ($extensionPath): PathResolutionResponse {
                 $metadata = new PathResolutionMetadata(
                     PathTypeEnum::EXTENSION,
                     InstallationTypeEnum::COMPOSER_STANDARD,
