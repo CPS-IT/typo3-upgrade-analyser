@@ -24,6 +24,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use CPSIT\UpgradeAnalyzer\Tests\Unit\TestHelper\VfsTestTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -42,6 +43,7 @@ class FractorAnalyzerTest extends TestCase
     private MockObject&FractorExecutor $fractorExecutor;
     private MockObject&FractorConfigGenerator $configGenerator;
     private MockObject&FractorResultParser $resultParser;
+    private MockObject&PathResolutionServiceInterface $pathResolutionService;
 
     protected function setUp(): void
     {
@@ -52,6 +54,7 @@ class FractorAnalyzerTest extends TestCase
         $this->fractorExecutor = $this->createMock(FractorExecutor::class);
         $this->configGenerator = $this->createMock(FractorConfigGenerator::class);
         $this->resultParser = $this->createMock(FractorResultParser::class);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
 
         $this->analyzer = new TestableFractorAnalyzer(
             $this->cacheService,
@@ -59,6 +62,7 @@ class FractorAnalyzerTest extends TestCase
             $this->fractorExecutor,
             $this->configGenerator,
             $this->resultParser,
+            $this->pathResolutionService,
         );
     }
 
@@ -465,8 +469,9 @@ class TestableFractorAnalyzer extends FractorAnalyzer
         private readonly FractorExecutor $fractorExecutor,
         private readonly FractorConfigGenerator $configGenerator,
         private readonly FractorResultParser $resultParser,
+        PathResolutionServiceInterface $pathResolutionService,
     ) {
-        parent::__construct($cacheService, $logger, $fractorExecutor, $configGenerator, $resultParser);
+        parent::__construct($cacheService, $logger, $fractorExecutor, $configGenerator, $resultParser, $pathResolutionService);
     }
 
     protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
