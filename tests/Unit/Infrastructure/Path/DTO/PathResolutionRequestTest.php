@@ -40,7 +40,7 @@ final class PathResolutionRequestTest extends TestCase
             ->build();
 
         self::assertSame(PathTypeEnum::EXTENSION, $request->pathType);
-        self::assertStringEndsWith('T', $request->installationPath);
+        self::assertSame(realpath($this->testPath), $request->installationPath);
         self::assertSame(InstallationTypeEnum::COMPOSER_STANDARD, $request->installationType);
     }
 
