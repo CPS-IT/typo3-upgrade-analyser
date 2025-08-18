@@ -149,6 +149,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
 
   # Shared services
