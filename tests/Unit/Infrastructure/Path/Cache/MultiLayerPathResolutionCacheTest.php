@@ -39,9 +39,9 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
     public function testGetMissReturnsNull(): void
     {
         $request = $this->createTestRequest();
-        
+
         $result = $this->cache->get($request);
-        
+
         $this->assertNull($result);
     }
 
@@ -49,10 +49,10 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
     {
         $request = $this->createTestRequest();
         $response = $this->createTestResponse();
-        
+
         $this->cache->put($request, $response);
         $result = $this->cache->get($request);
-        
+
         $this->assertSame($response, $result);
     }
 
@@ -60,18 +60,18 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
     {
         $request = $this->createTestRequest();
         $response = $this->createTestResponse();
-        
+
         // Initial stats
         $stats = $this->cache->getStats();
         $this->assertEquals(0, $stats->hits);
         $this->assertEquals(0, $stats->misses);
-        
+
         // Cache miss
         $this->cache->get($request);
         $stats = $this->cache->getStats();
         $this->assertEquals(0, $stats->hits);
         $this->assertEquals(1, $stats->misses);
-        
+
         // Cache put and hit
         $this->cache->put($request, $response);
         $this->cache->get($request);
@@ -85,17 +85,17 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
         // Should cache normal requests
         $request = $this->createTestRequest();
         $this->assertTrue($this->cache->shouldCache($request));
-        
+
         // Should not cache auto-detect requests
         $autoDetectRequest = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             '/test/path',
             InstallationTypeEnum::AUTO_DETECT,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test')
+            new ExtensionIdentifier('test'),
         );
         $this->assertFalse($this->cache->shouldCache($autoDetectRequest));
-        
+
         // Should not cache requests with validation rules
         $validationRequest = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
@@ -103,7 +103,7 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
             new ExtensionIdentifier('test'),
-            ['custom_rule' => ['param' => 'value']]
+            ['custom_rule' => ['param' => 'value']],
         );
         $this->assertFalse($this->cache->shouldCache($validationRequest));
     }
@@ -115,46 +115,46 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             '/test/path1',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test1')
+            new ExtensionIdentifier('test1'),
         );
-        
+
         $request2 = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             '/test/path2',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test2')
+            new ExtensionIdentifier('test2'),
         );
-        
+
         $response = $this->createTestResponse();
-        
+
         // Put both requests in cache
         $this->cache->put($request1, $response);
         $this->cache->put($request2, $response);
-        
+
         // Verify both are cached
         $this->assertNotNull($this->cache->get($request1));
         $this->assertNotNull($this->cache->get($request2));
-        
+
         // Invalidate based on path
         $this->cache->invalidate(['installation_path' => '/test/path1']);
-        
+
         // Check if invalidation worked (result depends on implementation details)
         $result1 = $this->cache->get($request1);
         $result2 = $this->cache->get($request2);
-        
+
         // At least one should be affected by invalidation
-        $this->assertTrue($result1 === null || $result2 !== null, 'Invalidation should affect cached entries');
+        $this->assertTrue(null === $result1 || null !== $result2, 'Invalidation should affect cached entries');
     }
 
     public function testClear(): void
     {
         $request = $this->createTestRequest();
         $response = $this->createTestResponse();
-        
+
         $this->cache->put($request, $response);
         $this->assertNotNull($this->cache->get($request));
-        
+
         $this->cache->clear();
         $this->assertNull($this->cache->get($request));
     }
@@ -164,40 +164,40 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
         // Test that cache respects max capacity setting
         $smallCache = new MultiLayerPathResolutionCache(new NullLogger(), 1, 60);  // Very small cache
         $response = $this->createTestResponse();
-        
+
         $request1 = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             '/test/path1',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test1')
+            new ExtensionIdentifier('test1'),
         );
-        
+
         $request2 = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             '/test/path2',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test2')
+            new ExtensionIdentifier('test2'),
         );
-        
+
         // Put first item
         $smallCache->put($request1, $response);
         $this->assertNotNull($smallCache->get($request1));
-        
+
         // Put second item (should evict first due to capacity)
         $smallCache->put($request2, $response);
         $this->assertNotNull($smallCache->get($request2));
-        
+
         // Cache behavior may vary, but the cache should function
-        $this->assertTrue(true, 'Cache eviction mechanism is present');
+        // Cache eviction mechanism is present - no assertion needed as we're testing functionality above
     }
 
     public function testIsValidForExistingFile(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'cache_test');
         file_put_contents($tempFile, 'test content');
-        
+
         $response = PathResolutionResponse::success(
             PathTypeEnum::EXTENSION,
             $tempFile,
@@ -205,11 +205,11 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             [],
             [],
             'cache-key',
-            0.1
+            0.1,
         );
-        
+
         $this->assertTrue($this->cache->isValid('test-key', $response));
-        
+
         unlink($tempFile);
     }
 
@@ -222,9 +222,9 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             [],
             [],
             'cache-key',
-            0.1
+            0.1,
         );
-        
+
         $this->assertFalse($this->cache->isValid('test-key', $response));
     }
 
@@ -235,7 +235,7 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             '/test/path',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
     }
 
@@ -248,7 +248,7 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             [],
             [],
             'cache-key',
-            0.1
+            0.1,
         );
     }
 
@@ -263,7 +263,7 @@ final class MultiLayerPathResolutionCacheTest extends TestCase
             ['test_strategy'],
             0.85,
             false,
-            'successful_resolution'
+            'successful_resolution',
         );
     }
 }

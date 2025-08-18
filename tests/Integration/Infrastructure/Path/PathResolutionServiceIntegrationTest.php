@@ -45,10 +45,10 @@ final class PathResolutionServiceIntegrationTest extends TestCase
 
         // Set up the complete service with all dependencies
         $logger = new NullLogger();
-        
+
         $strategy = new ExtensionPathResolutionStrategy($logger);
         $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
-        
+
         $validator = new PathResolutionValidator($logger);
         $cache = new MultiLayerPathResolutionCache($logger);
         $errorRecoveryManager = new ErrorRecoveryManager($logger);
@@ -58,7 +58,7 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $validator,
             $cache,
             $errorRecoveryManager,
-            $logger
+            $logger,
         );
     }
 
@@ -79,23 +79,21 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $this->testInstallationPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_extension')
+            new ExtensionIdentifier('test_extension'),
         );
 
         // Act: Resolve the path
         $response = $this->pathResolutionService->resolvePath($request);
 
         // Assert: Verify the response structure
-        $this->assertNotNull($response);
         $this->assertEquals(PathTypeEnum::EXTENSION, $response->pathType);
-        $this->assertNotNull($response->metadata);
         $this->assertIsFloat($response->resolutionTime);
         $this->assertIsString($response->cacheKey);
 
         // The response should indicate success or provide alternatives
         $this->assertTrue(
-            $response->isSuccess() || $response->hasSuggestions(),
-            'Response should either succeed or provide alternatives'
+            $response->isSuccess() || null !== $response->getBestAlternative(),
+            'Response should either succeed or provide alternatives',
         );
     }
 
@@ -103,13 +101,13 @@ final class PathResolutionServiceIntegrationTest extends TestCase
     {
         // Arrange: Create multiple requests for the same installation
         $requests = [];
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 5; ++$i) {
             $requests[] = PathResolutionRequest::create(
                 PathTypeEnum::EXTENSION,
                 $this->testInstallationPath,
                 InstallationTypeEnum::COMPOSER_STANDARD,
                 PathConfiguration::createDefault(),
-                new ExtensionIdentifier("test_extension_{$i}")
+                new ExtensionIdentifier("test_extension_{$i}"),
             );
         }
 
@@ -118,9 +116,8 @@ final class PathResolutionServiceIntegrationTest extends TestCase
 
         // Assert: Verify batch processing results
         $this->assertCount(5, $responses);
-        
-        foreach ($responses as $index => $response) {
-            $this->assertNotNull($response);
+
+        foreach ($responses as $response) {
             $this->assertEquals(PathTypeEnum::EXTENSION, $response->pathType);
             $this->assertIsFloat($response->resolutionTime);
         }
@@ -134,7 +131,7 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $this->testInstallationPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('cached_extension')
+            new ExtensionIdentifier('cached_extension'),
         );
 
         // Act: Resolve the same path twice
@@ -144,9 +141,9 @@ final class PathResolutionServiceIntegrationTest extends TestCase
         // Assert: Second response should be faster (cached)
         $this->assertEquals($firstResponse->pathType, $secondResponse->pathType);
         $this->assertEquals($firstResponse->cacheKey, $secondResponse->cacheKey);
-        
+
         // Cache behavior verification - second call should have cache metadata
-        $this->assertNotNull($secondResponse->metadata);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $secondResponse->metadata);
     }
 
     public function testValidationErrorHandling(): void
@@ -158,7 +155,7 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $invalidPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_extension')
+            new ExtensionIdentifier('test_extension'),
         );
 
         // Act: Resolve the path with invalid input
@@ -190,9 +187,8 @@ final class PathResolutionServiceIntegrationTest extends TestCase
     {
         // Act & Assert: Verify path type support
         $this->assertTrue($this->pathResolutionService->supportsPathType(PathTypeEnum::EXTENSION));
-        
+
         $availableTypes = $this->pathResolutionService->getAvailablePathTypes(InstallationTypeEnum::COMPOSER_STANDARD);
-        $this->assertIsArray($availableTypes);
         $this->assertContains(PathTypeEnum::EXTENSION, $availableTypes);
     }
 
@@ -213,7 +209,7 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $this->testInstallationPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('composer_ext')
+            new ExtensionIdentifier('composer_ext'),
         );
 
         $legacyRequest = PathResolutionRequest::create(
@@ -221,7 +217,7 @@ final class PathResolutionServiceIntegrationTest extends TestCase
             $this->testInstallationPath,
             InstallationTypeEnum::LEGACY_SOURCE,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('legacy_ext')
+            new ExtensionIdentifier('legacy_ext'),
         );
 
         // Act: Process mixed batch
@@ -239,22 +235,22 @@ final class PathResolutionServiceIntegrationTest extends TestCase
     private function createTestInstallation(string $path): void
     {
         if (!is_dir($path)) {
-            mkdir($path, 0755, true);
+            mkdir($path, 0o755, true);
         }
 
         // Create basic TYPO3 structure
-        mkdir($path . '/public', 0755, true);
-        mkdir($path . '/public/typo3conf', 0755, true);
-        mkdir($path . '/public/typo3conf/ext', 0755, true);
-        mkdir($path . '/public/typo3conf/ext/test_extension', 0755, true);
-        mkdir($path . '/public/fileadmin', 0755, true);
+        mkdir($path . '/public', 0o755, true);
+        mkdir($path . '/public/typo3conf', 0o755, true);
+        mkdir($path . '/public/typo3conf/ext', 0o755, true);
+        mkdir($path . '/public/typo3conf/ext/test_extension', 0o755, true);
+        mkdir($path . '/public/fileadmin', 0o755, true);
 
         // Create composer.json to indicate Composer installation
         file_put_contents($path . '/composer.json', json_encode([
             'name' => 'test/typo3-installation',
             'require' => [
                 'typo3/cms-core' => '^12.0',
-            ]
+            ],
         ], JSON_PRETTY_PRINT));
 
         // Create extension files

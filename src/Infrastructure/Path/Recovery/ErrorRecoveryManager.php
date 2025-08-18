@@ -292,7 +292,7 @@ final class ErrorRecoveryManager
     ): PathResolutionResponse {
         // Sort fallback strategies by priority
         $sortedStrategies = $request->fallbackStrategies;
-        usort($sortedStrategies, fn ($a, $b) => $b->priority <=> $a->priority);
+        usort($sortedStrategies, fn ($a, $b): int => $b->priority <=> $a->priority);
 
         $warnings = ['Fallback strategies attempted but not implemented'];
         $resolutionTime = microtime(true) - $startTime;

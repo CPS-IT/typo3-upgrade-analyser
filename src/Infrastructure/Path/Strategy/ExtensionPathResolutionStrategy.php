@@ -201,20 +201,36 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
     private function resolveComposerStandardPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
     {
-        // Standard Composer installation: public/typo3conf/ext/
-        $path = $installationPath . '/public/typo3conf/ext/' . $extensionKey;
+        // First, try custom web directory from composer.json configuration
+        $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'public';
+        $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
-
         if (is_dir($path)) {
             return $path;
         }
 
-        // Fallback: Check custom web directory
-        $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'public';
-        $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
-        $attemptedPaths[] = $path;
+        // Fallback: Standard Composer installation if not using custom paths
+        if ('public' === $webDir) {
+            $path = $installationPath . '/public/typo3conf/ext/' . $extensionKey;
+            $attemptedPaths[] = $path;
+            if (is_dir($path)) {
+                return $path;
+            }
+        }
 
-        return is_dir($path) ? $path : null;
+        // Additional fallback: Try common alternatives only if custom path failed
+        $commonAlternatives = ['app/web', 'web'];
+        foreach ($commonAlternatives as $altWebDir) {
+            if ($altWebDir !== $webDir) { // Don't try the same path twice
+                $path = $installationPath . '/' . $altWebDir . '/typo3conf/ext/' . $extensionKey;
+                $attemptedPaths[] = $path;
+                if (is_dir($path)) {
+                    return $path;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function resolveComposerCustomPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string

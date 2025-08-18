@@ -84,13 +84,15 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
     tags: ['analyzer']
 
-  # Lines of Code Analyzer
+  # Lines of Code Analyzer with PathResolutionService
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer:
     public: true
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
+
 
   # TYPO3 Rector Analyzer and supporting services
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry:
