@@ -183,10 +183,10 @@ final class PathResolutionService implements PathResolutionServiceInterface
             'successful_resolutions' => $successCount,
             'failed_resolutions' => $errorCount,
             'cache_hit_count' => $cacheHitCount,
-            'cache_hit_ratio' => round($cacheHitRatio * 100, 2).'%',
+            'cache_hit_ratio' => round($cacheHitRatio * 100, 2) . '%',
             'installation_groups' => \count($groupedRequests),
             'total_time_seconds' => round($totalTime, 3),
-            'average_time_per_request' => round($totalTime / \count($requests) * 1000, 2).'ms',
+            'average_time_per_request' => round($totalTime / \count($requests) * 1000, 2) . 'ms',
         ]);
 
         return $orderedResponses;

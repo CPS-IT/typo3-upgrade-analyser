@@ -88,7 +88,7 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
     {
         // Create test structure
         $extensionPath = $this->testPath . '/public/typo3conf/ext/test_ext';
-        mkdir($extensionPath, 0755, true);
+        mkdir($extensionPath, 0o755, true);
         file_put_contents($extensionPath . '/ext_emconf.php', '<?php $EM_CONF[$_EXTKEY] = [];');
 
         $request = PathResolutionRequest::create(
@@ -96,38 +96,38 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $response = $this->strategy->resolve($request);
 
         $this->assertTrue($response->isSuccess());
-        $this->assertStringContainsString('test_ext', $response->resolvedPath);
+        $this->assertStringContainsString('test_ext', $response->resolvedPath ?? '');
     }
 
     public function testResolveNonExistentExtension(): void
     {
-        mkdir($this->testPath, 0755, true);
+        mkdir($this->testPath, 0o755, true);
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('nonexistent_ext')
+            new ExtensionIdentifier('nonexistent_ext'),
         );
 
         $response = $this->strategy->resolve($request);
 
         $this->assertFalse($response->isSuccess());
         // The response should indicate failure appropriately
-        $this->assertNotNull($response->metadata);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
     }
 
     public function testAutoDetectInstallationType(): void
     {
         // Create composer installation structure
-        mkdir($this->testPath . '/public/typo3conf/ext', 0755, true);
+        mkdir($this->testPath . '/public/typo3conf/ext', 0o755, true);
         file_put_contents($this->testPath . '/composer.json', '{"name": "test/project"}');
 
         $request = PathResolutionRequest::create(
@@ -135,47 +135,47 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
             $this->testPath,
             InstallationTypeEnum::AUTO_DETECT,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $response = $this->strategy->resolve($request);
 
         // Strategy should process AUTO_DETECT requests (the response shows the detected type or original)
-        $this->assertNotNull($response);
-        $this->assertNotNull($response->metadata);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
     }
 
     public function testLegacyInstallationDetection(): void
     {
-        // Create legacy installation structure  
-        mkdir($this->testPath . '/typo3conf/ext', 0755, true);
-        mkdir($this->testPath . '/fileadmin', 0755, true);
-        
+        // Create legacy installation structure
+        mkdir($this->testPath . '/typo3conf/ext', 0o755, true);
+        mkdir($this->testPath . '/fileadmin', 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::AUTO_DETECT,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $response = $this->strategy->resolve($request);
 
         // Strategy should process AUTO_DETECT requests and provide a valid response
-        $this->assertNotNull($response);
-        $this->assertNotNull($response->metadata);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
     }
 
     public function testCustomPathConfiguration(): void
     {
         $customExtPath = $this->testPath . '/custom/extensions/test_ext';
-        mkdir($customExtPath, 0755, true);
+        mkdir($customExtPath, 0o755, true);
         file_put_contents($customExtPath . '/ext_emconf.php', '<?php $EM_CONF[$_EXTKEY] = [];');
 
         $pathConfig = PathConfiguration::fromArray([
             'customPaths' => [
-                'extensions' => '/custom/extensions'
-            ]
+                'extensions' => '/custom/extensions',
+            ],
         ]);
 
         $request = PathResolutionRequest::create(
@@ -183,14 +183,14 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
             $this->testPath,
             InstallationTypeEnum::CUSTOM,
             $pathConfig,
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $response = $this->strategy->resolve($request);
 
         // Custom path configuration should be processed (might not always succeed depending on implementation)
-        $this->assertNotNull($response);
-        $this->assertNotNull($response->metadata);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
+        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
     }
 
     private function removeDirectory(string $dir): void

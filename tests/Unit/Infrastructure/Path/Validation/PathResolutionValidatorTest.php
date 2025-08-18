@@ -47,14 +47,14 @@ final class PathResolutionValidatorTest extends TestCase
     public function testValidateSuccessfulRequest(): void
     {
         // Create valid test installation
-        mkdir($this->testPath . '/typo3conf', 0755, true);
-        
+        mkdir($this->testPath . '/typo3conf', 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::LEGACY_SOURCE,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $result = $this->validator->validate($request);
@@ -70,7 +70,7 @@ final class PathResolutionValidatorTest extends TestCase
             '/nonexistent/path',
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $result = $this->validator->validate($request);
@@ -83,20 +83,20 @@ final class PathResolutionValidatorTest extends TestCase
     public function testValidateNonReadablePath(): void
     {
         // Create path but make it non-readable (if possible on this system)
-        mkdir($this->testPath, 0000, true);
-        
+        mkdir($this->testPath, 0o000, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $result = $this->validator->validate($request);
 
         // Restore permissions for cleanup
-        chmod($this->testPath, 0755);
+        chmod($this->testPath, 0o755);
 
         // On some systems this might not fail, so we check if we got the expected error
         if (!$result->isValid()) {
@@ -107,14 +107,14 @@ final class PathResolutionValidatorTest extends TestCase
     public function testValidatePathWithoutTypo3Indicators(): void
     {
         // Create empty directory without TYPO3 indicators
-        mkdir($this->testPath, 0755, true);
-        
+        mkdir($this->testPath, 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $result = $this->validator->validate($request);
@@ -127,14 +127,14 @@ final class PathResolutionValidatorTest extends TestCase
 
     public function testValidateExtensionRequiredButMissing(): void
     {
-        mkdir($this->testPath, 0755, true);
-        
+        mkdir($this->testPath, 0o755, true);
+
         // Create request without extension identifier for path type that requires it
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
-            PathConfiguration::createDefault()
+            PathConfiguration::createDefault(),
         );
 
         $result = $this->validator->validate($request);
@@ -145,8 +145,8 @@ final class PathResolutionValidatorTest extends TestCase
 
     public function testValidateConfigurationIssues(): void
     {
-        mkdir($this->testPath, 0755, true);
-        
+        mkdir($this->testPath, 0o755, true);
+
         // Create configuration with validation issues
         $pathConfig = PathConfiguration::fromArray([
             'maxDepth' => -1, // Invalid depth
@@ -159,7 +159,7 @@ final class PathResolutionValidatorTest extends TestCase
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             $pathConfig,
-            new ExtensionIdentifier('test_ext')
+            new ExtensionIdentifier('test_ext'),
         );
 
         $result = $this->validator->validate($request);
@@ -172,15 +172,15 @@ final class PathResolutionValidatorTest extends TestCase
 
     public function testValidateCustomRules(): void
     {
-        mkdir($this->testPath, 0755, true);
-        
+        mkdir($this->testPath, 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
             new ExtensionIdentifier('test_ext'),
-            ['min_path_length' => ['length' => 100]] // Path too short
+            ['min_path_length' => ['length' => 100]], // Path too short
         );
 
         $result = $this->validator->validate($request);
@@ -191,15 +191,15 @@ final class PathResolutionValidatorTest extends TestCase
 
     public function testValidateRequiredSubdirectories(): void
     {
-        mkdir($this->testPath, 0755, true);
-        
+        mkdir($this->testPath, 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $this->testPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
             new ExtensionIdentifier('test_ext'),
-            ['required_subdirs' => ['dirs' => ['typo3conf', 'fileadmin']]]
+            ['required_subdirs' => ['dirs' => ['typo3conf', 'fileadmin']]],
         );
 
         $result = $this->validator->validate($request);
@@ -211,22 +211,22 @@ final class PathResolutionValidatorTest extends TestCase
     public function testValidateForbiddenPaths(): void
     {
         $forbiddenPath = '/tmp/forbidden-path';
-        mkdir($forbiddenPath, 0755, true);
-        
+        mkdir($forbiddenPath, 0o755, true);
+
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
             $forbiddenPath,
             InstallationTypeEnum::COMPOSER_STANDARD,
             PathConfiguration::createDefault(),
             new ExtensionIdentifier('test_ext'),
-            ['forbidden_paths' => ['paths' => ['forbidden']]]
+            ['forbidden_paths' => ['paths' => ['forbidden']]],
         );
 
         $result = $this->validator->validate($request);
 
         $this->assertFalse($result->isValid());
         $this->assertStringContainsString('forbidden path segment', implode(' ', $result->getErrors()));
-        
+
         // Cleanup
         rmdir($forbiddenPath);
     }

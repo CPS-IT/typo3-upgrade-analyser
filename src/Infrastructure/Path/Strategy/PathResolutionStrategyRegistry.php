@@ -81,7 +81,7 @@ final class PathResolutionStrategyRegistry
         // Filter by compatibility and capability
         $compatibleStrategies = array_filter(
             $candidateStrategies,
-            fn ($strategy) => $this->isStrategyCompatible($strategy, $request),
+            fn ($strategy): bool => $this->isStrategyCompatible($strategy, $request),
         );
 
         if (empty($compatibleStrategies)) {
@@ -117,7 +117,7 @@ final class PathResolutionStrategyRegistry
     {
         $strategies = $this->getStrategiesForPathType($pathType);
 
-        if ($installationType === null) {
+        if (null === $installationType) {
             return !empty($strategies);
         }
 
@@ -133,8 +133,8 @@ final class PathResolutionStrategyRegistry
     public function getSupportedPathTypes(): array
     {
         return array_map(
-            fn($value) => PathTypeEnum::from($value),
-            array_keys($this->strategiesByPathType)
+            fn ($value) => PathTypeEnum::from($value),
+            array_keys($this->strategiesByPathType),
         );
     }
 
@@ -202,7 +202,7 @@ final class PathResolutionStrategyRegistry
         PathTypeEnum $pathType,
         InstallationTypeEnum $installationType,
     ): PathResolutionStrategyInterface {
-        usort($strategies, function ($a, $b) use ($pathType, $installationType) {
+        usort($strategies, function ($a, $b) use ($pathType, $installationType): int {
             $priorityA = $a->getPriority($pathType, $installationType)->value;
             $priorityB = $b->getPriority($pathType, $installationType)->value;
 
@@ -219,7 +219,7 @@ final class PathResolutionStrategyRegistry
 
     private function sortStrategiesByPriority(): void
     {
-        foreach ($this->strategiesByPathType as $pathType => &$strategies) {
+        foreach ($this->strategiesByPathType as &$strategies) {
             // Sort will be done dynamically based on installation type during selection
             // This ensures we always get the right priority order for the specific context
             // We need this method to maintain a side effect for strategy ordering
