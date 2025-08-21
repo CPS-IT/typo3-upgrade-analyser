@@ -1,0 +1,26 @@
+{
+    "name": "local/site-package",
+    "description": "Local site package extension with composer metadata",
+    "type": "typo3-cms-extension",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Local Developer",
+            "email": "dev@local.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "typo3/cms-core": "^12.4"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "site_package"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Local\\SitePackage\\": "Classes/"
+        }
+    }
+}
