@@ -201,7 +201,13 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
     private function resolveComposerStandardPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
     {
-        // First, try custom web directory from composer.json configuration
+        // PRIORITY 1: Vendor directory - TYPO3 v12+ Composer-managed extensions
+        $vendorPath = $this->resolveVendorExtensionPath($extensionKey, $installationPath, $request, $attemptedPaths);
+        if ($vendorPath) {
+            return $vendorPath;
+        }
+
+        // PRIORITY 2: Custom web directory from composer.json configuration (local extensions)
         $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'public';
         $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
@@ -209,7 +215,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
             return $path;
         }
 
-        // Fallback: Standard Composer installation if not using custom paths
+        // PRIORITY 3: Standard Composer installation if not using custom paths
         if ('public' === $webDir) {
             $path = $installationPath . '/public/typo3conf/ext/' . $extensionKey;
             $attemptedPaths[] = $path;
@@ -218,7 +224,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
             }
         }
 
-        // Additional fallback: Try common alternatives only if custom path failed
+        // PRIORITY 4: Common alternatives only if custom path failed
         $commonAlternatives = ['app/web', 'web'];
         foreach ($commonAlternatives as $altWebDir) {
             if ($altWebDir !== $webDir) { // Don't try the same path twice
@@ -235,7 +241,13 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
     private function resolveComposerCustomPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
     {
-        // Custom Composer setup with different web directory
+        // PRIORITY 1: Vendor directory - TYPO3 v12+ Composer-managed extensions
+        $vendorPath = $this->resolveVendorExtensionPath($extensionKey, $installationPath, $request, $attemptedPaths);
+        if ($vendorPath) {
+            return $vendorPath;
+        }
+
+        // PRIORITY 2: Custom Composer setup with different web directory
         $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'web';
         $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
@@ -244,7 +256,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
             return $path;
         }
 
-        // Fallback to standard public directory
+        // PRIORITY 3: Fallback to standard public directory
         $path = $installationPath . '/public/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
 
@@ -406,5 +418,131 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         }
 
         return $suggestions;
+    }
+
+    /**
+     * Resolve vendor extension path for Composer-managed TYPO3 extensions.
+     * This method handles TYPO3 v12+ installations where extensions are managed by Composer.
+     * Uses actual composer package names from extension metadata when available.
+     */
+    private function resolveVendorExtensionPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
+    {
+        // Get vendor directory from configuration or default to 'vendor'
+        $vendorDir = $request->pathConfiguration->getCustomPath('vendor-dir') ?? 'vendor';
+        
+        // PRIORITY 1: Use actual composer package name if available
+        if ($request->extensionIdentifier && $request->extensionIdentifier->composerName) {
+            $composerName = $request->extensionIdentifier->composerName;
+            $vendorPath = $installationPath . '/' . $vendorDir . '/' . $composerName;
+            
+            $attemptedPaths[] = $vendorPath;
+            if (is_dir($vendorPath) && $this->isValidExtensionDirectory($vendorPath, $extensionKey)) {
+                $this->logger->debug('Found extension using composer package name', [
+                    'extension_key' => $extensionKey,
+                    'composer_name' => $composerName,
+                    'vendor_path' => $vendorPath,
+                ]);
+                
+                return $vendorPath;
+            }
+        }
+        
+        // PRIORITY 2: Standard TYPO3 core extension pattern (for system extensions)
+        $hyphenatedKey = str_replace('_', '-', $extensionKey);
+        $corePatterns = [
+            $vendorDir . '/typo3/cms-' . $extensionKey,
+            $vendorDir . '/typo3/cms-' . $hyphenatedKey,
+        ];
+        
+        foreach ($corePatterns as $pattern) {
+            $fullPath = $installationPath . '/' . $pattern;
+            $attemptedPaths[] = $fullPath;
+            
+            if (is_dir($fullPath) && $this->isValidExtensionDirectory($fullPath, $extensionKey)) {
+                $this->logger->debug('Found TYPO3 core extension in vendor directory', [
+                    'extension_key' => $extensionKey,
+                    'vendor_path' => $fullPath,
+                ]);
+                
+                return $fullPath;
+            }
+        }
+        
+        // PRIORITY 3: Fallback patterns for extensions without composer names
+        // Only used when composer name is not available
+        if (!$request->extensionIdentifier || !$request->extensionIdentifier->composerName) {
+            $fallbackPatterns = [
+                // Common vendor patterns (with wildcards for discovery)
+                $vendorDir . '/*/' . $extensionKey,
+                $vendorDir . '/*/' . $hyphenatedKey,
+            ];
+            
+            foreach ($fallbackPatterns as $pattern) {
+                $fullPath = $installationPath . '/' . $pattern;
+                
+                // Handle glob patterns with wildcards
+                if (str_contains($pattern, '*')) {
+                    $matchingPaths = glob($fullPath, GLOB_ONLYDIR);
+                    if ($matchingPaths) {
+                        foreach ($matchingPaths as $matchPath) {
+                            $attemptedPaths[] = $matchPath;
+                            // Verify this is actually an extension directory
+                            if ($this->isValidExtensionDirectory($matchPath, $extensionKey)) {
+                                $this->logger->debug('Found extension using fallback pattern', [
+                                    'extension_key' => $extensionKey,
+                                    'vendor_path' => $matchPath,
+                                    'pattern' => $pattern,
+                                ]);
+                                
+                                return $matchPath;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Validate if a directory is a valid TYPO3 extension directory.
+     */
+    private function isValidExtensionDirectory(string $path, string $extensionKey): bool
+    {
+        // Check for ext_emconf.php (classic extension marker)
+        if (file_exists($path . '/ext_emconf.php')) {
+            return true;
+        }
+
+        // Check for composer.json with extension name (modern extension marker)
+        $composerPath = $path . '/composer.json';
+        if (file_exists($composerPath)) {
+            $composerContent = file_get_contents($composerPath);
+            if (false !== $composerContent) {
+                $composerData = json_decode($composerContent, true);
+                if (is_array($composerData)) {
+                    if (isset($composerData['name']) && str_contains($composerData['name'], $extensionKey)) {
+                        return true;
+                    }
+                    // Check for TYPO3 extension type
+                    if (isset($composerData['type']) && str_starts_with($composerData['type'], 'typo3-')) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Check for Classes directory (common in modern extensions)
+        if (is_dir($path . '/Classes')) {
+            return true;
+        }
+
+        // Check for Resources directory (common in extensions)
+        if (is_dir($path . '/Resources')) {
+            return true;
+        }
+
+        return false;
     }
 }

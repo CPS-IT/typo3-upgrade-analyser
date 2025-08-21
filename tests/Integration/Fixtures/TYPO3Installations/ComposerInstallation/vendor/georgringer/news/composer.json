@@ -1,0 +1,26 @@
+{
+    "name": "georgringer/news",
+    "description": "Versatile news extension for TYPO3",
+    "type": "typo3-cms-extension",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Georg Ringer",
+            "email": "georg@ringer.it"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "typo3/cms-core": "^12.4"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "news"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "GeorgRinger\\News\\": "Classes/"
+        }
+    }
+}

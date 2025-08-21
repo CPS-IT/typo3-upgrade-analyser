@@ -318,6 +318,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
             $extension->getKey(),
             $extension->getVersion()->toString(),
             $extension->getType(),
+            $extension->getComposerName(),
         );
 
         $pathConfiguration = PathConfiguration::fromArray([

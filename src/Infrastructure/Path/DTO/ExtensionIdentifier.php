@@ -21,6 +21,7 @@ final readonly class ExtensionIdentifier
         public string $key,
         public ?string $version = null,
         public ?string $type = null,
+        public ?string $composerName = null,
     ) {
     }
 
@@ -30,6 +31,7 @@ final readonly class ExtensionIdentifier
             'key' => $this->key,
             'version' => $this->version,
             'type' => $this->type,
+            'composerName' => $this->composerName,
         ];
     }
 }

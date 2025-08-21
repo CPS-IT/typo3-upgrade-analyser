@@ -1,0 +1,182 @@
+{
+    "packages": [
+        {
+            "name": "typo3/cms-core",
+            "version": "v12.4.8",
+            "version_normalized": "12.4.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/TYPO3/typo3.git",
+                "reference": "abc123"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/TYPO3/typo3/zipball/abc123",
+                "reference": "abc123",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "type": "typo3-cms-framework",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "core"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "TYPO3\\CMS\\Core\\": "Classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "TYPO3 CMS Core",
+            "homepage": "https://typo3.org",
+            "keywords": [
+                "TYPO3",
+                "CMS"
+            ],
+            "time": "2023-12-01T10:00:00+00:00",
+            "install-path": "../typo3/cms-core"
+        },
+        {
+            "name": "example/news",
+            "version": "v11.0.2",
+            "version_normalized": "11.0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/example/news.git",
+                "reference": "def456"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/example/news/zipball/def456",
+                "reference": "def456",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "typo3/cms-core": "^12.4"
+            },
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "news"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Example\\News\\": "Classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "News extension for TYPO3",
+            "homepage": "https://example.com/news",
+            "keywords": [
+                "TYPO3",
+                "news"
+            ],
+            "time": "2023-11-15T14:30:00+00:00",
+            "install-path": "../example/news"
+        },
+        {
+            "name": "example/powermail",
+            "version": "v10.0.1",
+            "version_normalized": "10.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/example/powermail.git",
+                "reference": "ghi789"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/example/powermail/zipball/ghi789",
+                "reference": "ghi789",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "typo3/cms-core": "^12.4"
+            },
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "powermail"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Example\\Powermail\\": "Classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "Powermail extension for TYPO3",
+            "homepage": "https://example.com/powermail",
+            "keywords": [
+                "TYPO3",
+                "forms",
+                "powermail"
+            ],
+            "time": "2023-10-20T09:15:00+00:00",
+            "install-path": "../example/powermail"
+        },
+        {
+            "name": "georgringer/news",
+            "version": "v11.0.5",
+            "version_normalized": "11.0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/georgringer/news.git",
+                "reference": "jkl012"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/georgringer/news/zipball/jkl012",
+                "reference": "jkl012",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "typo3/cms-core": "^12.4"
+            },
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "news"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "GeorgRinger\\News\\": "Classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "Versatile news extension for TYPO3",
+            "homepage": "https://github.com/georgringer/news",
+            "keywords": [
+                "TYPO3",
+                "news"
+            ],
+            "time": "2023-12-05T16:45:00+00:00",
+            "install-path": "../georgringer/news"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
+}

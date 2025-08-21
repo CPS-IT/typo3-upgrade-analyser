@@ -1,0 +1,25 @@
+{
+  "name": "test/v11-custom-webdir",
+  "description": "TYPO3 v11 Composer installation with custom web directory for testing",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "typo3/cms-core": "^11.5",
+    "typo3/cms-backend": "^11.5",
+    "typo3/cms-extbase": "^11.5",
+    "typo3/cms-fluid": "^11.5",
+    "typo3/cms-frontend": "^11.5",
+    "typo3/cms-install": "^11.5",
+    "georgringer/news": "^9.3",
+    "in2code/powermail": "^8.5",
+    "example/powermail": "^8.0"
+  },
+  "config": {
+    "vendor-dir": "vendor",
+    "web-dir": "web"
+  },
+  "extra": {
+    "typo3/cms": {
+      "web-dir": "web"
+    }
+  }
+}
