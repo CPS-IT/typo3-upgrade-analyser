@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Infrastructure\Path;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
@@ -46,7 +47,8 @@ final class PathResolutionServiceIntegrationTest extends TestCase
         // Set up the complete service with all dependencies
         $logger = new NullLogger();
 
-        $strategy = new ExtensionPathResolutionStrategy($logger);
+        $composerVersionStrategy = new ComposerVersionStrategy($logger);
+        $strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
         $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
 
         $validator = new PathResolutionValidator($logger);

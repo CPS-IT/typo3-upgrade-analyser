@@ -331,4 +331,5 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy:
     arguments:
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy'
     tags: ['path_resolution_strategy']
