@@ -17,6 +17,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
@@ -42,7 +43,8 @@ final class LinesOfCodeValidationTest extends TestCase
 
         // Set up complete PathResolutionService
         $logger = new NullLogger();
-        $strategy = new ExtensionPathResolutionStrategy($logger);
+        $composerVersionStrategy = new ComposerVersionStrategy($logger);
+        $strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
         $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
         $validator = new PathResolutionValidator($logger);
         $cache = new MultiLayerPathResolutionCache($logger);
@@ -236,29 +238,35 @@ final class LinesOfCodeValidationTest extends TestCase
     private function createRealisticTestExtensions(string $path): void
     {
         mkdir($path, 0o755, true);
-        mkdir($path . '/public/typo3conf/ext', 0o755, true);
-        mkdir($path . '/app/web/typo3conf/ext', 0o755, true);
+
+        // For legacy installation, extensions go directly in typo3conf/ext (no public/ prefix)
+        mkdir($path . '/typo3conf/ext', 0o755, true);
 
         // Create small extension
-        $this->createExtensionWithSize($path . '/public/typo3conf/ext/small_extension', 'small');
+        $this->createExtensionWithSize($path . '/typo3conf/ext/small_extension', 'small');
 
         // Create medium extension
-        $this->createExtensionWithSize($path . '/public/typo3conf/ext/medium_extension', 'medium');
+        $this->createExtensionWithSize($path . '/typo3conf/ext/medium_extension', 'medium');
 
         // Create large extension (news-like)
-        $this->createExtensionWithSize($path . '/public/typo3conf/ext/large_extension', 'large');
+        $this->createExtensionWithSize($path . '/typo3conf/ext/large_extension', 'large');
 
         // Create very large extension (powermail-like)
-        $this->createExtensionWithSize($path . '/public/typo3conf/ext/very_large_extension', 'very_large');
+        $this->createExtensionWithSize($path . '/typo3conf/ext/very_large_extension', 'very_large');
 
-        // Create test extension for path resolution
+        // Create test extension for custom path resolution testing
+        mkdir($path . '/app/web/typo3conf/ext', 0o755, true);
         $this->createExtensionWithSize($path . '/app/web/typo3conf/ext/test_path_resolution', 'small');
 
-        // Create composer.json
-        file_put_contents($path . '/composer.json', json_encode([
-            'name' => 'test/realistic-typo3-installation',
-            'require' => ['typo3/cms-core' => '^12.0'],
-        ], JSON_PRETTY_PRINT));
+        // Create legacy TYPO3 installation structure (no composer.json)
+        // This allows extensions to be found in typo3conf/ext directory
+        mkdir($path . '/typo3', 0o755, true);
+        mkdir($path . '/typo3/sysext', 0o755, true);
+
+        // Create basic TYPO3 legacy structure files
+        file_put_contents($path . '/typo3/index.php', '<?php // TYPO3 legacy installation');
+
+        // Don't create composer.json - this should be detected as legacy installation
     }
 
     private function createExtensionWithSize(string $path, string $size): void

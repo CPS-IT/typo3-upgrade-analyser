@@ -17,6 +17,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
@@ -42,7 +43,8 @@ final class LinesOfCodeAnalyzerIntegrationTest extends TestCase
         // Set up the complete PathResolutionService with all dependencies
         $logger = new NullLogger();
 
-        $strategy = new ExtensionPathResolutionStrategy($logger);
+        $composerVersionStrategy = new ComposerVersionStrategy($logger);
+        $strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
         $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
 
         $validator = new PathResolutionValidator($logger);
@@ -212,24 +214,22 @@ final class LinesOfCodeAnalyzerIntegrationTest extends TestCase
             mkdir($path, 0o755, true);
         }
 
-        // Create basic TYPO3 structure
-        mkdir($path . '/public', 0o755, true);
-        mkdir($path . '/public/typo3conf', 0o755, true);
-        mkdir($path . '/public/typo3conf/ext', 0o755, true);
+        // Create legacy TYPO3 structure (extensions in typo3conf/ext, no composer.json)
+        mkdir($path . '/typo3conf', 0o755, true);
+        mkdir($path . '/typo3conf/ext', 0o755, true);
 
         // Copy the test extension from fixtures
         $sourceExtPath = __DIR__ . '/../../Fixtures/test_extension';
-        $targetExtPath = $path . '/public/typo3conf/ext/test_extension';
+        $targetExtPath = $path . '/typo3conf/ext/test_extension';
 
         $this->copyDirectory($sourceExtPath, $targetExtPath);
 
-        // Create composer.json to indicate Composer installation
-        file_put_contents($path . '/composer.json', json_encode([
-            'name' => 'test/typo3-installation',
-            'require' => [
-                'typo3/cms-core' => '^12.0',
-            ],
-        ], JSON_PRETTY_PRINT));
+        // Create legacy TYPO3 installation markers
+        mkdir($path . '/typo3', 0o755, true);
+        mkdir($path . '/typo3/sysext', 0o755, true);
+        file_put_contents($path . '/typo3/index.php', '<?php // TYPO3 legacy installation');
+
+        // Don't create composer.json - this should be detected as legacy installation
     }
 
     /**
@@ -254,11 +254,12 @@ final class LinesOfCodeAnalyzerIntegrationTest extends TestCase
 
         $this->copyDirectory($sourceExtPath, $targetExtPath);
 
-        // Create composer.json with custom paths
+        // Create TYPO3 v11 Composer installation with custom paths
+        // v11 Composer mode allows extensions in typo3conf/ext
         file_put_contents($path . '/composer.json', json_encode([
             'name' => 'test/typo3-custom-installation',
             'require' => [
-                'typo3/cms-core' => '^12.0',
+                'typo3/cms-core' => '^11.5',  // v11 allows extensions in typo3conf/ext
             ],
             'extra' => [
                 'typo3/cms' => [

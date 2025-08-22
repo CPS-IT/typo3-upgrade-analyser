@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Path\Strategy;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
@@ -33,7 +34,9 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->strategy = new ExtensionPathResolutionStrategy(new NullLogger());
+        $logger = new NullLogger();
+        $composerVersionStrategy = new ComposerVersionStrategy($logger);
+        $this->strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
         $this->testPath = sys_get_temp_dir() . '/test-path-' . uniqid();
     }
 

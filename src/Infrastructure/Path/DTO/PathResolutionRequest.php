@@ -41,11 +41,12 @@ final readonly class PathResolutionRequest
     public function getCacheKey(): string
     {
         return \sprintf(
-            'path_resolution:%s:%s:%s:%s',
+            'path_resolution:%s:%s:%s:%s:%s',
             $this->pathType->value,
             $this->installationType->value,
             hash('sha256', $this->installationPath),
             hash('sha256', serialize($this->pathConfiguration->toArray())),
+            hash('sha256', serialize($this->extensionIdentifier->key ?? '')),
         );
     }
 
