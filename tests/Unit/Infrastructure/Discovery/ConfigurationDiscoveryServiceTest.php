@@ -559,7 +559,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         ]);
 
         // Configure parsers for multiple files
-        $this->phpParser->method('parseFile')->willReturnCallback(function ($filePath): \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult {
+        $this->phpParser->method('parseFile')->willReturnCallback(function ($filePath): ParseResult {
             if (str_contains($filePath, 'LocalConfiguration.php')) {
                 return ParseResult::success(['SYS' => ['sitename' => 'Test']], 'php', $filePath);
             }
@@ -573,7 +573,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
             return ParseResult::failure(['Unknown file'], 'php', $filePath);
         });
 
-        $this->yamlParser->method('parseFile')->willReturnCallback(function ($filePath): \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult {
+        $this->yamlParser->method('parseFile')->willReturnCallback(function ($filePath): ParseResult {
             if (str_contains($filePath, '/config/Services.yaml')) {
                 return ParseResult::success(['services' => []], 'yaml', $filePath);
             }

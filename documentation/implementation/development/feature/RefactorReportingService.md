@@ -11,7 +11,7 @@ Refactor the oversized ReportService class (558 LOC) to address critical archite
 The ReportService contains multiple distinct responsibilities:
 
 1. **Context Building** (lines 122-187): Complex data aggregation and transformation logic
-2. **Template Rendering** (lines 413-547): Format-specific rendering with multiple output types  
+2. **Template Rendering** (lines 413-547): Format-specific rendering with multiple output types
 3. **File Management** (lines 417-425, 500-503): Directory creation and file I/O operations
 4. **Result Analysis** (lines 192-331): Extraction and calculation logic for different analyzer types
 5. **Statistics Calculation** (lines 336-411): Complex aggregation of risk and availability metrics
@@ -32,7 +32,7 @@ Break down ReportService into three focused services while maintaining simplicit
 ```
 ReportService (Coordinator)
 ├── ReportContextBuilder (Data aggregation)
-├── TemplateRenderer (Content generation) 
+├── TemplateRenderer (Content generation)
 └── ReportFileManager (File operations)
 ```
 
@@ -40,14 +40,14 @@ ReportService (Coordinator)
 
 #### 1. ReportContextBuilder
 - **Single Responsibility**: Data aggregation and context preparation
-- **Extract Methods**: 
+- **Extract Methods**:
   - `buildReportContext()`
   - `calculateOverallStatistics()`
   - `calculateExtensionRiskSummary()`
   - All result extraction methods (`extractVersionAnalysis()`, etc.)
 - **Dependencies**: None (pure data transformation)
 
-#### 2. TemplateRenderer  
+#### 2. TemplateRenderer
 - **Single Responsibility**: Format-specific content generation
 - **Extract Methods**:
   - `generateMainReport()`
@@ -183,11 +183,11 @@ public function generateReport(AnalysisResult $analysisResult, string $outputPat
 {
     // 1. Build context
     $context = $this->contextBuilder->buildReportContext($analysisResult);
-    
+
     // 2. Render content
     $mainContent = $this->templateRenderer->renderMainReport($context, 'html');
     $extensionContent = $this->templateRenderer->renderExtensionReports($context, 'html');
-    
+
     // 3. Write files
     return $this->fileManager->writeReportFiles([
         'main' => $mainContent,
