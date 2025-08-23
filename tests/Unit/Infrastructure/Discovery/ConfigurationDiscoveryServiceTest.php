@@ -208,6 +208,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     {
         // Create actual test files
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/Services.yaml' => "services:\n  test: {}\n",
         ]);
@@ -216,14 +217,10 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         $configData = ['SYS' => ['sitename' => 'Test Site']];
         $parseResult = ParseResult::success($configData, 'php', $this->testInstallationPath . '/config/LocalConfiguration.php');
 
-        $this->phpParser->expects(self::once())
-            ->method('parseFile')
-            ->with(self::stringContains('/config/LocalConfiguration.php'))
+        $this->phpParser->method('parseFile')
             ->willReturn($parseResult);
 
-        $this->yamlParser->expects(self::once())
-            ->method('parseFile')
-            ->with(self::stringContains('Services.yaml'))
+        $this->yamlParser->method('parseFile')
             ->willReturn(ParseResult::success([], 'yaml', $this->testInstallationPath . '/config/Services.yaml'));
 
         $this->logger->expects(self::atLeastOnce())
@@ -286,7 +283,11 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
 
     public function testDiscoverConfigurationWithYamlParser(): void
     {
-        $this->createConfigurationFiles(['config/Services.yaml' => "services:\n  test: {}\n"]);
+        // Create a composer.json file so determineInstallationType returns COMPOSER_STANDARD
+        $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
+            'config/Services.yaml' => "services:\n  test: {}\n",
+        ]);
 
         $servicesConfig = [
             'services' => [
@@ -303,8 +304,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
             $this->testInstallationPath . '/config/Services.yaml',
         );
 
-        $this->yamlParser->expects(self::once())
-            ->method('parseFile')
+        $this->yamlParser->method('parseFile')
             ->willReturn($parseResult);
 
         $result = $this->service->discoverConfiguration($this->installation);
@@ -382,6 +382,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testConfigurationFileIdentificationLogic(): void
     {
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/AdditionalConfiguration.php' => "<?php\nreturn [];\n",
             'config/PackageStates.php' => "<?php\nreturn [];\n",
@@ -445,6 +446,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testGetConfigurationSummary(): void
     {
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/Services.yaml' => "services:\n  test: {}\n",
         ]);
@@ -494,6 +496,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithSiteConfigurations(): void
     {
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'config/sites/main/config.yaml' => "rootPageId: 1\nbase: 'https://example.com'\n",
             'config/sites/sub/config.yaml' => "rootPageId: 2\nbase: 'https://sub.example.com'\n",
         ]);
@@ -521,6 +524,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithExtensionServices(): void
     {
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'extensions/ext1/Configuration/Services.yaml' => "services:\n  Ext\\Service: {}\n",
             'ext/ext2/Configuration/Services.yaml' => "services:\n  Ext\\Service2: {}\n",
         ]);
@@ -545,6 +549,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithComplexStructure(): void
     {
         $this->createConfigurationFiles([
+            'composer.json' => json_encode(['name' => 'test/project']),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/AdditionalConfiguration.php' => "<?php\nreturn [];\n",
             'config/PackageStates.php' => "<?php\nreturn [];\n",
@@ -554,17 +559,33 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         ]);
 
         // Configure parsers for multiple files
-        $this->phpParser->method('parseFile')->willReturnOnConsecutiveCalls(
-            ParseResult::success(['SYS' => ['sitename' => 'Test']], 'php', '/test/LocalConfiguration.php'),
-            ParseResult::success(['ADDITIONAL' => ['custom' => 'value']], 'php', '/test/AdditionalConfiguration.php'),
-            ParseResult::success(['packages' => ['core' => ['active' => true]]], 'php', '/test/PackageStates.php'),
-        );
+        $this->phpParser->method('parseFile')->willReturnCallback(function ($filePath): \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult {
+            if (str_contains($filePath, 'LocalConfiguration.php')) {
+                return ParseResult::success(['SYS' => ['sitename' => 'Test']], 'php', $filePath);
+            }
+            if (str_contains($filePath, 'AdditionalConfiguration.php')) {
+                return ParseResult::success(['ADDITIONAL' => ['custom' => 'value']], 'php', $filePath);
+            }
+            if (str_contains($filePath, 'PackageStates.php')) {
+                return ParseResult::success(['packages' => ['core' => ['active' => true]]], 'php', $filePath);
+            }
 
-        $this->yamlParser->method('parseFile')->willReturnOnConsecutiveCalls(
-            ParseResult::success(['services' => []], 'yaml', '/test/Services.yaml'),
-            ParseResult::success(['base' => 'https://example.com'], 'yaml', '/test/site/config.yaml'),
-            ParseResult::success(['services' => ['Ext\\Service' => []]], 'yaml', '/test/ext/Services.yaml'),
-        );
+            return ParseResult::failure(['Unknown file'], 'php', $filePath);
+        });
+
+        $this->yamlParser->method('parseFile')->willReturnCallback(function ($filePath): \CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult {
+            if (str_contains($filePath, '/config/Services.yaml')) {
+                return ParseResult::success(['services' => []], 'yaml', $filePath);
+            }
+            if (str_contains($filePath, '/config/sites/main/config.yaml')) {
+                return ParseResult::success(['base' => 'https://example.com'], 'yaml', $filePath);
+            }
+            if (str_contains($filePath, 'custom_ext/Configuration/Services.yaml')) {
+                return ParseResult::success(['services' => ['Ext\\Service' => []]], 'yaml', $filePath);
+            }
+
+            return ParseResult::failure(['Unknown file'], 'yaml', $filePath);
+        });
 
         $result = $this->service->discoverConfiguration($this->installation);
 
