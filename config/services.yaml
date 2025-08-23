@@ -84,13 +84,15 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
     tags: ['analyzer']
 
-  # Lines of Code Analyzer
+  # Lines of Code Analyzer with PathResolutionService
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer:
     public: true
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
+
 
   # TYPO3 Rector Analyzer and supporting services
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry:
@@ -122,6 +124,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
 
   # Fractor Analyzer and supporting services
@@ -147,6 +150,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
 
   # Shared services
@@ -221,6 +225,7 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService:
     arguments:
       - !tagged_iterator 'configuration_parser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
       - '@logger'
 
   # Discovery Services
@@ -236,6 +241,7 @@ services:
       - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['discovery_service']
 
   # Installation Discovery Service with Configuration Discovery
@@ -261,6 +267,10 @@ services:
 
   # Detection Strategies
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
+      - '@logger'
     tags: ['detection_strategy']
 
   # Configuration Service
@@ -286,3 +296,47 @@ services:
     arguments:
       - '@Twig\Environment'
       - '@logger'
+
+  # Path Resolution Service
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\PathResolutionCacheInterface'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager'
+      - '@logger'
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService
+
+  # Path Resolution Strategy Registry
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry:
+    arguments:
+      $strategies: !tagged_iterator path_resolution_strategy
+      $logger: '@logger'
+
+  # Path Resolution Validator
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator:
+    arguments:
+      - '@logger'
+
+  # Path Resolution Cache
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\PathResolutionCacheInterface:
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache:
+    arguments:
+      - '@logger'
+      - 1000 # maxMemoryEntries
+      - 300  # defaultTtl
+
+  # Error Recovery Manager
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager:
+    arguments:
+      - '@logger'
+
+  # Path Resolution Strategies
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy:
+    arguments:
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy'
+    tags: ['path_resolution_strategy']

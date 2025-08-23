@@ -18,7 +18,15 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\StrategyPriorityEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -26,14 +34,45 @@ use Psr\Log\LoggerInterface;
 class LinesOfCodeAnalyzerTest extends TestCase
 {
     private LinesOfCodeAnalyzer $subject;
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
+    private MockObject $logger;
+    private MockObject $cacheService;
+    private MockObject $pathResolutionService;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->cacheService = $this->createMock(CacheService::class);
-        $this->subject = new LinesOfCodeAnalyzer($this->cacheService, $this->logger);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+
+        // Default mock behavior - return failed responses (extensions not found)
+        $this->pathResolutionService
+            ->method('resolvePath')
+            ->willReturnCallback(function (PathResolutionRequest $request): PathResolutionResponse {
+                return $this->createFailedPathResolutionResponse('default_extension');
+            });
+
+        $this->subject = new LinesOfCodeAnalyzer($this->cacheService, $this->logger, $this->pathResolutionService);
+    }
+
+    private function createFailedPathResolutionResponse(string $extensionKey): PathResolutionResponse
+    {
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'test_strategy',
+            StrategyPriorityEnum::HIGH->value,
+            [],
+            [],
+            0.0,
+            false,
+            "Extension '{$extensionKey}' not found",
+        );
+
+        return PathResolutionResponse::notFound(
+            PathTypeEnum::EXTENSION,
+            $metadata,
+            ["Extension '{$extensionKey}' not found"],
+        );
     }
 
     public function testImplementsAnalyzerInterface(): void
@@ -134,28 +173,50 @@ class LinesOfCodeAnalyzerTest extends TestCase
         }
     }
 
+    private function createTempInstallationDir(): string
+    {
+        $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
+        mkdir($tempDir, 0o755, true);
+
+        return $tempDir;
+    }
+
+    private function cleanupTempDir(string $dir): void
+    {
+        if (is_dir($dir)) {
+            rmdir($dir);
+        }
+    }
+
     public function testAnalyzeWithNonExistentExtensionPath(): void
     {
         $extension = new Extension('non_existent_ext', 'Non Existent Extension', new Version('1.0.0'), 'local');
+        $tempDir = sys_get_temp_dir() . '/test_installation_' . uniqid();
+        mkdir($tempDir, 0o755, true);
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/nonexistent'],
+            ['installation_path' => $tempDir],
         );
 
+        // Mock PathResolutionService to return a failed response
+        $this->pathResolutionService
+            ->expects(self::once())
+            ->method('resolvePath')
+            ->with(self::isInstanceOf(PathResolutionRequest::class))
+            ->willReturn($this->createFailedPathResolutionResponse('non_existent_ext'));
+
+        // Expect warning to be logged (either PathResolutionService failure or path not found)
         $this->logger->expects(self::atLeastOnce())
-            ->method('warning')
-            ->with(
-                'Extension path not found for LOC analysis',
-                self::callback(function ($context): bool {
-                    return isset($context['extension']) && 'non_existent_ext' === $context['extension'];
-                }),
-            );
+            ->method('warning');
 
         $result = $this->subject->analyze($extension, $context);
 
-        self::assertTrue($result->isSuccessful());
+        // Clean up
+        rmdir($tempDir);
+
+        self::assertTrue($result->isSuccessful(), 'Analysis result should be successful, error: ' . $result->getError());
         self::assertSame(0, $result->getMetric('total_lines'));
         self::assertSame(0, $result->getMetric('php_files'));
         self::assertSame(0, $result->getMetric('classes'));
@@ -164,14 +225,16 @@ class LinesOfCodeAnalyzerTest extends TestCase
     public function testAnalyzeWithValidAbsolutePath(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+        $tempDir = $this->createTempInstallationDir();
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/valid/absolute/path'],
+            ['installation_path' => $tempDir],
         );
 
         $result = $this->subject->analyze($extension, $context);
+        $this->cleanupTempDir($tempDir);
 
         // Should not error on a valid absolute path, even if the extension doesn't exist
         self::assertTrue($result->isSuccessful());
@@ -181,17 +244,19 @@ class LinesOfCodeAnalyzerTest extends TestCase
     public function testAnalyzeLogsDebugInformation(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+        $tempDir = $this->createTempInstallationDir();
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/test'],
+            ['installation_path' => $tempDir],
         );
 
         $this->logger->expects(self::atLeastOnce())
             ->method('debug');
 
         $this->subject->analyze($extension, $context);
+        $this->cleanupTempDir($tempDir);
     }
 
     public function testAnalyzeWithCustomPaths(): void
@@ -202,17 +267,19 @@ class LinesOfCodeAnalyzerTest extends TestCase
             'web-dir' => 'custom_web',
             'typo3conf-dir' => 'custom_web/typo3conf',
         ];
+        $tempDir = $this->createTempInstallationDir();
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
             [
-                'installation_path' => '/test',
+                'installation_path' => $tempDir,
                 'custom_paths' => $customPaths,
             ],
         );
 
         $result = $this->subject->analyze($extension, $context);
+        $this->cleanupTempDir($tempDir);
 
         self::assertTrue($result->isSuccessful());
     }
@@ -220,17 +287,19 @@ class LinesOfCodeAnalyzerTest extends TestCase
     public function testAnalyzeWithComposerManagedExtension(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'third_party', 'vendor/test-extension');
+        $tempDir = $this->createTempInstallationDir();
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/test'],
+            ['installation_path' => $tempDir],
         );
 
         $this->logger->expects(self::atLeastOnce())
             ->method('debug');
 
         $result = $this->subject->analyze($extension, $context);
+        $this->cleanupTempDir($tempDir);
 
         self::assertTrue($result->isSuccessful());
     }
@@ -238,14 +307,53 @@ class LinesOfCodeAnalyzerTest extends TestCase
     public function testAnalyzeGeneratesRecommendations(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+        $tempDir = $this->createTempInstallationDir();
+
+        // Create a sample extension directory with PHP files to generate recommendations
+        $extensionPath = $tempDir . '/public/typo3conf/ext/test_ext';
+        mkdir($extensionPath, 0o755, true);
+        mkdir($extensionPath . '/Classes', 0o755, true);
+
+        // Create sample PHP files with enough content to generate recommendations
+        file_put_contents($extensionPath . '/Classes/Controller.php', str_repeat("<?php\n// Sample line\n", 100));
+        file_put_contents($extensionPath . '/Classes/Model.php', str_repeat("<?php\n// Another line\n", 200));
+
+        // Mock PathResolutionService to return the created extension path
+        $this->pathResolutionService
+            ->method('resolvePath')
+            ->willReturnCallback(function () use ($extensionPath): PathResolutionResponse {
+                $metadata = new PathResolutionMetadata(
+                    PathTypeEnum::EXTENSION,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'test_strategy',
+                    StrategyPriorityEnum::HIGH->value,
+                );
+
+                return PathResolutionResponse::success(
+                    PathTypeEnum::EXTENSION,
+                    $extensionPath,
+                    $metadata,
+                );
+            });
+
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/test'],
+            ['installation_path' => $tempDir],
         );
 
         $result = $this->subject->analyze($extension, $context);
+
+        // Cleanup
+        unlink($extensionPath . '/Classes/Controller.php');
+        unlink($extensionPath . '/Classes/Model.php');
+        rmdir($extensionPath . '/Classes');
+        rmdir($extensionPath);
+        rmdir($tempDir . '/public/typo3conf/ext');
+        rmdir($tempDir . '/public/typo3conf');
+        rmdir($tempDir . '/public');
+        $this->cleanupTempDir($tempDir);
 
         $recommendations = $result->getRecommendations();
         self::assertNotEmpty($recommendations);
@@ -272,17 +380,19 @@ class LinesOfCodeAnalyzerTest extends TestCase
     public function testAnalyzeLogsCompletionInfo(): void
     {
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+        $tempDir = $this->createTempInstallationDir();
         $context = new AnalysisContext(
             new Version('12.4.0'),
             new Version('13.4.0'),
             [],
-            ['installation_path' => '/test'],
+            ['installation_path' => $tempDir],
         );
 
         $this->logger->expects(self::atLeastOnce())
             ->method('info');
 
         $result = $this->subject->analyze($extension, $context);
+        $this->cleanupTempDir($tempDir);
 
         // Verify the result is successful and contains expected data
         self::assertTrue($result->isSuccessful());

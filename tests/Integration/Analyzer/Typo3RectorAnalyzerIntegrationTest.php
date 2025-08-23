@@ -13,6 +13,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Typo3RectorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\MultiLayerPathResolutionCache;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -50,6 +57,21 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
         $configGenerator = new RectorConfigGenerator($ruleRegistry, $tempDir);
         $resultParser = new RectorResultParser($ruleRegistry, $logger);
 
+        // Set up PathResolutionService with real dependencies
+        $versionStrategy = new ComposerVersionStrategy($logger);
+        $extensionStrategy = new ExtensionPathResolutionStrategy($logger, $versionStrategy);
+        $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$extensionStrategy]);
+        $validator = new PathResolutionValidator($logger);
+        $cache = new MultiLayerPathResolutionCache($logger, 100, 300);
+        $errorRecovery = new ErrorRecoveryManager($logger);
+        $pathResolutionService = new PathResolutionService(
+            $strategyRegistry,
+            $validator,
+            $cache,
+            $errorRecovery,
+            $logger,
+        );
+
         $this->analyzer = new Typo3RectorAnalyzer(
             $cacheService,
             $logger,
@@ -57,6 +79,7 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
             $configGenerator,
             $resultParser,
             $ruleRegistry,
+            $pathResolutionService,
         );
     }
 

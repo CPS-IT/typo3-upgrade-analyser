@@ -16,6 +16,12 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequestBuilder;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -28,6 +34,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     public function __construct(
         CacheService $cacheService,
         LoggerInterface $logger,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
     ) {
         parent::__construct($cacheService, $logger);
     }
@@ -62,15 +69,13 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     protected function doAnalyze(Extension $extension, AnalysisContext $context): AnalysisResult
     {
         $result = new AnalysisResult($this->getName(), $extension);
-
-        // Get installation path from context
         $installationPath = $context->getConfigurationValue('installation_path', '');
 
         if (empty($installationPath)) {
             throw new \RuntimeException('No installation path available in context');
         }
 
-        // Convert relative path to absolute path
+        // Convert the relative path to an absolute path
         if (!str_starts_with($installationPath, '/')) {
             $installationPath = realpath(getcwd() . '/' . $installationPath);
             if (!$installationPath) {
@@ -78,14 +83,13 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
             }
         }
 
-        // Build extension path - assume typical TYPO3 structure
         $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
 
         $this->logger->debug('LOC analyzer path discovery', [
             'extension' => $extension->getKey(),
             'installation_path' => $installationPath,
             'found_path' => $extensionPath,
-            'path_exists' => $extensionPath ? is_dir($extensionPath) : false,
+            'path_exists' => $extensionPath && is_dir($extensionPath),
         ]);
 
         if (!$extensionPath || !is_dir($extensionPath)) {
@@ -140,7 +144,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
 
     protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array
     {
-        // Include installation path since extension paths depend on it
+        // Include the installation path since extension paths depend on it
         $components = [
             'installation_path' => $context->getConfigurationValue('installation_path', ''),
         ];
@@ -315,103 +319,53 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
     }
 
     /**
-     * Find extension path in TYPO3 installation.
+     * Find the extension path using PathResolutionService.
      */
     private function findExtensionPath(string $installationPath, string $extensionKey, AnalysisContext $context, Extension $extension): ?string
     {
-        // Use the same path resolution logic as ExtensionDiscoveryService
-        $customPaths = $this->getCustomPathsFromContext($context);
+        $customPaths = $context->getConfigurationValue('custom_paths', null);
 
-        $this->logger->debug('LOC analyzer starting path resolution', [
-            'extension' => $extensionKey,
-            'composer_name' => $extension->getComposerName(),
-            'extension_type' => $extension->getType(),
-            'installation_path' => $installationPath,
-            'custom_paths' => $customPaths,
+        $extensionIdentifier = new ExtensionIdentifier(
+            $extension->getKey(),
+            $extension->getVersion()->toString(),
+            $extension->getType(),
+            $extension->getComposerName(),
+        );
+
+        $pathConfiguration = PathConfiguration::fromArray([
+            'customPaths' => $customPaths ?? [],
         ]);
 
-        $paths = $this->resolvePaths($installationPath, $customPaths);
+        $builder = new PathResolutionRequestBuilder();
+        $request = $builder
+            ->installationPath($installationPath)
+            ->pathType(PathTypeEnum::EXTENSION)
+            ->installationType(InstallationTypeEnum::AUTO_DETECT) // Let PathResolutionService auto-detect
+            ->pathConfiguration($pathConfiguration)
+            ->extensionIdentifier($extensionIdentifier)
+            ->build();
 
-        // Build possible extension locations based on extension type
-        $possiblePaths = [];
+        $response = $this->pathResolutionService->resolvePath($request);
 
-        if ($extension->getComposerName()) {
-            // For Composer-managed extensions, use the composer name for vendor directory
-            $composerName = $extension->getComposerName();
-            $possiblePaths[] = $paths['vendor_dir'] . '/' . $composerName;
+        if ($response->isSuccess()) {
+            $this->logger->debug('PathResolutionService found extension path', [
+                'extension' => $extensionKey,
+                'path' => $response->resolvedPath,
+            ]);
+
+            return $response->resolvedPath;
         }
 
-        // Add traditional TYPO3 extension paths
-        $possiblePaths = array_merge($possiblePaths, [
-            // Local extensions (using resolved typo3conf path)
-            $paths['typo3conf_dir'] . '/ext/' . $extensionKey,
-            // System extensions (TYPO3 < 12)
-            $installationPath . '/typo3/sysext/' . $extensionKey,
-            // System extensions (TYPO3 >= 12, using resolved vendor path)
-            $paths['vendor_dir'] . '/typo3/cms-' . str_replace('_', '-', $extensionKey),
-            // Public extensions directory (using resolved web dir)
-            $paths['web_dir'] . '/typo3conf/ext/' . $extensionKey,
-        ]);
-
-        $this->logger->debug('LOC analyzer attempting paths', [
+        $this->logger->warning('PathResolutionService failed to find extension path', [
             'extension' => $extensionKey,
-            'composer_name' => $extension->getComposerName(),
-            'possible_paths' => $possiblePaths,
+            'errors' => $response->errors,
         ]);
-
-        foreach ($possiblePaths as $path) {
-            if (str_contains($path, '*')) {
-                // Handle wildcard paths for vendor extensions
-                $pattern = str_replace('*', '[^/]+', $path);
-                $matches = glob($pattern, GLOB_ONLYDIR);
-                $this->logger->debug('Wildcard path search', [
-                    'pattern' => $pattern,
-                    'matches' => $matches,
-                ]);
-                if (!empty($matches) && is_dir($matches[0])) {
-                    return $matches[0];
-                }
-            } elseif (is_dir($path)) {
-                $this->logger->debug('Found extension path', [
-                    'extension' => $extensionKey,
-                    'path' => $path,
-                ]);
-
-                return $path;
-            }
-        }
 
         return null;
     }
 
     /**
-     * Resolve paths based on custom paths or defaults (same logic as ExtensionDiscoveryService).
-     */
-    private function resolvePaths(string $installationPath, ?array $customPaths): array
-    {
-        $vendorDir = $customPaths['vendor-dir'] ?? 'vendor';
-        $webDir = $customPaths['web-dir'] ?? 'public';
-        $typo3confDir = $customPaths['typo3conf-dir'] ?? $webDir . '/typo3conf';
-
-        return [
-            'package_states' => $installationPath . '/' . $typo3confDir . '/PackageStates.php',
-            'composer_installed' => $installationPath . '/' . $vendorDir . '/composer/installed.json',
-            'vendor_dir' => $installationPath . '/' . $vendorDir,
-            'web_dir' => $installationPath . '/' . $webDir,
-            'typo3conf_dir' => $installationPath . '/' . $typo3confDir,
-        ];
-    }
-
-    /**
-     * Get custom paths from context (passed from installation discovery).
-     */
-    private function getCustomPathsFromContext(AnalysisContext $context): ?array
-    {
-        return $context->getConfigurationValue('custom_paths', null);
-    }
-
-    /**
-     * Scan extension directory for PHP files and calculate metrics.
+     * Scan the extension directory for PHP files and calculate metrics.
      */
     private function scanExtensionDirectory(string $extensionPath): array
     {

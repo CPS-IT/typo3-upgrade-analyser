@@ -1,0 +1,40 @@
+{
+  "description": "TYPO3 v11 Composer Installation with Custom Web Directory - Extensions ONLY in vendor directory",
+  "typo3_version": "11.5",
+  "installation_type": "composer_custom",
+  "path_configuration": "web-dir-web",
+  "extensions": {
+    "news": {
+      "should_exist": false,
+      "reason": "Should not find georgringer/news in vendor directory"
+    },
+    "powermail": {
+      "should_exist": false,
+      "reason": "Should not find in2code/powermail or example/powermail in vendor directory"
+    },
+    "custom_tools": {
+      "should_exist": true,
+      "reason": "Should find in web/typo3conf/ext directory (TYPO3 v11 Composer allows extensions in typo3conf/ext)"
+    },
+    "site_package": {
+      "should_exist": true,
+      "reason": "Should find in web/typo3conf/ext directory (TYPO3 v11 Composer allows extensions in typo3conf/ext)"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [
+    "news",
+    "powermail",
+    "custom_tools",
+    "site_package"
+  ],
+  "notes": [
+    "TYPO3 v11 Composer installation with custom web-dir 'web'",
+    "For TYPO3 v11, extensions can be NOT be found in vendor directory",
+    "TYPO3 v11 Composer mode still allows extensions in typo3conf/ext directory",
+    "Only TYPO3 v12+ enforces vendor-directory-only for Composer mode"
+  ]
+}

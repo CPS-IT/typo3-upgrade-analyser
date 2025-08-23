@@ -22,6 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $this->createMock(FractorExecutor::class),
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(PathResolutionServiceInterface::class),
         );
     }
 
@@ -89,6 +91,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $executor,
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(PathResolutionServiceInterface::class),
         );
 
         self::assertFalse($analyzer->hasRequiredTools());
@@ -103,6 +106,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $executor,
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(PathResolutionServiceInterface::class),
         );
 
         self::assertTrue($analyzer->hasRequiredTools());
@@ -133,7 +137,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
         $summary = new FractorAnalysisSummary(5, 2, [], true, 3, 10, ['file1.xml'], ['TestRule']);
         $parser->method('parse')->willReturn($summary);
 
-        $analyzer = new FractorAnalyzer($cacheService, new NullLogger(), $executor, $configGenerator, $parser);
+        $analyzer = new FractorAnalyzer($cacheService, new NullLogger(), $executor, $configGenerator, $parser, $this->createMock(PathResolutionServiceInterface::class));
 
         $result = $analyzer->analyze($extension, $context);
 

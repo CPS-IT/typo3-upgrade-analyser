@@ -84,7 +84,8 @@
       "@lint:composer",
       "@lint:editorconfig",
       "@lint:php",
-      "@lint:rector"
+      "@lint:rector",
+      "@sca:php"
     ],
     "lint:composer": "@composer normalize --dry-run",
     "lint:editorconfig": "ec",

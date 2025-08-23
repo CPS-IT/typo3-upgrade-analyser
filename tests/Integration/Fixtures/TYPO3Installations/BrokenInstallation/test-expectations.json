@@ -1,0 +1,28 @@
+{
+  "description": "Broken TYPO3 Installation - For testing error handling and validation",
+  "typo3_version": "unknown",
+  "installation_type": "legacy_source",
+  "path_configuration": "default",
+  "extensions": {
+    "broken_extension": {
+      "should_exist": false,
+      "reason": "Extension path resolution should fail due to broken PackageStates.php"
+    },
+    "core": {
+      "should_exist": false,
+      "reason": "System extension resolution should fail due to broken configuration"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [],
+  "notes": [
+    "This is an intentionally broken installation for testing error handling",
+    "PackageStates.php contains syntax errors",
+    "No composer.json present - appears to be legacy installation attempt",
+    "All extension resolution should fail gracefully",
+    "Tests validation and error recovery mechanisms"
+  ]
+}

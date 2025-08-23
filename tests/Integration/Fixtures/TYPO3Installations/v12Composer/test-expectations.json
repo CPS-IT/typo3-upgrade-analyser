@@ -1,0 +1,42 @@
+{
+  "description": "TYPO3 v12 Composer Standard Installation - Extensions ONLY in vendor directory",
+  "typo3_version": "12.4",
+  "installation_type": "composer_standard",
+  "path_configuration": "default",
+  "extensions": {
+    "news": {
+      "should_exist": true,
+      "reason": "Should find georgringer/news in vendor directory"
+    },
+    "example_news": {
+      "should_exist": true,
+      "reason": "Should find example/news with example_news extension-key in vendor directory"
+    },
+    "powermail": {
+      "should_exist": true,
+      "reason": "Should find example/powermail in vendor directory"
+    },
+    "custom_tools": {
+      "should_exist": false,
+      "reason": "Should NOT find - located in invalid public/typo3conf/ext location (Composer mode ignores this)"
+    },
+    "site_package": {
+      "should_exist": false,
+      "reason": "Should NOT find - located in invalid public/typo3conf/ext location (Composer mode ignores this)"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [
+    "news",
+    "powermail"
+  ],
+  "notes": [
+    "TYPO3 v12 Composer installation with standard public web directory",
+    "In Composer mode, extensions MUST be in vendor directory only",
+    "Extensions in public/typo3conf/ext are completely ignored in Composer mode",
+    "Extension Manager cannot install extensions in Composer mode"
+  ]
+}

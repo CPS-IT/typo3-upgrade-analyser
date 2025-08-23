@@ -1,0 +1,26 @@
+{
+    "name": "example/news",
+    "description": "Example news extension for TYPO3 testing",
+    "type": "typo3-cms-extension",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Test Author",
+            "email": "test@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "typo3/cms-core": "^12.4"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "example_news"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Example\\News\\": "Classes/"
+        }
+    }
+}

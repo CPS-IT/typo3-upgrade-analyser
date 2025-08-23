@@ -1,0 +1,34 @@
+{
+  "description": "TYPO3 v11 Legacy Source Installation - Extensions ONLY in typo3conf/ext directory",
+  "typo3_version": "11.5",
+  "installation_type": "legacy_source",
+  "path_configuration": "default",
+  "extensions": {
+    "legacy_news": {
+      "should_exist": true,
+      "reason": "Should find legacy_news in typo3conf/ext directory"
+    },
+    "legacy_powermail": {
+      "should_exist": true,
+      "reason": "Should find legacy_powermail in typo3conf/ext directory"
+    },
+    "custom_extension": {
+      "should_exist": true,
+      "reason": "Should find custom_extension in typo3conf/ext directory"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [
+    "legacy_news",
+    "legacy_powermail",
+    "custom_extension"
+  ],
+  "notes": [
+    "TYPO3 v11 legacy source installation (non-Composer)",
+    "Extensions are managed through Extension Manager and located in typo3conf/ext",
+    "No vendor directory - all extensions are local installations"
+  ]
+}

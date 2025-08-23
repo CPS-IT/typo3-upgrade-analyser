@@ -18,6 +18,11 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -28,12 +33,17 @@ use Psr\Log\LoggerInterface;
 final class ComposerInstallationDetectorTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
+    private PathResolutionServiceInterface&MockObject $pathResolutionService;
     private ComposerInstallationDetector $detector;
     private string $testDir;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+
+        // Setup default PathResolutionService behavior
+        $this->setupDefaultPathResolutionMocks();
 
         // Create a real VersionExtractor with a minimal strategy
         $mockStrategy = $this->createMock(VersionStrategyInterface::class);
@@ -43,7 +53,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         $mockStrategy->method('getRequiredFiles')->willReturn(['composer.json']);
         $versionExtractor = new VersionExtractor([$mockStrategy], $this->logger);
 
-        $this->detector = new ComposerInstallationDetector($versionExtractor, $this->logger);
+        $this->detector = new ComposerInstallationDetector(
+            $versionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+        );
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($this->testDir, 0o755, true);
     }
@@ -215,7 +229,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         // Create a working version extractor with a strategy that returns a version
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
-        $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
+        $workingDetector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+        );
 
         $result = $workingDetector->detect($this->testDir);
 
@@ -235,7 +253,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         // Create a working version extractor
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
-        $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
+        $workingDetector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+        );
 
         $result = $workingDetector->detect($this->testDir);
         if (null !== $result) {
@@ -257,7 +279,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         $failingStrategy->method('getReliabilityScore')->willReturn(0.8);
 
         $failingVersionExtractor = new VersionExtractor([$failingStrategy], $this->logger);
-        $failingDetector = new ComposerInstallationDetector($failingVersionExtractor, $this->logger);
+        $failingDetector = new ComposerInstallationDetector(
+            $failingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+        );
 
         $this->logger->expects(self::atLeastOnce())
             ->method('warning');
@@ -275,7 +301,11 @@ final class ComposerInstallationDetectorTest extends TestCase
         // Use working version extractor
         $workingStrategy = new TestableVersionStrategy();
         $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
-        $workingDetector = new ComposerInstallationDetector($workingVersionExtractor, $this->logger);
+        $workingDetector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+        );
 
         $result = $workingDetector->detect($this->testDir);
         $this->assertNotEmpty($result);
@@ -357,6 +387,89 @@ final class ComposerInstallationDetectorTest extends TestCase
             }
         }
         rmdir($dir);
+    }
+
+    private function setupDefaultPathResolutionMocks(): void
+    {
+        // Mock vendor-dir resolution
+        $vendorMetadata = new PathResolutionMetadata(
+            PathTypeEnum::VENDOR_DIR,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'default_mock',
+            0,
+            [],
+            [],
+            0.0,
+            false,
+            'mock_resolution',
+        );
+
+        // Mock web-dir resolution
+        $webMetadata = new PathResolutionMetadata(
+            PathTypeEnum::WEB_DIR,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'default_mock',
+            0,
+            [],
+            [],
+            0.0,
+            false,
+            'mock_resolution',
+        );
+
+        // Mock typo3conf-dir resolution
+        $typo3confMetadata = new PathResolutionMetadata(
+            PathTypeEnum::TYPO3CONF_DIR,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'default_mock',
+            0,
+            [],
+            [],
+            0.0,
+            false,
+            'mock_resolution',
+        );
+
+        $this->pathResolutionService->method('resolvePath')
+            ->willReturnCallback(function ($request) use ($vendorMetadata, $webMetadata, $typo3confMetadata): PathResolutionResponse {
+                return match ($request->pathType) {
+                    PathTypeEnum::VENDOR_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::VENDOR_DIR,
+                        $request->installationPath . '/vendor',
+                        $vendorMetadata,
+                        [],
+                        [],
+                        'cache_key_vendor',
+                        0.1,
+                    ),
+                    PathTypeEnum::WEB_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::WEB_DIR,
+                        $request->installationPath . '/public',
+                        $webMetadata,
+                        [],
+                        [],
+                        'cache_key_web',
+                        0.1,
+                    ),
+                    PathTypeEnum::TYPO3CONF_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::TYPO3CONF_DIR,
+                        $request->installationPath . '/public/typo3conf',
+                        $typo3confMetadata,
+                        [],
+                        [],
+                        'cache_key_typo3conf',
+                        0.1,
+                    ),
+                    default => PathResolutionResponse::notFound(
+                        $request->pathType,
+                        $vendorMetadata,
+                        [],
+                        ['Path type not mocked'],
+                        'cache_key_default',
+                        0.1,
+                    )
+                };
+            });
     }
 }
 

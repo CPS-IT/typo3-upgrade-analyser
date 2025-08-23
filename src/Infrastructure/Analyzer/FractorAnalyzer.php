@@ -21,6 +21,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionExcept
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequestBuilder;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,6 +43,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         private readonly FractorExecutor $fractorExecutor,
         private readonly FractorConfigGenerator $configGenerator,
         private readonly FractorResultParser $resultParser,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
     ) {
         parent::__construct($cacheService, $logger);
     }
@@ -156,7 +163,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
             }
         }
 
-        // Use the same path resolution logic as other analyzers
+        // Use PathResolutionService to find extension path
         $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
 
         if (!$extensionPath || !is_dir($extensionPath)) {
@@ -301,53 +308,48 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
     }
 
     /**
-     * Find extension path in TYPO3 installation (reused from LinesOfCodeAnalyzer).
+     * Find extension path using PathResolutionService.
      */
     private function findExtensionPath(string $installationPath, string $extensionKey, AnalysisContext $context, Extension $extension): ?string
     {
-        // Use the same path resolution logic as LinesOfCodeAnalyzer
-        $customPaths = $this->getCustomPathsFromContext($context);
-        $paths = $this->resolvePaths($installationPath, $customPaths);
+        $customPaths = $context->getConfigurationValue('custom_paths', null);
 
-        // Build possible extension locations
-        $possiblePaths = [];
+        $extensionIdentifier = new ExtensionIdentifier(
+            $extension->getKey(),
+            $extension->getVersion()->toString(),
+            $extension->getType(),
+            $extension->getComposerName(),
+        );
 
-        if ($extension->getComposerName()) {
-            $composerName = $extension->getComposerName();
-            $possiblePaths[] = $paths['vendor_dir'] . '/' . $composerName;
-        }
-
-        $possiblePaths = array_merge($possiblePaths, [
-            $paths['typo3conf_dir'] . '/ext/' . $extensionKey,
-            $installationPath . '/typo3/sysext/' . $extensionKey,
-            $paths['vendor_dir'] . '/typo3/cms-' . str_replace('_', '-', $extensionKey),
-            $paths['web_dir'] . '/typo3conf/ext/' . $extensionKey,
+        $pathConfiguration = PathConfiguration::fromArray([
+            'customPaths' => $customPaths ?? [],
         ]);
 
-        foreach ($possiblePaths as $path) {
-            if (is_dir($path)) {
-                return $path;
-            }
+        $builder = new PathResolutionRequestBuilder();
+        $request = $builder
+            ->installationPath($installationPath)
+            ->pathType(PathTypeEnum::EXTENSION)
+            ->installationType(InstallationTypeEnum::AUTO_DETECT) // Let PathResolutionService auto-detect
+            ->pathConfiguration($pathConfiguration)
+            ->extensionIdentifier($extensionIdentifier)
+            ->build();
+
+        $response = $this->pathResolutionService->resolvePath($request);
+
+        if ($response->isSuccess()) {
+            $this->logger->debug('PathResolutionService found extension path', [
+                'extension' => $extensionKey,
+                'path' => $response->resolvedPath,
+            ]);
+
+            return $response->resolvedPath;
         }
 
+        $this->logger->warning('PathResolutionService failed to find extension path', [
+            'extension' => $extensionKey,
+            'errors' => $response->errors,
+        ]);
+
         return null;
-    }
-
-    private function getCustomPathsFromContext(AnalysisContext $context): ?array
-    {
-        return $context->getConfigurationValue('custom_paths', null);
-    }
-
-    private function resolvePaths(string $installationPath, ?array $customPaths): array
-    {
-        $vendorDir = $customPaths['vendor-dir'] ?? 'vendor';
-        $webDir = $customPaths['web-dir'] ?? 'public';
-        $typo3confDir = $customPaths['typo3conf-dir'] ?? $webDir . '/typo3conf';
-
-        return [
-            'vendor_dir' => $installationPath . '/' . $vendorDir,
-            'web_dir' => $installationPath . '/' . $webDir,
-            'typo3conf_dir' => $installationPath . '/' . $typo3confDir,
-        ];
     }
 }
