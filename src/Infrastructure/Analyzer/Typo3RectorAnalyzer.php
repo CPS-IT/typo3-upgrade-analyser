@@ -22,6 +22,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,6 +46,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         private readonly RectorConfigGenerator $configGenerator,
         private readonly RectorResultParser $resultParser,
         private readonly RectorRuleRegistry $ruleRegistry,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
     ) {
         parent::__construct($cacheService, $logger);
     }
@@ -182,8 +189,8 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     }
 
     /**
-     * Get extension path for analysis based on installation configuration.
-     * Note: Core extensions are excluded during discovery, so only custom extensions reach this analyzer.
+     * Get extension path for analysis using PathResolutionService.
+     * Uses sophisticated path resolution with TYPO3 version awareness and installation type detection.
      */
     private function getExtensionPath(Extension $extension, AnalysisContext $context): string
     {
@@ -191,45 +198,129 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         $customPaths = $context->getConfigurationValue('custom_paths', []);
 
         if (empty($installationPath)) {
-            $this->logger->warning('No installation path available - using fallback paths', [
+            $this->logger->warning('No installation path available - using fallback path', [
                 'extension' => $extension->getKey(),
             ]);
 
             return 'typo3conf/ext/' . $extension->getKey();
         }
 
-        // Convert relative path to absolute path
-        $currentDir = getcwd();
-        if (!str_starts_with($installationPath, '/') && false !== $currentDir && !str_starts_with($installationPath, $currentDir)) {
-            $resolvedPath = realpath($currentDir . '/' . $installationPath);
-            if ($resolvedPath) {
-                $installationPath = $resolvedPath;
+        try {
+            // Create extension identifier from the Extension domain object
+            $extensionIdentifier = new ExtensionIdentifier(
+                $extension->getKey(),
+                $extension->hasComposerName() ? $extension->getComposerName() : null,
+                null, // No namespace for extensions
+                $extension->hasComposerName() ? $extension->getComposerName() : null,
+            );
+
+            // Create path configuration from custom paths
+            $pathConfiguration = PathConfiguration::fromArray([
+                'customPaths' => $customPaths,
+                'validateExists' => true,
+                'followSymlinks' => true,
+            ]);
+
+            // Determine installation type based on available information
+            $installationType = $this->determineInstallationType($installationPath, $customPaths);
+
+            // Create path resolution request
+            $request = PathResolutionRequest::create(
+                PathTypeEnum::EXTENSION,
+                $installationPath,
+                $installationType,
+                $pathConfiguration,
+                $extensionIdentifier,
+            );
+
+            // Use PathResolutionService to resolve the extension path
+            $response = $this->pathResolutionService->resolvePath($request);
+
+            if ($response->isSuccess() && $response->resolvedPath) {
+                $this->logger->info('Successfully resolved extension path using PathResolutionService', [
+                    'extension' => $extension->getKey(),
+                    'extension_type' => $extension->getType(),
+                    'composer_name' => $extension->getComposerName(),
+                    'installation_path' => $installationPath,
+                    'installation_type' => $installationType->value,
+                    'resolved_path' => $response->resolvedPath,
+                    'resolution_strategy' => $response->metadata->usedStrategy,
+                    'resolution_time' => $response->resolutionTime ?? 0,
+                ]);
+
+                return $response->resolvedPath;
             }
+
+            // If PathResolutionService fails, log detailed error information
+            $this->logger->warning('PathResolutionService failed to resolve extension path, using fallback', [
+                'extension' => $extension->getKey(),
+                'installation_path' => $installationPath,
+                'installation_type' => $installationType->value,
+                'response_status' => $response->status->value,
+                'errors' => $response->errors,
+                'attempted_paths' => $response->metadata->attemptedPaths,
+                'alternative_paths' => $response->alternativePaths,
+            ]);
+
+            // Fallback to legacy path resolution
+            return $this->getFallbackExtensionPath($extension, $installationPath, $customPaths);
+        } catch (\Throwable $e) {
+            $this->logger->error('Error using PathResolutionService, falling back to legacy method', [
+                'extension' => $extension->getKey(),
+                'installation_path' => $installationPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback to legacy path resolution
+            return $this->getFallbackExtensionPath($extension, $installationPath, $customPaths);
+        }
+    }
+
+    /**
+     * Determine installation type based on available information.
+     */
+    private function determineInstallationType(string $installationPath, array $customPaths): InstallationTypeEnum
+    {
+        // Check if it's a Composer installation
+        if (file_exists($installationPath . '/composer.json')) {
+            // Check for custom web directory
+            $webDir = $customPaths['web-dir'] ?? null;
+            if ($webDir && 'public' !== $webDir) {
+                return InstallationTypeEnum::COMPOSER_CUSTOM;
+            }
+
+            // Check if public directory exists (standard Composer layout)
+            if (is_dir($installationPath . '/public')) {
+                return InstallationTypeEnum::COMPOSER_STANDARD;
+            }
+
+            return InstallationTypeEnum::COMPOSER_CUSTOM;
         }
 
-        // All discovered extensions are custom extensions (core extensions are filtered out during discovery)
-        // Custom extensions always go to typo3conf/ext/ in TYPO3 11+ regardless of composer management
+        // Check for legacy source installation
+        if (is_dir($installationPath . '/typo3_src') || is_dir($installationPath . '/typo3/sysext')) {
+            return InstallationTypeEnum::LEGACY_SOURCE;
+        }
+
+        // Default to auto-detect if unsure
+        return InstallationTypeEnum::AUTO_DETECT;
+    }
+
+    /**
+     * Legacy fallback method for extension path resolution.
+     * Used when PathResolutionService fails or is unavailable.
+     */
+    private function getFallbackExtensionPath(Extension $extension, string $installationPath, array $customPaths): string
+    {
         $typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';
 
         // Handle direct extension path (for test fixtures)
         if ($typo3confDir === $extension->getKey()) {
-            $extensionPath = $installationPath . '/' . $typo3confDir;
-        } else {
-            // Standard typo3conf/ext structure for all custom extensions
-            $extensionPath = $installationPath . '/' . $typo3confDir . '/ext/' . $extension->getKey();
+            return $installationPath . '/' . $typo3confDir;
         }
 
-        $this->logger->info('Rector analyzer resolved extension path', [
-            'extension' => $extension->getKey(),
-            'extension_type' => $extension->getType(),
-            'composer_name' => $extension->getComposerName(),
-            'installation_path' => $installationPath,
-            'typo3conf_dir' => $typo3confDir,
-            'resolved_path' => $extensionPath,
-            'path_exists' => is_dir($extensionPath),
-        ]);
-
-        return $extensionPath;
+        // Standard typo3conf/ext structure
+        return $installationPath . '/' . $typo3confDir . '/ext/' . $extension->getKey();
     }
 
     /**

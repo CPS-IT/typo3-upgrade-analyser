@@ -124,6 +124,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
 
   # Fractor Analyzer and supporting services

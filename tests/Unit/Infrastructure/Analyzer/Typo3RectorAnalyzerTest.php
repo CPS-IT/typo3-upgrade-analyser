@@ -27,6 +27,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Typo3RectorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -44,6 +50,7 @@ class Typo3RectorAnalyzerTest extends TestCase
     private \PHPUnit\Framework\MockObject\MockObject $configGenerator;
     private \PHPUnit\Framework\MockObject\MockObject $resultParser;
     private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
+    private \PHPUnit\Framework\MockObject\MockObject $pathResolutionService;
 
     /**
      * @throws \PHPUnit\Framework\MockObject\Exception
@@ -56,6 +63,7 @@ class Typo3RectorAnalyzerTest extends TestCase
         $this->configGenerator = $this->createMock(RectorConfigGenerator::class);
         $this->resultParser = $this->createMock(RectorResultParser::class);
         $this->ruleRegistry = $this->createMock(RectorRuleRegistry::class);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
 
         $this->analyzer = new Typo3RectorAnalyzer(
             $this->cacheService,
@@ -64,6 +72,7 @@ class Typo3RectorAnalyzerTest extends TestCase
             $this->configGenerator,
             $this->resultParser,
             $this->ruleRegistry,
+            $this->pathResolutionService,
         );
     }
 
@@ -258,6 +267,26 @@ class Typo3RectorAnalyzerTest extends TestCase
             ],
         );
 
+        // Mock PathResolutionService response
+        $expectedPath = '/test/path/public/typo3conf/ext/custom_ext';
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::success(
+            PathTypeEnum::EXTENSION,
+            $expectedPath,
+            $metadata,
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->with($this->isInstanceOf(PathResolutionRequest::class))
+            ->willReturn($response);
+
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
@@ -265,7 +294,7 @@ class Typo3RectorAnalyzerTest extends TestCase
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
-        $this->assertEquals('/test/path/public/typo3conf/ext/custom_ext', $path);
+        $this->assertEquals($expectedPath, $path);
     }
 
     public function testGetExtensionPathForComposerExtension(): void
@@ -281,6 +310,26 @@ class Typo3RectorAnalyzerTest extends TestCase
             ],
         );
 
+        // Mock PathResolutionService response
+        $expectedPath = '/test/path/public/typo3conf/ext/test_extension';
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::success(
+            PathTypeEnum::EXTENSION,
+            $expectedPath,
+            $metadata,
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->with($this->isInstanceOf(PathResolutionRequest::class))
+            ->willReturn($response);
+
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
@@ -288,7 +337,7 @@ class Typo3RectorAnalyzerTest extends TestCase
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
-        $this->assertEquals('/test/path/public/typo3conf/ext/test_extension', $path);
+        $this->assertEquals($expectedPath, $path);
     }
 
     public function testGetExtensionPathForLocalExtension(): void
@@ -304,6 +353,26 @@ class Typo3RectorAnalyzerTest extends TestCase
             ],
         );
 
+        // Mock PathResolutionService response
+        $expectedPath = '/test/path/public/typo3conf/ext/test_extension';
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::success(
+            PathTypeEnum::EXTENSION,
+            $expectedPath,
+            $metadata,
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->with($this->isInstanceOf(PathResolutionRequest::class))
+            ->willReturn($response);
+
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
@@ -311,7 +380,7 @@ class Typo3RectorAnalyzerTest extends TestCase
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
-        $this->assertEquals('/test/path/public/typo3conf/ext/test_extension', $path);
+        $this->assertEquals($expectedPath, $path);
     }
 
     public function testCalculateRiskScoreWithNoFindings(): void
@@ -440,5 +509,48 @@ class Typo3RectorAnalyzerTest extends TestCase
             }
         }
         $this->assertTrue($hasBreakingRecommendation);
+    }
+
+    public function testGetExtensionPathWithPathResolutionServiceFailure(): void
+    {
+        $extension = new Extension('failing_ext', 'Failing Extension', new Version('1.0.0'));
+        $context = new AnalysisContext(
+            new Version('11.5.0'),
+            new Version('12.4.0'),
+            [],
+            [
+                'installation_path' => '/test/path',
+                'custom_paths' => ['vendor-dir' => 'vendor', 'typo3conf-dir' => 'public/typo3conf'],
+            ],
+        );
+
+        // Mock PathResolutionService failure
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::error(
+            PathTypeEnum::EXTENSION,
+            $metadata,
+            ['Path resolution failed for testing'],
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->with($this->isInstanceOf(PathResolutionRequest::class))
+            ->willReturn($response);
+
+        // Use reflection to test private method
+        $reflection = new \ReflectionClass($this->analyzer);
+        $method = $reflection->getMethod('getExtensionPath');
+        $method->setAccessible(true);
+
+        $path = $method->invoke($this->analyzer, $extension, $context);
+
+        // Should fall back to hardcoded path construction
+        $this->assertEquals('/test/path/public/typo3conf/ext/failing_ext', $path);
     }
 }
