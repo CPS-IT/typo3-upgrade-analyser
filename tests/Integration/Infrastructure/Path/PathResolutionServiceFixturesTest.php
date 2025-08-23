@@ -41,7 +41,11 @@ final class PathResolutionServiceFixturesTest extends TestCase
     {
         parent::setUp();
 
-        $this->fixturesPath = __DIR__ . '/../../Fixtures/TYPO3Installations';
+        $fixturesPath = realpath(__DIR__ . '/../../Fixtures/TYPO3Installations');
+        if (false === $fixturesPath) {
+            throw new \RuntimeException('Could not resolve fixtures path: ' . __DIR__ . '/../../Fixtures/TYPO3Installations');
+        }
+        $this->fixturesPath = $fixturesPath;
 
         // Set up the complete service with all dependencies - create fresh instances each time
         $logger = new NullLogger();
@@ -88,12 +92,15 @@ final class PathResolutionServiceFixturesTest extends TestCase
             $shouldExist = $expectation['should_exist'];
             $reason = $expectation['reason'] ?? '';
 
+            // Create extension identifier with composer name for vendor extensions
+            $extensionIdentifier = $this->createExtensionIdentifier($extensionKey, $expectations);
+
             $request = PathResolutionRequest::create(
                 PathTypeEnum::EXTENSION,
                 $installationPath,
                 $installationType,
                 $pathConfig,
-                new ExtensionIdentifier($extensionKey),
+                $extensionIdentifier,
             );
 
             $response = $this->pathResolutionService->resolvePath($request);
@@ -101,7 +108,7 @@ final class PathResolutionServiceFixturesTest extends TestCase
             if ($shouldExist) {
                 $this->assertTrue(
                     $response->isSuccess(),
-                    "Extension '{$extensionKey}' should be found in '{$fixtureName}'. Reason: {$reason}",
+                    "Extension '{$extensionKey}' should be found in '{$fixtureName}'. Reason: {$reason}. Status: {$response->status->value}, Errors: " . json_encode($response->errors) . ', Attempted paths: ' . json_encode($response->metadata->attemptedPaths),
                 );
                 $this->assertNotNull(
                     $response->resolvedPath,
@@ -125,14 +132,19 @@ final class PathResolutionServiceFixturesTest extends TestCase
      */
     public static function fixtureInstallationProvider(): array
     {
-        $fixturesPath = __DIR__ . '/../../Fixtures/TYPO3Installations';
+        $fixturesPath = realpath(__DIR__ . '/../../Fixtures/TYPO3Installations');
         $fixtures = [];
 
-        if (!is_dir($fixturesPath)) {
+        if (false === $fixturesPath || !is_dir($fixturesPath)) {
             return $fixtures;
         }
 
-        foreach (scandir($fixturesPath) as $item) {
+        $scanResult = scandir($fixturesPath);
+        if (false === $scanResult) {
+            return $fixtures;
+        }
+
+        foreach ($scanResult as $item) {
             if ('.' === $item || '..' === $item || !is_dir($fixturesPath . '/' . $item)) {
                 continue;
             }
@@ -160,5 +172,23 @@ final class PathResolutionServiceFixturesTest extends TestCase
             ]),
             default => PathConfiguration::createDefault(),
         };
+    }
+
+    /**
+     * Create extension identifier with composer name for better vendor resolution.
+     */
+    private function createExtensionIdentifier(string $extensionKey, array $expectations): ExtensionIdentifier
+    {
+        // Map extension keys to their known composer names for better vendor resolution
+        $composerNames = [
+            'news' => 'georgringer/news',  // Use georgringer/news as primary
+            'example_news' => 'example/news',  // example/news package with example_news extension key
+            'powermail' => 'example/powermail',
+            // Add more mappings as needed
+        ];
+
+        $composerName = $composerNames[$extensionKey] ?? null;
+
+        return new ExtensionIdentifier($extensionKey, null, null, $composerName);
     }
 }

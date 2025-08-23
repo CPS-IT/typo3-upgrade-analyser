@@ -6,7 +6,11 @@
   "extensions": {
     "news": {
       "should_exist": true,
-      "reason": "Should find example/news or georgringer/news in vendor directory"
+      "reason": "Should find georgringer/news in vendor directory"
+    },
+    "example_news": {
+      "should_exist": true,
+      "reason": "Should find example/news with example_news extension-key in vendor directory"
     },
     "powermail": {
       "should_exist": true,

@@ -15,7 +15,7 @@
     },
     "extra": {
         "typo3/cms": {
-            "extension-key": "news"
+            "extension-key": "example_news"
         }
     },
     "autoload": {

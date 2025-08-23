@@ -188,17 +188,28 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
     private function resolveAbsolutePath(string $path): string
     {
-        if (!str_starts_with($path, '/') && !str_starts_with($path, '\\') && !preg_match('/^[A-Za-z]:/', $path)) {
+        // Security: Prevent path traversal attacks
+        if (str_contains($path, '..') || str_contains($path, './') || str_contains($path, '.\\')) {
+            throw new InvalidRequestException('Path traversal detected in installation path: ' . $path);
+        }
+
+        // Normalize path separators for cross-platform compatibility
+        $normalizedPath = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
+
+        if (!str_starts_with($normalizedPath, DIRECTORY_SEPARATOR) && !preg_match('/^[A-Za-z]:/', $normalizedPath)) {
             $currentDir = getcwd();
-            if ($currentDir && !str_starts_with($path, $currentDir)) {
-                $resolved = realpath($currentDir . '/' . $path);
-                if ($resolved) {
+            if ($currentDir && !str_starts_with($normalizedPath, $currentDir)) {
+                $fullPath = $currentDir . DIRECTORY_SEPARATOR . $normalizedPath;
+                $resolved = realpath($fullPath);
+                if (false !== $resolved) {
                     return $resolved;
                 }
             }
         }
 
-        return realpath($path) ?: $path;
+        $resolved = realpath($normalizedPath);
+
+        return false !== $resolved ? $resolved : $normalizedPath;
     }
 
     private function resolveComposerStandardPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
@@ -588,18 +599,50 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         // Check for composer.json with extension name (modern extension marker)
         $composerPath = $path . '/composer.json';
         if (file_exists($composerPath)) {
-            $composerContent = file_get_contents($composerPath);
-            if (false !== $composerContent) {
-                $composerData = json_decode($composerContent, true);
-                if (\is_array($composerData)) {
-                    if (isset($composerData['name']) && str_contains($composerData['name'], $extensionKey)) {
-                        return true;
-                    }
-                    // Check for TYPO3 extension type
-                    if (isset($composerData['type']) && str_starts_with($composerData['type'], 'typo3-')) {
-                        return true;
-                    }
+            try {
+                $composerContent = file_get_contents($composerPath);
+                if (false === $composerContent) {
+                    $this->logger->debug('Failed to read composer.json file', [
+                        'composer_path' => $composerPath,
+                        'extension_key' => $extensionKey,
+                    ]);
+
+                    return false;
                 }
+
+                $composerData = json_decode($composerContent, true);
+                if (!\is_array($composerData)) {
+                    $this->logger->debug('Invalid JSON in composer.json file', [
+                        'composer_path' => $composerPath,
+                        'json_error' => json_last_error_msg(),
+                    ]);
+
+                    return false;
+                }
+
+                // Enhanced TYPO3 extension validation
+                if (isset($composerData['name']) && str_contains($composerData['name'], $extensionKey)) {
+                    return true;
+                }
+
+                // Check for TYPO3 extension type
+                if (isset($composerData['type']) && str_starts_with($composerData['type'], 'typo3-')) {
+                    return true;
+                }
+
+                // Check for TYPO3 extension in extra section
+                if (isset($composerData['extra']['typo3/cms']['extension-key'])
+                    && $composerData['extra']['typo3/cms']['extension-key'] === $extensionKey) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                $this->logger->warning('Error reading composer.json for extension validation', [
+                    'composer_path' => $composerPath,
+                    'extension_key' => $extensionKey,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return false;
             }
         }
 

@@ -171,9 +171,8 @@ final class PathResolutionService implements PathResolutionServiceInterface
             }
         }
 
-        // 4. Restore original order
+        // 4. Restore original order - avoid unnecessary array copy
         ksort($responses);
-        $orderedResponses = array_values($responses);
 
         $totalTime = microtime(true) - $startTime;
         $cacheHitRatio = \count($requests) > 0 ? $cacheHitCount / \count($requests) : 0;
@@ -189,7 +188,7 @@ final class PathResolutionService implements PathResolutionServiceInterface
             'average_time_per_request' => round($totalTime / \count($requests) * 1000, 2) . 'ms',
         ]);
 
-        return $orderedResponses;
+        return $responses;
     }
 
     /**
