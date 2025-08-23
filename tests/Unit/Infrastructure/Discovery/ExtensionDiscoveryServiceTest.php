@@ -17,6 +17,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -26,6 +32,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     private LoggerInterface&MockObject $logger;
     private ConfigurationService&MockObject $configService;
     private CacheService&MockObject $cacheService;
+    private PathResolutionServiceInterface&MockObject $pathResolutionService;
     private ExtensionDiscoveryService $service;
     private string $tempDir;
 
@@ -34,15 +41,20 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->configService = $this->createMock(ConfigurationService::class);
         $this->cacheService = $this->createMock(CacheService::class);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
 
         $this->service = new ExtensionDiscoveryService(
             $this->logger,
             $this->configService,
             $this->cacheService,
+            $this->pathResolutionService,
         );
 
         $this->tempDir = sys_get_temp_dir() . '/ext_discovery_test_' . uniqid();
         mkdir($this->tempDir, 0o755, true);
+
+        // Set up default PathResolutionService mocks for most test cases
+        $this->setupDefaultPathResolutionMocks();
     }
 
     protected function tearDown(): void
@@ -99,7 +111,8 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testConstructorWithoutOptionalServices(): void
     {
-        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
+        $pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService, $pathResolutionService);
         $this->assertInstanceOf(ExtensionDiscoveryService::class, $service);
     }
 
@@ -301,6 +314,45 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             'typo3conf-dir' => 'web/conf',
         ];
 
+        // Create a fresh service with custom mocks for this test
+        $pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+        $pathResolutionService
+            ->method('resolvePath')
+            ->willReturnCallback(function (PathResolutionRequest $request) use ($customPaths): PathResolutionResponse {
+                $vendorDir = $customPaths['vendor-dir'];
+                $webDir = $customPaths['web-dir'];
+                $typo3confDir = $customPaths['typo3conf-dir'];
+
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_CUSTOM,
+                    'MockCustomPathResolutionStrategy',
+                    1,
+                );
+
+                $resolvedPath = match ($request->pathType) {
+                    PathTypeEnum::PACKAGE_STATES => $this->tempDir . '/' . $typo3confDir . '/PackageStates.php',
+                    PathTypeEnum::COMPOSER_INSTALLED => $this->tempDir . '/' . $vendorDir . '/composer/installed.json',
+                    PathTypeEnum::VENDOR_DIR => $this->tempDir . '/' . $vendorDir,
+                    PathTypeEnum::WEB_DIR => $this->tempDir . '/' . $webDir,
+                    PathTypeEnum::TYPO3CONF_DIR => $this->tempDir . '/' . $typo3confDir,
+                    default => $this->tempDir . '/fallback',
+                };
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $resolvedPath,
+                    $metadata,
+                );
+            });
+
+        $customService = new ExtensionDiscoveryService(
+            $this->logger,
+            $this->configService,
+            $this->cacheService,
+            $pathResolutionService,
+        );
+
         $packages = [
             'custom_ext' => [
                 'packagePath' => 'web/conf/ext/custom_ext/',
@@ -319,7 +371,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             'version' => '1.0.0',
         ]);
 
-        $result = $this->service->discoverExtensions($this->tempDir, $customPaths);
+        $result = $customService->discoverExtensions($this->tempDir, $customPaths);
 
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(1, $result->getExtensions());
@@ -678,7 +730,33 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testServiceWithoutCachingServices(): void
     {
-        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService);
+        $pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+
+        // Set up basic mocks for this test
+        $pathResolutionService
+            ->method('resolvePath')
+            ->willReturnCallback(function (PathResolutionRequest $request): PathResolutionResponse {
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'MockStrategy',
+                    1,
+                );
+
+                $resolvedPath = match ($request->pathType) {
+                    PathTypeEnum::PACKAGE_STATES => $this->tempDir . '/public/typo3conf/PackageStates.php',
+                    PathTypeEnum::COMPOSER_INSTALLED => $this->tempDir . '/vendor/composer/installed.json',
+                    default => $this->tempDir . '/fallback',
+                };
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $resolvedPath,
+                    $metadata,
+                );
+            });
+
+        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService, $pathResolutionService);
 
         $result = $service->discoverExtensions($this->tempDir);
 
@@ -960,5 +1038,40 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(1, $result->getExtensions()); // Only 'news' should be included
         $this->assertSame('news', $result->getExtensions()[0]->getKey());
+    }
+
+    /**
+     * Set up default PathResolutionService mocks that return successful responses
+     * for the standard path types used in most tests.
+     */
+    private function setupDefaultPathResolutionMocks(): void
+    {
+        // Default setup for standard installation paths
+        $this->pathResolutionService
+            ->method('resolvePath')
+            ->willReturnCallback(function (PathResolutionRequest $request): PathResolutionResponse {
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'MockPathResolutionStrategy',
+                    1,
+                );
+
+                // Return appropriate paths based on the path type
+                $resolvedPath = match ($request->pathType) {
+                    PathTypeEnum::PACKAGE_STATES => $this->tempDir . '/public/typo3conf/PackageStates.php',
+                    PathTypeEnum::COMPOSER_INSTALLED => $this->tempDir . '/vendor/composer/installed.json',
+                    PathTypeEnum::VENDOR_DIR => $this->tempDir . '/vendor',
+                    PathTypeEnum::WEB_DIR => $this->tempDir . '/public',
+                    PathTypeEnum::TYPO3CONF_DIR => $this->tempDir . '/public/typo3conf',
+                    default => $this->tempDir . '/fallback',
+                };
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $resolvedPath,
+                    $metadata,
+                );
+            });
     }
 }

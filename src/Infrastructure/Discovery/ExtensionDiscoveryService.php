@@ -16,6 +16,11 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
 class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
@@ -24,6 +29,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         private readonly LoggerInterface $logger,
         private readonly ConfigurationService $configService,
         private readonly CacheService $cacheService,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
     ) {
     }
 
@@ -134,7 +140,8 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
     }
 
     /**
-     * Resolve paths based on custom paths or defaults.
+     * Resolve paths using PathResolutionService with sophisticated TYPO3 installation detection.
+     * Falls back to hardcoded logic if PathResolutionService fails to ensure backward compatibility.
      *
      * @param string     $installationPath Base installation path
      * @param array|null $customPaths      Custom paths from installation metadata
@@ -143,17 +150,155 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
      */
     private function resolvePaths(string $installationPath, ?array $customPaths): array
     {
+        try {
+            // Create path configuration from custom paths
+            $pathConfiguration = PathConfiguration::fromArray([
+                'customPaths' => $customPaths ?? [],
+                'validateExists' => false, // Don't require existence for discovery
+                'followSymlinks' => true,
+            ]);
+
+            // Determine installation type based on filesystem structure
+            $installationType = $this->determineInstallationType($installationPath, $customPaths);
+
+            // Use PathResolutionService to resolve all required paths
+            $resolvedPaths = [];
+            $pathTypes = [
+                'package_states' => PathTypeEnum::PACKAGE_STATES,
+                'composer_installed' => PathTypeEnum::COMPOSER_INSTALLED,
+                'vendor_dir' => PathTypeEnum::VENDOR_DIR,
+                'web_dir' => PathTypeEnum::WEB_DIR,
+                'typo3conf_dir' => PathTypeEnum::TYPO3CONF_DIR,
+            ];
+
+            $allSuccessful = true;
+            $pathResolutionErrors = [];
+
+            foreach ($pathTypes as $key => $pathType) {
+                $request = PathResolutionRequest::create(
+                    $pathType,
+                    $installationPath,
+                    $installationType,
+                    $pathConfiguration,
+                );
+
+                $response = $this->pathResolutionService->resolvePath($request);
+
+                if ($response->isSuccess() && $response->resolvedPath) {
+                    $resolvedPaths[$key] = $response->resolvedPath;
+
+                    $this->logger->debug('Successfully resolved path using PathResolutionService', [
+                        'path_type' => $pathType->value,
+                        'resolved_path' => $response->resolvedPath,
+                        'installation_type' => $installationType->value,
+                        'strategy_used' => $response->metadata->usedStrategy,
+                    ]);
+                } else {
+                    $allSuccessful = false;
+                    $pathResolutionErrors[$key] = [
+                        'path_type' => $pathType->value,
+                        'errors' => $response->errors,
+                        'status' => $response->status->value,
+                    ];
+
+                    $this->logger->warning('PathResolutionService failed to resolve path', [
+                        'path_type' => $pathType->value,
+                        'installation_path' => $installationPath,
+                        'installation_type' => $installationType->value,
+                        'errors' => $response->errors,
+                    ]);
+                }
+            }
+
+            // If all paths were resolved successfully, return them
+            if ($allSuccessful) {
+                $this->logger->info('All paths successfully resolved using PathResolutionService', [
+                    'installation_path' => $installationPath,
+                    'installation_type' => $installationType->value,
+                    'paths_resolved' => array_keys($resolvedPaths),
+                ]);
+
+                return $resolvedPaths;
+            }
+
+            // If some paths failed, log details and fall back
+            $this->logger->warning('Some path resolutions failed, using fallback method', [
+                'installation_path' => $installationPath,
+                'successful_paths' => array_keys($resolvedPaths),
+                'failed_paths' => array_keys($pathResolutionErrors),
+                'path_resolution_errors' => $pathResolutionErrors,
+            ]);
+
+            // Use successful resolutions where possible, fallback for failed ones
+            return $this->getFallbackPaths($installationPath, $customPaths, $resolvedPaths);
+        } catch (\Throwable $e) {
+            $this->logger->error('Error using PathResolutionService for discovery, falling back to legacy method', [
+                'installation_path' => $installationPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Complete fallback to legacy method
+            return $this->getFallbackPaths($installationPath, $customPaths);
+        }
+    }
+
+    /**
+     * Determine installation type based on filesystem structure and custom paths.
+     */
+    private function determineInstallationType(string $installationPath, ?array $customPaths): InstallationTypeEnum
+    {
+        // Check if it's a Composer installation
+        if (file_exists($installationPath . '/composer.json')) {
+            // Check for custom web directory
+            $webDir = $customPaths['web-dir'] ?? null;
+            if ($webDir && 'public' !== $webDir) {
+                return InstallationTypeEnum::COMPOSER_CUSTOM;
+            }
+
+            // Check if public directory exists (standard Composer layout)
+            if (is_dir($installationPath . '/public')) {
+                return InstallationTypeEnum::COMPOSER_STANDARD;
+            }
+
+            return InstallationTypeEnum::COMPOSER_CUSTOM;
+        }
+
+        // Check for legacy source installation
+        if (is_dir($installationPath . '/typo3_src') || is_dir($installationPath . '/typo3/sysext')) {
+            return InstallationTypeEnum::LEGACY_SOURCE;
+        }
+
+        // Check for Docker container patterns
+        if (is_dir($installationPath . '/app') || str_contains($installationPath, '/app/')) {
+            return InstallationTypeEnum::DOCKER_CONTAINER;
+        }
+
+        // Default to auto-detect if unsure
+        return InstallationTypeEnum::AUTO_DETECT;
+    }
+
+    /**
+     * Legacy fallback method for path resolution.
+     * Used when PathResolutionService fails or partially fails.
+     *
+     * @param array<string, string> $successfulPaths Already resolved paths from PathResolutionService
+     */
+    private function getFallbackPaths(string $installationPath, ?array $customPaths, array $successfulPaths = []): array
+    {
         $vendorDir = $customPaths['vendor-dir'] ?? 'vendor';
         $webDir = $customPaths['web-dir'] ?? 'public';
         $typo3confDir = $customPaths['typo3conf-dir'] ?? $webDir . '/typo3conf';
 
-        return [
+        $fallbackPaths = [
             'package_states' => $installationPath . '/' . $typo3confDir . '/PackageStates.php',
             'composer_installed' => $installationPath . '/' . $vendorDir . '/composer/installed.json',
             'vendor_dir' => $installationPath . '/' . $vendorDir,
             'web_dir' => $installationPath . '/' . $webDir,
             'typo3conf_dir' => $installationPath . '/' . $typo3confDir,
         ];
+
+        // Use successful PathResolutionService results where available
+        return array_merge($fallbackPaths, $successfulPaths);
     }
 
     /**

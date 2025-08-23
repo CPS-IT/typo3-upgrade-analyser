@@ -240,6 +240,7 @@ services:
       - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['discovery_service']
 
   # Installation Discovery Service with Configuration Discovery
