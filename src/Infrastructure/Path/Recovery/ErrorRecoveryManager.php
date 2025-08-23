@@ -356,23 +356,117 @@ final class ErrorRecoveryManager
     {
         $alternatives = [];
 
-        // Search common extension locations
-        $commonLocations = [
-            '/public/typo3conf/ext/',
-            '/web/typo3conf/ext/',
-            '/typo3conf/ext/',
-            '/app/public/typo3conf/ext/',
-            '/htdocs/typo3conf/ext/',
-        ];
+        // Enhanced search locations including Docker, custom installations
+        $searchLocations = $this->getExtensionSearchLocations($installationPath);
 
-        foreach ($commonLocations as $location) {
-            $path = $installationPath . $location . $extensionKey;
+        foreach ($searchLocations as $location) {
+            $path = $location . '/' . $extensionKey;
             if (is_dir($path)) {
                 $alternatives[] = $path;
+
+                $this->logger->debug('Alternative extension path found', [
+                    'extension' => $extensionKey,
+                    'path' => $path,
+                    'search_location' => $location,
+                ]);
             }
         }
 
+        // Remove duplicates and sort by path length (shorter paths first)
+        $alternatives = array_unique($alternatives);
+        usort($alternatives, fn ($a, $b): int => \strlen($a) <=> \strlen($b));
+
         return $alternatives;
+    }
+
+    /**
+     * Get comprehensive list of extension search locations.
+     *
+     * @param string $installationPath Base installation path
+     *
+     * @return array<string> Extension search directories
+     */
+    private function getExtensionSearchLocations(string $installationPath): array
+    {
+        $locations = [];
+
+        // Standard Composer installations
+        $standardPaths = [
+            '/public/typo3conf/ext',
+            '/web/typo3conf/ext', // Alternative web dir
+            '/typo3conf/ext', // Legacy installations
+        ];
+
+        // Docker and custom installations
+        $dockerPaths = [
+            '/app/public/typo3conf/ext',
+            '/var/www/html/typo3conf/ext',
+            '/var/www/html/public/typo3conf/ext',
+            '/htdocs/typo3conf/ext',
+            '/htdocs/public/typo3conf/ext',
+            '/public_html/typo3conf/ext',
+        ];
+
+        // Check standard paths first
+        foreach ($standardPaths as $path) {
+            $fullPath = $installationPath . $path;
+            if (is_dir($fullPath)) {
+                $locations[] = $fullPath;
+            }
+        }
+
+        // Check Docker and custom paths
+        foreach ($dockerPaths as $path) {
+            $fullPath = $installationPath . $path;
+            if (is_dir($fullPath)) {
+                $locations[] = $fullPath;
+            }
+        }
+
+        // Check composer.json for custom web-dir configuration
+        $customWebDir = $this->detectCustomWebDir($installationPath);
+        if ($customWebDir) {
+            $customExtPath = $installationPath . '/' . $customWebDir . '/typo3conf/ext';
+            if (is_dir($customExtPath)) {
+                $locations[] = $customExtPath;
+            }
+        }
+
+        return array_unique($locations);
+    }
+
+    /**
+     * Detect custom web directory from composer.json.
+     *
+     * @param string $installationPath Installation path
+     *
+     * @return string|null Custom web directory or null
+     */
+    private function detectCustomWebDir(string $installationPath): ?string
+    {
+        $composerJsonPath = $installationPath . '/composer.json';
+
+        if (!file_exists($composerJsonPath)) {
+            return null;
+        }
+
+        try {
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return null;
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+            return $composerData['extra']['typo3/cms']['web-dir'] ?? null;
+        } catch (\JsonException $e) {
+            $this->logger->debug('Failed to parse composer.json for web-dir detection', [
+                'path' => $composerJsonPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function generateConfigurationSuggestions(PathResolutionRequest $request): array
@@ -400,37 +494,217 @@ final class ErrorRecoveryManager
     private function getDefaultPathsForType(PathResolutionRequest $request): array
     {
         if (!$request->extensionIdentifier) {
-            return [];
+            return $this->getDefaultDirectoryPaths($request->installationPath);
         }
 
         $extensionKey = $request->extensionIdentifier->key;
-        $installationPath = $request->installationPath;
 
-        return [
-            $installationPath . '/public/typo3conf/ext/' . $extensionKey,
-            $installationPath . '/typo3conf/ext/' . $extensionKey,
-            $installationPath . '/web/typo3conf/ext/' . $extensionKey,
+        return $this->findAlternativePaths($extensionKey, $request->installationPath);
+    }
+
+    /**
+     * Get default directory paths for common TYPO3 directories.
+     *
+     * @param string $installationPath Installation path
+     *
+     * @return array<string> Default directory paths
+     */
+    private function getDefaultDirectoryPaths(string $installationPath): array
+    {
+        $paths = [];
+
+        // Standard directory patterns
+        $directoryPatterns = [
+            // Web directories
+            '/public',
+            '/web',
+            '/htdocs',
+            '/public_html',
+            '/app/public',
+            '/var/www/html',
+            // TYPO3 conf directories
+            '/public/typo3conf',
+            '/web/typo3conf',
+            '/typo3conf',
+            '/htdocs/typo3conf',
+            '/app/public/typo3conf',
+            // Vendor directories
+            '/vendor',
+            '/app/vendor',
         ];
+
+        foreach ($directoryPatterns as $pattern) {
+            $path = $installationPath . $pattern;
+            if (is_dir($path)) {
+                $paths[] = $path;
+            }
+        }
+
+        // Add custom web dir based paths
+        $customWebDir = $this->detectCustomWebDir($installationPath);
+        if ($customWebDir) {
+            $customPaths = [
+                $installationPath . '/' . $customWebDir,
+                $installationPath . '/' . $customWebDir . '/typo3conf',
+            ];
+
+            foreach ($customPaths as $customPath) {
+                if (is_dir($customPath)) {
+                    $paths[] = $customPath;
+                }
+            }
+        }
+
+        return array_unique($paths);
     }
 
     private function searchForCustomInstallationPaths(string $installationPath): array
     {
         $customPaths = [];
 
-        // Search for TYPO3 directories at different levels
-        $searchPaths = [
-            $installationPath,
-            $installationPath . '/app',
-            $installationPath . '/htdocs',
-            $installationPath . '/public_html',
+        // Enhanced search for custom installation patterns
+        $searchPatterns = [
+            // Docker container patterns
+            '/app',
+            '/var/www/html',
+            '/usr/share/nginx/html',
+            // Traditional web server patterns
+            '/htdocs',
+            '/public_html',
+            '/www',
+            // Development patterns
+            '/web',
+            '/public',
+            '/src/public',
         ];
 
-        foreach ($searchPaths as $searchPath) {
-            if (is_dir($searchPath . '/typo3conf')) {
-                $customPaths[] = $searchPath . '/typo3conf/ext';
+        foreach ($searchPatterns as $pattern) {
+            $searchPath = $installationPath . $pattern;
+
+            // Check if this path contains TYPO3 indicators
+            if ($this->isTypo3Directory($searchPath)) {
+                $customPaths[] = $searchPath;
+
+                // Add related paths
+                $relatedPaths = [
+                    $searchPath . '/typo3conf',
+                    $searchPath . '/typo3conf/ext',
+                ];
+
+                foreach ($relatedPaths as $relatedPath) {
+                    if (is_dir($relatedPath)) {
+                        $customPaths[] = $relatedPath;
+                    }
+                }
             }
         }
 
-        return $customPaths;
+        // Check composer.json for custom paths
+        $composerPaths = $this->getComposerBasedPaths($installationPath);
+        $customPaths = array_merge($customPaths, $composerPaths);
+
+        // Filter out non-existent paths and remove duplicates
+        $customPaths = array_filter($customPaths, 'is_dir');
+        $customPaths = array_unique($customPaths);
+
+        $this->logger->debug('Custom installation paths discovered', [
+            'installation_path' => $installationPath,
+            'paths_found' => \count($customPaths),
+            'paths' => $customPaths,
+        ]);
+
+        return array_values($customPaths);
+    }
+
+    /**
+     * Check if a directory contains TYPO3 indicators.
+     *
+     * @param string $path Directory path to check
+     *
+     * @return bool True if TYPO3 indicators found
+     */
+    private function isTypo3Directory(string $path): bool
+    {
+        if (!is_dir($path)) {
+            return false;
+        }
+
+        $typo3Indicators = [
+            '/typo3conf',
+            '/typo3',
+            '/index.php', // TYPO3 main entry point
+        ];
+
+        $foundIndicators = 0;
+        foreach ($typo3Indicators as $indicator) {
+            if (file_exists($path . $indicator)) {
+                ++$foundIndicators;
+            }
+        }
+
+        // Require at least 2 indicators for confidence
+        return $foundIndicators >= 2;
+    }
+
+    /**
+     * Get custom paths from composer.json configuration.
+     *
+     * @param string $installationPath Installation path
+     *
+     * @return array<string> Custom paths from composer config
+     */
+    private function getComposerBasedPaths(string $installationPath): array
+    {
+        $paths = [];
+        $composerJsonPath = $installationPath . '/composer.json';
+
+        if (!file_exists($composerJsonPath)) {
+            return $paths;
+        }
+
+        try {
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return $paths;
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+            // Check vendor-dir configuration
+            if (isset($composerData['config']['vendor-dir'])) {
+                $vendorDir = $installationPath . '/' . $composerData['config']['vendor-dir'];
+                if (is_dir($vendorDir)) {
+                    $paths[] = $vendorDir;
+                }
+            }
+
+            // Check TYPO3 web-dir configuration
+            if (isset($composerData['extra']['typo3/cms']['web-dir'])) {
+                $webDir = $installationPath . '/' . $composerData['extra']['typo3/cms']['web-dir'];
+                if (is_dir($webDir)) {
+                    $paths[] = $webDir;
+
+                    // Add related TYPO3 paths
+                    $typo3Paths = [
+                        $webDir . '/typo3conf',
+                        $webDir . '/typo3conf/ext',
+                        $webDir . '/typo3',
+                    ];
+
+                    foreach ($typo3Paths as $typo3Path) {
+                        if (is_dir($typo3Path)) {
+                            $paths[] = $typo3Path;
+                        }
+                    }
+                }
+            }
+        } catch (\JsonException $e) {
+            $this->logger->debug('Failed to parse composer.json for custom paths', [
+                'path' => $composerJsonPath,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $paths;
     }
 }
