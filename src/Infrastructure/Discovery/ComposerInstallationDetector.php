@@ -16,6 +16,11 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,6 +41,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
 
     public function __construct(
         private readonly VersionExtractor $versionExtractor,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -116,9 +122,8 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             return false;
         }
 
-        // Detect custom paths from composer.json (version-agnostic for supports check)
-        $customPaths = $this->detectCustomPaths($path);
-        $webDir = $customPaths['web-dir'];
+        // Detect web directory for TYPO3 indicators check
+        $webDir = $this->getWebDirectoryForSupportsCheck($path);
 
         // Check for TYPO3 indicators using custom paths (both v11 and v12+ locations)
         $typo3Indicators = [
@@ -326,16 +331,25 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     }
 
     /**
-     * Detect custom paths in TYPO3 installation.
+     * Detect custom paths in TYPO3 installation using PathResolutionService.
      *
-     * @param string       $path    Installation path
-     * @param Version|null $version TYPO3 version (optional, for version-specific path detection)
+     * @param string  $path    Installation path
+     * @param Version $version TYPO3 version for version-specific path detection
      *
      * @return array<string, string> Custom paths
      */
-    private function detectCustomPaths(string $path, ?Version $version = null): array
+    private function detectCustomPaths(string $path, Version $version): array
     {
-        $paths = [
+        $installationType = $this->determineInstallationType($path, $version);
+        $pathConfiguration = PathConfiguration::createDefault();
+
+        $pathTypes = [
+            'vendor-dir' => PathTypeEnum::VENDOR_DIR,
+            'web-dir' => PathTypeEnum::WEB_DIR,
+            'typo3conf-dir' => PathTypeEnum::TYPO3CONF_DIR,
+        ];
+
+        $resolvedPaths = [
             'vendor-dir' => 'vendor',
             'web-dir' => 'public',
             'typo3conf-dir' => 'public/typo3conf',
@@ -343,80 +357,133 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             'config' => 'config',
         ];
 
+        foreach ($pathTypes as $pathKey => $pathType) {
+            $request = PathResolutionRequest::builder()
+                ->pathType($pathType)
+                ->installationPath($path)
+                ->installationType($installationType)
+                ->pathConfiguration($pathConfiguration)
+                ->build();
+
+            $response = $this->pathResolutionService->resolvePath($request);
+
+            if ($response->isSuccess() && $response->resolvedPath) {
+                // Convert absolute path to relative path for consistency
+                $relativePath = str_replace($path . '/', '', $response->resolvedPath);
+                $resolvedPaths[$pathKey] = $relativePath;
+
+                $this->logger->debug('Path resolved via PathResolutionService', [
+                    'path_type' => $pathType->value,
+                    'resolved_path' => $relativePath,
+                    'strategy' => $response->metadata->usedStrategy,
+                ]);
+            } else {
+                $this->logger->debug('Path resolution failed, using default', [
+                    'path_type' => $pathType->value,
+                    'default_path' => $resolvedPaths[$pathKey],
+                    'errors' => $response->errors,
+                ]);
+            }
+        }
+
+        $this->logger->debug('Custom paths detected using PathResolutionService', [
+            'paths' => $resolvedPaths,
+            'typo3_version' => $version->toString(),
+            'installation_type' => $installationType->value,
+        ]);
+
+        return $resolvedPaths;
+    }
+
+    /**
+     * Get web directory for supports() method check (simplified version).
+     *
+     * @param string $path Installation path
+     *
+     * @return string Web directory path
+     */
+    private function getWebDirectoryForSupportsCheck(string $path): string
+    {
         $composerJsonPath = $path . '/composer.json';
 
         if (!file_exists($composerJsonPath)) {
-            $this->logger->debug('composer.json not found, using default paths');
-
-            return $paths;
+            return 'public';
         }
 
         try {
             $json = file_get_contents($composerJsonPath);
             if (false === $json) {
-                return $paths;
+                return 'public';
             }
 
             $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
             if (!\is_array($composerData)) {
-                return $paths;
+                return 'public';
             }
 
-            // Read the composer config section
-            if (isset($composerData['config'])) {
-                $composerConfig = $composerData['config'];
-
-                if (isset($composerConfig['vendor-dir'])) {
-                    $paths['vendor-dir'] = $composerConfig['vendor-dir'];
-                }
+            // Read TYPO3-specific web-dir configuration
+            if (isset($composerData['extra']['typo3/cms']['web-dir'])) {
+                return $composerData['extra']['typo3/cms']['web-dir'];
             }
 
-            // Read TYPO3-specific configuration from extra section
+            return 'public';
+        } catch (\JsonException) {
+            return 'public';
+        }
+    }
+
+    /**
+     * Determine installation type based on composer.json and directory structure.
+     *
+     * @param string  $path    Installation path
+     * @param Version $version TYPO3 version
+     *
+     * @return InstallationTypeEnum Installation type
+     */
+    private function determineInstallationType(string $path, Version $version): InstallationTypeEnum
+    {
+        $composerJsonPath = $path . '/composer.json';
+
+        if (!file_exists($composerJsonPath)) {
+            return InstallationTypeEnum::LEGACY_SOURCE;
+        }
+
+        try {
+            $json = file_get_contents($composerJsonPath);
+            if (false === $json) {
+                return InstallationTypeEnum::COMPOSER_STANDARD;
+            }
+
+            $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+            if (!\is_array($composerData)) {
+                return InstallationTypeEnum::COMPOSER_STANDARD;
+            }
+
+            // Check for custom TYPO3 configuration
             if (isset($composerData['extra']['typo3/cms'])) {
                 $typo3Config = $composerData['extra']['typo3/cms'];
 
-                if (isset($typo3Config['web-dir'])) {
-                    $paths['web-dir'] = $typo3Config['web-dir'];
+                // If custom web-dir is configured, it's a custom installation
+                if (isset($typo3Config['web-dir']) && 'public' !== $typo3Config['web-dir']) {
+                    return InstallationTypeEnum::COMPOSER_CUSTOM;
                 }
             }
 
-            // Update typo3conf-dir based on web-dir and TYPO3 version
-            // TYPO3 v12+ uses web-dir/typo3conf, TYPO3 v11 and earlier uses typo3conf
-            if ($version && $version->getMajor() >= 12) {
-                $paths['typo3conf-dir'] = $paths['web-dir'] . '/typo3conf';
-            } else {
-                // For TYPO3 v11 and earlier, typo3conf is in the root directory
-                $paths['typo3conf-dir'] = 'typo3conf';
-
-                // Verify the path exists, otherwise try common alternatives
-                $possiblePaths = [
-                    'typo3conf',
-                    $paths['web-dir'] . '/typo3conf', // fallback for misconfigured v11 installations
-                ];
-
-                foreach ($possiblePaths as $possiblePath) {
-                    if (is_dir($path . '/' . $possiblePath)) {
-                        $paths['typo3conf-dir'] = $possiblePath;
-                        break;
-                    }
-                }
+            // Check for custom vendor directory
+            if (isset($composerData['config']['vendor-dir']) && 'vendor' !== $composerData['config']['vendor-dir']) {
+                return InstallationTypeEnum::COMPOSER_CUSTOM;
             }
 
-            $this->logger->debug('Custom paths detected from composer.json', [
-                'paths' => $paths,
-                'typo3_version' => $version?->toString() ?? 'unknown',
-                'version_aware_typo3conf_path' => $version ? ($version->getMajor() >= 12 ? 'v12+ mode' : 'v11 mode') : 'fallback mode',
-            ]);
+            // Check for Docker indicators
+            if (file_exists($path . '/docker-compose.yml') || file_exists($path . '/Dockerfile')) {
+                return InstallationTypeEnum::DOCKER_CONTAINER;
+            }
 
-            return $paths;
-        } catch (\JsonException $e) {
-            $this->logger->warning('Failed to parse composer.json for custom paths', [
-                'path' => $composerJsonPath,
-                'error' => $e->getMessage(),
-            ]);
-
-            return $paths;
+            return InstallationTypeEnum::COMPOSER_STANDARD;
+        } catch (\JsonException) {
+            return InstallationTypeEnum::COMPOSER_STANDARD;
         }
     }
 
