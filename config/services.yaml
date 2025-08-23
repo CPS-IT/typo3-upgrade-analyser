@@ -266,6 +266,10 @@ services:
 
   # Detection Strategies
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
+      - '@logger'
     tags: ['detection_strategy']
 
   # Configuration Service
