@@ -65,7 +65,7 @@
             "type": "typo3-cms-extension",
             "extra": {
                 "typo3/cms": {
-                    "extension-key": "news"
+                    "extension-key": "example_news"
                 }
             },
             "installation-source": "dist",

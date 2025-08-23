@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$EM_CONF['news'] = [
+$EM_CONF['example_news'] = [
     'title' => 'News Extension',
     'description' => 'Example news extension for testing',
     'category' => 'plugin',

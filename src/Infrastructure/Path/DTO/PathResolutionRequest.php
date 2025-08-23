@@ -40,13 +40,15 @@ final readonly class PathResolutionRequest
 
     public function getCacheKey(): string
     {
+        // Use faster CRC32 hashing instead of SHA256 for cache keys
+        // CRC32 is sufficient for cache key collision avoidance and much faster
         return \sprintf(
-            'path_resolution:%s:%s:%s:%s:%s',
+            'path_resolution:%s:%s:%08x:%08x:%08x',
             $this->pathType->value,
             $this->installationType->value,
-            hash('sha256', $this->installationPath),
-            hash('sha256', serialize($this->pathConfiguration->toArray())),
-            hash('sha256', serialize($this->extensionIdentifier->key ?? '')),
+            crc32($this->installationPath),
+            crc32(serialize($this->pathConfiguration->toArray())),
+            crc32(serialize($this->extensionIdentifier->key ?? '')),
         );
     }
 
