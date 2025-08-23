@@ -291,10 +291,26 @@ services:
       - '%app.root_dir%'
 
   # Report Service
+  # Report Context Builder
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder:
+    public: false
+
+  # Template Renderer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer:
+    arguments:
+      - '@Twig\Environment'
+    public: false
+
+  # Report File Manager
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager:
+    public: false
+
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService:
     public: true
     arguments:
-      - '@Twig\Environment'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager'
       - '@logger'
 
   # Path Resolution Service
