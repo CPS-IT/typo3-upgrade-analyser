@@ -19,6 +19,11 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +33,7 @@ use Psr\Log\LoggerInterface;
 final class ConfigurationDiscoveryServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
+    private PathResolutionServiceInterface&MockObject $pathResolutionService;
     private ConfigurationParserInterface&MockObject $phpParser;
     private ConfigurationParserInterface&MockObject $yamlParser;
     private ConfigurationDiscoveryService $service;
@@ -37,8 +43,12 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
         $this->phpParser = $this->createMock(ConfigurationParserInterface::class);
         $this->yamlParser = $this->createMock(ConfigurationParserInterface::class);
+
+        // Setup default PathResolutionService behavior
+        $this->setupDefaultPathResolutionMocks();
 
         // Configure PHP parser mock
         $this->phpParser->method('getFormat')->willReturn('php');
@@ -54,6 +64,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
 
         $this->service = new ConfigurationDiscoveryService(
             [$this->phpParser, $this->yamlParser],
+            $this->pathResolutionService,
             $this->logger,
         );
 
@@ -93,10 +104,102 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         rmdir($dir);
     }
 
+    private function setupDefaultPathResolutionMocks(): void
+    {
+        // Create default metadata for path resolution responses
+        $defaultMetadata = new PathResolutionMetadata(
+            PathTypeEnum::LOCAL_CONFIGURATION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'default_mock',
+            0,
+            [],
+            [],
+            0.0,
+            false,
+            'mock_resolution',
+        );
+
+        // Mock path resolution service to return expected paths
+        $this->pathResolutionService->method('resolvePath')
+            ->willReturnCallback(function ($request) use ($defaultMetadata): PathResolutionResponse {
+                return match ($request->pathType) {
+                    PathTypeEnum::LOCAL_CONFIGURATION => PathResolutionResponse::success(
+                        PathTypeEnum::LOCAL_CONFIGURATION,
+                        $request->installationPath . '/config/LocalConfiguration.php',
+                        $defaultMetadata,
+                        [
+                            $request->installationPath . '/typo3conf/LocalConfiguration.php', // Legacy fallback
+                        ],
+                        [],
+                        'cache_key_local_config',
+                        0.1,
+                    ),
+                    PathTypeEnum::PACKAGE_STATES => PathResolutionResponse::success(
+                        PathTypeEnum::PACKAGE_STATES,
+                        $request->installationPath . '/config/PackageStates.php',
+                        $defaultMetadata,
+                        [
+                            $request->installationPath . '/typo3conf/PackageStates.php', // Legacy fallback
+                        ],
+                        [],
+                        'cache_key_package_states',
+                        0.1,
+                    ),
+                    PathTypeEnum::WEB_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::WEB_DIR,
+                        $request->installationPath . '/public',
+                        $defaultMetadata,
+                        [
+                            $request->installationPath . '/web',
+                            $request->installationPath, // Root directory for Services.yaml search
+                        ],
+                        [],
+                        'cache_key_web_dir',
+                        0.1,
+                    ),
+                    PathTypeEnum::TYPO3CONF_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::TYPO3CONF_DIR,
+                        $request->installationPath . '/public/typo3conf',
+                        $defaultMetadata,
+                        [
+                            $request->installationPath . '/typo3conf', // Legacy fallback
+                        ],
+                        [],
+                        'cache_key_typo3conf_dir',
+                        0.1,
+                    ),
+                    PathTypeEnum::VENDOR_DIR => PathResolutionResponse::success(
+                        PathTypeEnum::VENDOR_DIR,
+                        $request->installationPath . '/vendor',
+                        $defaultMetadata,
+                        [
+                            $request->installationPath . '/extensions', // For Services.yaml search
+                            $request->installationPath . '/ext', // For Services.yaml search
+                        ],
+                        [],
+                        'cache_key_vendor_dir',
+                        0.1,
+                    ),
+                    default => PathResolutionResponse::notFound(
+                        $request->pathType,
+                        $defaultMetadata,
+                        [],
+                        ['Path type not mocked'],
+                        'cache_key_default',
+                        0.1,
+                    ),
+                };
+            });
+    }
+
     public function testConstructorWithParsers(): void
     {
         $parsers = [$this->phpParser, $this->yamlParser];
-        $service = new ConfigurationDiscoveryService($parsers, $this->logger);
+        $service = new ConfigurationDiscoveryService(
+            $parsers,
+            $this->pathResolutionService,
+            $this->logger,
+        );
 
         self::assertSame($parsers, $service->getParsers());
     }
