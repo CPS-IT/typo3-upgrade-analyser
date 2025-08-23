@@ -16,6 +16,11 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Finder\Finder;
 
@@ -28,11 +33,13 @@ use Symfony\Component\Finder\Finder;
 class ConfigurationDiscoveryService
 {
     /**
-     * @param iterable<ConfigurationParserInterface> $parsers Available configuration parsers
-     * @param LoggerInterface                        $logger  Logger instance
+     * @param iterable<ConfigurationParserInterface> $parsers               Available configuration parsers
+     * @param PathResolutionServiceInterface         $pathResolutionService Path resolution service
+     * @param LoggerInterface                        $logger                Logger instance
      */
     public function __construct(
         private readonly iterable $parsers,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -67,7 +74,7 @@ class ConfigurationDiscoveryService
     }
 
     /**
-     * Find configuration files in installation directory.
+     * Find configuration files in installation directory using PathResolutionService.
      *
      * @param string $installationPath Installation root path
      *
@@ -75,54 +82,28 @@ class ConfigurationDiscoveryService
      */
     private function findConfigurationFiles(string $installationPath): array
     {
-        $finder = new Finder();
         $files = [];
+        $installationType = $this->determineInstallationType($installationPath);
+        $pathConfiguration = PathConfiguration::createDefault();
 
         try {
-            // Core configuration files
-            $coreConfigs = [
-                'LocalConfiguration.php',
-                'AdditionalConfiguration.php',
-                'PackageStates.php',
-            ];
+            // Find core configuration files using PathResolutionService
+            $coreConfigFiles = $this->findCoreConfigurationFiles($installationPath, $installationType, $pathConfiguration);
+            $files = array_merge($files, $coreConfigFiles);
 
-            foreach ($coreConfigs as $configFile) {
-                $configPath = $installationPath . '/config/' . $configFile;
-                if (file_exists($configPath)) {
-                    $files[] = new \SplFileInfo($configPath);
-                }
+            // Find Services.yaml files
+            $servicesFiles = $this->findServicesFiles($installationPath, $installationType, $pathConfiguration);
+            $files = array_merge($files, $servicesFiles);
 
-                // Also check legacy locations
-                $legacyPath = $installationPath . '/typo3conf/' . $configFile;
-                if (file_exists($legacyPath)) {
-                    $files[] = new \SplFileInfo($legacyPath);
-                }
-            }
+            // Find site configuration files
+            $siteConfigFiles = $this->findSiteConfigurationFiles($installationPath, $installationType, $pathConfiguration);
+            $files = array_merge($files, $siteConfigFiles);
 
-            // Services.yaml files
-            $servicesFiles = $finder->create()
-                ->files()
-                ->name('Services.yaml')
-                ->in($installationPath)
-                ->depth('< 4'); // Limit depth to avoid deep traversal
-
-            foreach ($servicesFiles as $file) {
-                $files[] = $file;
-            }
-
-            // Site configurations
-            $siteConfigDir = $installationPath . '/config/sites';
-            if (is_dir($siteConfigDir)) {
-                $siteConfigs = $finder->create()
-                    ->files()
-                    ->name('config.yaml')
-                    ->in($siteConfigDir)
-                    ->depth('== 1'); // Only direct subdirectories
-
-                foreach ($siteConfigs as $file) {
-                    $files[] = $file;
-                }
-            }
+            $this->logger->debug('Configuration file discovery completed', [
+                'installation_path' => $installationPath,
+                'installation_type' => $installationType->value,
+                'files_found' => \count($files),
+            ]);
         } catch (\Exception $e) {
             $this->logger->warning('Error finding configuration files', [
                 'installation_path' => $installationPath,
@@ -131,6 +112,292 @@ class ConfigurationDiscoveryService
         }
 
         return $files;
+    }
+
+    /**
+     * Find core TYPO3 configuration files.
+     *
+     * @param string               $installationPath  Installation path
+     * @param InstallationTypeEnum $installationType  Installation type
+     * @param PathConfiguration    $pathConfiguration Path configuration
+     *
+     * @return array<\SplFileInfo> Core configuration files
+     */
+    private function findCoreConfigurationFiles(
+        string $installationPath,
+        InstallationTypeEnum $installationType,
+        PathConfiguration $pathConfiguration,
+    ): array {
+        $files = [];
+        $coreConfigs = [
+            'LocalConfiguration.php' => PathTypeEnum::LOCAL_CONFIGURATION,
+            'AdditionalConfiguration.php' => PathTypeEnum::LOCAL_CONFIGURATION, // Same type for both
+            'PackageStates.php' => PathTypeEnum::PACKAGE_STATES,
+        ];
+
+        foreach ($coreConfigs as $configFile => $pathType) {
+            $request = PathResolutionRequest::builder()
+                ->pathType($pathType)
+                ->installationPath($installationPath)
+                ->installationType($installationType)
+                ->pathConfiguration($pathConfiguration)
+                ->build();
+
+            $response = $this->pathResolutionService->resolvePath($request);
+
+            // Try both modern and legacy paths
+            $searchPaths = [];
+            if ($response->isSuccess() && $response->resolvedPath) {
+                // Use resolved configuration directory
+                $configDir = \dirname($response->resolvedPath);
+                $searchPaths[] = $configDir . '/' . $configFile;
+            }
+
+            // Add alternative paths from response
+            foreach ($response->alternativePaths as $altPath) {
+                $searchPaths[] = \dirname($altPath) . '/' . $configFile;
+            }
+
+            // Add standard fallback paths
+            $searchPaths = array_merge($searchPaths, [
+                $installationPath . '/config/' . $configFile, // TYPO3 v12+
+                $installationPath . '/typo3conf/' . $configFile, // TYPO3 v11 and earlier
+            ]);
+
+            // Check all paths and add existing files
+            foreach (array_unique($searchPaths) as $configPath) {
+                if (file_exists($configPath)) {
+                    $files[] = new \SplFileInfo($configPath);
+
+                    $this->logger->debug('Core configuration file found', [
+                        'file' => $configFile,
+                        'path' => $configPath,
+                        'type' => $pathType->value,
+                    ]);
+                    break; // Only add the first found instance
+                }
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Find Services.yaml files using PathResolutionService.
+     *
+     * @param string               $installationPath  Installation path
+     * @param InstallationTypeEnum $installationType  Installation type
+     * @param PathConfiguration    $pathConfiguration Path configuration
+     *
+     * @return array<\SplFileInfo> Services.yaml files
+     */
+    private function findServicesFiles(
+        string $installationPath,
+        InstallationTypeEnum $installationType,
+        PathConfiguration $pathConfiguration,
+    ): array {
+        $files = [];
+        $finder = new Finder();
+
+        // Get base directories to search from PathResolutionService
+        $searchDirectories = $this->getSearchDirectories($installationPath, $installationType, $pathConfiguration);
+
+        foreach ($searchDirectories as $searchDir) {
+            if (!is_dir($searchDir)) {
+                continue;
+            }
+
+            try {
+                $servicesFiles = $finder->create()
+                    ->files()
+                    ->name('Services.yaml')
+                    ->in($searchDir)
+                    ->depth('< 4'); // Limit depth to avoid deep traversal
+
+                foreach ($servicesFiles as $file) {
+                    $files[] = $file;
+
+                    $this->logger->debug('Services.yaml file found', [
+                        'path' => $file->getRealPath(),
+                        'search_dir' => $searchDir,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $this->logger->debug('Error searching for Services.yaml in directory', [
+                    'directory' => $searchDir,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Find site configuration files.
+     *
+     * @param string               $installationPath  Installation path
+     * @param InstallationTypeEnum $installationType  Installation type
+     * @param PathConfiguration    $pathConfiguration Path configuration
+     *
+     * @return array<\SplFileInfo> Site configuration files
+     */
+    private function findSiteConfigurationFiles(
+        string $installationPath,
+        InstallationTypeEnum $installationType,
+        PathConfiguration $pathConfiguration,
+    ): array {
+        $files = [];
+        $finder = new Finder();
+
+        // Try to find config directory using PathResolutionService
+        $request = PathResolutionRequest::builder()
+            ->pathType(PathTypeEnum::LOCAL_CONFIGURATION)
+            ->installationPath($installationPath)
+            ->installationType($installationType)
+            ->pathConfiguration($pathConfiguration)
+            ->build();
+
+        $response = $this->pathResolutionService->resolvePath($request);
+
+        $siteConfigDirs = [];
+        if ($response->isSuccess() && $response->resolvedPath) {
+            // Use the directory containing the resolved configuration file
+            $configBaseDir = \dirname($response->resolvedPath);
+            $siteConfigDirs[] = $configBaseDir . '/sites';
+        }
+
+        // Add alternative paths
+        foreach ($response->alternativePaths as $altPath) {
+            $siteConfigDirs[] = \dirname($altPath) . '/sites';
+        }
+
+        // Add standard fallback paths
+        $siteConfigDirs = array_merge($siteConfigDirs, [
+            $installationPath . '/config/sites', // TYPO3 v12+
+            $installationPath . '/typo3conf/sites', // Fallback
+        ]);
+
+        // Search in all potential site config directories
+        foreach (array_unique($siteConfigDirs) as $siteConfigDir) {
+            if (!is_dir($siteConfigDir)) {
+                continue;
+            }
+
+            try {
+                $siteConfigs = $finder->create()
+                    ->files()
+                    ->name('config.yaml')
+                    ->in($siteConfigDir)
+                    ->depth('== 1'); // Only direct subdirectories
+
+                foreach ($siteConfigs as $file) {
+                    $files[] = $file;
+
+                    $this->logger->debug('Site configuration file found', [
+                        'path' => $file->getRealPath(),
+                        'site_dir' => $siteConfigDir,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $this->logger->debug('Error searching for site configs in directory', [
+                    'directory' => $siteConfigDir,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Get search directories for Services.yaml files.
+     *
+     * @param string               $installationPath  Installation path
+     * @param InstallationTypeEnum $installationType  Installation type
+     * @param PathConfiguration    $pathConfiguration Path configuration
+     *
+     * @return array<string> Search directories
+     */
+    private function getSearchDirectories(
+        string $installationPath,
+        InstallationTypeEnum $installationType,
+        PathConfiguration $pathConfiguration,
+    ): array {
+        $directories = [$installationPath]; // Always include root
+
+        // Get additional directories from PathResolutionService
+        $pathTypes = [
+            PathTypeEnum::WEB_DIR,
+            PathTypeEnum::TYPO3CONF_DIR,
+            PathTypeEnum::VENDOR_DIR,
+        ];
+
+        foreach ($pathTypes as $pathType) {
+            $request = PathResolutionRequest::builder()
+                ->pathType($pathType)
+                ->installationPath($installationPath)
+                ->installationType($installationType)
+                ->pathConfiguration($pathConfiguration)
+                ->build();
+
+            $response = $this->pathResolutionService->resolvePath($request);
+
+            if ($response->isSuccess() && $response->resolvedPath && is_dir($response->resolvedPath)) {
+                $directories[] = $response->resolvedPath;
+            }
+
+            // Add alternative paths
+            foreach ($response->alternativePaths as $altPath) {
+                if (is_dir($altPath)) {
+                    $directories[] = $altPath;
+                }
+            }
+        }
+
+        return array_unique($directories);
+    }
+
+    /**
+     * Determine installation type for path resolution.
+     *
+     * @param string $installationPath Installation path
+     *
+     * @return InstallationTypeEnum Installation type
+     */
+    private function determineInstallationType(string $installationPath): InstallationTypeEnum
+    {
+        // Check for composer.json to determine if it's a Composer installation
+        if (file_exists($installationPath . '/composer.json')) {
+            try {
+                $json = file_get_contents($installationPath . '/composer.json');
+                if (false !== $json) {
+                    $composerData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+                    // Check for custom TYPO3 configuration
+                    if (isset($composerData['extra']['typo3/cms'])) {
+                        return InstallationTypeEnum::COMPOSER_CUSTOM;
+                    }
+
+                    // Check for custom vendor directory
+                    if (isset($composerData['config']['vendor-dir']) && 'vendor' !== $composerData['config']['vendor-dir']) {
+                        return InstallationTypeEnum::COMPOSER_CUSTOM;
+                    }
+
+                    return InstallationTypeEnum::COMPOSER_STANDARD;
+                }
+            } catch (\JsonException) {
+                // Fall through to default
+            }
+        }
+
+        // Check for Docker indicators
+        if (file_exists($installationPath . '/docker-compose.yml') || file_exists($installationPath . '/Dockerfile')) {
+            return InstallationTypeEnum::DOCKER_CONTAINER;
+        }
+
+        // Default to legacy source installation
+        return InstallationTypeEnum::LEGACY_SOURCE;
     }
 
     /**

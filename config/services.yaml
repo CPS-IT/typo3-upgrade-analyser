@@ -225,6 +225,7 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService:
     arguments:
       - !tagged_iterator 'configuration_parser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
       - '@logger'
 
   # Discovery Services
