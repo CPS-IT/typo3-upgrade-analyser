@@ -1,0 +1,46 @@
+{
+    "packages": [
+        {
+            "name": "typo3/cms-core",
+            "version": "11.5.47",
+            "type": "typo3-cms-framework",
+            "extra": {}
+        },
+        {
+            "name": "typo3/cms-backend",
+            "version": "11.5.47",
+            "type": "typo3-cms-framework",
+            "extra": {}
+        },
+        {
+            "name": "symfony/console",
+            "version": "5.4.0",
+            "type": "library",
+            "extra": {}
+        },
+        {
+            "name": "georgringer/news",
+            "version": "9.3.1",
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "news"
+                }
+            },
+            "install-path": "../../app/web/typo3conf/ext/news"
+        },
+        {
+            "name": "in2code/powermail",
+            "version": "8.5.0",
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "powermail"
+                }
+            },
+            "install-path": "../../app/web/typo3conf/ext/powermail"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
+}
