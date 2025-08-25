@@ -356,3 +356,28 @@ services:
       - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy'
     tags: ['path_resolution_strategy']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\VendorDirPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\WebDirPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\Typo3ConfDirPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ComposerInstalledPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PackageStatesPathResolutionStrategy:
+    arguments:
+      - '@logger'
+    tags: ['path_resolution_strategy']

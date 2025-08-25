@@ -1,0 +1,23 @@
+{
+  "name": "test/v11-app-vendor",
+  "description": "TYPO3 v11 Composer installation with vendor directory in app/vendor for testing",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "typo3/cms-core": "^11.5",
+    "typo3/cms-backend": "^11.5",
+    "typo3/cms-extbase": "^11.5",
+    "typo3/cms-fluid": "^11.5",
+    "typo3/cms-frontend": "^11.5",
+    "typo3/cms-install": "^11.5",
+    "georgringer/news": "^9.3",
+    "in2code/powermail": "^8.5"
+  },
+  "config": {
+    "vendor-dir": "app/vendor"
+  },
+  "extra": {
+    "typo3/cms": {
+      "web-dir": "app/web"
+    }
+  }
+}

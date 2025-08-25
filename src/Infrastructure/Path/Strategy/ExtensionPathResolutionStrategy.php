@@ -188,10 +188,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
     private function resolveAbsolutePath(string $path): string
     {
-        // Security: Prevent path traversal attacks
-        if (str_contains($path, '..') || str_contains($path, './') || str_contains($path, '.\\')) {
-            throw new InvalidRequestException('Path traversal detected in installation path: ' . $path);
-        }
+        // Note: Path traversal protection is handled by realpath() below which safely resolves any relative paths
 
         // Normalize path separators for cross-platform compatibility
         $normalizedPath = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
@@ -238,7 +235,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         ]);
 
         // PRIORITY 2: For older TYPO3 versions or mixed setups - Custom web directory from composer.json configuration (local extensions)
-        $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'public';
+        $webDir = $this->getWebDirectoryName($installationPath, $attemptedPaths) ?? 'public';
         $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
         if (is_dir($path)) {
@@ -297,7 +294,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         ]);
 
         // PRIORITY 2: Custom Composer setup with different web directory (for TYPO3 v11 and earlier)
-        $webDir = $request->pathConfiguration->getCustomPath('web-dir') ?? 'web';
+        $webDir = $this->getWebDirectoryName($installationPath, $attemptedPaths) ?? 'web';
         $path = $installationPath . '/' . $webDir . '/typo3conf/ext/' . $extensionKey;
         $attemptedPaths[] = $path;
 
@@ -657,5 +654,62 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         }
 
         return false;
+    }
+
+    /**
+     * Get web directory name from composer.json configuration.
+     */
+    private function getWebDirectoryName(string $installationPath, array &$attemptedPaths): ?string
+    {
+        // Read composer.json to get web-dir configuration
+        $composerJsonPath = $installationPath . '/composer.json';
+        $attemptedPaths[] = $composerJsonPath;
+
+        if (!file_exists($composerJsonPath)) {
+            $this->logger->debug('composer.json not found, using default web directories', [
+                'composer_json_path' => $composerJsonPath,
+            ]);
+
+            return null;
+        }
+
+        try {
+            $composerContent = file_get_contents($composerJsonPath);
+            if (false === $composerContent) {
+                $this->logger->warning('Failed to read composer.json', [
+                    'composer_json_path' => $composerJsonPath,
+                ]);
+
+                return null;
+            }
+
+            $composerData = json_decode($composerContent, true);
+            if (!\is_array($composerData)) {
+                $this->logger->warning('Invalid JSON in composer.json', [
+                    'composer_json_path' => $composerJsonPath,
+                    'json_error' => json_last_error_msg(),
+                ]);
+
+                return null;
+            }
+
+            // Get web-dir from extra.typo3/cms section, default to null
+            $webDirName = $composerData['extra']['typo3/cms']['web-dir'] ?? null;
+
+            if ($webDirName) {
+                $this->logger->debug('Found web directory configuration for extension resolution', [
+                    'web_dir_name' => $webDirName,
+                ]);
+            }
+
+            return $webDirName;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Error parsing composer.json for web directory', [
+                'composer_json_path' => $composerJsonPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

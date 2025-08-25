@@ -21,8 +21,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ComposerInstalledPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PackageStatesPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\Typo3ConfDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\VendorDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\WebDirPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -51,8 +56,18 @@ final class PathResolutionServiceFixturesTest extends TestCase
         $logger = new NullLogger();
 
         $composerVersionStrategy = new ComposerVersionStrategy($logger);
-        $strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
-        $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
+
+        // Create all path resolution strategies
+        $strategies = [
+            new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy),
+            new VendorDirPathResolutionStrategy($logger),
+            new WebDirPathResolutionStrategy($logger),
+            new Typo3ConfDirPathResolutionStrategy($logger),
+            new ComposerInstalledPathResolutionStrategy($logger),
+            new PackageStatesPathResolutionStrategy($logger),
+        ];
+
+        $strategyRegistry = new PathResolutionStrategyRegistry($logger, $strategies);
 
         $validator = new PathResolutionValidator($logger);
         $cache = new MultiLayerPathResolutionCache($logger);

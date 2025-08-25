@@ -1,0 +1,49 @@
+{
+  "description": "TYPO3 v11 Composer Installation with vendor in app/vendor directory",
+  "typo3_version": "11.5",
+  "installation_type": "composer_custom",
+  "path_configuration": "default",
+  "extensions": {
+    "news": {
+      "should_exist": true,
+      "reason": "Should find georgringer/news extension in app/web/typo3conf/ext directory (installed via Composer)"
+    },
+    "powermail": {
+      "should_exist": true,
+      "reason": "Should find in2code/powermail extension in app/web/typo3conf/ext directory (installed via Composer)"
+    },
+    "custom_tools": {
+      "should_exist": true,
+      "reason": "Should find custom_tools extension in app/web/typo3conf/ext directory"
+    },
+    "site_package": {
+      "should_exist": true,
+      "reason": "Should find site_package extension in app/web/typo3conf/ext directory"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [
+    "news",
+    "powermail",
+    "custom_tools",
+    "site_package"
+  ],
+  "paths": {
+    "vendor_dir": "app/vendor",
+    "web_dir": "app/web",
+    "typo3conf_dir": "app/web/typo3conf",
+    "package_states": "app/web/typo3conf/PackageStates.php",
+    "composer_installed": "app/vendor/composer/installed.json"
+  },
+  "notes": [
+    "TYPO3 v11 Composer installation with custom vendor-dir 'app/vendor'",
+    "Web directory configured as 'app/web'",
+    "This matches installations like ihkof-bundle with vendor at app/vendor",
+    "Extensions are located in app/web/typo3conf/ext directory",
+    "Vendor directory (app/vendor) contains only libraries and TYPO3 framework",
+    "TYPO3 extensions (type: typo3-cms-extension) cannot be in vendor directory"
+  ]
+}
