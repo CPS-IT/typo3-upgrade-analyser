@@ -102,9 +102,9 @@ final class PathResolutionServiceFixturesTest extends TestCase
         // Get installation type and path configuration
         $installationType = InstallationTypeEnum::from($expectations['installation_type']);
         $pathConfig = $this->createPathConfiguration($expectations['path_configuration'] ?? 'default');
-        
+
         // For custom installations, resolve base paths first to populate PathConfiguration
-        if ($installationType === InstallationTypeEnum::COMPOSER_CUSTOM) {
+        if (InstallationTypeEnum::COMPOSER_CUSTOM === $installationType) {
             $pathConfig = $this->resolveBasePaths($installationPath, $installationType, $pathConfig);
         }
 
@@ -184,37 +184,37 @@ final class PathResolutionServiceFixturesTest extends TestCase
     private function resolveBasePaths(string $installationPath, InstallationTypeEnum $installationType, PathConfiguration $baseConfig): PathConfiguration
     {
         $customPaths = [];
-        
+
         // Resolve vendor-dir
         $vendorDirRequest = PathResolutionRequest::create(
             PathTypeEnum::VENDOR_DIR,
             $installationPath,
             $installationType,
-            $baseConfig
+            $baseConfig,
         );
         $vendorDirResponse = $this->pathResolutionService->resolvePath($vendorDirRequest);
         if ($vendorDirResponse->isSuccess()) {
             $customPaths['vendor-dir'] = $vendorDirResponse->resolvedPath;
         }
-        
-        // Resolve web-dir 
+
+        // Resolve web-dir
         $webDirRequest = PathResolutionRequest::create(
             PathTypeEnum::WEB_DIR,
             $installationPath,
             $installationType,
-            $baseConfig
+            $baseConfig,
         );
         $webDirResponse = $this->pathResolutionService->resolvePath($webDirRequest);
         if ($webDirResponse->isSuccess()) {
             $customPaths['web-dir'] = $webDirResponse->resolvedPath;
         }
-        
+
         // Create new PathConfiguration with resolved paths
         return PathConfiguration::fromArray([
             'customPaths' => $customPaths,
             'validateExists' => $baseConfig->validateExists,
             'followSymlinks' => $baseConfig->followSymlinks,
-            'searchDirectories' => $baseConfig->searchDirectories
+            'searchDirectories' => $baseConfig->searchDirectories,
         ]);
     }
 

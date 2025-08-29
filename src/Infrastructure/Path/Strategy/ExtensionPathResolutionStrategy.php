@@ -475,7 +475,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
     {
         // Get vendor directory from configuration or default to 'vendor'
         $vendorDirConfig = $request->pathConfiguration->getCustomPath('vendor-dir') ?? 'vendor';
-        
+
         // Handle absolute vs relative vendor directory paths
         $vendorDir = $this->resolveAbsoluteOrRelativePath($vendorDirConfig, $installationPath);
 
@@ -595,7 +595,7 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         if ($this->isAbsolutePath($path)) {
             return $path;
         }
-        
+
         // Path is relative, combine with installation path
         return $installationPath . '/' . $path;
     }
@@ -609,12 +609,12 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         if (str_starts_with($path, '/')) {
             return true;
         }
-        
+
         // Windows absolute paths start with drive letter (C:, D:, etc.)
         if (preg_match('/^[A-Za-z]:/', $path)) {
             return true;
         }
-        
+
         return false;
     }
 
