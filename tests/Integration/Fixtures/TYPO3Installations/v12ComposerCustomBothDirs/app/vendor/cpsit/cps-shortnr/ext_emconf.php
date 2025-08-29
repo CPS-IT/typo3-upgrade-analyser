@@ -1,7 +1,7 @@
 <?php
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'CPS Short Number', 
+    'title' => 'CPS Short Number',
     'description' => 'Builds links to pages and extension records with a tiny url',
     'category' => 'plugin',
     'author' => 'CPS IT',

@@ -32,7 +32,7 @@
     "auto_detect_expected": [
         "solr",
         "tika",
-        "bravo_handlebars_content", 
+        "bravo_handlebars_content",
         "cps_shortnr",
         "news"
     ],
