@@ -278,7 +278,15 @@ class GitHubClientTest extends TestCase
 
         $this->httpClient->expects($this->exactly(2))
             ->method('request')
-            ->willReturnOnConsecutiveCalls($graphqlResponse, $contributorsResponse);
+            ->willReturnCallback(function () use ($graphqlResponse, $contributorsResponse): \PHPUnit\Framework\MockObject\MockObject {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => $graphqlResponse,
+                    2 => $contributorsResponse,
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         $health = $this->client->getRepositoryHealth('https://github.com/user/repo');
 

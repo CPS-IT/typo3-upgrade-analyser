@@ -88,8 +88,8 @@ class ContainerFactory
         // Set both project root (for working directories) and source dir (for templates/config)
         $container->setParameter('app.project_root', $projectRoot);
         $container->setParameter('app.source_dir', $sourceDir);
-        $container->setParameter('app.config_dir', '%app.source_dir%/config');
-        $container->setParameter('app.resources_dir', '%app.source_dir%/resources');
+        $container->setParameter('app.config_dir', $sourceDir . '/config');
+        $container->setParameter('app.resources_dir', $sourceDir . '/resources');
 
         // Legacy parameters for backward compatibility
         $container->setParameter('app.root_dir', $projectRoot); // Now points to project root, not source dir

@@ -169,7 +169,7 @@ class ContainerFactoryTest extends TestCase
             $loader = $twig->getLoader();
             self::assertInstanceOf(\Twig\Loader\LoaderInterface::class, $loader);
         } else {
-            self::markTestSkipped('Twig services are optional and not registered');
+            self::fail('Twig services should be registered in the container');
         }
 
         // Test Twig Loader
@@ -177,7 +177,7 @@ class ContainerFactoryTest extends TestCase
             $loader = $this->container->get('twig.loader');
             self::assertInstanceOf(\Twig\Loader\LoaderInterface::class, $loader);
         } else {
-            self::markTestSkipped('Twig loader is optional and not registered');
+            self::fail('Twig loader should be registered in the container');
         }
     }
 
@@ -190,7 +190,7 @@ class ContainerFactoryTest extends TestCase
             // Verify basic parser functionality
             self::assertInstanceOf(\PhpParser\Parser::class, $parser);
         } else {
-            self::markTestSkipped('PHP Parser service is optional and not registered');
+            self::fail('PHP Parser service should be registered in the container');
         }
     }
 

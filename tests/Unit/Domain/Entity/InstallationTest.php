@@ -215,9 +215,9 @@ class InstallationTest extends TestCase
         $systemExtensions = $this->installation->getSystemExtensions();
 
         self::assertCount(1, $systemExtensions);
-        self::assertContains($systemExt, $systemExtensions);
-        self::assertNotContains($localExt, $systemExtensions);
-        self::assertNotContains($composerExt, $systemExtensions);
+        self::assertContainsEquals($systemExt, $systemExtensions);
+        self::assertNotContainsEquals($localExt, $systemExtensions);
+        self::assertNotContainsEquals($composerExt, $systemExtensions);
     }
 
     public function testGetLocalExtensions(): void
@@ -235,10 +235,10 @@ class InstallationTest extends TestCase
         $localExtensions = $this->installation->getLocalExtensions();
 
         self::assertCount(2, $localExtensions);
-        self::assertContains($localExt, $localExtensions);
-        self::assertContains($localExt2, $localExtensions);
-        self::assertNotContains($systemExt, $localExtensions);
-        self::assertNotContains($composerExt, $localExtensions);
+        self::assertContainsEquals($localExt, $localExtensions);
+        self::assertContainsEquals($localExt2, $localExtensions);
+        self::assertNotContainsEquals($systemExt, $localExtensions);
+        self::assertNotContainsEquals($composerExt, $localExtensions);
     }
 
     public function testGetComposerExtensions(): void
@@ -256,10 +256,10 @@ class InstallationTest extends TestCase
         $composerExtensions = $this->installation->getComposerExtensions();
 
         self::assertCount(2, $composerExtensions);
-        self::assertContains($composerExt, $composerExtensions);
-        self::assertContains($composerExt2, $composerExtensions);
-        self::assertNotContains($systemExt, $composerExtensions);
-        self::assertNotContains($localExt, $composerExtensions);
+        self::assertContainsEquals($composerExt, $composerExtensions);
+        self::assertContainsEquals($composerExt2, $composerExtensions);
+        self::assertNotContainsEquals($systemExt, $composerExtensions);
+        self::assertNotContainsEquals($localExt, $composerExtensions);
     }
 
     public function testIsMixedModeWithBothLocalAndComposerExtensions(): void

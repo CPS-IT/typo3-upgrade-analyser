@@ -133,10 +133,15 @@ class PackagistClientTest extends TestCase
         $this->httpClient->method('get')->willReturn($this->response);
 
         $this->constraintChecker->method('findTypo3Requirements')
-            ->willReturnOnConsecutiveCalls(
-                ['typo3/cms-core' => '^12.0'],
-                ['typo3/cms-core' => '^11.0'],
-            );
+            ->willReturnCallback(function (): array {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => ['typo3/cms-core' => '^12.0'],
+                    2 => ['typo3/cms-core' => '^11.0'],
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         $this->constraintChecker->method('isConstraintCompatible')
             ->willReturn(false); // All constraints incompatible

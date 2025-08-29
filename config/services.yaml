@@ -159,6 +159,7 @@ services:
 
   # Twig
   Twig\Environment:
+    public: true
     arguments:
       $loader: '@twig.loader'
       $options:
@@ -167,12 +168,16 @@ services:
 
   twig.loader:
     class: Twig\Loader\FilesystemLoader
+    public: true
     arguments:
       - '%app.resources_dir%/templates'
 
   # PHP Parser
   PhpParser\Parser:
-    factory: ['PhpParser\ParserFactory', 'createForHostVersion']
+    public: true
+    factory: ['@PhpParser\ParserFactory', 'createForHostVersion']
+
+  PhpParser\ParserFactory: ~
 
   # Git Provider Factory and implementations
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory:

@@ -199,7 +199,7 @@ class GitRepositoryIntegrationTestTest extends AbstractIntegrationTestCase
 
         $this->assertIsArray($branches);
         $this->assertGreaterThan(0, \count($branches));
-        $this->assertContains('main', $branches, 'Default branch "main" should exist');
+        $this->assertContainsEquals('main', $branches, 'Default branch "main" should exist');
     }
 
     /**

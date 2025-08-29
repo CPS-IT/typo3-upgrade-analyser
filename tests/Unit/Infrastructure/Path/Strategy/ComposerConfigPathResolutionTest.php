@@ -16,11 +16,17 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ComposerInstalledPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PackageStatesPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\Typo3ConfDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\VendorDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\WebDirPathResolutionStrategy;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 /**
- * Unit tests for missing Composer configuration path resolution strategies.
- * These tests should fail until the missing strategies are implemented.
+ * Unit tests for Composer configuration path resolution strategies.
+ * Tests various path resolution strategies that read composer.json configurations.
  */
 final class ComposerConfigPathResolutionTest extends TestCase
 {
@@ -55,115 +61,219 @@ final class ComposerConfigPathResolutionTest extends TestCase
     }
 
     /**
-     * Test that vendor directory resolution from composer.json config fails
-     * because VendorDirPathResolutionStrategy doesn't exist.
+     * Test that vendor directory resolution from composer.json config works
+     * with VendorDirPathResolutionStrategy.
      */
-    public function testVendorDirStrategyDoesNotExist(): void
+    public function testVendorDirStrategyResolvesDefaultVendorPath(): void
     {
-        $this->markTestIncomplete(
-            'VendorDirPathResolutionStrategy class does not exist yet. ' .
-            'This strategy should read composer.json config.vendor-dir and resolve vendor directory path.',
+        // Arrange: Create a composer installation with default vendor-dir
+        $this->createComposerInstallation([]);
+        mkdir($this->testPath . '/vendor', 0o755, true);
+
+        $logger = new NullLogger();
+        $strategy = new VendorDirPathResolutionStrategy($logger);
+
+        $request = PathResolutionRequest::create(
+            PathTypeEnum::VENDOR_DIR,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            PathConfiguration::createDefault(),
+            null,
         );
 
-        // This test would fail to even load the class:
-        // $strategy = new VendorDirPathResolutionStrategy($logger);
+        // Act
+        $response = $strategy->resolve($request);
+
+        // Assert
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/vendor', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * Test that web directory resolution from composer.json extra config fails
-     * because WebDirPathResolutionStrategy doesn't exist.
+     * Test that web directory resolution from composer.json extra config works
+     * with WebDirPathResolutionStrategy.
      */
-    public function testWebDirStrategyDoesNotExist(): void
+    public function testWebDirStrategyResolvesCustomWebPath(): void
     {
-        $this->markTestIncomplete(
-            'WebDirPathResolutionStrategy class does not exist yet. ' .
-            'This strategy should read composer.json extra.typo3/cms.web-dir and resolve web directory path.',
+        // Arrange: Create a composer installation with custom web-dir
+        $this->createComposerInstallation([
+            'extra' => [
+                'typo3/cms' => [
+                    'web-dir' => 'app/web',
+                ],
+            ],
+        ]);
+        mkdir($this->testPath . '/app/web', 0o755, true);
+
+        $logger = new NullLogger();
+        $strategy = new WebDirPathResolutionStrategy($logger);
+
+        $request = PathResolutionRequest::create(
+            PathTypeEnum::WEB_DIR,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            PathConfiguration::createDefault(),
+            null,
         );
 
-        // This test would fail to even load the class:
-        // $strategy = new WebDirPathResolutionStrategy($logger);
+        // Act
+        $response = $strategy->resolve($request);
+
+        // Assert
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/web', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * Test that typo3conf directory resolution based on web-dir fails
-     * because Typo3ConfDirPathResolutionStrategy doesn't exist.
+     * Test that typo3conf directory resolution based on web-dir works
+     * with Typo3ConfDirPathResolutionStrategy.
      */
-    public function testTypo3ConfDirStrategyDoesNotExist(): void
+    public function testTypo3ConfDirStrategyResolvesTypo3ConfPath(): void
     {
-        $this->markTestIncomplete(
-            'Typo3ConfDirPathResolutionStrategy class does not exist yet. ' .
-            'This strategy should resolve {web-dir}/typo3conf path.',
+        // Arrange: Create a composer installation with default paths
+        $this->createComposerInstallation([]);
+        mkdir($this->testPath . '/public/typo3conf', 0o755, true);
+
+        $logger = new NullLogger();
+        $strategy = new Typo3ConfDirPathResolutionStrategy($logger);
+
+        $request = PathResolutionRequest::create(
+            PathTypeEnum::TYPO3CONF_DIR,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            PathConfiguration::createDefault(),
+            null,
         );
 
-        // This test would fail to even load the class:
-        // $strategy = new Typo3ConfDirPathResolutionStrategy($logger);
+        // Act
+        $response = $strategy->resolve($request);
+
+        // Assert
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/public/typo3conf', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * Test that composer installed.json path resolution fails
-     * because ComposerInstalledPathResolutionStrategy doesn't exist.
+     * Test that composer installed.json path resolution works
+     * with ComposerInstalledPathResolutionStrategy.
      */
-    public function testComposerInstalledStrategyDoesNotExist(): void
+    public function testComposerInstalledStrategyResolvesInstalledJsonPath(): void
     {
-        $this->markTestIncomplete(
-            'ComposerInstalledPathResolutionStrategy class does not exist yet. ' .
-            'This strategy should resolve {vendor-dir}/composer/installed.json path.',
+        // Arrange: Create a composer installation with installed.json
+        $this->createComposerInstallation([]);
+        mkdir($this->testPath . '/vendor/composer', 0o755, true);
+        file_put_contents(
+            $this->testPath . '/vendor/composer/installed.json',
+            json_encode(['packages' => []], JSON_PRETTY_PRINT),
         );
 
-        // This test would fail to even load the class:
-        // $strategy = new ComposerInstalledPathResolutionStrategy($logger);
+        $logger = new NullLogger();
+        $strategy = new ComposerInstalledPathResolutionStrategy($logger);
+
+        $request = PathResolutionRequest::create(
+            PathTypeEnum::COMPOSER_INSTALLED,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            PathConfiguration::createDefault(),
+            null,
+        );
+
+        // Act
+        $response = $strategy->resolve($request);
+
+        // Assert
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/vendor/composer/installed.json', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * Test that PackageStates.php path resolution fails
-     * because PackageStatesPathResolutionStrategy doesn't exist.
+     * Test that PackageStates.php path resolution works
+     * with PackageStatesPathResolutionStrategy.
      */
-    public function testPackageStatesStrategyDoesNotExist(): void
+    public function testPackageStatesStrategyResolvesPackageStatesPath(): void
     {
-        $this->markTestIncomplete(
-            'PackageStatesPathResolutionStrategy class does not exist yet. ' .
-            'This strategy should resolve {typo3conf-dir}/PackageStates.php path.',
+        // Arrange: Create a composer installation with PackageStates.php
+        $this->createComposerInstallation([]);
+        mkdir($this->testPath . '/public/typo3conf', 0o755, true);
+        file_put_contents(
+            $this->testPath . '/public/typo3conf/PackageStates.php',
+            '<?php return [];',
         );
 
-        // This test would fail to even load the class:
-        // $strategy = new PackageStatesPathResolutionStrategy($logger);
+        $logger = new NullLogger();
+        $strategy = new PackageStatesPathResolutionStrategy($logger);
+
+        $request = PathResolutionRequest::create(
+            PathTypeEnum::PACKAGE_STATES,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            PathConfiguration::createDefault(),
+            null,
+        );
+
+        // Act
+        $response = $strategy->resolve($request);
+
+        // Assert
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/public/typo3conf/PackageStates.php', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
      * Test realistic scenario: ihkof-bundle-like installation with custom paths.
-     * This test should fail because none of the required strategies exist.
+     * All path resolution strategies should now work correctly.
      */
-    public function testIhkofBundleLikeInstallationShouldFail(): void
+    public function testIhkofBundleLikeInstallationPathResolution(): void
     {
         // Arrange: Create installation similar to ihkof-bundle
         $this->createIhkofBundleLikeInstallation();
 
         $pathConfig = PathConfiguration::createDefault();
+        $logger = new NullLogger();
 
-        // Test each path type that should be resolvable
-        $pathTypesToTest = [
-            PathTypeEnum::VENDOR_DIR,      // Should resolve to app/vendor
-            PathTypeEnum::WEB_DIR,         // Should resolve to app/web
-            PathTypeEnum::TYPO3CONF_DIR,   // Should resolve to app/web/typo3conf
-            PathTypeEnum::COMPOSER_INSTALLED, // Should resolve to app/vendor/composer/installed.json
-            PathTypeEnum::PACKAGE_STATES,  // Should resolve to app/web/typo3conf/PackageStates.php
-        ];
+        // Test vendor directory resolution
+        $vendorStrategy = new VendorDirPathResolutionStrategy($logger);
+        $vendorRequest = PathResolutionRequest::create(
+            PathTypeEnum::VENDOR_DIR,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            $pathConfig,
+            null,
+        );
+        $vendorResponse = $vendorStrategy->resolve($vendorRequest);
+        self::assertTrue($vendorResponse->isSuccess());
+        self::assertEquals($this->testPath . '/app/vendor', $vendorResponse->resolvedPath);
 
-        foreach ($pathTypesToTest as $pathType) {
-            $request = PathResolutionRequest::create(
-                $pathType,
-                $this->testPath,
-                InstallationTypeEnum::COMPOSER_CUSTOM,
-                $pathConfig,
-                null,
-            );
+        // Test web directory resolution
+        $webStrategy = new WebDirPathResolutionStrategy($logger);
+        $webRequest = PathResolutionRequest::create(
+            PathTypeEnum::WEB_DIR,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            $pathConfig,
+            null,
+        );
+        $webResponse = $webStrategy->resolve($webRequest);
+        self::assertTrue($webResponse->isSuccess());
+        self::assertEquals($this->testPath . '/app/web', $webResponse->resolvedPath);
 
-            // This should fail because we don't have strategies for these path types
-            $this->markTestIncomplete(
-                "Path resolution for {$pathType->value} should fail until corresponding strategy is implemented. " .
-                "Installation structure: {$this->testPath}",
-            );
-        }
+        // Test composer installed resolution
+        $installedStrategy = new ComposerInstalledPathResolutionStrategy($logger);
+        $installedRequest = PathResolutionRequest::create(
+            PathTypeEnum::COMPOSER_INSTALLED,
+            $this->testPath,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            $pathConfig,
+            null,
+        );
+        $installedResponse = $installedStrategy->resolve($installedRequest);
+        self::assertTrue($installedResponse->isSuccess());
+        self::assertEquals($this->testPath . '/app/vendor/composer/installed.json', $installedResponse->resolvedPath);
     }
 
     private function createIhkofBundleLikeInstallation(): void
@@ -229,6 +339,26 @@ final class ComposerConfigPathResolutionTest extends TestCase
         file_put_contents(
             $this->testPath . '/app/web/typo3conf/ext/news/ext_emconf.php',
             '<?php $EM_CONF[$_EXTKEY] = [];',
+        );
+    }
+
+    private function createComposerInstallation(array $composerConfig): void
+    {
+        mkdir($this->testPath, 0o755, true);
+
+        $defaultConfig = [
+            'name' => 'test/installation',
+            'type' => 'project',
+            'require' => [
+                'typo3/cms-core' => '^11.5',
+            ],
+        ];
+
+        $config = array_merge_recursive($defaultConfig, $composerConfig);
+
+        file_put_contents(
+            $this->testPath . '/composer.json',
+            json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
     }
 }
