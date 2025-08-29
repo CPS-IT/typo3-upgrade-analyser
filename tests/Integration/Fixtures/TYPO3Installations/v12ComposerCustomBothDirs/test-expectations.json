@@ -1,0 +1,46 @@
+{
+    "description": "TYPO3 v12 Composer installation with custom vendor-dir (app/vendor) and web-dir (app/web) - matches DENA structure",
+    "typo3_version": "12.4",
+    "installation_type": "composer_custom",
+    "path_configuration": "default",
+    "extensions": {
+        "solr": {
+            "should_exist": true,
+            "reason": "Should find apache-solr-for-typo3/solr in app/vendor directory"
+        },
+        "tika": {
+            "should_exist": true,
+            "reason": "Should find apache-solr-for-typo3/tika in app/vendor directory"
+        },
+        "bravo_handlebars_content": {
+            "should_exist": true,
+            "reason": "Should find cpsit/bravo-handlebars-content in app/vendor directory"
+        },
+        "cps_shortnr": {
+            "should_exist": true,
+            "reason": "Should find cpsit/cps-shortnr in app/vendor directory"
+        },
+        "news": {
+            "should_exist": true,
+            "reason": "Should find georgringer/news in app/vendor directory"
+        },
+        "non_existent": {
+            "should_exist": false,
+            "reason": "Extension does not exist anywhere"
+        }
+    },
+    "auto_detect_expected": [
+        "solr",
+        "tika",
+        "bravo_handlebars_content", 
+        "cps_shortnr",
+        "news"
+    ],
+    "notes": [
+        "TYPO3 v12+ Composer installation with custom vendor (app/vendor) and web (app/web) directories",
+        "Extensions MUST be in vendor directory only (not typo3conf/ext)",
+        "Uses composer.json config: vendor-dir=app/vendor, extra.typo3/cms.web-dir=app/web",
+        "Matches real DENA project structure at ../dena/ventures/dena-de/v12/dena-bundle/",
+        "This tests the ExtensionPathResolutionStrategy with custom both vendor-dir and web-dir"
+    ]
+}

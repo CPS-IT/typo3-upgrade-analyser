@@ -474,12 +474,15 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
     private function resolveVendorExtensionPath(string $extensionKey, string $installationPath, PathResolutionRequest $request, array &$attemptedPaths): ?string
     {
         // Get vendor directory from configuration or default to 'vendor'
-        $vendorDir = $request->pathConfiguration->getCustomPath('vendor-dir') ?? 'vendor';
+        $vendorDirConfig = $request->pathConfiguration->getCustomPath('vendor-dir') ?? 'vendor';
+        
+        // Handle absolute vs relative vendor directory paths
+        $vendorDir = $this->resolveAbsoluteOrRelativePath($vendorDirConfig, $installationPath);
 
         // PRIORITY 1: Use actual composer package name if available
         if ($request->extensionIdentifier && $request->extensionIdentifier->composerName) {
             $composerName = $request->extensionIdentifier->composerName;
-            $vendorPath = $installationPath . '/' . $vendorDir . '/' . $composerName;
+            $vendorPath = $vendorDir . '/' . $composerName;
 
             $attemptedPaths[] = $vendorPath;
             if (is_dir($vendorPath) && $this->isValidExtensionDirectory($vendorPath, $extensionKey)) {
@@ -496,12 +499,12 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         // PRIORITY 2: Standard TYPO3 core extension pattern (for system extensions)
         $hyphenatedKey = str_replace('_', '-', $extensionKey);
         $corePatterns = [
-            $vendorDir . '/typo3/cms-' . $extensionKey,
-            $vendorDir . '/typo3/cms-' . $hyphenatedKey,
+            '/typo3/cms-' . $extensionKey,
+            '/typo3/cms-' . $hyphenatedKey,
         ];
 
         foreach ($corePatterns as $pattern) {
-            $fullPath = $installationPath . '/' . $pattern;
+            $fullPath = $vendorDir . $pattern;
             $attemptedPaths[] = $fullPath;
 
             if (is_dir($fullPath) && $this->isValidExtensionDirectory($fullPath, $extensionKey)) {
@@ -519,12 +522,12 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
         if (!$request->extensionIdentifier || !$request->extensionIdentifier->composerName) {
             $fallbackPatterns = [
                 // Common vendor patterns (with wildcards for discovery)
-                $vendorDir . '/*/' . $extensionKey,
-                $vendorDir . '/*/' . $hyphenatedKey,
+                '/*/' . $extensionKey,
+                '/*/' . $hyphenatedKey,
             ];
 
             foreach ($fallbackPatterns as $pattern) {
-                $fullPath = $installationPath . '/' . $pattern;
+                $fullPath = $vendorDir . $pattern;
 
                 // Handle glob patterns with wildcards
                 if (str_contains($pattern, '*')) {
@@ -581,6 +584,38 @@ final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInt
 
             return false;
         }
+    }
+
+    /**
+     * Resolve absolute or relative path based on whether it's already absolute.
+     */
+    private function resolveAbsoluteOrRelativePath(string $path, string $installationPath): string
+    {
+        // Check if path is already absolute
+        if ($this->isAbsolutePath($path)) {
+            return $path;
+        }
+        
+        // Path is relative, combine with installation path
+        return $installationPath . '/' . $path;
+    }
+
+    /**
+     * Check if a path is absolute.
+     */
+    private function isAbsolutePath(string $path): bool
+    {
+        // Unix/Linux absolute paths start with /
+        if (str_starts_with($path, '/')) {
+            return true;
+        }
+        
+        // Windows absolute paths start with drive letter (C:, D:, etc.)
+        if (preg_match('/^[A-Za-z]:/', $path)) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**

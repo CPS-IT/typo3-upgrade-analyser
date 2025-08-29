@@ -1,0 +1,66 @@
+{
+    "packages": [
+        {
+            "name": "apache-solr-for-typo3/solr",
+            "version": "12.0.7",
+            "version_normalized": "12.0.7.0",
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "solr"
+                }
+            },
+            "install-path": "../apache-solr-for-typo3/solr"
+        },
+        {
+            "name": "apache-solr-for-typo3/tika",
+            "version": "12.0.3", 
+            "version_normalized": "12.0.3.0",
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "tika"
+                }
+            },
+            "install-path": "../apache-solr-for-typo3/tika"
+        },
+        {
+            "name": "cpsit/bravo-handlebars-content",
+            "version": "1.3.1",
+            "version_normalized": "1.3.1.0", 
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "bravo_handlebars_content"
+                }
+            },
+            "install-path": "../cpsit/bravo-handlebars-content"
+        },
+        {
+            "name": "cpsit/cps-shortnr",
+            "version": "3.2.0",
+            "version_normalized": "3.2.0.0",
+            "type": "typo3-cms-extension", 
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "cps_shortnr"
+                }
+            },
+            "install-path": "../cpsit/cps-shortnr"
+        },
+        {
+            "name": "georgringer/news",
+            "version": "11.4.3",
+            "version_normalized": "11.4.3.0",
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "news"
+                }
+            },
+            "install-path": "../georgringer/news"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}
