@@ -278,7 +278,7 @@ class GitHubClientTest extends TestCase
 
         $this->httpClient->expects($this->exactly(2))
             ->method('request')
-            ->willReturnCallback(function () use ($graphqlResponse, $contributorsResponse): \PHPUnit\Framework\MockObject\MockObject {
+            ->willReturnCallback(function () use ($graphqlResponse, $contributorsResponse): MockObject {
                 static $callCount = 0;
 
                 return match (++$callCount) {
