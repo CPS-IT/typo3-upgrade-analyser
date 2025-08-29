@@ -140,7 +140,7 @@ class FractorAnalyzerTest extends TestCase
         self::assertEquals('fractor', $result->getAnalyzerName());
         self::assertTrue($result->getMetric('analysis_error'));
         self::assertEquals(5.0, $result->getRiskScore());
-        self::assertContains('Analysis encountered errors - results may be incomplete', $result->getRecommendations());
+        self::assertContainsEquals('Analysis encountered errors - results may be incomplete', $result->getRecommendations());
     }
 
     #[Test]
@@ -234,7 +234,17 @@ class FractorAnalyzerTest extends TestCase
 
         $this->resultParser->expects(self::exactly(4))
             ->method('parse')
-            ->willReturnOnConsecutiveCalls($summary1, $summary2, $summary3, $summary4);
+            ->willReturnCallback(function () use ($summary1, $summary2, $summary3, $summary4): \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => $summary1,
+                    2 => $summary2,
+                    3 => $summary3,
+                    4 => $summary4,
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         // Test case 1: No changes needed (0 rules, 0 files) -> score should be 1.0
         $result1 = $this->analyzer->analyze($extension, $context);
@@ -269,18 +279,26 @@ class FractorAnalyzerTest extends TestCase
 
         $this->resultParser->expects(self::exactly(2))
             ->method('parse')
-            ->willReturnOnConsecutiveCalls($noChangesSummary, $manyChangesSummary);
+            ->willReturnCallback(function () use ($noChangesSummary, $manyChangesSummary): \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => $noChangesSummary,
+                    2 => $manyChangesSummary,
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         // Test no changes scenario
         $result = $this->analyzer->analyze($extension, $context);
-        self::assertContains(
+        self::assertContainsEquals(
             'Code appears to follow modern patterns - minimal refactoring needed',
             $result->getRecommendations(),
         );
 
         // Test many changes scenario - reuse same analyzer instance
         $result2 = $this->analyzer->analyze($extension, $context);
-        self::assertContains(
+        self::assertContainsEquals(
             'Many modernization opportunities found (60 rules) - consider systematic refactoring',
             $result2->getRecommendations(),
         );
@@ -308,7 +326,7 @@ class FractorAnalyzerTest extends TestCase
         self::assertTrue($result->getMetric('execution_failed'));
         self::assertEquals('Fractor failed', $result->getMetric('error_message'));
         self::assertEquals(8.0, $result->getRiskScore());
-        self::assertContains(
+        self::assertContainsEquals(
             'Fractor analysis failed - manual code review recommended',
             $result->getRecommendations(),
         );

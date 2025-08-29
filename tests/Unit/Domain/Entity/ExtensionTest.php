@@ -120,11 +120,11 @@ class ExtensionTest extends TestCase
 
         $allFiles = $this->extension->getFiles();
         self::assertCount(5, $allFiles);
-        self::assertContains($phpFile, $allFiles);
-        self::assertContains($tcaFile, $allFiles);
-        self::assertContains($templateFile, $allFiles);
-        self::assertContains($fluidFile, $allFiles);
-        self::assertContains($jsFile, $allFiles);
+        self::assertContainsEquals($phpFile, $allFiles);
+        self::assertContainsEquals($tcaFile, $allFiles);
+        self::assertContainsEquals($templateFile, $allFiles);
+        self::assertContainsEquals($fluidFile, $allFiles);
+        self::assertContainsEquals($jsFile, $allFiles);
     }
 
     public function testGetPhpFiles(): void

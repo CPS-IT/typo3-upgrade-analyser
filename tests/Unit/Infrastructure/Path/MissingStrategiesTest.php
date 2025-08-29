@@ -209,11 +209,10 @@ final class MissingStrategiesTest extends TestCase
 
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert that it fails with specific validation error
+        // Assert that it fails with missing strategy error
         $this->assertSame(ResolutionStatusEnum::ERROR, $response->status);
-        // This might fail with validation error OR missing strategy error
         $this->assertContains(
-            'Installation path must be a file for path type: package_states',
+            'No strategies registered for path type: package_states',
             $response->errors,
         );
         $this->assertFalse($response->isSuccess());

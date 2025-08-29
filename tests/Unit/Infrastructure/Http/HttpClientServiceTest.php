@@ -223,7 +223,15 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
-            ->willReturnOnConsecutiveCalls($rateLimitResponse, $successResponse);
+            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => $rateLimitResponse,
+                    2 => $successResponse,
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         $this->logger
             ->expects(self::once())
@@ -347,11 +355,16 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(3))
             ->method('request')
-            ->willReturnOnConsecutiveCalls(
-                $rateLimitResponse,
-                $rateLimitResponse,
-                $successResponse,
-            );
+            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => $rateLimitResponse,
+                    2 => $rateLimitResponse,
+                    3 => $successResponse,
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         $this->logger
             ->expects(self::exactly(2))

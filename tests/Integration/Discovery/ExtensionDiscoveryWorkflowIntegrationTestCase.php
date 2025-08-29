@@ -117,9 +117,9 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
         $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $extensions);
 
         // Should find extensions from PackageStates.php
-        $this->assertContains('news', $extensionKeys);
-        $this->assertContains('powermail', $extensionKeys);
-        $this->assertContains('local_extension', $extensionKeys);
+        $this->assertContainsEquals('news', $extensionKeys);
+        $this->assertContainsEquals('powermail', $extensionKeys);
+        $this->assertContainsEquals('local_extension', $extensionKeys);
 
         // Should also find extensions from composer installed.json (if not duplicated)
         $this->assertGreaterThanOrEqual(3, \count($extensions));
@@ -130,8 +130,8 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
 
         // Should have attempted both PackageStates.php and composer installed.json
         $attemptedMethods = array_column($metadata, 'method');
-        $this->assertContains('PackageStates.php', $attemptedMethods);
-        $this->assertContains('composer installed.json', $attemptedMethods);
+        $this->assertContainsEquals('PackageStates.php', $attemptedMethods);
+        $this->assertContainsEquals('composer installed.json', $attemptedMethods);
 
         // At least one method should have been successful
         $successfulMethods = $extensionResult->getSuccessfulMethods();
@@ -175,13 +175,13 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
         $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $extensions);
 
         // Should find legacy extensions
-        $this->assertContains('legacy_news', $extensionKeys);
-        $this->assertContains('legacy_powermail', $extensionKeys);
-        $this->assertContains('custom_extension', $extensionKeys);
+        $this->assertContainsEquals('legacy_news', $extensionKeys);
+        $this->assertContainsEquals('legacy_powermail', $extensionKeys);
+        $this->assertContainsEquals('custom_extension', $extensionKeys);
 
         // Should have used PackageStates.php method
         $successfulMethods = $extensionResult->getSuccessfulMethods();
-        $this->assertContains('PackageStates.php', $successfulMethods);
+        $this->assertContainsEquals('PackageStates.php', $successfulMethods);
     }
 
     /**
@@ -202,7 +202,7 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
         $extensionTypes = array_unique(array_map(fn ($ext): string => $ext->getType(), $extensions));
 
         // Should have local extensions (from PackageStates.php)
-        $this->assertContains('local', $extensionTypes);
+        $this->assertContainsEquals('local', $extensionTypes);
 
         // Should have composer extensions if found in composer data
         // (depends on the specific discovery logic)

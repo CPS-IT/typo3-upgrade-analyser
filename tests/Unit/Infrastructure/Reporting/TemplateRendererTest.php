@@ -130,10 +130,15 @@ class TemplateRendererTest extends TestCase
         $this->twig->expects(self::exactly(2))
             ->method('render')
             ->with('md/extension-detail.md.twig', self::anything())
-            ->willReturnOnConsecutiveCalls(
-                '# Extension 1 Details',
-                '# Extension 2 Details',
-            );
+            ->willReturnCallback(function (): string {
+                static $callCount = 0;
+
+                return match (++$callCount) {
+                    1 => '# Extension 1 Details',
+                    2 => '# Extension 2 Details',
+                    default => throw new \LogicException('Unexpected call')
+                };
+            });
 
         // Act
         $result = $this->subject->renderExtensionReports($context, 'markdown');

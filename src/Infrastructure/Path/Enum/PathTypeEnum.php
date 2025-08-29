@@ -71,7 +71,8 @@ enum PathTypeEnum: string
     {
         return match ($this) {
             self::EXTENSION => ['extension_identifier_required', 'directory_exists'],
-            self::LOCAL_CONFIGURATION, self::PACKAGE_STATES => ['file_exists', 'readable'],
+            self::LOCAL_CONFIGURATION => ['file_exists', 'readable'],
+            self::PACKAGE_STATES => ['directory_exists', 'readable'],
             self::VENDOR_DIR, self::WEB_DIR => ['directory_exists', 'readable'],
             default => ['exists'],
         };

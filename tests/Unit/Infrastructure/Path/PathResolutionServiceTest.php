@@ -20,15 +20,20 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ComposerInstalledPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PackageStatesPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\Typo3ConfDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\VendorDirPathResolutionStrategy;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\WebDirPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 /**
- * Unit tests for PathResolutionService focusing on missing functionality
- * that should fail until the missing path resolution strategies are implemented.
+ * Unit tests for PathResolutionService testing integrated path resolution
+ * with all available path resolution strategies working together.
  */
 final class PathResolutionServiceTest extends TestCase
 {
@@ -43,8 +48,17 @@ final class PathResolutionServiceTest extends TestCase
 
         $logger = new NullLogger();
         $composerVersionStrategy = new ComposerVersionStrategy($logger);
-        $strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
-        $strategyRegistry = new PathResolutionStrategyRegistry($logger, [$strategy]);
+
+        // Register all available strategies
+        $strategies = [
+            new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy),
+            new VendorDirPathResolutionStrategy($logger),
+            new WebDirPathResolutionStrategy($logger),
+            new Typo3ConfDirPathResolutionStrategy($logger),
+            new ComposerInstalledPathResolutionStrategy($logger),
+            new PackageStatesPathResolutionStrategy($logger),
+        ];
+        $strategyRegistry = new PathResolutionStrategyRegistry($logger, $strategies);
 
         $validator = new PathResolutionValidator($logger);
         $cache = new MultiLayerPathResolutionCache($logger);
@@ -82,10 +96,10 @@ final class PathResolutionServiceTest extends TestCase
     }
 
     /**
-     * This test should FAIL because PathResolutionService doesn't have a strategy
-     * to resolve vendor_dir path type by reading composer.json configuration.
+     * Test that PathResolutionService can resolve vendor_dir path type
+     * by reading composer.json configuration with VendorDirPathResolutionStrategy.
      */
-    public function testResolveVendorDirFromComposerConfigShouldFail(): void
+    public function testResolveVendorDirFromComposerConfigSucceeds(): void
     {
         // Arrange: Create a composer installation with custom vendor-dir
         $this->createComposerInstallation([
@@ -93,6 +107,7 @@ final class PathResolutionServiceTest extends TestCase
                 'vendor-dir' => 'app/vendor',
             ],
         ]);
+        mkdir($this->testPath . '/app/vendor', 0o755, true);
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::VENDOR_DIR,
@@ -105,18 +120,17 @@ final class PathResolutionServiceTest extends TestCase
         // Act
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert: This should fail because we don't have a strategy for vendor_dir
-        $this->markTestIncomplete(
-            'This test should fail until VendorDirPathResolutionStrategy is implemented. ' .
-            'Currently fails with: ' . implode(', ', $response->errors),
-        );
+        // Assert: This should now succeed with VendorDirPathResolutionStrategy
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/vendor', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * This test should FAIL because PathResolutionService doesn't have a strategy
-     * to resolve web_dir path type by reading composer.json configuration.
+     * Test that PathResolutionService can resolve web_dir path type
+     * by reading composer.json configuration with WebDirPathResolutionStrategy.
      */
-    public function testResolveWebDirFromComposerConfigShouldFail(): void
+    public function testResolveWebDirFromComposerConfigSucceeds(): void
     {
         // Arrange: Create a composer installation with custom web-dir
         $this->createComposerInstallation([
@@ -126,6 +140,7 @@ final class PathResolutionServiceTest extends TestCase
                 ],
             ],
         ]);
+        mkdir($this->testPath . '/app/web', 0o755, true);
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::WEB_DIR,
@@ -138,18 +153,17 @@ final class PathResolutionServiceTest extends TestCase
         // Act
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert: This should fail because we don't have a strategy for web_dir
-        $this->markTestIncomplete(
-            'This test should fail until WebDirPathResolutionStrategy is implemented. ' .
-            'Currently fails with: ' . implode(', ', $response->errors),
-        );
+        // Assert: This should now succeed with WebDirPathResolutionStrategy
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/web', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * This test should FAIL because PathResolutionService doesn't have a strategy
-     * to resolve typo3conf_dir based on web_dir configuration.
+     * Test that PathResolutionService can resolve typo3conf_dir path type
+     * based on web_dir configuration with Typo3ConfDirPathResolutionStrategy.
      */
-    public function testResolveTypo3ConfDirFromWebDirShouldFail(): void
+    public function testResolveTypo3ConfDirFromWebDirSucceeds(): void
     {
         // Arrange: Create a composer installation with custom web-dir
         $this->createComposerInstallation([
@@ -159,6 +173,7 @@ final class PathResolutionServiceTest extends TestCase
                 ],
             ],
         ]);
+        mkdir($this->testPath . '/app/web/typo3conf', 0o755, true);
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::TYPO3CONF_DIR,
@@ -171,18 +186,17 @@ final class PathResolutionServiceTest extends TestCase
         // Act
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert: This should fail because we don't have a strategy for typo3conf_dir
-        $this->markTestIncomplete(
-            'This test should fail until Typo3ConfDirPathResolutionStrategy is implemented. ' .
-            'Currently fails with: ' . implode(', ', $response->errors),
-        );
+        // Assert: This should now succeed with Typo3ConfDirPathResolutionStrategy
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/web/typo3conf', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * This test should FAIL because PathResolutionService doesn't have a strategy
-     * to resolve composer_installed path based on vendor_dir configuration.
+     * Test that PathResolutionService can resolve composer_installed path type
+     * based on vendor_dir configuration with ComposerInstalledPathResolutionStrategy.
      */
-    public function testResolveComposerInstalledFromVendorDirShouldFail(): void
+    public function testResolveComposerInstalledFromVendorDirSucceeds(): void
     {
         // Arrange: Create a composer installation with custom vendor-dir
         $this->createComposerInstallation([
@@ -208,18 +222,17 @@ final class PathResolutionServiceTest extends TestCase
         // Act
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert: This should fail because we don't have a strategy for composer_installed
-        $this->markTestIncomplete(
-            'This test should fail until ComposerInstalledPathResolutionStrategy is implemented. ' .
-            'Currently fails with: ' . implode(', ', $response->errors),
-        );
+        // Assert: This should now succeed with ComposerInstalledPathResolutionStrategy
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/vendor/composer/installed.json', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     /**
-     * This test should FAIL because PathResolutionService doesn't have a strategy
-     * to resolve package_states path based on typo3conf_dir configuration.
+     * Test that PathResolutionService can resolve package_states path type
+     * based on typo3conf_dir configuration with PackageStatesPathResolutionStrategy.
      */
-    public function testResolvePackageStatesFromTypo3ConfDirShouldFail(): void
+    public function testResolvePackageStatesFromTypo3ConfDirSucceeds(): void
     {
         // Arrange: Create a composer installation with custom paths
         $this->createComposerInstallation([
@@ -247,11 +260,10 @@ final class PathResolutionServiceTest extends TestCase
         // Act
         $response = $this->pathResolutionService->resolvePath($request);
 
-        // Assert: This should fail because we don't have a strategy for package_states
-        $this->markTestIncomplete(
-            'This test should fail until PackageStatesPathResolutionStrategy is implemented. ' .
-            'Currently fails with: ' . implode(', ', $response->errors),
-        );
+        // Assert: This should now succeed with PackageStatesPathResolutionStrategy
+        self::assertTrue($response->isSuccess());
+        self::assertEquals($this->testPath . '/app/web/typo3conf/PackageStates.php', $response->resolvedPath);
+        self::assertEmpty($response->errors);
     }
 
     private function createComposerInstallation(array $composerConfig): void

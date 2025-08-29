@@ -91,8 +91,8 @@ class FractorAnalyzerIntegrationTest extends TestCase
         // Verify file paths and rules
         self::assertCount(3, $summary->filePaths);
         self::assertCount(2, $summary->appliedRules);
-        self::assertContains('RemoveTCEformsFractor', $summary->appliedRules);
-        self::assertContains('RemoveNoCacheHashFractor', $summary->appliedRules);
+        self::assertContainsEquals('RemoveTCEformsFractor', $summary->appliedRules);
+        self::assertContainsEquals('RemoveNoCacheHashFractor', $summary->appliedRules);
     }
 
     #[Test]
