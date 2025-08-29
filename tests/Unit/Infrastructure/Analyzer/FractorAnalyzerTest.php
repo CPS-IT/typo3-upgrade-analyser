@@ -234,7 +234,7 @@ class FractorAnalyzerTest extends TestCase
 
         $this->resultParser->expects(self::exactly(4))
             ->method('parse')
-            ->willReturnCallback(function () use ($summary1, $summary2, $summary3, $summary4): \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary {
+            ->willReturnCallback(function () use ($summary1, $summary2, $summary3, $summary4): FractorAnalysisSummary {
                 static $callCount = 0;
 
                 return match (++$callCount) {
@@ -279,7 +279,7 @@ class FractorAnalyzerTest extends TestCase
 
         $this->resultParser->expects(self::exactly(2))
             ->method('parse')
-            ->willReturnCallback(function () use ($noChangesSummary, $manyChangesSummary): \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary {
+            ->willReturnCallback(function () use ($noChangesSummary, $manyChangesSummary): FractorAnalysisSummary {
                 static $callCount = 0;
 
                 return match (++$callCount) {
