@@ -102,6 +102,11 @@ final class PathResolutionServiceFixturesTest extends TestCase
         // Get installation type and path configuration
         $installationType = InstallationTypeEnum::from($expectations['installation_type']);
         $pathConfig = $this->createPathConfiguration($expectations['path_configuration'] ?? 'default');
+        
+        // For custom installations, resolve base paths first to populate PathConfiguration
+        if ($installationType === InstallationTypeEnum::COMPOSER_CUSTOM) {
+            $pathConfig = $this->resolveBasePaths($installationPath, $installationType, $pathConfig);
+        }
 
         foreach ($expectations['extensions'] as $extensionKey => $expectation) {
             $shouldExist = $expectation['should_exist'];
@@ -174,6 +179,46 @@ final class PathResolutionServiceFixturesTest extends TestCase
     }
 
     /**
+     * Resolve base paths (vendor-dir, web-dir, etc.) and populate PathConfiguration.
+     */
+    private function resolveBasePaths(string $installationPath, InstallationTypeEnum $installationType, PathConfiguration $baseConfig): PathConfiguration
+    {
+        $customPaths = [];
+        
+        // Resolve vendor-dir
+        $vendorDirRequest = PathResolutionRequest::create(
+            PathTypeEnum::VENDOR_DIR,
+            $installationPath,
+            $installationType,
+            $baseConfig
+        );
+        $vendorDirResponse = $this->pathResolutionService->resolvePath($vendorDirRequest);
+        if ($vendorDirResponse->isSuccess()) {
+            $customPaths['vendor-dir'] = $vendorDirResponse->resolvedPath;
+        }
+        
+        // Resolve web-dir 
+        $webDirRequest = PathResolutionRequest::create(
+            PathTypeEnum::WEB_DIR,
+            $installationPath,
+            $installationType,
+            $baseConfig
+        );
+        $webDirResponse = $this->pathResolutionService->resolvePath($webDirRequest);
+        if ($webDirResponse->isSuccess()) {
+            $customPaths['web-dir'] = $webDirResponse->resolvedPath;
+        }
+        
+        // Create new PathConfiguration with resolved paths
+        return PathConfiguration::fromArray([
+            'customPaths' => $customPaths,
+            'validateExists' => $baseConfig->validateExists,
+            'followSymlinks' => $baseConfig->followSymlinks,
+            'searchDirectories' => $baseConfig->searchDirectories
+        ]);
+    }
+
+    /**
      * Create path configuration from expectations.
      */
     private function createPathConfiguration(string $configType): PathConfiguration
@@ -199,6 +244,11 @@ final class PathResolutionServiceFixturesTest extends TestCase
             'news' => 'georgringer/news',  // Use georgringer/news as primary
             'example_news' => 'example/news',  // example/news package with example_news extension key
             'powermail' => 'example/powermail',
+            // v12ComposerCustomBothDirs fixture mappings
+            'solr' => 'apache-solr-for-typo3/solr',
+            'tika' => 'apache-solr-for-typo3/tika',
+            'bravo_handlebars_content' => 'cpsit/bravo-handlebars-content',
+            'cps_shortnr' => 'cpsit/cps-shortnr',
             // Add more mappings as needed
         ];
 
