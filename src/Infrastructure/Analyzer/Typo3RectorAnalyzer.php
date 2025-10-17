@@ -113,6 +113,12 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             // Add metrics to result
             $this->addMetricsToResult($result, $summary, $executionResult);
 
+            // Store raw objects for detailed findings export
+            if (!empty($executionResult->getFindings())) {
+                $result->addMetric('raw_findings', $executionResult->getFindings());
+                $result->addMetric('raw_summary', $summary);
+            }
+
             // Calculate risk score
             $riskScore = $this->calculateRiskScore($summary);
             $result->setRiskScore($riskScore);

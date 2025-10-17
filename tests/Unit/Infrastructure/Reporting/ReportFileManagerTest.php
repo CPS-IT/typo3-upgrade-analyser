@@ -285,4 +285,264 @@ class ReportFileManagerTest extends TestCase
         // Assert
         self::assertSame(1000, $result['size']);
     }
+
+    // Tests for new Rector findings methods
+
+    public function testEnsureRectorFindingsDirectory(): void
+    {
+        // Act
+        $result = $this->subject->ensureRectorFindingsDirectory($this->tempDir);
+
+        // Assert
+        $expectedPath = $this->tempDir . '/rector-findings/';
+        self::assertSame($expectedPath, $result);
+        self::assertTrue(is_dir($expectedPath));
+    }
+
+    public function testEnsureRectorFindingsDirectoryWithExistingDirectory(): void
+    {
+        // Arrange - Create directory first
+        $rectorDir = $this->tempDir . '/rector-findings/';
+        mkdir($rectorDir, 0o755, true);
+
+        // Act
+        $result = $this->subject->ensureRectorFindingsDirectory($this->tempDir);
+
+        // Assert
+        self::assertSame($rectorDir, $result);
+        self::assertTrue(is_dir($rectorDir));
+    }
+
+    public function testWriteRectorDetailPages(): void
+    {
+        // Arrange
+        $rectorDetailPages = [
+            [
+                'content' => '# Rector Findings for Extension 1',
+                'filename' => 'ext1.html',
+                'extension' => 'ext1',
+            ],
+            [
+                'content' => '# Rector Findings for Extension 2',
+                'filename' => 'ext2.html',
+                'extension' => 'ext2',
+            ],
+        ];
+
+        // Act
+        $result = $this->subject->writeRectorDetailPages($rectorDetailPages, $this->tempDir);
+
+        // Assert
+        self::assertCount(2, $result);
+
+        // Check first rector page
+        $page1Result = $result[0];
+        self::assertSame('rector_detail_page', $page1Result['type']);
+        self::assertSame('ext1', $page1Result['extension']);
+        self::assertSame($this->tempDir . '/rector-findings/ext1.html', $page1Result['path']);
+        self::assertGreaterThan(0, $page1Result['size']);
+
+        // Check second rector page
+        $page2Result = $result[1];
+        self::assertSame('rector_detail_page', $page2Result['type']);
+        self::assertSame('ext2', $page2Result['extension']);
+        self::assertSame($this->tempDir . '/rector-findings/ext2.html', $page2Result['path']);
+        self::assertGreaterThan(0, $page2Result['size']);
+
+        // Verify files were actually written
+        self::assertTrue(file_exists($this->tempDir . '/rector-findings/ext1.html'));
+        self::assertTrue(file_exists($this->tempDir . '/rector-findings/ext2.html'));
+        self::assertSame('# Rector Findings for Extension 1', file_get_contents($this->tempDir . '/rector-findings/ext1.html'));
+        self::assertSame('# Rector Findings for Extension 2', file_get_contents($this->tempDir . '/rector-findings/ext2.html'));
+
+        // Verify rector-findings directory was created
+        self::assertTrue(is_dir($this->tempDir . '/rector-findings/'));
+    }
+
+    public function testWriteRectorDetailPagesEmptyArray(): void
+    {
+        // Act
+        $result = $this->subject->writeRectorDetailPages([], $this->tempDir);
+
+        // Assert
+        self::assertEmpty($result);
+
+        // Verify rector-findings directory was NOT created when there are no pages
+        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+    }
+
+    public function testWriteReportFilesWithRectorPages(): void
+    {
+        // Arrange
+        $mainReport = [
+            'content' => '# Main Analysis Report',
+            'filename' => 'analysis-report.html',
+        ];
+
+        $extensionReports = [
+            [
+                'content' => '# Extension Report',
+                'filename' => 'test_ext.html',
+                'extension' => 'test_ext',
+            ],
+        ];
+
+        $rectorDetailPages = [
+            [
+                'content' => '<h1>Rector Findings for test_ext</h1>',
+                'filename' => 'test_ext.html',
+                'extension' => 'test_ext',
+            ],
+        ];
+
+        // Act
+        $result = $this->subject->writeReportFilesWithRectorPages(
+            $mainReport,
+            $extensionReports,
+            $rectorDetailPages,
+            $this->tempDir,
+        );
+
+        // Assert
+        self::assertCount(3, $result); // 1 main + 1 extension + 1 rector page
+
+        // Check main report
+        $mainResults = array_filter($result, fn (array $r): bool => 'main_report' === $r['type']);
+        self::assertCount(1, $mainResults, 'Should have exactly one main report');
+        $mainResult = array_values($mainResults)[0];
+        self::assertSame('main_report', $mainResult['type']);
+        self::assertSame($this->tempDir . '/analysis-report.html', $mainResult['path']);
+
+        // Check extension report
+        $extensionResults = array_filter($result, fn (array $r): bool => 'extension_report' === $r['type']);
+        self::assertCount(1, $extensionResults, 'Should have exactly one extension report');
+        $extensionResult = array_values($extensionResults)[0];
+        self::assertSame('extension_report', $extensionResult['type']);
+        self::assertArrayHasKey('extension', $extensionResult);
+        self::assertTrue(isset($extensionResult['extension']), 'Extension key must be present');
+        /* @var array{type: string, extension: string, path: string, size: int} $extensionResult */
+        self::assertSame('test_ext', $extensionResult['extension']);
+
+        // Check rector detail page
+        $rectorResults = array_filter($result, fn (array $r): bool => 'rector_detail_page' === $r['type']);
+        self::assertCount(1, $rectorResults, 'Should have exactly one rector detail page');
+        $rectorResult = array_values($rectorResults)[0];
+        self::assertSame('rector_detail_page', $rectorResult['type']);
+        self::assertArrayHasKey('extension', $rectorResult);
+        self::assertTrue(isset($rectorResult['extension']), 'Extension key must be present');
+        /* @var array{type: string, extension: string, path: string, size: int} $rectorResult */
+        self::assertSame('test_ext', $rectorResult['extension']);
+        self::assertSame($this->tempDir . '/rector-findings/test_ext.html', $rectorResult['path']);
+
+        // Verify directories were created
+        self::assertTrue(is_dir($this->tempDir . '/extensions/'));
+        self::assertTrue(is_dir($this->tempDir . '/rector-findings/'));
+
+        // Verify files exist
+        self::assertTrue(file_exists($this->tempDir . '/analysis-report.html'));
+        self::assertTrue(file_exists($this->tempDir . '/extensions/test_ext.html'));
+        self::assertTrue(file_exists($this->tempDir . '/rector-findings/test_ext.html'));
+
+        // Verify file contents
+        self::assertSame('# Main Analysis Report', file_get_contents($this->tempDir . '/analysis-report.html'));
+        self::assertSame('# Extension Report', file_get_contents($this->tempDir . '/extensions/test_ext.html'));
+        self::assertSame('<h1>Rector Findings for test_ext</h1>', file_get_contents($this->tempDir . '/rector-findings/test_ext.html'));
+    }
+
+    public function testWriteReportFilesWithRectorPagesNoRectorPages(): void
+    {
+        // Arrange
+        $mainReport = [
+            'content' => '# Main Report',
+            'filename' => 'main.html',
+        ];
+        $extensionReports = [];
+        $rectorDetailPages = [];
+
+        // Act
+        $result = $this->subject->writeReportFilesWithRectorPages(
+            $mainReport,
+            $extensionReports,
+            $rectorDetailPages,
+            $this->tempDir,
+        );
+
+        // Assert
+        self::assertCount(1, $result); // Only main report
+        self::assertSame('main_report', $result[0]['type']);
+
+        // Verify only main file exists
+        self::assertTrue(file_exists($this->tempDir . '/main.html'));
+
+        // Verify no subdirectories were created
+        self::assertFalse(is_dir($this->tempDir . '/extensions/'));
+        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+    }
+
+    public function testWriteReportFilesWithRectorPagesOnlyExtensionReports(): void
+    {
+        // Arrange
+        $mainReport = [
+            'content' => '# Main Report',
+            'filename' => 'main.md',
+        ];
+        $extensionReports = [
+            [
+                'content' => '# Extension 1',
+                'filename' => 'ext1.md',
+                'extension' => 'ext1',
+            ],
+        ];
+        $rectorDetailPages = []; // No rector pages
+
+        // Act
+        $result = $this->subject->writeReportFilesWithRectorPages(
+            $mainReport,
+            $extensionReports,
+            $rectorDetailPages,
+            $this->tempDir,
+        );
+
+        // Assert
+        self::assertCount(2, $result); // 1 main + 1 extension
+
+        // Verify extensions directory was created but rector-findings was not
+        self::assertTrue(is_dir($this->tempDir . '/extensions/'));
+        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+    }
+
+    public function testRectorDetailPageFileSizes(): void
+    {
+        // Arrange
+        $smallContent = 'Small content';
+        $largeContent = str_repeat('Large content with lots of text. ', 100);
+
+        $rectorDetailPages = [
+            [
+                'content' => $smallContent,
+                'filename' => 'small.html',
+                'extension' => 'small_ext',
+            ],
+            [
+                'content' => $largeContent,
+                'filename' => 'large.html',
+                'extension' => 'large_ext',
+            ],
+        ];
+
+        // Act
+        $result = $this->subject->writeRectorDetailPages($rectorDetailPages, $this->tempDir);
+
+        // Assert
+        self::assertCount(2, $result);
+
+        $smallResult = $result[0];
+        $largeResult = $result[1];
+
+        self::assertSame(\strlen($smallContent), $smallResult['size']);
+        self::assertSame(\strlen($largeContent), $largeResult['size']);
+
+        // Verify large content is actually larger
+        self::assertGreaterThan($smallResult['size'], $largeResult['size']);
+    }
 }

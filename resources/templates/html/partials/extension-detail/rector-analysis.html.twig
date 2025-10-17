@@ -104,6 +104,21 @@
                 </div>
                 {% endif %}
 
+                {% if rector_analysis.detailed_findings.findings is defined and rector_analysis.detailed_findings.findings|length > 0 %}
+                <div class="findings-actions">
+                    <h3>Detailed Analysis</h3>
+                    <p>{{ rector_analysis.detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
+                    <div class="action-buttons">
+                        <a href="../rector-findings/{{ extension.key }}.html" class="btn btn-primary">
+                            🔍 View Detailed Findings
+                        </a>
+                        <small class="text-muted">
+                            Includes code examples, fix suggestions, and file-by-file breakdown
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% else %}
                 <div class="error-card">
                     <h3>❌ Analysis Not Available</h3>

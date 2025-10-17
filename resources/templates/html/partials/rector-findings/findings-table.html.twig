@@ -1,0 +1,222 @@
+            <div class="section" id="detailed-findings-table">
+                <h2>Detailed Findings</h2>
+
+                {% if detailed_findings.findings and detailed_findings.findings|length > 0 %}
+                <div class="findings-container">
+                    {% for finding in detailed_findings.findings %}
+                    <div class="finding-item" data-severity="{{ finding.severity }}">
+                        <div class="finding-header">
+                            <div class="finding-title">
+                                <h3>Finding #{{ loop.index }}</h3>
+                                <span class="badge badge-{{ finding.severity == 'critical' ? 'critical' : (finding.severity == 'warning' ? 'high' : 'low') }}">
+                                    {{ finding.severity|upper }}
+                                </span>
+                            </div>
+                            <div class="finding-location">
+                                <strong>{{ finding.file }}</strong>{% if finding.line %}:{{ finding.line }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="finding-details">
+                            <div class="finding-rule">
+                                <strong>Rule:</strong> <code>{{ finding.rule_class }}</code>
+                            </div>
+
+                            <div class="finding-message">
+                                <strong>Issue:</strong> {{ finding.message }}
+                            </div>
+
+                            {% if finding.old_code or finding.new_code %}
+                            <div class="code-changes">
+                                <h4>Code Changes</h4>
+
+                                {% if finding.old_code %}
+                                <div class="code-block old-code">
+                                    <h5>Before:</h5>
+                                    <pre><code>{{ finding.old_code }}</code></pre>
+                                </div>
+                                {% endif %}
+
+                                {% if finding.new_code %}
+                                <div class="code-block new-code">
+                                    <h5>After:</h5>
+                                    <pre><code>{{ finding.new_code }}</code></pre>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% if finding.suggested_fix %}
+                            <div class="suggested-fix">
+                                <strong>Suggested Fix:</strong> {{ finding.suggested_fix }}
+                            </div>
+                            {% endif %}
+
+                            {% if finding.priority_score is defined %}
+                            <div class="finding-metadata">
+                                <small>
+                                    {% if finding.change_type %}<strong>Type:</strong> {{ finding.change_type }} • {% endif %}
+                                    {% if finding.priority_score %}<strong>Priority:</strong> {{ finding.priority_score }}/10 • {% endif %}
+                                    {% if finding.estimated_effort %}<strong>Effort:</strong> ~{{ finding.estimated_effort }} min{% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="findings-summary">
+                    <p><strong>{{ detailed_findings.findings|length }}</strong> total findings displayed</p>
+                </div>
+
+                {% else %}
+                <div class="info-card">
+                    <h3>No Detailed Findings</h3>
+                    <p>No specific findings are available for detailed display. This may occur when:</p>
+                    <ul>
+                        <li>The extension has no code issues detected by Rector</li>
+                        <li>Analysis completed but found no actionable items</li>
+                        <li>Findings data was not properly captured during analysis</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <style>
+            .findings-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .finding-item {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 1rem;
+                background: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .finding-item[data-severity="critical"] {
+                border-left: 4px solid #dc3545;
+            }
+
+            .finding-item[data-severity="warning"] {
+                border-left: 4px solid #ffc107;
+            }
+
+            .finding-item[data-severity="info"] {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .finding-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid #eee;
+            }
+
+            .finding-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .finding-title h3 {
+                margin: 0;
+                font-size: 1.1rem;
+                color: #333;
+            }
+
+            .finding-location {
+                font-family: 'Courier New', monospace;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .finding-details {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .finding-rule code {
+                background: #f8f9fa;
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                font-size: 0.9rem;
+            }
+
+            .code-changes {
+                margin: 0.5rem 0;
+            }
+
+            .code-changes h4 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1rem;
+                color: #333;
+            }
+
+            .code-block {
+                margin-bottom: 0.75rem;
+            }
+
+            .code-block h5 {
+                margin: 0 0 0.25rem 0;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .code-block.old-code h5 {
+                color: #dc3545;
+            }
+
+            .code-block.new-code h5 {
+                color: #28a745;
+            }
+
+            .code-block pre {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 4px;
+                padding: 0.75rem;
+                margin: 0;
+                overflow-x: auto;
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+
+            .code-block.old-code pre {
+                background: #fff5f5;
+                border-color: #fed7d7;
+            }
+
+            .code-block.new-code pre {
+                background: #f0fff4;
+                border-color: #c6f6d5;
+            }
+
+            .suggested-fix {
+                background: #e3f2fd;
+                border-radius: 4px;
+                padding: 0.75rem;
+                border-left: 3px solid #2196f3;
+            }
+
+            .finding-metadata {
+                padding-top: 0.5rem;
+                border-top: 1px solid #f0f0f0;
+                color: #666;
+            }
+
+            .findings-summary {
+                text-align: center;
+                padding: 1rem;
+                background: #f8f9fa;
+                border-radius: 4px;
+                margin-top: 1rem;
+            }
+            </style>

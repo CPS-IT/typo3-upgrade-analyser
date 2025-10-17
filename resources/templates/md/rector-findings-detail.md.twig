@@ -1,0 +1,93 @@
+# {{ extension_key }} - Rector Findings Detail
+
+**{{ detailed_findings.findings|length }} findings** • Generated: {{ generated_at.format('Y-m-d H:i:s T') }}
+
+---
+
+## Summary Overview
+
+### Analysis Metadata
+- **Extension**: {{ detailed_findings.metadata.extension_key }}
+- **Analysis Date**: {{ detailed_findings.metadata.analysis_timestamp }}
+- **Rector Version**: {{ detailed_findings.metadata.rector_version }}
+- **Execution Time**: {{ detailed_findings.metadata.execution_time }} seconds
+
+### Findings Distribution
+{% if detailed_findings.summary.severity_distribution %}
+{% for severity, count in detailed_findings.summary.severity_distribution %}
+{% if count > 0 %}
+- **{{ severity|upper }}**: {{ count }} findings
+{% endif %}
+{% endfor %}
+{% endif %}
+
+### Impact Assessment
+- **Total Findings**: {{ detailed_findings.summary.total_findings }}
+- **Affected Files**: {{ detailed_findings.summary.affected_files }} / {{ detailed_findings.summary.total_files }}
+- **File Impact**: {{ detailed_findings.summary.file_impact_percentage }}%
+- **Estimated Fix Time**: {{ detailed_findings.summary.estimated_fix_time_hours }}h
+- **Upgrade Readiness**: {{ detailed_findings.summary.upgrade_readiness_score }}/10
+- **Risk Level**: {{ detailed_findings.summary.risk_level }}
+
+---
+
+## Detailed Findings
+
+{% if detailed_findings.findings %}
+{% for finding in detailed_findings.findings %}
+
+### Finding #{{ loop.index }} - {{ finding.severity|upper }}
+
+**File**: `{{ finding.file }}`{% if finding.line %}:{{ finding.line }}{% endif %}
+**Rule**: {{ finding.rule_class }}
+**Message**: {{ finding.message }}
+
+{% if finding.old_code or finding.new_code %}
+#### Code Changes
+
+{% if finding.old_code %}
+**Before**:
+```php
+{{ finding.old_code }}
+```
+{% endif %}
+
+{% if finding.new_code %}
+**After**:
+```php
+{{ finding.new_code }}
+```
+{% endif %}
+{% endif %}
+
+{% if finding.suggested_fix %}
+**Suggested Fix**: {{ finding.suggested_fix }}
+{% endif %}
+
+---
+{% endfor %}
+{% else %}
+
+*No detailed findings available.*
+
+{% endif %}
+
+## Top Issues by File
+
+{% if detailed_findings.summary.top_issues_by_file %}
+{% for file, count in detailed_findings.summary.top_issues_by_file %}
+- **{{ file }}**: {{ count }} findings
+{% endfor %}
+{% endif %}
+
+## Top Issues by Rule
+
+{% if detailed_findings.summary.top_issues_by_rule %}
+{% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+- **{{ rule }}**: {{ count }} occurrences
+{% endfor %}
+{% endif %}
+
+---
+
+[← Back to Extension Report](../extensions/{{ extension_key }}.md)

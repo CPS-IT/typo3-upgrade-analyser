@@ -114,6 +114,57 @@ class ReportFileManager
     }
 
     /**
+     * Ensure rector-findings subdirectory exists within the output path.
+     *
+     * @param string $outputPath Output path where rector-findings directory should be created
+     *
+     * @return string The rector-findings subdirectory path
+     */
+    public function ensureRectorFindingsDirectory(string $outputPath): string
+    {
+        $outputPath = rtrim($outputPath, '/') . '/';
+        $rectorPath = $outputPath . 'rector-findings/';
+
+        if (!is_dir($rectorPath)) {
+            mkdir($rectorPath, 0o755, true);
+        }
+
+        return $rectorPath;
+    }
+
+    /**
+     * Write rector detail pages to rector-findings subdirectory.
+     *
+     * @param array<int, array{content: string, filename: string, extension: string}> $rectorDetailPages Rendered Rector detail pages
+     * @param string                                                                  $outputPath        Output directory path
+     *
+     * @return array<int, array{type: string, extension: string, path: string, size: int}> File metadata array
+     */
+    public function writeRectorDetailPages(array $rectorDetailPages, string $outputPath): array
+    {
+        if (empty($rectorDetailPages)) {
+            return [];
+        }
+
+        $rectorPath = $this->ensureRectorFindingsDirectory($outputPath);
+        $files = [];
+
+        foreach ($rectorDetailPages as $page) {
+            $filename = $rectorPath . $page['filename'];
+            file_put_contents($filename, $page['content']);
+
+            $files[] = [
+                'type' => 'rector_detail_page',
+                'extension' => $page['extension'],
+                'path' => $filename,
+                'size' => filesize($filename) ?: 0,
+            ];
+        }
+
+        return $files;
+    }
+
+    /**
      * Write all report files and return combined metadata.
      *
      * @param array{content: string, filename: string}                                $mainReport       Main report data
@@ -135,5 +186,30 @@ class ReportFileManager
         }
 
         return array_merge($mainReportFiles, $extensionReportFiles);
+    }
+
+    /**
+     * Extended file writing that includes Rector detail pages.
+     *
+     * @param array{content: string, filename: string}                                $mainReport        Main report data
+     * @param array<int, array{content: string, filename: string, extension: string}> $extensionReports  Extension reports data
+     * @param array<int, array{content: string, filename: string, extension: string}> $rectorDetailPages Rector detail pages data
+     * @param string                                                                  $outputPath        Output directory path
+     *
+     * @return array<int, array{type: string, extension?: string, path: string, size: int}> All file metadata
+     */
+    public function writeReportFilesWithRectorPages(
+        array $mainReport,
+        array $extensionReports,
+        array $rectorDetailPages,
+        string $outputPath,
+    ): array {
+        // Use existing method for main and extension reports
+        $files = $this->writeReportFiles($mainReport, $extensionReports, $outputPath);
+
+        // Add Rector detail pages
+        $rectorFiles = $this->writeRectorDetailPages($rectorDetailPages, $outputPath);
+
+        return array_merge($files, $rectorFiles);
     }
 }

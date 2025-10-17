@@ -269,4 +269,38 @@ class RectorAnalysisSummary
 
         return $summary;
     }
+
+    /**
+     * Convert summary to array format for serialization.
+     *
+     * @return array<string, mixed> Summary data as associative array
+     */
+    public function toArray(): array
+    {
+        return [
+            'total_findings' => $this->totalFindings,
+            'critical_issues' => $this->criticalIssues,
+            'warnings' => $this->warnings,
+            'info_issues' => $this->infoIssues,
+            'suggestions' => $this->suggestions,
+            'affected_files' => $this->affectedFiles,
+            'total_files' => $this->totalFiles,
+            'rule_breakdown' => $this->ruleBreakdown,
+            'file_breakdown' => $this->fileBreakdown,
+            'type_breakdown' => $this->typeBreakdown,
+            'complexity_score' => $this->complexityScore,
+            'estimated_fix_time' => $this->estimatedFixTime,
+            'estimated_fix_time_hours' => $this->getEstimatedFixTimeHours(),
+            'file_impact_percentage' => $this->getFileImpactPercentage(),
+            'upgrade_readiness_score' => $this->getUpgradeReadinessScore(),
+            'risk_level' => $this->getRiskLevel(),
+            'summary_text' => $this->getSummaryText(),
+            'has_breaking_changes' => $this->hasBreakingChanges(),
+            'has_deprecations' => $this->hasDeprecations(),
+            'has_issues' => $this->hasIssues(),
+            'severity_distribution' => $this->getSeverityDistribution(),
+            'top_issues_by_file' => $this->getTopIssuesByFile(10),
+            'top_issues_by_rule' => $this->getTopIssuesByRule(10),
+        ];
+    }
 }

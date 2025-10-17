@@ -266,7 +266,7 @@ class ReportContextBuilder
         /** @var AnalysisResult $result */
         $result = reset($rectorResult);
 
-        return [
+        $analysisData = [
             'total_findings' => $result->getMetric('total_findings'),
             'affected_files' => $result->getMetric('affected_files'),
             'total_files' => $result->getMetric('total_files'),
@@ -288,6 +288,25 @@ class ReportContextBuilder
             'risk_score' => $result->getRiskScore(),
             'recommendations' => $result->getRecommendations(),
         ];
+
+        // Add detailed findings data if available
+        $rawFindings = $result->getMetric('raw_findings');
+        $rawSummary = $result->getMetric('raw_summary');
+
+        if ($rawFindings && $rawSummary) {
+            $analysisData['detailed_findings'] = [
+                'metadata' => [
+                    'extension_key' => $result->getExtension()->getKey(),
+                    'analysis_timestamp' => (new \DateTime())->format('c'),
+                    'rector_version' => $result->getMetric('rector_version'),
+                    'execution_time' => $result->getMetric('execution_time'),
+                ],
+                'summary' => $rawSummary->toArray(),
+                'findings' => array_map(fn ($finding) => $finding->toArray(), $rawFindings),
+            ];
+        }
+
+        return $analysisData;
     }
 
     /**
