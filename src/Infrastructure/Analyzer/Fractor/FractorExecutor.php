@@ -42,16 +42,16 @@ class FractorExecutor
             // Create a temporary minimal config file for the availability check
             $tempConfigPath = sys_get_temp_dir() . '/fractor_availability_check_' . uniqid() . '.php';
             $minimalConfig = <<<'PHP'
-<?php
+                <?php
 
-declare(strict_types=1);
+                declare(strict_types=1);
 
-use a9f\Fractor\Configuration\FractorConfiguration;
+                use a9f\Fractor\Configuration\FractorConfiguration;
 
-return FractorConfiguration::configure()
-    ->withPaths([])
-    ->withSets([]);
-PHP;
+                return FractorConfiguration::configure()
+                    ->withPaths([])
+                    ->withSets([]);
+                PHP;
             file_put_contents($tempConfigPath, $minimalConfig);
 
             try {
