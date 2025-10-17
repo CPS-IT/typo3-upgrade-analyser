@@ -1,0 +1,78 @@
+            <div class="section" id="rector-findings-summary">
+                <h2>Analysis Summary</h2>
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Analysis Metadata</h3>
+                        <p><strong>Extension:</strong> {{ detailed_findings.metadata.extension_key }}</p>
+                        <p><strong>Analysis Date:</strong> {{ detailed_findings.metadata.analysis_timestamp }}</p>
+                        <p><strong>Rector Version:</strong> {{ detailed_findings.metadata.rector_version }}</p>
+                        <p><strong>Execution Time:</strong> {{ "%.2f"|format(detailed_findings.metadata.execution_time) }} seconds</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Impact Assessment</h3>
+                        <p><strong>Total Findings:</strong> {{ detailed_findings.summary.total_findings }}</p>
+                        <p><strong>Affected Files:</strong> {{ detailed_findings.summary.affected_files }} / {{ detailed_findings.summary.total_files }}</p>
+                        <p><strong>File Impact:</strong> {{ "%.1f"|format(detailed_findings.summary.file_impact_percentage) }}%</p>
+                        <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(detailed_findings.summary.estimated_fix_time_hours) }} hours</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Upgrade Readiness</h3>
+                        <p><strong>Readiness Score:</strong> {{ "%.1f"|format(detailed_findings.summary.upgrade_readiness_score) }}/10.0</p>
+                        <p><strong>Risk Level:</strong>
+                            <span class="badge badge-{{ detailed_findings.summary.risk_level == 'low' ? 'low' : (detailed_findings.summary.risk_level == 'medium' ? 'medium' : (detailed_findings.summary.risk_level == 'high' ? 'high' : 'critical')) }}">
+                                {{ detailed_findings.summary.risk_level|upper }}
+                            </span>
+                        </p>
+                        <p><strong>Breaking Changes:</strong>
+                            {% if detailed_findings.summary.has_breaking_changes %}
+                                <span style="color: #dc3545;">⚠️ Yes</span>
+                            {% else %}
+                                <span style="color: #28a745;">✅ No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if detailed_findings.summary.severity_distribution %}
+                <div class="info-card">
+                    <h3>Findings by Severity</h3>
+                    <div class="severity-grid">
+                        {% for severity, count in detailed_findings.summary.severity_distribution %}
+                        {% if count > 0 %}
+                        <div class="severity-item">
+                            <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
+                            <span class="count">{{ count }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if detailed_findings.summary.top_issues_by_file %}
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Most Affected Files</h3>
+                        <ul>
+                            {% for file, count in detailed_findings.summary.top_issues_by_file %}
+                            <li><strong>{{ file }}:</strong> {{ count }} findings</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% if detailed_findings.summary.top_issues_by_rule %}
+                    <div class="info-card">
+                        <h3>Most Triggered Rules</h3>
+                        <ul>
+                            {% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+                            <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>

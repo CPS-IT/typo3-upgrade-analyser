@@ -144,12 +144,17 @@ class ReportService
         $this->logger->debug('Rendering extension reports', ['format' => $format]);
         $extensionReports = $this->templateRenderer->renderExtensionReports($context, $format);
 
+        // Render Rector findings detail pages for HTML/Markdown formats
+        $this->logger->debug('Rendering Rector findings detail pages', ['format' => $format]);
+        $rectorDetailPages = $this->templateRenderer->renderRectorFindingsDetailPages($context, $format);
+
         // 3. Write files using ReportFileManager
         $this->logger->debug('Writing report files', [
             'format' => $format,
             'extension_reports_count' => \count($extensionReports),
+            'rector_detail_pages_count' => \count($rectorDetailPages),
         ]);
-        $allFiles = $this->fileManager->writeReportFiles($mainReport, $extensionReports, $formatOutputPath);
+        $allFiles = $this->fileManager->writeReportFilesWithRectorPages($mainReport, $extensionReports, $rectorDetailPages, $formatOutputPath);
 
         // 4. Create result object
         $result = new ReportingResult(

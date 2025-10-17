@@ -119,6 +119,75 @@ class TemplateRenderer
     }
 
     /**
+     * Render Rector findings detail pages for extensions with detailed findings.
+     * Only generates pages for HTML/Markdown formats where detailed_findings exist.
+     *
+     * @param array<string, mixed> $context Report context data from ReportContextBuilder
+     * @param string               $format  Output format (html, markdown)
+     *
+     * @return array<int, array{content: string, filename: string, extension: string}> Rendered Rector detail pages
+     */
+    public function renderRectorFindingsDetailPages(array $context, string $format): array
+    {
+        // Skip JSON format - detailed findings already included in extension JSON
+        if ('json' === $format) {
+            return [];
+        }
+
+        $detailPages = [];
+
+        foreach ($context['extension_data'] as $extensionData) {
+            $rectorAnalysis = $extensionData['rector_analysis'];
+
+            // Only create detail pages for extensions with detailed findings
+            if ($rectorAnalysis && !empty($rectorAnalysis['detailed_findings'])) {
+                $extensionKey = $extensionData['extension']->getKey();
+
+                $findingsContext = [
+                    'extension_key' => $extensionKey,
+                    'extension' => $extensionData['extension'],
+                    'detailed_findings' => $rectorAnalysis['detailed_findings'],
+                    'rector_analysis' => $rectorAnalysis,
+                    'generated_at' => $context['generated_at'],
+                ];
+
+                $renderedPage = $this->renderSingleRectorFindingsDetailPage($findingsContext, $format, $extensionKey);
+                if (null !== $renderedPage) {
+                    $detailPages[] = $renderedPage;
+                }
+            }
+        }
+
+        return $detailPages;
+    }
+
+    /**
+     * Render a single Rector findings detail page.
+     *
+     * @param array<string, mixed> $findingsContext Findings-specific context
+     * @param string               $format          Output format
+     * @param string               $extensionKey    Extension key for filename
+     *
+     * @return array{content: string, filename: string, extension: string}|null Rendered page or null for unsupported formats
+     */
+    private function renderSingleRectorFindingsDetailPage(array $findingsContext, string $format, string $extensionKey): ?array
+    {
+        return match ($format) {
+            'markdown' => [
+                'content' => $this->twig->render('md/rector-findings-detail.md.twig', $findingsContext),
+                'filename' => $extensionKey . '.md',
+                'extension' => $extensionKey,
+            ],
+            'html' => [
+                'content' => $this->twig->render('html/rector-findings-detail.html.twig', $findingsContext),
+                'filename' => $extensionKey . '.html',
+                'extension' => $extensionKey,
+            ],
+            default => null, // Skip unsupported formats
+        };
+    }
+
+    /**
      * Render main report as JSON, excluding extension details to avoid duplication.
      *
      * @param array<string, mixed> $context Original context
