@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use PHPUnit\Framework\TestCase;
@@ -248,8 +247,8 @@ class ReportContextBuilderTest extends TestCase
             'change_type' => 'breaking',
         ]);
 
-        $rawSummary = $this->createMock(RectorAnalysisSummary::class);
-        $rawSummary->method('toArray')->willReturn([
+        // Convert to arrays as done by the real analyzers when storing metrics
+        $rawSummaryArray = [
             'total_findings' => 2,
             'critical_issues' => 1,
             'warnings' => 1,
@@ -260,9 +259,26 @@ class ReportContextBuilderTest extends TestCase
             'rule_breakdown' => ['TestRule' => 1, 'AnotherRule' => 1],
             'file_breakdown' => ['Classes/TestClass.php' => 1, 'Classes/AnotherClass.php' => 1],
             'type_breakdown' => ['deprecation' => 1, 'breaking' => 1],
-        ]);
+        ];
 
-        $rawFindings = [$rawFinding1, $rawFinding2];
+        $rawFindingsArray = [
+            [
+                'file' => 'Classes/TestClass.php',
+                'line' => 25,
+                'rule_class' => 'TestRule',
+                'message' => 'Test finding message',
+                'severity' => 'critical',
+                'change_type' => 'deprecation',
+            ],
+            [
+                'file' => 'Classes/AnotherClass.php',
+                'line' => 15,
+                'rule_class' => 'AnotherRule',
+                'message' => 'Another finding message',
+                'severity' => 'warning',
+                'change_type' => 'breaking',
+            ],
+        ];
 
         // Create Rector analysis result with raw data
         $rectorResult = $this->createMock(AnalysisResult::class);
@@ -287,8 +303,8 @@ class ReportContextBuilderTest extends TestCase
             ['file_impact_percentage', 40.0],
             ['summary_text', 'Found critical issues'],
             ['rector_version', '0.18.0'],
-            ['raw_findings', $rawFindings], // Raw findings present
-            ['raw_summary', $rawSummary], // Raw summary present
+            ['raw_findings', $rawFindingsArray], // Raw findings present
+            ['raw_summary', $rawSummaryArray], // Raw summary present
         ]);
         $rectorResult->method('getRiskScore')->willReturn(7.5);
         $rectorResult->method('getRecommendations')->willReturn(['Address critical issues', 'Fix deprecations']);
@@ -442,7 +458,16 @@ class ReportContextBuilderTest extends TestCase
             'change_type' => 'deprecation',
         ]);
 
-        $rawFindings = [$rawFinding];
+        $rawFindingsArray = [
+            [
+                'file' => 'Classes/TestClass.php',
+                'line' => 25,
+                'rule_class' => 'TestRule',
+                'message' => 'Test finding message',
+                'severity' => 'critical',
+                'change_type' => 'deprecation',
+            ],
+        ];
 
         // Create Rector analysis result with raw findings but no summary
         $rectorResult = $this->createMock(AnalysisResult::class);
@@ -467,7 +492,7 @@ class ReportContextBuilderTest extends TestCase
             ['file_impact_percentage', 20.0],
             ['summary_text', 'Found deprecations'],
             ['rector_version', '0.18.0'],
-            ['raw_findings', $rawFindings], // Raw findings present
+            ['raw_findings', $rawFindingsArray], // Raw findings present
             ['raw_summary', null], // No raw summary
         ]);
         $rectorResult->method('getRiskScore')->willReturn(5.0);

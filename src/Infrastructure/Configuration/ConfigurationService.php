@@ -187,6 +187,12 @@ class ConfigurationService implements ConfigurationServiceInterface
                         'complexity_threshold' => self::DEFAULT_COMPLEXITY_THRESHOLD,
                         'loc_threshold' => self::DEFAULT_LOC_THRESHOLD,
                     ],
+                    'typo3_rector' => [
+                        'enabled' => true,
+                    ],
+                    'fractor' => [
+                        'enabled' => true,
+                    ],
                 ],
             ],
             'reporting' => [

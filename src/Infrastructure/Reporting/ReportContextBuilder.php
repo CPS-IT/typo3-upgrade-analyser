@@ -293,7 +293,7 @@ class ReportContextBuilder
         $rawFindings = $result->getMetric('raw_findings');
         $rawSummary = $result->getMetric('raw_summary');
 
-        if ($rawFindings && $rawSummary) {
+        if (!empty($rawFindings) && !empty($rawSummary)) {
             $analysisData['detailed_findings'] = [
                 'metadata' => [
                     'extension_key' => $result->getExtension()->getKey(),
@@ -301,8 +301,8 @@ class ReportContextBuilder
                     'rector_version' => $result->getMetric('rector_version'),
                     'execution_time' => $result->getMetric('execution_time'),
                 ],
-                'summary' => $rawSummary->toArray(),
-                'findings' => array_map(fn ($finding) => $finding->toArray(), $rawFindings),
+                'summary' => $rawSummary,  // Already converted to array in the analyzer
+                'findings' => $rawFindings,  // Already converted to array in the analyzer
             ];
         }
 

@@ -22,6 +22,10 @@ analysis:
       enabled: true
       complexity_threshold: 10
       loc_threshold: 1000
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
 reporting:
   formats:
     - markdown

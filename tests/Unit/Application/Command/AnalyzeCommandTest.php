@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInte
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -27,11 +28,16 @@ use Symfony\Component\Console\Tester\CommandTester;
 #[CoversClass(AnalyzeCommand::class)]
 class AnalyzeCommandTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $extensionDiscovery;
-    private \PHPUnit\Framework\MockObject\MockObject $installationDiscovery;
-    private \PHPUnit\Framework\MockObject\MockObject $configService;
-    private \PHPUnit\Framework\MockObject\MockObject $reportService;
+    /** @var LoggerInterface&MockObject */
+    private MockObject $logger;
+    /** @var ExtensionDiscoveryServiceInterface&MockObject */
+    private MockObject $extensionDiscovery;
+    /** @var InstallationDiscoveryServiceInterface&MockObject */
+    private MockObject $installationDiscovery;
+    /** @var ConfigurationServiceInterface&MockObject */
+    private MockObject $configService;
+    /** @var ReportService&MockObject */
+    private MockObject $reportService;
     private AnalyzeCommand $command;
     private CommandTester $commandTester;
 
@@ -166,5 +172,141 @@ class AnalyzeCommandTest extends TestCase
 
         // Check that analyzers option has no default (empty array)
         self::assertEquals([], $definition->getOption('analyzers')->getDefault());
+    }
+
+    public function testAnalyzerFilteringRespectsConfiguration(): void
+    {
+        // Mock analyzers
+        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
+        $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
+
+        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2->method('getName')->willReturn('fractor');
+        $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
+
+        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3->method('getName')->willReturn('version_availability');
+        $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
+
+        // Create command with mock analyzers
+        $command = new AnalyzeCommand(
+            $this->logger,
+            $this->extensionDiscovery,
+            $this->installationDiscovery,
+            $this->configService,
+            $this->reportService,
+            [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
+        );
+
+        // Configure mock service to disable fractor analyzer
+        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+            return match ($key) {
+                'analysis.analyzers.typo3_rector.enabled' => true,
+                'analysis.analyzers.fractor.enabled' => false,  // Disabled
+                'analysis.analyzers.version_availability.enabled' => true,
+                default => $default,
+            };
+        });
+
+        // Use reflection to call the private method
+        $reflection = new \ReflectionClass($command);
+        $method = $reflection->getMethod('getAnalyzersToRun');
+        $method->setAccessible(true);
+
+        // Test with no specific analyzers requested
+        $result = $method->invoke($command, null);
+
+        // Should return only enabled analyzers (typo3_rector and version_availability)
+        self::assertCount(2, $result);
+        $analyzerNames = array_map(fn ($analyzer) => $analyzer->getName(), $result);
+        self::assertContains('typo3_rector', $analyzerNames);
+        self::assertContains('version_availability', $analyzerNames);
+        self::assertNotContains('fractor', $analyzerNames);
+    }
+
+    public function testAnalyzerFilteringCombinesConfigurationAndCommandLine(): void
+    {
+        // Mock analyzers
+        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
+        $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
+
+        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2->method('getName')->willReturn('fractor');
+        $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
+
+        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3->method('getName')->willReturn('version_availability');
+        $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
+
+        // Create command with mock analyzers
+        $command = new AnalyzeCommand(
+            $this->logger,
+            $this->extensionDiscovery,
+            $this->installationDiscovery,
+            $this->configService,
+            $this->reportService,
+            [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
+        );
+
+        // Configure mock service - all analyzers enabled in config
+        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+            return match ($key) {
+                'analysis.analyzers.typo3_rector.enabled' => true,
+                'analysis.analyzers.fractor.enabled' => true,
+                'analysis.analyzers.version_availability.enabled' => true,
+                default => $default,
+            };
+        });
+
+        // Use reflection to call the private method
+        $reflection = new \ReflectionClass($command);
+        $method = $reflection->getMethod('getAnalyzersToRun');
+        $method->setAccessible(true);
+
+        // Test with specific analyzer requested via command line
+        $result = $method->invoke($command, ['typo3_rector']);
+
+        // Should return only the requested analyzer (that is also enabled in config)
+        self::assertCount(1, $result);
+        self::assertEquals('typo3_rector', $result[0]->getName());
+    }
+
+    public function testAnalyzerFilteringCommandLineRequestsDisabledAnalyzer(): void
+    {
+        // Mock analyzers
+        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1->method('getName')->willReturn('fractor');
+        $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
+
+        // Create command with mock analyzer
+        $command = new AnalyzeCommand(
+            $this->logger,
+            $this->extensionDiscovery,
+            $this->installationDiscovery,
+            $this->configService,
+            $this->reportService,
+            [$mockAnalyzer1],
+        );
+
+        // Configure mock service to disable the analyzer
+        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+            return match ($key) {
+                'analysis.analyzers.fractor.enabled' => false,  // Disabled in config
+                default => $default,
+            };
+        });
+
+        // Use reflection to call the private method
+        $reflection = new \ReflectionClass($command);
+        $method = $reflection->getMethod('getAnalyzersToRun');
+        $method->setAccessible(true);
+
+        // Test requesting a disabled analyzer via command line
+        $result = $method->invoke($command, ['fractor']);
+
+        // Should return empty array (analyzer is disabled in config, so command line can't override)
+        self::assertCount(0, $result);
     }
 }
