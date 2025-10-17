@@ -39,15 +39,39 @@ class FractorExecutor
         }
 
         try {
-            // Test with version command which doesn't require config
-            $process = new Process([
-                'php',
-                $this->fractorBinaryPath,
-                '--version',
-            ]);
-            $process->run();
+            // Create a temporary minimal config file for the availability check
+            $tempConfigPath = sys_get_temp_dir() . '/fractor_availability_check_' . uniqid() . '.php';
+            $minimalConfig = <<<'PHP'
+<?php
 
-            return $process->isSuccessful();
+declare(strict_types=1);
+
+use a9f\Fractor\Configuration\FractorConfiguration;
+
+return FractorConfiguration::configure()
+    ->withPaths([])
+    ->withSets([]);
+PHP;
+            file_put_contents($tempConfigPath, $minimalConfig);
+
+            try {
+                // Test with version command using the temporary config
+                $process = new Process([
+                    'php',
+                    $this->fractorBinaryPath,
+                    '--version',
+                    '--config',
+                    $tempConfigPath,
+                ]);
+                $process->run();
+
+                return $process->isSuccessful();
+            } finally {
+                // Clean up temporary config file
+                if (file_exists($tempConfigPath)) {
+                    unlink($tempConfigPath);
+                }
+            }
         } catch (\Throwable $e) {
             $this->logger->warning('Fractor availability check failed', [
                 'error' => $e->getMessage(),
