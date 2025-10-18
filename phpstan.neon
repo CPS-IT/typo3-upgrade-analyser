@@ -17,7 +17,7 @@ parameters:
 		# Ignore missing typehints from arrays (replaces deprecated checkMissingIterableValueType)
 		-
 			identifier: missingType.iterableValue
-	bootstrapFiles:
-		- vendor/autoload.php
-	scanDirectories:
-		- vendor/
+#	bootstrapFiles:
+#		- vendor/autoload.php
+#	scanDirectories:
+#		- vendor/
