@@ -67,9 +67,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist
-      # this is a workaround for an issue where the rector stub is loaded before the phpstan TestCase class
-      - name: Remove offending class from rector stubs
-        run: rm vendor/rector/rector/stubs-rector/PHPUnit/Framework/TestCase.php
 
       - name: Run PHPStan
         run: composer sca:php
