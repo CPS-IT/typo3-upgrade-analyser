@@ -64,6 +64,18 @@ No rule-specific data available.
 No specific Rector recommendations available.
 {% endif %}
 
+{% if rector_analysis.detailed_findings.findings is defined and rector_analysis.detailed_findings.findings|length > 0 %}
+
+## Detailed Analysis
+
+**{{ rector_analysis.detailed_findings.findings|length }} detailed findings** are available for in-depth review.
+
+[🔍 **View Detailed Findings**](../rector-findings/{{ extension.key }}.md)
+
+*Includes code examples, fix suggestions, and file-by-file breakdown*
+
+{% endif %}
+
 {% else %}
 ❌ **TYPO3 Rector analysis was not performed for this extension.** This may occur when:
 - Rector binary is not available

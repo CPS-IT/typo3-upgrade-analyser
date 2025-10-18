@@ -30,11 +30,6 @@ class TemplateRendererTest extends TestCase
         $this->subject = new TemplateRenderer($this->twig);
     }
 
-    public function testServiceCanBeInstantiated(): void
-    {
-        self::assertInstanceOf(TemplateRenderer::class, $this->subject);
-    }
-
     public function testRenderMainReportMarkdown(): void
     {
         // Arrange
@@ -50,8 +45,6 @@ class TemplateRendererTest extends TestCase
         $result = $this->subject->renderMainReport($context, 'markdown');
 
         // Assert
-        self::assertArrayHasKey('content', $result);
-        self::assertArrayHasKey('filename', $result);
         self::assertSame($expectedContent, $result['content']);
         self::assertSame('analysis-report.md', $result['filename']);
     }
@@ -88,12 +81,11 @@ class TemplateRendererTest extends TestCase
         $result = $this->subject->renderMainReport($context, 'json');
 
         // Assert
-        self::assertArrayHasKey('content', $result);
-        self::assertArrayHasKey('filename', $result);
         self::assertSame('analysis-report.json', $result['filename']);
 
         // Verify JSON content excludes extension_data
         $decodedContent = json_decode($result['content'], true);
+        self::assertIsArray($decodedContent);
         self::assertArrayHasKey('installation', $decodedContent);
         self::assertArrayHasKey('other_data', $decodedContent);
         self::assertArrayNotHasKey('extension_data', $decodedContent);
@@ -270,5 +262,246 @@ class TemplateRendererTest extends TestCase
 
         // Act
         $this->subject->renderExtensionReports($context, 'markdown');
+    }
+
+    // Tests for renderRectorFindingsDetailPages method
+
+    public function testRenderRectorFindingsDetailPagesHtml(): void
+    {
+        // Arrange
+        $extension1 = new Extension('ext1', 'Extension 1', new Version('1.0.0'), 'local');
+        $extension2 = new Extension('ext2', 'Extension 2', new Version('2.0.0'), 'local');
+
+        $context = [
+            'generated_at' => '2023-01-01T00:00:00+00:00',
+            'extension_data' => [
+                [
+                    'extension' => $extension1,
+                    'rector_analysis' => [
+                        'detailed_findings' => [
+                            ['file' => 'file1.php', 'line' => 10, 'message' => 'Issue 1'],
+                        ],
+                        'summary' => 'Has findings',
+                    ],
+                ],
+                [
+                    'extension' => $extension2,
+                    'rector_analysis' => [
+                        'detailed_findings' => [], // Empty findings
+                        'summary' => 'No findings',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->twig->expects(self::once())
+            ->method('render')
+            ->with('html/rector-findings-detail.html.twig', self::callback(
+                function (array $context) use ($extension1): bool {
+                    return 'ext1' === $context['extension_key']
+                        && $context['extension'] === $extension1
+                        && !empty($context['detailed_findings'])
+                        && '2023-01-01T00:00:00+00:00' === $context['generated_at']
+                        && isset($context['rector_analysis']);
+                },
+            ))
+            ->willReturn('<h1>Rector Findings for ext1</h1>');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'html');
+
+        // Assert
+        self::assertCount(1, $result); // Only ext1 has detailed findings
+        self::assertSame('<h1>Rector Findings for ext1</h1>', $result[0]['content']);
+        self::assertSame('ext1.html', $result[0]['filename']);
+        self::assertSame('ext1', $result[0]['extension']);
+    }
+
+    public function testRenderRectorFindingsDetailPagesMarkdown(): void
+    {
+        // Arrange
+        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+
+        $context = [
+            'generated_at' => '2023-01-01T00:00:00+00:00',
+            'extension_data' => [
+                [
+                    'extension' => $extension,
+                    'rector_analysis' => [
+                        'detailed_findings' => [
+                            ['file' => 'Classes/Test.php', 'line' => 25, 'message' => 'Deprecated method'],
+                        ],
+                        'summary' => 'Found 1 issue',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->twig->expects(self::once())
+            ->method('render')
+            ->with('md/rector-findings-detail.md.twig', self::anything())
+            ->willReturn('# Rector Findings for test_ext');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'markdown');
+
+        // Assert
+        self::assertCount(1, $result);
+        self::assertSame('# Rector Findings for test_ext', $result[0]['content']);
+        self::assertSame('test_ext.md', $result[0]['filename']);
+    }
+
+    public function testRenderRectorFindingsDetailPagesSkipsJsonFormat(): void
+    {
+        // Arrange
+        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+
+        $context = [
+            'extension_data' => [
+                [
+                    'extension' => $extension,
+                    'rector_analysis' => [
+                        'detailed_findings' => ['some' => 'findings'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->twig->expects(self::never())->method('render');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'json');
+
+        // Assert
+        self::assertEmpty($result);
+    }
+
+    public function testRenderRectorFindingsDetailPagesSkipsExtensionsWithoutFindings(): void
+    {
+        // Arrange
+        $extension1 = new Extension('ext1', 'Extension 1', new Version('1.0.0'), 'local');
+        $extension2 = new Extension('ext2', 'Extension 2', new Version('2.0.0'), 'local');
+        $extension3 = new Extension('ext3', 'Extension 3', new Version('3.0.0'), 'local');
+
+        $context = [
+            'extension_data' => [
+                [
+                    'extension' => $extension1,
+                    'rector_analysis' => null, // No rector analysis
+                ],
+                [
+                    'extension' => $extension2,
+                    'rector_analysis' => [
+                        'detailed_findings' => [], // Empty findings
+                    ],
+                ],
+                [
+                    'extension' => $extension3,
+                    'rector_analysis' => [
+                        'detailed_findings' => ['finding1'], // Has findings
+                        'summary' => 'Found issues',
+                    ],
+                ],
+            ],
+            'generated_at' => '2023-01-01T00:00:00+00:00',
+        ];
+
+        $this->twig->expects(self::once())
+            ->method('render')
+            ->with('html/rector-findings-detail.html.twig', self::anything())
+            ->willReturn('<h1>Findings</h1>');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'html');
+
+        // Assert
+        self::assertCount(1, $result); // Only ext3 should be rendered
+        self::assertSame('ext3', $result[0]['extension']);
+    }
+
+    public function testRenderRectorFindingsDetailPagesUnsupportedFormat(): void
+    {
+        // Arrange
+        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+
+        $context = [
+            'extension_data' => [
+                [
+                    'extension' => $extension,
+                    'rector_analysis' => [
+                        'detailed_findings' => ['finding1'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->twig->expects(self::never())->method('render');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'unsupported');
+
+        // Assert
+        self::assertEmpty($result);
+    }
+
+    public function testRenderRectorFindingsDetailPagesEmptyExtensionData(): void
+    {
+        // Arrange
+        $context = ['extension_data' => []];
+
+        $this->twig->expects(self::never())->method('render');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'html');
+
+        // Assert
+        self::assertEmpty($result);
+    }
+
+    public function testRenderSingleRectorFindingsDetailPageContext(): void
+    {
+        // Arrange
+        $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
+        $detailedFindings = [
+            ['file' => 'Classes/Test.php', 'line' => 10, 'message' => 'Issue 1'],
+            ['file' => 'Classes/Another.php', 'line' => 20, 'message' => 'Issue 2'],
+        ];
+        $rectorAnalysis = [
+            'detailed_findings' => $detailedFindings,
+            'summary' => 'Found 2 issues',
+            'score' => 85,
+        ];
+
+        $context = [
+            'extension_data' => [
+                [
+                    'extension' => $extension,
+                    'rector_analysis' => $rectorAnalysis,
+                ],
+            ],
+            'generated_at' => '2023-01-01T00:00:00+00:00',
+        ];
+
+        // Assert that Twig is called with the correct findings context
+        $this->twig->expects(self::once())
+            ->method('render')
+            ->with(
+                'html/rector-findings-detail.html.twig',
+                self::callback(function (array $findingsContext) use ($extension, $detailedFindings, $rectorAnalysis): bool {
+                    return 'test_ext' === $findingsContext['extension_key']
+                        && $findingsContext['extension'] === $extension
+                        && $findingsContext['detailed_findings'] === $detailedFindings
+                        && $findingsContext['rector_analysis'] === $rectorAnalysis
+                        && '2023-01-01T00:00:00+00:00' === $findingsContext['generated_at'];
+                }),
+            )
+            ->willReturn('<h1>Rector Findings Details</h1>');
+
+        // Act
+        $result = $this->subject->renderRectorFindingsDetailPages($context, 'html');
+
+        // Assert
+        self::assertCount(1, $result);
+        self::assertSame('<h1>Rector Findings Details</h1>', $result[0]['content']);
     }
 }

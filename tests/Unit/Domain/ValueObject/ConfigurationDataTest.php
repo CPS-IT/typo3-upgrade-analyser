@@ -286,8 +286,6 @@ class ConfigurationDataTest extends TestCase
         $config = new ConfigurationData($this->sampleData, 'php', '/path/to/config.php', [], [], null, $this->sampleMetadata);
 
         $systemSection = $config->getSection('system');
-
-        self::assertInstanceOf(ConfigurationData::class, $systemSection);
         self::assertSame($this->sampleData['system'], $systemSection->getData());
         self::assertSame('php', $systemSection->getFormat());
         self::assertSame('/path/to/config.php.system', $systemSection->getSource());

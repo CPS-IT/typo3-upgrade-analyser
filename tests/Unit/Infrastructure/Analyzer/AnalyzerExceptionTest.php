@@ -19,13 +19,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(AnalyzerException::class)]
 class AnalyzerExceptionTest extends TestCase
 {
-    public function testExceptionExtendsBaseException(): void
-    {
-        $exception = new AnalyzerException('Test message', 'test_analyzer');
-
-        self::assertInstanceOf(\Exception::class, $exception);
-    }
-
     public function testConstructorSetsMessageAndAnalyzerName(): void
     {
         $message = 'Analysis failed';
@@ -85,7 +78,7 @@ class AnalyzerExceptionTest extends TestCase
         } catch (AnalyzerException $e) {
             self::assertSame('Processing failed', $e->getMessage());
             self::assertSame('test_analyzer', $e->getAnalyzerName());
-            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertTrue($e->getPrevious() instanceof \InvalidArgumentException);
             self::assertSame('Invalid input', $e->getPrevious()->getMessage());
         }
     }

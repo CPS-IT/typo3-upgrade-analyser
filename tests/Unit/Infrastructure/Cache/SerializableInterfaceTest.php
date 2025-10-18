@@ -52,8 +52,6 @@ final class SerializableInterfaceTest extends TestCase
             }
         };
 
-        $this->assertInstanceOf(SerializableInterface::class, $implementation);
-
         // Test toArray method
         $array = $implementation->toArray();
         $this->assertArrayHasKey('value', $array);
@@ -61,7 +59,6 @@ final class SerializableInterfaceTest extends TestCase
 
         // Test fromArray method
         $recreated = $implementation::fromArray(['value' => 'recreated']);
-        $this->assertInstanceOf(SerializableInterface::class, $recreated);
         $this->assertSame('recreated', $recreated->getValue());
     }
 

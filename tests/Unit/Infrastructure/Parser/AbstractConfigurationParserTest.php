@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -42,11 +41,6 @@ class AbstractConfigurationParserTest extends TestCase
         if (file_exists($this->tempFile)) {
             unlink($this->tempFile);
         }
-    }
-
-    public function testImplementsConfigurationParserInterface(): void
-    {
-        self::assertInstanceOf(ConfigurationParserInterface::class, $this->parser);
     }
 
     public function testParseFileWithValidFile(): void

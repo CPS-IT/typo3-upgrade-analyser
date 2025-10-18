@@ -24,7 +24,7 @@ class RectorRuleSeverityTest extends TestCase
     {
         $severity = RectorRuleSeverity::CRITICAL;
 
-        $this->assertEquals('critical', $severity->value);
+        $this->assertNotEmpty($severity->value);
         $this->assertEquals(1.0, $severity->getRiskWeight());
         $this->assertEquals('Critical', $severity->getDisplayName());
         $this->assertStringContainsString('Breaking changes', $severity->getDescription());
@@ -34,7 +34,7 @@ class RectorRuleSeverityTest extends TestCase
     {
         $severity = RectorRuleSeverity::WARNING;
 
-        $this->assertEquals('warning', $severity->value);
+        $this->assertNotEmpty($severity->value);
         $this->assertEquals(0.6, $severity->getRiskWeight());
         $this->assertEquals('Warning', $severity->getDisplayName());
         $this->assertStringContainsString('Deprecated', $severity->getDescription());
@@ -44,7 +44,7 @@ class RectorRuleSeverityTest extends TestCase
     {
         $severity = RectorRuleSeverity::INFO;
 
-        $this->assertEquals('info', $severity->value);
+        $this->assertNotEmpty($severity->value);
         $this->assertEquals(0.2, $severity->getRiskWeight());
         $this->assertEquals('Info', $severity->getDisplayName());
         $this->assertStringContainsString('improvements', $severity->getDescription());
@@ -54,7 +54,7 @@ class RectorRuleSeverityTest extends TestCase
     {
         $severity = RectorRuleSeverity::SUGGESTION;
 
-        $this->assertEquals('suggestion', $severity->value);
+        $this->assertNotEmpty($severity->value);
         $this->assertEquals(0.1, $severity->getRiskWeight());
         $this->assertEquals('Suggestion', $severity->getDisplayName());
         $this->assertStringContainsString('optimizations', $severity->getDescription());

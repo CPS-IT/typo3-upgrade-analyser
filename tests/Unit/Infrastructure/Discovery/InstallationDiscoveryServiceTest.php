@@ -454,14 +454,6 @@ final class InstallationDiscoveryServiceTest extends TestCase
         self::assertSame($installation, $result->getInstallation());
     }
 
-    public function testCreateServiceWithCustomConfigurationDiscoveryService(): void
-    {
-        $customConfigService = $this->createMock(ConfigurationDiscoveryService::class);
-        $service = $this->createService([], [], $customConfigService);
-
-        self::assertInstanceOf(InstallationDiscoveryService::class, $service);
-    }
-
     public function testConfigurationDiscoveryServiceIntegrationInWorkflow(): void
     {
         file_put_contents($this->testDir . '/indicator.txt', 'test');

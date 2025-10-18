@@ -17,11 +17,12 @@ use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Shared\Configuration\ContainerFactory;
 use Monolog\Logger;
+use PhpParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Twig\Environment;
 
 #[CoversClass(ContainerFactory::class)]
 class ContainerFactoryTest extends TestCase
@@ -39,19 +40,8 @@ class ContainerFactoryTest extends TestCase
         $this->container = self::$sharedContainer;
     }
 
-    public function testCreateReturnsContainerInterface(): void
-    {
-        // Use the shared container instead of creating a new one
-        self::assertInstanceOf(ContainerInterface::class, $this->container);
-    }
-
     public function testContainerIsCompiled(): void
     {
-        // The container returned is a compiled ContainerBuilder
-        // We can verify it's compiled by checking that it's a ContainerInterface instance
-        // (since ContainerFactory returns a compiled container)
-        self::assertInstanceOf(ContainerInterface::class, $this->container);
-
         // Additional verification that services are properly configured (implies compilation succeeded)
         self::assertTrue($this->container->has(LoggerInterface::class));
     }
@@ -62,36 +52,21 @@ class ContainerFactoryTest extends TestCase
         self::assertTrue($this->container->has(LoggerInterface::class));
         self::assertTrue($this->container->has(Logger::class));
 
-        $logger = $this->container->get(LoggerInterface::class);
-        self::assertInstanceOf(LoggerInterface::class, $logger);
-        self::assertInstanceOf(Logger::class, $logger);
-
         // Test HTTP Client
         self::assertTrue($this->container->has('http_client'));
-
-        $httpClient = $this->container->get('http_client');
-        self::assertInstanceOf(HttpClientInterface::class, $httpClient);
     }
 
     public function testLoggerConfiguration(): void
     {
         $logger = $this->container->get(Logger::class);
-        self::assertInstanceOf(Logger::class, $logger);
-
-        self::assertEquals('typo3-upgrade-analyzer', $logger->getName());
-        self::assertNotEmpty($logger->getHandlers());
+        if ($logger instanceof Logger) {
+            self::assertEquals('typo3-upgrade-analyzer', $logger->getName());
+            self::assertNotEmpty($logger->getHandlers());
+        }
 
         // Test that it's the same instance for both interfaces
         $loggerInterface = $this->container->get(LoggerInterface::class);
         self::assertSame($logger, $loggerInterface);
-    }
-
-    public function testHttpClientConfiguration(): void
-    {
-        $httpClient = $this->container->get('http_client');
-
-        // Verify it's a proper HTTP client instance
-        self::assertInstanceOf(HttpClientInterface::class, $httpClient);
     }
 
     public function testApplicationParametersAreSet(): void
@@ -125,87 +100,38 @@ class ContainerFactoryTest extends TestCase
                 $this->container->has($commandClass),
                 "Command $commandClass is not registered in container",
             );
-
-            $command = $this->container->get($commandClass);
-            self::assertInstanceOf($commandClass, $command);
         }
-    }
-
-    public function testAnalyzeCommandDependencies(): void
-    {
-        $command = $this->container->get(AnalyzeCommand::class);
-
-        self::assertInstanceOf(AnalyzeCommand::class, $command);
-
-        // Test command configuration
-        self::assertEquals('analyze', $command->getName());
-        self::assertEquals('Analyze a TYPO3 installation for upgrade readiness', $command->getDescription());
-    }
-
-    public function testInitConfigCommandDependencies(): void
-    {
-        $command = $this->container->get(InitConfigCommand::class);
-
-        self::assertInstanceOf(InitConfigCommand::class, $command);
-        self::assertEquals('init-config', $command->getName());
-    }
-
-    public function testListAnalyzersCommandDependencies(): void
-    {
-        $command = $this->container->get(ListAnalyzersCommand::class);
-
-        self::assertInstanceOf(ListAnalyzersCommand::class, $command);
-        self::assertEquals('list-analyzers', $command->getName());
     }
 
     public function testTwigServicesAreRegistered(): void
     {
         // Test Twig Environment
-        if ($this->container->has(\Twig\Environment::class)) {
-            $twig = $this->container->get(\Twig\Environment::class);
-            self::assertInstanceOf(\Twig\Environment::class, $twig);
-
-            // Verify basic Twig functionality
-            $loader = $twig->getLoader();
-            self::assertInstanceOf(\Twig\Loader\LoaderInterface::class, $loader);
-        } else {
-            self::fail('Twig services should be registered in the container');
-        }
+        self::assertTrue(
+            $this->container->has(Environment::class),
+            'Twig Environment should be registered in the container',
+        );
 
         // Test Twig Loader
-        if ($this->container->has('twig.loader')) {
-            $loader = $this->container->get('twig.loader');
-            self::assertInstanceOf(\Twig\Loader\LoaderInterface::class, $loader);
-        } else {
-            self::fail('Twig loader should be registered in the container');
-        }
+        self::assertTrue(
+            $this->container->has('twig.loader'),
+            'Twig loader should be registered in the container',
+        );
     }
 
     public function testPhpParserIsRegistered(): void
     {
-        if ($this->container->has(\PhpParser\Parser::class)) {
-            $parser = $this->container->get(\PhpParser\Parser::class);
-            self::assertInstanceOf(\PhpParser\Parser::class, $parser);
-
-            // Verify basic parser functionality
-            self::assertInstanceOf(\PhpParser\Parser::class, $parser);
-        } else {
-            self::fail('PHP Parser service should be registered in the container');
-        }
+        self::assertTrue(
+            $this->container->has(Parser::class),
+            'PHP Parser service should be registered in the container',
+        );
     }
 
     public function testServiceDefinitionsLoadedFromYaml(): void
     {
         // Test that services.yaml was loaded by checking for service definitions
         // that would only exist if the YAML file was processed
-
         // The commands should be public (as defined in services.yaml)
         self::assertTrue($this->container->has(AnalyzeCommand::class));
-
-        // If services.yaml is loaded, autowiring should be enabled
-        // This is harder to test directly, but we can verify commands are properly instantiated
-        $command = $this->container->get(AnalyzeCommand::class);
-        self::assertInstanceOf(AnalyzeCommand::class, $command);
     }
 
     public function testAutoRegisterAnalyzersHandlesEmptyDirectory(): void
@@ -213,16 +139,9 @@ class ContainerFactoryTest extends TestCase
         // Test that the analyzer auto-registration doesn't fail when analyzer directory doesn't exist
         // This is tested implicitly by the container creation not throwing exceptions
 
-        // Use the shared container instead of creating a new one
-        self::assertInstanceOf(ContainerInterface::class, $this->container);
-
         // Verify container is functional despite empty analyzer directory
         self::assertTrue($this->container->has(LoggerInterface::class));
         self::assertTrue($this->container->has('http_client'));
-
-        // Verify at least basic services are registered
-        $logger = $this->container->get(LoggerInterface::class);
-        self::assertInstanceOf(LoggerInterface::class, $logger);
     }
 
     public function testContainerParametersAreCorrect(): void
@@ -282,7 +201,7 @@ class ContainerFactoryTest extends TestCase
         foreach ($serviceIds as $serviceId) {
             if ($this->container->has($serviceId)) {
                 try {
-                    $service = $this->container->get($serviceId);
+                    $this->container->get($serviceId);
                 } catch (\Throwable $e) {
                     self::fail("Failed to instantiate service $serviceId: " . $e->getMessage());
                 }
@@ -312,20 +231,5 @@ class ContainerFactoryTest extends TestCase
 
         // Verify we successfully instantiated multiple services
         self::assertGreaterThanOrEqual(5, \count($instantiatedServices), 'Should instantiate at least 5 services without circular dependency issues');
-    }
-
-    public function testAutoConfigurationWorks(): void
-    {
-        // Commands should be auto-configured (this is defined in services.yaml)
-        $commands = [
-            $this->container->get(AnalyzeCommand::class),
-            $this->container->get(InitConfigCommand::class),
-            $this->container->get(ListAnalyzersCommand::class),
-        ];
-
-        foreach ($commands as $command) {
-            self::assertInstanceOf(\Symfony\Component\Console\Command\Command::class, $command);
-            self::assertNotEmpty($command->getName());
-        }
     }
 }

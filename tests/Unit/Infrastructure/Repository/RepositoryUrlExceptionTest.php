@@ -19,13 +19,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(RepositoryUrlException::class)]
 class RepositoryUrlExceptionTest extends TestCase
 {
-    public function testExceptionExtendsBaseException(): void
-    {
-        $exception = new RepositoryUrlException('Test message');
-
-        self::assertInstanceOf(\Exception::class, $exception);
-    }
-
     public function testConstructorWithMessage(): void
     {
         $message = 'Invalid repository URL';
@@ -78,8 +71,7 @@ class RepositoryUrlExceptionTest extends TestCase
         } catch (RepositoryUrlException $e) {
             self::assertSame('URL processing failed', $e->getMessage());
             self::assertSame(400, $e->getCode());
-            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
-            self::assertSame('Invalid URL format', $e->getPrevious()->getMessage());
+            self::assertSame('Invalid URL format', $e->getPrevious()?->getMessage());
         }
     }
 

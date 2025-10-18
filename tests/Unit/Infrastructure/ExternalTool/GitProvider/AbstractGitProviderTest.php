@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -25,8 +26,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 #[CoversClass(AbstractGitProvider::class)]
 final class AbstractGitProviderTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $httpClient;
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private MockObject $httpClient;
+    private MockObject $logger;
     private TestableGitProvider $provider;
 
     protected function setUp(): void
@@ -34,14 +35,6 @@ final class AbstractGitProviderTest extends TestCase
         $this->httpClient = $this->createMock(HttpClientServiceInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->provider = new TestableGitProvider($this->httpClient, $this->logger);
-    }
-
-    public function testConstructor(): void
-    {
-        $httpClient = $this->createMock(HttpClientServiceInterface::class);
-        $logger = $this->createMock(LoggerInterface::class);
-        $provider = new TestableGitProvider($httpClient, $logger, 'access-token');
-        $this->assertInstanceOf(AbstractGitProvider::class, $provider);
     }
 
     public function testGetPriority(): void

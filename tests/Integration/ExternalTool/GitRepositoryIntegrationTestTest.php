@@ -138,9 +138,6 @@ class GitRepositoryIntegrationTestTest extends AbstractIntegrationTestCase
             throw $e;
         }
 
-        // Assert type and basic structure
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata::class, $metadata);
-
         // Assert archived status
         $this->assertTrue($metadata->isArchived());
         $this->assertEquals('gridelements', $metadata->getName());

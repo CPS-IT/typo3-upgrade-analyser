@@ -28,7 +28,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = new YamlParseException($message, $sourcePath);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertStringContainsString($message, $exception->getMessage());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame('yaml', $exception->getFormat());
@@ -93,7 +92,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = YamlParseException::fromSymfonyYamlException($original, $sourcePath);
 
-        self::assertInstanceOf(YamlParseException::class, $exception);
         self::assertStringContainsString($originalMessage, $exception->getMessage());
         self::assertSame($originalCode, $exception->getCode());
         self::assertSame($original, $exception->getPrevious());
@@ -148,7 +146,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = YamlParseException::indentationError($sourcePath, $line, $expectedIndent, $actualIndent);
 
-        self::assertInstanceOf(YamlParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
         self::assertNull($exception->getParseColumn());
@@ -168,7 +165,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = YamlParseException::invalidYamlStructure($message, $sourcePath, $line, $snippet);
 
-        self::assertInstanceOf(YamlParseException::class, $exception);
         self::assertStringContainsString($message, $exception->getMessage());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
@@ -200,7 +196,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = YamlParseException::unsupportedFeature($feature, $sourcePath, $line);
 
-        self::assertInstanceOf(YamlParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
         self::assertStringContainsString('Unsupported YAML feature', $exception->getMessage());
@@ -227,7 +222,6 @@ class YamlParseExceptionTest extends TestCase
 
         $exception = YamlParseException::duplicateKey($key, $sourcePath, $line);
 
-        self::assertInstanceOf(YamlParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
         self::assertStringContainsString('Duplicate key found', $exception->getMessage());
@@ -266,7 +260,6 @@ class YamlParseExceptionTest extends TestCase
     {
         $exception = new YamlParseException('Test', '/path/to/file.yaml');
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertSame('yaml', $exception->getFormat());
     }
 

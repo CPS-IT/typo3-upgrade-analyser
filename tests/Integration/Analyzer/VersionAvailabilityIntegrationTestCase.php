@@ -319,13 +319,6 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
 
         // Assert all analyses completed successfully
         $this->assertEquals(\count($extensions), \count($results));
-
-        foreach ($results as $result) {
-            $this->assertInstanceOf(
-                \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult::class,
-                $result['result'],
-            );
-        }
     }
 
     /**

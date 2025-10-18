@@ -143,9 +143,6 @@ final class PathResolutionServiceIntegrationTest extends TestCase
         // Assert: Second response should be faster (cached)
         $this->assertEquals($firstResponse->pathType, $secondResponse->pathType);
         $this->assertEquals($firstResponse->cacheKey, $secondResponse->cacheKey);
-
-        // Cache behavior verification - second call should have cache metadata
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $secondResponse->metadata);
     }
 
     public function testValidationErrorHandling(): void

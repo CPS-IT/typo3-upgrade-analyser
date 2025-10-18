@@ -77,7 +77,6 @@ class ParseResultTest extends TestCase
         self::assertSame([], $result->getErrors());
         self::assertSame($this->sampleWarnings, $result->getWarnings());
         self::assertSame($this->sampleMetadata, $result->getMetadata());
-        self::assertInstanceOf(\DateTimeImmutable::class, $result->getParsedAt());
         self::assertFalse($result->hasErrors());
         self::assertTrue($result->hasWarnings());
     }
@@ -415,7 +414,7 @@ class ParseResultTest extends TestCase
 
         // Verify it's a valid ISO 8601 timestamp
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $parsedAt);
-        self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);
+        self::assertNotFalse($dateTime);
     }
 
     public function testImmutabilityOfResult(): void

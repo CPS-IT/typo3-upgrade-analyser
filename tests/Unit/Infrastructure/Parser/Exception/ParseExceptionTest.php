@@ -142,7 +142,6 @@ class ParseExceptionTest extends TestCase
 
         $exception = ParseException::syntaxError($message, $sourcePath, $format, $line, $column, $context);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertStringContainsString($message, $exception->getMessage());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($format, $exception->getFormat());
@@ -159,7 +158,6 @@ class ParseExceptionTest extends TestCase
 
         $exception = ParseException::fileAccessError($sourcePath, $format, $reason);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($format, $exception->getFormat());
         self::assertNull($exception->getParseLine());
@@ -188,7 +186,6 @@ class ParseExceptionTest extends TestCase
 
         $exception = ParseException::unsupportedFormat($sourcePath, $format);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($format, $exception->getFormat());
         self::assertStringContainsString('Unsupported configuration format', $exception->getMessage());
@@ -204,7 +201,6 @@ class ParseExceptionTest extends TestCase
 
         $exception = ParseException::invalidStructure($message, $sourcePath, $format, $context);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($format, $exception->getFormat());
         self::assertNull($exception->getParseLine());
@@ -223,22 +219,12 @@ class ParseExceptionTest extends TestCase
 
         $exception = ParseException::fromThrowable($original, $sourcePath, $format);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertStringContainsString($originalMessage, $exception->getMessage());
         self::assertSame($originalCode, $exception->getCode());
         self::assertSame($original, $exception->getPrevious());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($format, $exception->getFormat());
         self::assertSame('InvalidArgumentException', $exception->getContextValue('original_exception'));
-    }
-
-    public function testInheritanceFromRuntimeException(): void
-    {
-        $exception = new ParseException('Test', '/path', 'php');
-
-        self::assertInstanceOf(\RuntimeException::class, $exception);
-        self::assertInstanceOf(\Exception::class, $exception);
-        self::assertInstanceOf(\Throwable::class, $exception);
     }
 
     public function testGetLocationStringWithoutLocation(): void

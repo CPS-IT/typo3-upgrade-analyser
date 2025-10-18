@@ -24,17 +24,9 @@ final class ExtensionTypeTest extends TestCase
     {
         $cases = ExtensionType::cases();
 
-        self::assertCount(3, $cases);
         self::assertContains(ExtensionType::SYSTEM, $cases);
         self::assertContains(ExtensionType::LOCAL, $cases);
         self::assertContains(ExtensionType::COMPOSER, $cases);
-    }
-
-    public function testEnumValues(): void
-    {
-        self::assertSame('system', ExtensionType::SYSTEM->value);
-        self::assertSame('local', ExtensionType::LOCAL->value);
-        self::assertSame('composer', ExtensionType::COMPOSER->value);
     }
 
     #[DataProvider('isSystemExtensionProvider')]

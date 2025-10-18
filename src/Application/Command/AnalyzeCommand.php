@@ -373,7 +373,7 @@ class AnalyzeCommand extends Command
     }
 
     /**
-     * Get analyzers to run based on requested analyzers or all available.
+     * Get analyzers to run based on configuration settings and command-line options.
      *
      * @param array<string>|null $requestedAnalyzers
      *
@@ -383,12 +383,27 @@ class AnalyzeCommand extends Command
     {
         $allAnalyzers = iterator_to_array($this->analyzers);
 
+        // First filter by configuration - only include analyzers that are enabled in config
+        $enabledAnalyzers = [];
+        foreach ($allAnalyzers as $analyzer) {
+            $analyzerName = $analyzer->getName();
+            $configKey = "analysis.analyzers.{$analyzerName}.enabled";
+            $isEnabled = $this->configService->get($configKey, true); // Default to true for backwards compatibility
+
+            if ($isEnabled) {
+                $enabledAnalyzers[] = $analyzer;
+            } else {
+                $this->logger->debug('Skipping disabled analyzer', ['analyzer' => $analyzerName]);
+            }
+        }
+
+        // Then filter by command-line option if specified
         if (null === $requestedAnalyzers || empty($requestedAnalyzers)) {
-            return $allAnalyzers;
+            return $enabledAnalyzers;
         }
 
         $analyzersToRun = [];
-        foreach ($allAnalyzers as $analyzer) {
+        foreach ($enabledAnalyzers as $analyzer) {
             if (\in_array($analyzer->getName(), $requestedAnalyzers, true)) {
                 $analyzersToRun[] = $analyzer;
             }

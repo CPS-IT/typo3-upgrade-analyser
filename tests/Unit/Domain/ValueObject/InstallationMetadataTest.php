@@ -357,8 +357,6 @@ final class InstallationMetadataTest extends TestCase
         $metadata = new InstallationMetadata([], [], [], $date, []);
 
         $retrievedDate = $metadata->getLastModified();
-
-        self::assertInstanceOf(\DateTimeImmutable::class, $retrievedDate);
         self::assertEquals($date, $retrievedDate);
         self::assertSame($date, $retrievedDate); // Should be the same instance
     }
