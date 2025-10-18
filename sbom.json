@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:4e7abba4-c90d-4fae-9562-9254e3ac7a41",
+    "serialNumber": "urn:uuid:368c9559-1d6d-4b2f-a95d-89a5ec9b0505",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-10-18T12:29:08Z",
+        "timestamp": "2025-10-18T13:24:56Z",
         "tools": [
             {
                 "name": "composer",
@@ -82,10 +82,10 @@
             }
         ],
         "component": {
-            "bom-ref": "cpsit/typo3-upgrade-analyser-dev-develop",
+            "bom-ref": "cpsit/typo3-upgrade-analyser-1.0.9999999.9999999-dev",
             "type": "application",
             "name": "typo3-upgrade-analyser",
-            "version": "dev-develop",
+            "version": "1.0.x-dev",
             "group": "cpsit",
             "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
             "author": "Dirk Wenzel",
@@ -96,15 +96,15 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@dev-develop",
+            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@1.0.x-dev",
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "4f21d6e090595d79da95fa4072b66368acb6f50d"
+                    "value": "7c1a5043e8be6ba22873236f8836d8b72f30bfae"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "4f21d6e090595d79da95fa4072b66368acb6f50d"
+                    "value": "7c1a5043e8be6ba22873236f8836d8b72f30bfae"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -7900,7 +7900,7 @@
             "ref": "webmozart/assert-1.11.0.0"
         },
         {
-            "ref": "cpsit/typo3-upgrade-analyser-dev-develop",
+            "ref": "cpsit/typo3-upgrade-analyser-1.0.9999999.9999999-dev",
             "dependsOn": [
                 "a9f/typo3-fractor-0.5.6.0",
                 "composer/semver-3.4.4.0",
