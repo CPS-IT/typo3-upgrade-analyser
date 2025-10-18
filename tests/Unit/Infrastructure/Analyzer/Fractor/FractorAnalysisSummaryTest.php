@@ -13,6 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Fractor;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorChangeType;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorFinding;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleSeverity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +28,10 @@ class FractorAnalysisSummaryTest extends TestCase
     {
         $filesScanned = 10;
         $rulesApplied = 5;
-        $findings = ['finding1', 'finding2'];
+        $findings = [
+            new FractorFinding('test/file1.php', 10, 'TestRule1', 'Test message 1', FractorRuleSeverity::WARNING, FractorChangeType::MODERNIZATION, '', '', '', null, []),
+            new FractorFinding('test/file2.php', 20, 'TestRule2', 'Test message 2', FractorRuleSeverity::INFO, FractorChangeType::DEPRECATION_REMOVAL, '', '', '', null, []),
+        ];
         $successful = true;
         $changeBlocks = 8;
         $changedLines = 25;
@@ -62,13 +68,13 @@ class FractorAnalysisSummaryTest extends TestCase
         $summary = new FractorAnalysisSummary(
             5,
             3,
-            ['finding'],
+            [new FractorFinding('test/file.php', 5, 'TestRule', 'Test message', FractorRuleSeverity::WARNING, FractorChangeType::MODERNIZATION, '', '', '', null, [])],
             true,
         );
 
         self::assertEquals(5, $summary->filesScanned);
         self::assertEquals(3, $summary->rulesApplied);
-        self::assertEquals(['finding'], $summary->findings);
+        self::assertCount(1, $summary->findings);
         self::assertTrue($summary->successful);
         self::assertEquals(0, $summary->changeBlocks);
         self::assertEquals(0, $summary->changedLines);
@@ -109,7 +115,7 @@ class FractorAnalysisSummaryTest extends TestCase
         $summary = new FractorAnalysisSummary(
             0,
             0,
-            ['some finding'],
+            [new FractorFinding('test/file.php', 5, 'TestRule', 'Test message', FractorRuleSeverity::WARNING, FractorChangeType::MODERNIZATION, '', '', '', null, [])],
             true,
         );
 
