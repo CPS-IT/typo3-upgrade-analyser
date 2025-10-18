@@ -15,19 +15,28 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Reporting;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\FindingsDetailPageRenderer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Twig\Environment as TwigEnvironment;
 
 class TemplateRendererTest extends TestCase
 {
     private TemplateRenderer $subject;
-    private \PHPUnit\Framework\MockObject\MockObject $twig;
+    private MockObject $twig;
 
     protected function setUp(): void
     {
         $this->twig = $this->createMock(TwigEnvironment::class);
-        $this->subject = new TemplateRenderer($this->twig);
+        $findingsDetailPageRenderer = $this->createMock(FindingsDetailPageRenderer::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $this->subject = new TemplateRenderer(
+            $this->twig,
+            $findingsDetailPageRenderer,
+            $logger,
+        );
     }
 
     public function testRenderMainReportMarkdown(): void

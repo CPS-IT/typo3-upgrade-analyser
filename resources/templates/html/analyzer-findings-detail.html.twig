@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ extension_key }} - {{ analyzer_type|title }} Findings</title>
+    {% include 'html/partials/shared/styles.html.twig' %}
+    <style>
+        .analyzer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .analyzer-header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .analyzer-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .analyzer-header .subtitle {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .back-link:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+
+        .findings-nav {
+            background: #f8f9fa;
+            padding: 1rem 0;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 2rem;
+        }
+
+        .findings-nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #495057;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="analyzer-header">
+        <div class="container">
+            <h1>{{ extension_key }} - {{ analyzer_type|title }} Findings</h1>
+            <p class="subtitle">
+                {% if detailed_findings.findings %}
+                    {{ detailed_findings.findings|length }} finding{{ detailed_findings.findings|length != 1 ? 's' : '' }} found
+                {% else %}
+                    No detailed findings available
+                {% endif %}
+                • Generated: {{ generated_at.format('Y-m-d H:i:s T') }}
+            </p>
+        </div>
+    </div>
+
+    <nav class="findings-nav">
+        <div class="container">
+            <div class="nav-links">
+                <a href="#{{ analyzer_type }}-findings-summary" class="active">Summary</a>
+                <a href="#detailed-findings-table">Detailed Findings</a>
+                {% if detailed_findings.summary.has_findings %}
+                <a href="#findings-actions">Actions</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        {% include "html/partials/#{analyzer_type}-findings/summary-overview.html.twig" %}
+        {% include "html/partials/#{analyzer_type}-findings/findings-table.html.twig" %}
+
+        {% if detailed_findings.summary.has_findings %}
+        <div class="section" id="findings-actions">
+            <h2>Next Steps</h2>
+
+            <div class="info-card">
+                <h3>Recommended Actions</h3>
+                {% if analyzer_type == 'fractor' %}
+                <ol>
+                    <li><strong>Review Manual Interventions:</strong> Check findings marked as requiring manual intervention</li>
+                    <li><strong>Apply Auto-fixes:</strong> Use Fractor's dry-run results to apply safe automatic changes</li>
+                    <li><strong>Test Changes:</strong> Thoroughly test all modifications in a development environment</li>
+                    <li><strong>Validate Migration:</strong> Ensure modernized code maintains expected functionality</li>
+                    {% if detailed_findings.summary.error_message %}
+                    <li><strong>Address Processing Issues:</strong> Fix syntax errors that prevented complete analysis</li>
+                    {% endif %}
+                </ol>
+                {% else %}
+                <ol>
+                    <li><strong>Address Critical Issues:</strong> Focus on critical and high-severity findings first</li>
+                    <li><strong>Apply Suggested Fixes:</strong> Use Rector's recommended changes where applicable</li>
+                    <li><strong>Test Thoroughly:</strong> Validate all changes in a development environment</li>
+                    <li><strong>Review Breaking Changes:</strong> Pay special attention to any breaking changes identified</li>
+                </ol>
+                {% endif %}
+            </div>
+
+            {% if detailed_findings.summary.recommendations %}
+            <div class="info-card">
+                <h3>Analysis Recommendations</h3>
+                <ul>
+                    {% for recommendation in detailed_findings.summary.recommendations %}
+                    <li>{{ recommendation }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <a href="../extensions/{{ extension_key }}.html" class="back-link">← Back to Extension Report</a>
+    </div>
+
+    <script>
+        // Simple navigation highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links a');
+            const sections = document.querySelectorAll('.section');
+
+            function updateActiveLink() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 200;
+                    if (pageYOffset >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink);
+
+            // Smooth scrolling for navigation links
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

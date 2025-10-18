@@ -303,10 +303,19 @@ services:
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder:
     public: false
 
+  # Findings Detail Page Renderer
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\FindingsDetailPageRenderer:
+    arguments:
+      - '@Twig\Environment'
+      - '@logger'
+    public: false
+
   # Template Renderer
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer:
     arguments:
       - '@Twig\Environment'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\FindingsDetailPageRenderer'
+      - '@logger'
     public: false
 
   # Report File Manager

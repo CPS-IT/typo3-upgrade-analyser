@@ -17,10 +17,10 @@ use Psr\Log\LoggerInterface;
 /**
  * Parses Fractor execution results.
  */
-class FractorResultParser
+readonly class FractorResultParser
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

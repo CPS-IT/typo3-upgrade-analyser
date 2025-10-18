@@ -15,9 +15,11 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Infrastructure\Reporting;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\FindingsDetailPageRenderer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
+use Psr\Log\NullLogger;
 use Twig\Environment as TwigEnvironment;
 use Twig\Loader\ArrayLoader;
 
@@ -50,8 +52,10 @@ class RectorDetailPageIntegrationTest extends AbstractIntegrationTestCase
         ]);
 
         $twig = new TwigEnvironment($twigLoader);
+        $logger = new NullLogger();
+        $findingsDetailPageRenderer = new FindingsDetailPageRenderer($twig, $logger);
 
-        $this->templateRenderer = new TemplateRenderer($twig);
+        $this->templateRenderer = new TemplateRenderer($twig, $findingsDetailPageRenderer, $logger);
         $this->fileManager = new ReportFileManager();
     }
 
