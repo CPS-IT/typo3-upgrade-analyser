@@ -384,7 +384,6 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     {
         foreach ($arrayNode->items as $item) {
             // Array items can be null in PHP AST (e.g., [1, , 3])
-            /* @phpstan-ignore-next-line identical.alwaysFalse */
             if (null === $item) {
                 continue;
             }

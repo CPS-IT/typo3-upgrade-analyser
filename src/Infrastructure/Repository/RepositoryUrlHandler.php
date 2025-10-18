@@ -66,7 +66,7 @@ class RepositoryUrlHandler implements RepositoryUrlHandlerInterface
         }
 
         // Check for URLs with git subdomain or containing 'git' in domain
-        if (1 === preg_match('#^https?://git\.#', $url) || 1 === preg_match('#^https?://[^/]*\.git\.[^/]*/#', $url) || 1 === preg_match('#^https?://[^/]*git[^/]*\.com/#', $url)) {
+        if (\in_array(1, [preg_match('#^https?://git\.#', $url), preg_match('#^https?://[^/]*\.git\.[^/]*/#', $url), preg_match('#^https?://[^/]*git[^/]*\.com/#', $url)], true)) {
             return true;
         }
 
