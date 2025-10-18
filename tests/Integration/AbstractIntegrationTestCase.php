@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\TestCase;
@@ -387,7 +388,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function assertGitRepositoryHealthValid(
         \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth $health,
     ): void {
-        $this->assertInstanceOf(\DateTimeInterface::class, $health->getLastCommitDate());
         $this->assertGreaterThanOrEqual(0, $health->getStarCount());
         $this->assertGreaterThanOrEqual(0, $health->getForkCount());
         $this->assertGreaterThanOrEqual(0, $health->getOpenIssuesCount());
@@ -405,7 +405,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
         // Description is string, archived and fork status are boolean by design
         $this->assertGreaterThanOrEqual(0, $metadata->getStarCount());
         $this->assertGreaterThanOrEqual(0, $metadata->getForkCount());
-        $this->assertInstanceOf(\DateTimeInterface::class, $metadata->getLastUpdated());
         $this->assertNotEmpty($metadata->getDefaultBranch());
     }
 
@@ -417,12 +416,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
         // Tags parameter is typed as array
 
         foreach ($tags as $tag) {
-            $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag::class, $tag);
+            $this->assertInstanceOf(GitTag::class, $tag);
             $this->assertNotEmpty($tag->getName());
-
-            if ($tag->getDate()) {
-                $this->assertInstanceOf(\DateTimeInterface::class, $tag->getDate());
-            }
         }
     }
 

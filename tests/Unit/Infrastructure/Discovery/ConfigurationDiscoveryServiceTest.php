@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
@@ -231,8 +230,6 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
             );
 
         $result = $this->service->discoverConfiguration($this->installation);
-
-        self::assertInstanceOf(Installation::class, $result);
         self::assertGreaterThan(0, \count($result->getAllConfigurationData()));
     }
 
@@ -270,7 +267,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverConfiguration($this->installation);
 
         $localConfig = $result->getConfigurationData('LocalConfiguration');
-        self::assertInstanceOf(ConfigurationData::class, $localConfig);
+        self::assertNotNull($localConfig);
         self::assertSame($configData, $localConfig->getData());
         self::assertSame('php', $localConfig->getFormat());
         self::assertSame(['Deprecated configuration found'], $localConfig->getValidationWarnings());
@@ -310,7 +307,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverConfiguration($this->installation);
 
         $servicesData = $result->getConfigurationData('Services');
-        self::assertInstanceOf(ConfigurationData::class, $servicesData);
+        self::assertNotNull($servicesData);
         self::assertSame($servicesConfig, $servicesData->getData());
         self::assertSame('yaml', $servicesData->getFormat());
     }
@@ -517,7 +514,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         self::assertTrue($result->hasConfiguration('Site.sub'));
 
         $mainSiteConfig = $result->getConfigurationData('Site.main');
-        self::assertInstanceOf(ConfigurationData::class, $mainSiteConfig);
+        self::assertNotNull($mainSiteConfig);
         self::assertSame($siteConfig, $mainSiteConfig->getData());
     }
 

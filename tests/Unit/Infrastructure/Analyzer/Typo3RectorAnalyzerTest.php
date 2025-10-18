@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 
-use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
@@ -209,8 +208,6 @@ class Typo3RectorAnalyzerTest extends TestCase
             ->method('set');
 
         $result = $this->analyzer->analyze($extension, $context);
-
-        $this->assertInstanceOf(AnalysisResult::class, $result);
         $this->assertGreaterThan(1.0, $result->getRiskScore());
     }
 

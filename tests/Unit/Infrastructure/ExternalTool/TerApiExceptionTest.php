@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -20,13 +19,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(TerApiException::class)]
 class TerApiExceptionTest extends TestCase
 {
-    public function testExceptionInheritsFromExternalToolException(): void
-    {
-        $exception = new TerApiException('Test message');
-
-        self::assertInstanceOf(ExternalToolException::class, $exception);
-    }
-
     public function testExceptionWithMessage(): void
     {
         $exception = new TerApiException('TER API failed');

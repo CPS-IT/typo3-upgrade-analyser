@@ -23,7 +23,7 @@ class ReportFileManagerTest extends TestCase
     protected function setUp(): void
     {
         $this->subject = new ReportFileManager();
-        $this->tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
+        $this->tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid('', true);
         mkdir($this->tempDir, 0o755, true);
     }
 
@@ -49,11 +49,6 @@ class ReportFileManagerTest extends TestCase
         rmdir($dir);
     }
 
-    public function testServiceCanBeInstantiated(): void
-    {
-        self::assertInstanceOf(ReportFileManager::class, $this->subject);
-    }
-
     public function testEnsureOutputDirectoryCreatesDirectory(): void
     {
         // Act
@@ -62,7 +57,7 @@ class ReportFileManagerTest extends TestCase
         // Assert
         $expectedPath = $this->tempDir . '/markdown/';
         self::assertSame($expectedPath, $result);
-        self::assertTrue(is_dir($expectedPath));
+        self::assertDirectoryExists($expectedPath);
     }
 
     public function testEnsureOutputDirectoryWithExistingDirectory(): void
@@ -76,7 +71,7 @@ class ReportFileManagerTest extends TestCase
 
         // Assert
         self::assertSame($markdownDir, $result);
-        self::assertTrue(is_dir($markdownDir));
+        self::assertDirectoryExists($markdownDir);
     }
 
     public function testEnsureOutputDirectoryFailsWithInvalidPath(): void
@@ -100,7 +95,7 @@ class ReportFileManagerTest extends TestCase
         // Assert
         $expectedPath = $this->tempDir . '/extensions/';
         self::assertSame($expectedPath, $result);
-        self::assertTrue(is_dir($expectedPath));
+        self::assertDirectoryExists($expectedPath);
     }
 
     public function testWriteMainReportFile(): void
@@ -116,16 +111,13 @@ class ReportFileManagerTest extends TestCase
 
         // Assert
         $expectedPath = $this->tempDir . '/analysis-report.md';
-        self::assertArrayHasKey('type', $result);
-        self::assertArrayHasKey('path', $result);
-        self::assertArrayHasKey('size', $result);
 
         self::assertSame('main_report', $result['type']);
         self::assertSame($expectedPath, $result['path']);
         self::assertGreaterThan(0, $result['size']);
 
         // Verify file was actually written
-        self::assertTrue(file_exists($expectedPath));
+        self::assertFileExists($expectedPath);
         self::assertSame('# Main Report Content', file_get_contents($expectedPath));
     }
 
@@ -169,8 +161,8 @@ class ReportFileManagerTest extends TestCase
         self::assertGreaterThan(0, $ext2Result['size']);
 
         // Verify files were actually written
-        self::assertTrue(file_exists($extensionsDir . 'ext1.md'));
-        self::assertTrue(file_exists($extensionsDir . 'ext2.md'));
+        self::assertFileExists($extensionsDir . 'ext1.md');
+        self::assertFileExists($extensionsDir . 'ext2.md');
         self::assertSame('# Extension 1 Details', file_get_contents($extensionsDir . 'ext1.md'));
         self::assertSame('# Extension 2 Details', file_get_contents($extensionsDir . 'ext2.md'));
     }
@@ -221,11 +213,11 @@ class ReportFileManagerTest extends TestCase
         self::assertSame('test_ext', $extensionResult['extension']);
 
         // Verify extensions directory was created
-        self::assertTrue(is_dir($this->tempDir . '/extensions/'));
+        self::assertDirectoryExists($this->tempDir . '/extensions/');
 
         // Verify files exist
-        self::assertTrue(file_exists($this->tempDir . '/main.md'));
-        self::assertTrue(file_exists($this->tempDir . '/extensions/ext.md'));
+        self::assertFileExists($this->tempDir . '/main.md');
+        self::assertFileExists($this->tempDir . '/extensions/ext.md');
     }
 
     public function testWriteReportFilesWithMainReportOnly(): void
@@ -246,8 +238,8 @@ class ReportFileManagerTest extends TestCase
         self::assertSame($this->tempDir . '/main-only.md', $result[0]['path']);
 
         // Verify main file exists but extensions directory was not created
-        self::assertTrue(file_exists($this->tempDir . '/main-only.md'));
-        self::assertFalse(is_dir($this->tempDir . '/extensions/'));
+        self::assertFileExists($this->tempDir . '/main-only.md');
+        self::assertDirectoryDoesNotExist($this->tempDir . '/extensions/');
     }
 
     public function testWriteReportFilesHandlesFileWriteError(): void
@@ -296,7 +288,7 @@ class ReportFileManagerTest extends TestCase
         // Assert
         $expectedPath = $this->tempDir . '/rector-findings/';
         self::assertSame($expectedPath, $result);
-        self::assertTrue(is_dir($expectedPath));
+        self::assertDirectoryExists($expectedPath);
     }
 
     public function testEnsureRectorFindingsDirectoryWithExistingDirectory(): void
@@ -310,7 +302,7 @@ class ReportFileManagerTest extends TestCase
 
         // Assert
         self::assertSame($rectorDir, $result);
-        self::assertTrue(is_dir($rectorDir));
+        self::assertDirectoryExists($rectorDir);
     }
 
     public function testWriteRectorDetailPages(): void
@@ -350,13 +342,13 @@ class ReportFileManagerTest extends TestCase
         self::assertGreaterThan(0, $page2Result['size']);
 
         // Verify files were actually written
-        self::assertTrue(file_exists($this->tempDir . '/rector-findings/ext1.html'));
-        self::assertTrue(file_exists($this->tempDir . '/rector-findings/ext2.html'));
+        self::assertFileExists($this->tempDir . '/rector-findings/ext1.html');
+        self::assertFileExists($this->tempDir . '/rector-findings/ext2.html');
         self::assertSame('# Rector Findings for Extension 1', file_get_contents($this->tempDir . '/rector-findings/ext1.html'));
         self::assertSame('# Rector Findings for Extension 2', file_get_contents($this->tempDir . '/rector-findings/ext2.html'));
 
         // Verify rector-findings directory was created
-        self::assertTrue(is_dir($this->tempDir . '/rector-findings/'));
+        self::assertDirectoryExists($this->tempDir . '/rector-findings/');
     }
 
     public function testWriteRectorDetailPagesEmptyArray(): void
@@ -368,7 +360,7 @@ class ReportFileManagerTest extends TestCase
         self::assertEmpty($result);
 
         // Verify rector-findings directory was NOT created when there are no pages
-        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+        self::assertDirectoryDoesNotExist($this->tempDir . '/rector-findings/');
     }
 
     public function testWriteReportFilesWithRectorPages(): void
@@ -407,41 +399,36 @@ class ReportFileManagerTest extends TestCase
         self::assertCount(3, $result); // 1 main + 1 extension + 1 rector page
 
         // Check main report
-        $mainResults = array_filter($result, fn (array $r): bool => 'main_report' === $r['type']);
+        $mainResults = array_filter($result, static fn (array $r): bool => 'main_report' === $r['type']);
         self::assertCount(1, $mainResults, 'Should have exactly one main report');
         $mainResult = array_values($mainResults)[0];
-        self::assertSame('main_report', $mainResult['type']);
         self::assertSame($this->tempDir . '/analysis-report.html', $mainResult['path']);
 
         // Check extension report
-        $extensionResults = array_filter($result, fn (array $r): bool => 'extension_report' === $r['type']);
+        $extensionResults = array_filter($result, static fn (array $r): bool => 'extension_report' === $r['type']);
         self::assertCount(1, $extensionResults, 'Should have exactly one extension report');
         $extensionResult = array_values($extensionResults)[0];
-        self::assertSame('extension_report', $extensionResult['type']);
         self::assertArrayHasKey('extension', $extensionResult);
-        self::assertTrue(isset($extensionResult['extension']), 'Extension key must be present');
         /* @var array{type: string, extension: string, path: string, size: int} $extensionResult */
         self::assertSame('test_ext', $extensionResult['extension']);
 
         // Check rector detail page
-        $rectorResults = array_filter($result, fn (array $r): bool => 'rector_detail_page' === $r['type']);
+        $rectorResults = array_filter($result, static fn (array $r): bool => 'rector_detail_page' === $r['type']);
         self::assertCount(1, $rectorResults, 'Should have exactly one rector detail page');
         $rectorResult = array_values($rectorResults)[0];
-        self::assertSame('rector_detail_page', $rectorResult['type']);
         self::assertArrayHasKey('extension', $rectorResult);
-        self::assertTrue(isset($rectorResult['extension']), 'Extension key must be present');
         /* @var array{type: string, extension: string, path: string, size: int} $rectorResult */
         self::assertSame('test_ext', $rectorResult['extension']);
         self::assertSame($this->tempDir . '/rector-findings/test_ext.html', $rectorResult['path']);
 
         // Verify directories were created
-        self::assertTrue(is_dir($this->tempDir . '/extensions/'));
-        self::assertTrue(is_dir($this->tempDir . '/rector-findings/'));
+        self::assertDirectoryExists($this->tempDir . '/extensions/');
+        self::assertDirectoryExists($this->tempDir . '/rector-findings/');
 
         // Verify files exist
-        self::assertTrue(file_exists($this->tempDir . '/analysis-report.html'));
-        self::assertTrue(file_exists($this->tempDir . '/extensions/test_ext.html'));
-        self::assertTrue(file_exists($this->tempDir . '/rector-findings/test_ext.html'));
+        self::assertFileExists($this->tempDir . '/analysis-report.html');
+        self::assertFileExists($this->tempDir . '/extensions/test_ext.html');
+        self::assertFileExists($this->tempDir . '/rector-findings/test_ext.html');
 
         // Verify file contents
         self::assertSame('# Main Analysis Report', file_get_contents($this->tempDir . '/analysis-report.html'));
@@ -472,11 +459,11 @@ class ReportFileManagerTest extends TestCase
         self::assertSame('main_report', $result[0]['type']);
 
         // Verify only main file exists
-        self::assertTrue(file_exists($this->tempDir . '/main.html'));
+        self::assertFileExists($this->tempDir . '/main.html');
 
         // Verify no subdirectories were created
-        self::assertFalse(is_dir($this->tempDir . '/extensions/'));
-        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+        self::assertDirectoryDoesNotExist($this->tempDir . '/extensions/');
+        self::assertDirectoryDoesNotExist($this->tempDir . '/rector-findings/');
     }
 
     public function testWriteReportFilesWithRectorPagesOnlyExtensionReports(): void
@@ -507,8 +494,8 @@ class ReportFileManagerTest extends TestCase
         self::assertCount(2, $result); // 1 main + 1 extension
 
         // Verify extensions directory was created but rector-findings was not
-        self::assertTrue(is_dir($this->tempDir . '/extensions/'));
-        self::assertFalse(is_dir($this->tempDir . '/rector-findings/'));
+        self::assertDirectoryExists($this->tempDir . '/extensions/');
+        self::assertDirectoryDoesNotExist($this->tempDir . '/rector-findings/');
     }
 
     public function testRectorDetailPageFileSizes(): void

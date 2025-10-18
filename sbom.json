@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:88dc0325-ba0f-4932-ad0d-baa39e9cfa14",
+    "serialNumber": "urn:uuid:447d8904-1fe1-45a5-82dc-0409542f7497",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-08-29T20:50:25Z",
+        "timestamp": "2025-10-17T19:50:27Z",
         "tools": [
             {
                 "name": "composer",
@@ -100,11 +100,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "f862a068674c1668ca39e577cd9f9efd4837b2f6"
+                    "value": "2181d3daa0eb7c7ef3409855acf190ca431ea507"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "f862a068674c1668ca39e577cd9f9efd4837b2f6"
+                    "value": "2181d3daa0eb7c7ef3409855acf190ca431ea507"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3016,6 +3016,62 @@
                 {
                     "name": "cdx:composer:package:type",
                     "value": "library"
+                },
+                {
+                    "name": "cdx:composer:package:isDevRequirement",
+                    "value": "true"
+                }
+            ]
+        },
+        {
+            "bom-ref": "phpstan/phpstan-phpunit-2.0.7.0",
+            "type": "library",
+            "name": "phpstan-phpunit",
+            "version": "2.0.7",
+            "group": "phpstan",
+            "description": "PHPUnit extensions and rules for PHPStan",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/phpstan/phpstan-phpunit@2.0.7",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/phpstan/phpstan-phpunit/zipball/9a9b161baee88a5f5c58d816943cff354ff233dc",
+                    "comment": "dist reference: 9a9b161baee88a5f5c58d816943cff354ff233dc"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/phpstan/phpstan-phpunit.git",
+                    "comment": "source reference: 9a9b161baee88a5f5c58d816943cff354ff233dc"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/phpstan/phpstan-phpunit/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/phpstan/phpstan-phpunit/tree/2.0.7",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "9a9b161baee88a5f5c58d816943cff354ff233dc"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "9a9b161baee88a5f5c58d816943cff354ff233dc"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "phpstan-extension"
                 },
                 {
                     "name": "cdx:composer:package:isDevRequirement",
@@ -7405,6 +7461,12 @@
             "ref": "phpstan/phpstan-2.1.22.0"
         },
         {
+            "ref": "phpstan/phpstan-phpunit-2.0.7.0",
+            "dependsOn": [
+                "phpstan/phpstan-2.1.22.0"
+            ]
+        },
+        {
             "ref": "phpunit/php-code-coverage-12.3.4.0",
             "dependsOn": [
                 "nikic/php-parser-5.6.1.0",
@@ -7810,6 +7872,7 @@
                 "friendsofphp/php-cs-fixer-3.86.0.0",
                 "mikey179/vfsstream-1.6.12.0",
                 "phpstan/phpstan-2.1.22.0",
+                "phpstan/phpstan-phpunit-2.0.7.0",
                 "phpunit/phpunit-12.3.7.0",
                 "roave/security-advisories-dev-latest"
             ]

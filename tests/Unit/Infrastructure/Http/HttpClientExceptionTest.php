@@ -23,7 +23,7 @@ class HttpClientExceptionTest extends TestCase
     {
         $exception = new HttpClientException('Test message');
 
-        self::assertInstanceOf(\Exception::class, $exception);
+        self::assertSame('Test message', $exception->getMessage());
     }
 
     public function testConstructorWithMessage(): void

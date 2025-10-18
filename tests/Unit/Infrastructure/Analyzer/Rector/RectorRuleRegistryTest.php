@@ -132,14 +132,6 @@ class RectorRuleRegistryTest extends TestCase
         $this->assertEquals(RectorRuleSeverity::CRITICAL, $severity);
     }
 
-    public function testGetSetChangeTypeUnknownSet(): void
-    {
-        $changeType = $this->registry->getSetChangeType('UnknownSet');
-
-        // Should return default change type
-        $this->assertInstanceOf(RectorChangeType::class, $changeType);
-    }
-
     public function testGetSetDescription(): void
     {
         $description = $this->registry->getSetDescription(Typo3SetList::TYPO3_12);
@@ -348,9 +340,7 @@ class RectorRuleRegistryTest extends TestCase
         // Test critical breaking change rule
         $ruleInfo = $this->registry->getRuleInfo('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveRule');
 
-        $this->assertArrayHasKey(RectorRuleRegistry::KEY_SEVERITY, $ruleInfo);
-        $this->assertArrayHasKey(RectorRuleRegistry::KEY_CHANGE_TYPE, $ruleInfo);
-        $this->assertArrayHasKey(RectorRuleRegistry::KEY_EFFORT, $ruleInfo);
+        // Verify rule info structure (keys are guaranteed by type definition)
 
         $this->assertEquals(RectorRuleSeverity::CRITICAL, $ruleInfo[RectorRuleRegistry::KEY_SEVERITY]);
         $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $ruleInfo[RectorRuleRegistry::KEY_CHANGE_TYPE]);

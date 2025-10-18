@@ -29,11 +29,6 @@ class ReportContextBuilderTest extends TestCase
         $this->subject = new ReportContextBuilder();
     }
 
-    public function testServiceCanBeInstantiated(): void
-    {
-        self::assertInstanceOf(ReportContextBuilder::class, $this->subject);
-    }
-
     public function testBuildReportContextCreatesBasicStructure(): void
     {
         // Arrange

@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,7 +27,6 @@ class PhpParseExceptionTest extends TestCase
 
         $exception = new PhpParseException($message, $sourcePath);
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertStringContainsString($message, $exception->getMessage());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame('php', $exception->getFormat());
@@ -132,7 +130,6 @@ class PhpParseExceptionTest extends TestCase
 
         $exception = PhpParseException::fromAstErrors($astErrors, $sourcePath, $line, $column);
 
-        self::assertInstanceOf(PhpParseException::class, $exception);
         self::assertSame($astErrors, $exception->getAstErrors());
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
@@ -176,7 +173,6 @@ class PhpParseExceptionTest extends TestCase
 
         $exception = PhpParseException::unsupportedConstruct($construct, $sourcePath, $line);
 
-        self::assertInstanceOf(PhpParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertSame($line, $exception->getParseLine());
         self::assertNull($exception->getParseColumn());
@@ -196,7 +192,6 @@ class PhpParseExceptionTest extends TestCase
 
         $exception = PhpParseException::invalidConfigurationStructure($expectedStructure, $sourcePath, $context);
 
-        self::assertInstanceOf(PhpParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertStringContainsString('Invalid configuration structure', $exception->getMessage());
         self::assertStringContainsString($expectedStructure, $exception->getMessage());
@@ -212,7 +207,6 @@ class PhpParseExceptionTest extends TestCase
 
         $exception = PhpParseException::missingRequiredKeys($missingKeys, $sourcePath);
 
-        self::assertInstanceOf(PhpParseException::class, $exception);
         self::assertSame($sourcePath, $exception->getSourcePath());
         self::assertStringContainsString('Missing required configuration keys', $exception->getMessage());
         self::assertStringContainsString('DB, SYS, EXTENSIONS', $exception->getMessage());
@@ -257,7 +251,6 @@ class PhpParseExceptionTest extends TestCase
     {
         $exception = new PhpParseException('Test', '/path/to/file.php');
 
-        self::assertInstanceOf(ParseException::class, $exception);
         self::assertSame('php', $exception->getFormat());
     }
 

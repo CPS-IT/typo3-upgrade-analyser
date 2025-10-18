@@ -33,7 +33,8 @@ class AnalyzerApplicationTest extends TestCase
 
     public function testExtendsSymfonyApplication(): void
     {
-        self::assertInstanceOf(Application::class, $this->subject);
+        $reflection = new \ReflectionClass($this->subject);
+        self::assertTrue($reflection->isSubclassOf(Application::class));
     }
 
     public function testHasCorrectNameAndVersion(): void
