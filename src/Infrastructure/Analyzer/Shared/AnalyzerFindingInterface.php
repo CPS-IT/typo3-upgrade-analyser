@@ -77,6 +77,16 @@ interface AnalyzerFindingInterface
     public function isImprovement(): bool;
 
     /**
+     * Check if this finding has before and after code changes available.
+     */
+    public function hasCodeChange(): bool;
+
+    /**
+     * Check if this finding has documentation available.
+     */
+    public function hasDocumentation(): bool;
+
+    /**
      * Convert finding to array format for serialization and templating.
      *
      * @return array<string, mixed>

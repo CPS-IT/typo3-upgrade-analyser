@@ -197,6 +197,16 @@ readonly class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindin
     }
 
     /**
+     * Check if this finding has documentation available.
+     */
+    public function hasDocumentation(): bool
+    {
+        // Rector findings typically don't have direct documentation URLs
+        // but may have suggested fixes that serve as documentation
+        return $this->hasSuggestedFix();
+    }
+
+    /**
      * Convert finding to array format.
      */
     public function toArray(): array

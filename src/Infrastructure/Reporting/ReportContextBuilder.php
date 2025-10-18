@@ -71,6 +71,8 @@ class ReportContextBuilder
                 'loc_analysis' => $this->extractLinesOfCodeAnalysis($extensionResults),
                 'rector_analysis' => $this->extractRectorAnalysis($extensionResults),
                 'fractor_analysis' => $this->extractFractorAnalysis($extensionResults),
+                'rector_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'typo3_rector'),
+                'fractor_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'fractor'),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
             ];
         }
@@ -350,6 +352,202 @@ class ReportContextBuilder
             'error_message' => $result->getMetric('error_message'),
             'execution_failed' => $result->getMetric('execution_failed'),
             'analysis_error' => $result->getMetric('analysis_error'),
+        ];
+    }
+
+    /**
+     * Extract detailed findings data from analysis results for generic analyzer support.
+     *
+     * @param array<ResultInterface> $results
+     *
+     * @return array<string, mixed>|null
+     */
+    private function extractAnalyzerDetailedFindings(array $results, string $analyzerName): ?array
+    {
+        $analyzerResult = array_filter(
+            $results,
+            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $analyzerName === $r->getAnalyzerName(),
+        );
+
+        if (empty($analyzerResult)) {
+            return null;
+        }
+
+        /** @var AnalysisResult $result */
+        $result = reset($analyzerResult);
+
+        // Check if detailed findings are available
+        $findings = $result->getMetric('findings');
+        $summary = null;
+
+        // Try to get summary data - check for different possible metric names
+        if ('fractor' === $analyzerName) {
+            // For Fractor, the summary might be in the analysis result itself
+            $summary = [
+                'total_findings' => \count($findings ?? []),
+                'files_scanned' => $result->getMetric('files_scanned'),
+                'rules_applied' => $result->getMetric('rules_applied'),
+                'successful' => $result->getMetric('analysis_successful'),
+                'has_findings' => $result->getMetric('has_findings'),
+                'error_message' => $result->getMetric('error_message'),
+                'change_blocks' => $result->getMetric('change_blocks'),
+                'changed_lines' => $result->getMetric('changed_lines'),
+                'severity_distribution' => $this->calculateSeverityDistribution($findings ?? []),
+                'change_type_distribution' => $this->calculateChangeTypeDistribution($findings ?? []),
+                'top_issues_by_file' => $this->calculateTopIssuesByFile($findings ?? []),
+                'top_issues_by_rule' => $this->calculateTopIssuesByRule($findings ?? []),
+            ];
+        } elseif ('typo3_rector' === $analyzerName) {
+            // For Rector, check for raw_summary
+            $rawSummary = $result->getMetric('raw_summary');
+            $summary = $rawSummary ?: [
+                'total_findings' => $result->getMetric('total_findings'),
+                'affected_files' => $result->getMetric('affected_files'),
+                'total_files' => $result->getMetric('total_files'),
+                'successful' => $result->isSuccessful(),
+                'has_findings' => ($result->getMetric('total_findings') ?? 0) > 0,
+                'severity_distribution' => $result->getMetric('findings_by_severity'),
+                'top_issues_by_file' => $result->getMetric('top_affected_files'),
+                'top_issues_by_rule' => $result->getMetric('top_rules_triggered'),
+            ];
+
+            // Use raw_findings if available, otherwise use findings
+            $rawFindings = $result->getMetric('raw_findings');
+            if ($rawFindings) {
+                $findings = $rawFindings;
+            }
+        }
+
+        if (empty($findings) && empty($summary)) {
+            return null;
+        }
+
+        return [
+            'findings' => $findings ?? [],
+            'summary' => $summary ?? $this->createEmptyAnalyzerSummary(),
+            'metadata' => [
+                'extension_key' => $result->getExtension()->getKey(),
+                'analyzer_type' => 'typo3_rector' === $analyzerName ? 'rector' : $analyzerName,
+                'analysis_timestamp' => (new \DateTime())->format('c'),
+                'execution_time' => $result->getMetric('execution_time') ?? 0.0,
+            ],
+        ];
+    }
+
+    /**
+     * Calculate severity distribution from findings array.
+     *
+     * @param array<mixed> $findings
+     *
+     * @return array<string, int>
+     */
+    private function calculateSeverityDistribution(array $findings): array
+    {
+        $distribution = [];
+
+        foreach ($findings as $finding) {
+            $severity = 'unknown';
+
+            if (\is_array($finding) && isset($finding['severity_value'])) {
+                $severity = $finding['severity_value'];
+            } elseif (\is_array($finding) && isset($finding['severity'])) {
+                $severity = $finding['severity'];
+            }
+
+            $distribution[$severity] = ($distribution[$severity] ?? 0) + 1;
+        }
+
+        return $distribution;
+    }
+
+    /**
+     * Calculate change type distribution from findings array.
+     *
+     * @param array<mixed> $findings
+     *
+     * @return array<string, int>
+     */
+    private function calculateChangeTypeDistribution(array $findings): array
+    {
+        $distribution = [];
+
+        foreach ($findings as $finding) {
+            if (\is_array($finding) && isset($finding['change_type'])) {
+                $changeType = $finding['change_type'];
+                $distribution[$changeType] = ($distribution[$changeType] ?? 0) + 1;
+            }
+        }
+
+        return $distribution;
+    }
+
+    /**
+     * Calculate top issues by file from findings array.
+     *
+     * @param array<mixed> $findings
+     *
+     * @return array<string, int>
+     */
+    private function calculateTopIssuesByFile(array $findings): array
+    {
+        $fileCount = [];
+
+        foreach ($findings as $finding) {
+            if (\is_array($finding) && isset($finding['file'])) {
+                $file = basename($finding['file']);
+                $fileCount[$file] = ($fileCount[$file] ?? 0) + 1;
+            }
+        }
+
+        arsort($fileCount);
+
+        return \array_slice($fileCount, 0, 5, true);
+    }
+
+    /**
+     * Calculate top issues by rule from findings array.
+     *
+     * @param array<mixed> $findings
+     *
+     * @return array<string, int>
+     */
+    private function calculateTopIssuesByRule(array $findings): array
+    {
+        $ruleCount = [];
+
+        foreach ($findings as $finding) {
+            if (\is_array($finding) && isset($finding['rule_name'])) {
+                $rule = $finding['rule_name'];
+                $ruleCount[$rule] = ($ruleCount[$rule] ?? 0) + 1;
+            } elseif (\is_array($finding) && isset($finding['rule_class'])) {
+                $rule = basename(str_replace('\\', '/', $finding['rule_class']));
+                $ruleCount[$rule] = ($ruleCount[$rule] ?? 0) + 1;
+            }
+        }
+
+        arsort($ruleCount);
+
+        return \array_slice($ruleCount, 0, 5, true);
+    }
+
+    /**
+     * Create empty analyzer summary structure.
+     *
+     * @return array<string, mixed>
+     */
+    private function createEmptyAnalyzerSummary(): array
+    {
+        return [
+            'total_findings' => 0,
+            'files_scanned' => 0,
+            'rules_applied' => 0,
+            'successful' => false,
+            'has_findings' => false,
+            'error_message' => null,
+            'severity_distribution' => [],
+            'change_type_distribution' => [],
+            'top_issues_by_file' => [],
+            'top_issues_by_rule' => [],
         ];
     }
 

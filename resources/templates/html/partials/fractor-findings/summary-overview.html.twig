@@ -1,0 +1,111 @@
+            <div class="section" id="fractor-findings-summary">
+                <h2>Analysis Summary</h2>
+
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Analysis Metadata</h3>
+                        <p><strong>Extension:</strong> {{ detailed_findings.metadata.extension_key }}</p>
+                        <p><strong>Analysis Date:</strong> {{ detailed_findings.metadata.analysis_timestamp }}</p>
+                        <p><strong>Fractor Version:</strong> {{ detailed_findings.metadata.fractor_version|default('0.5.6') }}</p>
+                        <p><strong>Execution Time:</strong> {{ "%.2f"|format(detailed_findings.metadata.execution_time) }} seconds</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Migration Progress</h3>
+                        <p><strong>Total Findings:</strong> {{ detailed_findings.summary.total_findings }}</p>
+                        <p><strong>Files Processed:</strong> {{ detailed_findings.summary.files_scanned }}</p>
+                        <p><strong>Rules Applied:</strong> {{ detailed_findings.summary.rules_applied }}</p>
+                        <p><strong>Change Blocks:</strong> {{ detailed_findings.summary.change_blocks|default(0) }}</p>
+                        <p><strong>Lines Changed:</strong> {{ detailed_findings.summary.changed_lines|default(0) }}</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Migration Impact</h3>
+                        <p><strong>Modernization Score:</strong>
+                            {% set score = detailed_findings.summary.modernization_score|default(0) %}
+                            {{ "%.1f"|format(score) }}/10.0
+                        </p>
+                        <p><strong>Migration Status:</strong>
+                            {% if detailed_findings.summary.successful %}
+                                <span class="badge badge-low">✅ Successful</span>
+                            {% else %}
+                                <span class="badge badge-critical">❌ Failed</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Manual Intervention:</strong>
+                            {% set manualCount = detailed_findings.summary.manual_intervention_count|default(0) %}
+                            {% if manualCount > 0 %}
+                                <span style="color: #dc3545;">⚠️ {{ manualCount }} items</span>
+                            {% else %}
+                                <span style="color: #28a745;">✅ None required</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if detailed_findings.summary.severity_distribution %}
+                <div class="info-card">
+                    <h3>Findings by Severity</h3>
+                    <div class="severity-grid">
+                        {% for severity, count in detailed_findings.summary.severity_distribution %}
+                        {% if count > 0 %}
+                        <div class="severity-item">
+                            <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
+                            <span class="count">{{ count }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if detailed_findings.summary.change_type_distribution %}
+                <div class="info-card">
+                    <h3>Changes by Type</h3>
+                    <div class="change-type-grid">
+                        {% for changeType, count in detailed_findings.summary.change_type_distribution %}
+                        {% if count > 0 %}
+                        <div class="change-type-item">
+                            <span class="change-type-label">{{ changeType|replace('_', ' ')|title }}</span>
+                            <span class="count">{{ count }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if detailed_findings.summary.top_issues_by_file %}
+                <div class="analysis-grid">
+                    <div class="info-card">
+                        <h3>Most Affected Files</h3>
+                        <ul>
+                            {% for file, count in detailed_findings.summary.top_issues_by_file %}
+                            <li><strong>{{ file }}:</strong> {{ count }} changes</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% if detailed_findings.summary.top_issues_by_rule %}
+                    <div class="info-card">
+                        <h3>Most Applied Rules</h3>
+                        <ul>
+                            {% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+                            <li><strong>{{ rule }}:</strong> {{ count }} applications</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if detailed_findings.summary.has_findings and detailed_findings.summary.error_message %}
+                <div class="analysis-grid">
+                    <div class="info-card error-card">
+                        <h3>⚠️ Processing Warnings</h3>
+                        <p>{{ detailed_findings.summary.error_message|nl2br }}</p>
+                        <small><em>Some files may not have been fully processed due to syntax errors or configuration issues.</em></small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>

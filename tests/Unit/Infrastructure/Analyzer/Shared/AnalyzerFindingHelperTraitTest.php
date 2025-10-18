@@ -445,6 +445,18 @@ class TestAnalyzerFinding implements AnalyzerFindingInterface, AnalyzerFindingHe
         return $this->isImprovement;
     }
 
+    public function hasCodeChange(): bool
+    {
+        // For testing purposes, return a fixed value
+        return true;
+    }
+
+    public function hasDocumentation(): bool
+    {
+        // For testing purposes, return a fixed value
+        return false;
+    }
+
     public function toArray(): array
     {
         return $this->getBaseArrayData();

@@ -15,9 +15,8 @@ The executive summary feature provides a quick overview of the project's current
 * target TYPO3 version
 * currently installed extensions
 * availability of each extension's upgrade path
-* categorized risk for each extension's upgrade path (high, medium, low)
-* categorized effort required to upgrade each extension (high, medium, low)
+* categorized risk for each extension's upgrade path (critical, high, medium, low)
+* categorized effort required to upgrade each extension (excessive, high, medium, low)
 * overall upgrade effort
 
 The summary must use a clear language. The output should be easily consumable by non-technical users.
-

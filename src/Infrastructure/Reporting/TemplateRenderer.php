@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Reporting;
 
+use Psr\Log\LoggerInterface;
 use Twig\Environment as TwigEnvironment;
 
 /**
@@ -24,6 +25,8 @@ readonly class TemplateRenderer
 {
     public function __construct(
         private TwigEnvironment $twig,
+        private readonly FindingsDetailPageRenderer $findingsDetailPageRenderer,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -185,6 +188,113 @@ readonly class TemplateRenderer
             ],
             default => null, // Skip unsupported formats
         };
+    }
+
+    /**
+     * Render analyzer findings detail pages using generic renderer.
+     * Works for any analyzer type that has detailed findings (fractor, rector, etc.).
+     *
+     * @param array<string, mixed> $context      Report context data from ReportContextBuilder
+     * @param string               $analyzerType Analyzer type (e.g., 'fractor', 'rector')
+     * @param string               $format       Output format (html, markdown)
+     *
+     * @return array<int, array{content: string, filename: string, extension: string}> Rendered detail pages
+     */
+    public function renderAnalyzerFindingsDetailPages(array $context, string $analyzerType, string $format): array
+    {
+        // Skip JSON format - detailed findings already included in extension JSON
+        if ('json' === $format) {
+            return [];
+        }
+
+        // Check if the findings renderer supports this analyzer
+        if (!$this->findingsDetailPageRenderer->supportsAnalyzer($analyzerType)) {
+            $this->logger->warning('Analyzer not supported for detailed findings', [
+                'analyzer_type' => $analyzerType,
+                'supported_analyzers' => $this->findingsDetailPageRenderer->getSupportedAnalyzers(),
+            ]);
+
+            return [];
+        }
+
+        $detailPages = [];
+        $detailedFindingsKey = $analyzerType . '_detailed_findings';
+
+        foreach ($context['extension_data'] as $extensionData) {
+            // Check if this extension has detailed findings for the specified analyzer
+            if (!isset($extensionData[$detailedFindingsKey]) || empty($extensionData[$detailedFindingsKey])) {
+                continue;
+            }
+
+            $extensionKey = $extensionData['extension']->getKey();
+            $detailedFindings = $extensionData[$detailedFindingsKey];
+
+            // Skip if no actual findings data
+            if (empty($detailedFindings['findings']) && empty($detailedFindings['summary'])) {
+                continue;
+            }
+
+            $findingsContext = [
+                'extension_key' => $extensionKey,
+                'extension' => $extensionData['extension'],
+                'detailed_findings' => $detailedFindings,
+                'analyzer_type' => $analyzerType,
+                'generated_at' => $context['generated_at'],
+            ];
+
+            try {
+                $renderedPages = $this->findingsDetailPageRenderer->renderDetailPages(
+                    $analyzerType,
+                    $findingsContext,
+                    $format,
+                );
+
+                foreach ($renderedPages as $pageType => $content) {
+                    $filename = match ($pageType) {
+                        'detail' => $extensionKey . '-' . $analyzerType . '-findings.' . $format,
+                        default => $extensionKey . '-' . $analyzerType . '-' . $pageType . '.' . $format,
+                    };
+
+                    $detailPages[] = [
+                        'content' => $content,
+                        'filename' => $filename,
+                        'extension' => $extensionKey,
+                        'analyzer_type' => $analyzerType,
+                        'page_type' => $pageType,
+                    ];
+                }
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to render analyzer findings detail page', [
+                    'extension_key' => $extensionKey,
+                    'analyzer_type' => $analyzerType,
+                    'format' => $format,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $detailPages;
+    }
+
+    /**
+     * Render all analyzer findings detail pages for all supported analyzers.
+     * This is a convenience method that renders detailed pages for all analyzers.
+     *
+     * @param array<string, mixed> $context Report context data
+     * @param string               $format  Output format (html, markdown)
+     *
+     * @return array<int, array{content: string, filename: string, extension: string, analyzer_type?: string, page_type?: string}> All rendered detail pages
+     */
+    public function renderAllAnalyzerFindingsDetailPages(array $context, string $format): array
+    {
+        $allDetailPages = [];
+
+        foreach ($this->findingsDetailPageRenderer->getSupportedAnalyzers() as $analyzerType) {
+            $analyzerPages = $this->renderAnalyzerFindingsDetailPages($context, $analyzerType, $format);
+            $allDetailPages = array_merge($allDetailPages, $analyzerPages);
+        }
+
+        return $allDetailPages;
     }
 
     /**

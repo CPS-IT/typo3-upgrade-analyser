@@ -65,7 +65,7 @@ This project follows the TYPO3 Community Code of Conduct. By participating, you 
    ```
 
 2. **Plan Implementation**:
-   - Create detailed plan in `documentation/implementation/development/feature/YourFeature.md`
+   - Create detailed plan in `documentation/implementation/feature/planned/YourFeature.md`
    - Include architecture decisions, API design, and testing strategy
 
 3. **Implement with Tests First**:

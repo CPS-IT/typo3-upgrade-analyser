@@ -1,0 +1,361 @@
+            <div class="section" id="detailed-findings-table">
+                <h2>Detailed Findings</h2>
+
+                {% if detailed_findings.findings and detailed_findings.findings|length > 0 %}
+                <div class="findings-container">
+                    {% for finding in detailed_findings.findings %}
+                    <div class="finding-item" data-severity="{{ finding.severity_value }}" data-change-type="{{ finding.change_type }}">
+                        <div class="finding-header">
+                            <div class="finding-title">
+                                <h3>Finding #{{ loop.index }}</h3>
+                                <span class="badge badge-{{ finding.severity_value == 'critical' ? 'critical' : (finding.severity_value == 'warning' ? 'high' : 'low') }}">
+                                    {{ finding.severity_value|upper }}
+                                </span>
+                                {% if finding.change_type %}
+                                <span class="change-type-badge">{{ finding.change_type|replace('_', ' ')|title }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="finding-location">
+                                <strong>{{ finding.file }}</strong>{% if finding.line %}:{{ finding.line }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="finding-details">
+                            <div class="finding-rule">
+                                <strong>Rule:</strong> <code>{{ finding.rule_class }}</code>
+                                {% if finding.rule_name and finding.rule_name != finding.rule_class %}
+                                <small>({{ finding.rule_name }})</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="finding-message">
+                                <strong>Issue:</strong> {{ finding.message }}
+                            </div>
+
+                            {% if finding.code_before or finding.code_after %}
+                            <div class="code-changes">
+                                <h4>Code Migration</h4>
+
+                                {% if finding.code_before %}
+                                <div class="code-block old-code">
+                                    <h5>Before:</h5>
+                                    <pre><code>{{ finding.code_before }}</code></pre>
+                                </div>
+                                {% endif %}
+
+                                {% if finding.code_after %}
+                                <div class="code-block new-code">
+                                    <h5>After:</h5>
+                                    <pre><code>{{ finding.code_after }}</code></pre>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% if finding.diff %}
+                            <div class="diff-section">
+                                <h4>Unified Diff</h4>
+                                <pre class="diff-content"><code>{{ finding.diff }}</code></pre>
+                            </div>
+                            {% endif %}
+
+                            {% if finding.documentation_url %}
+                            <div class="documentation-link">
+                                <strong>📖 Documentation:</strong>
+                                <a href="{{ finding.documentation_url }}" target="_blank" rel="noopener">
+                                    View Migration Guide
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            {% if finding.requires_manual_intervention is defined %}
+                            <div class="manual-intervention">
+                                {% if finding.requires_manual_intervention %}
+                                <span class="badge badge-critical">⚠️ Manual Intervention Required</span>
+                                <p><small>This change cannot be automatically applied and requires manual review.</small></p>
+                                {% else %}
+                                <span class="badge badge-low">✅ Auto-fixable</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% if finding.priority_score is defined or finding.estimated_effort is defined %}
+                            <div class="finding-metadata">
+                                <small>
+                                    {% if finding.change_type %}<strong>Type:</strong> {{ finding.change_type|replace('_', ' ')|title }} • {% endif %}
+                                    {% if finding.priority_score %}<strong>Priority:</strong> {{ "%.1f"|format(finding.priority_score) }}/10 • {% endif %}
+                                    {% if finding.estimated_effort %}<strong>Effort:</strong> ~{{ finding.estimated_effort }} min • {% endif %}
+                                    {% if finding.analyzer_type %}<strong>Analyzer:</strong> {{ finding.analyzer_type|title }}{% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="findings-summary">
+                    <p><strong>{{ detailed_findings.findings|length }}</strong> total findings displayed</p>
+                    {% set manualCount = detailed_findings.findings|filter(f => f.requires_manual_intervention)|length %}
+                    {% if manualCount > 0 %}
+                    <p><strong>{{ manualCount }}</strong> findings require manual intervention</p>
+                    {% endif %}
+                </div>
+
+                {% else %}
+                <div class="info-card">
+                    <h3>No Detailed Findings</h3>
+                    <p>No specific findings are available for detailed display. This may occur when:</p>
+                    <ul>
+                        <li>The extension has no code issues detected by Fractor</li>
+                        <li>Analysis completed but found no actionable modernization items</li>
+                        <li>All detected issues were automatically fixed during processing</li>
+                        <li>Findings data was not properly captured due to parsing errors</li>
+                    </ul>
+                    {% if detailed_findings.summary.error_message %}
+                    <div class="error-details">
+                        <h4>Processing Information:</h4>
+                        <pre>{{ detailed_findings.summary.error_message }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <style>
+            .findings-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .finding-item {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 1rem;
+                background: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .finding-item[data-severity="critical"] {
+                border-left: 4px solid #dc3545;
+            }
+
+            .finding-item[data-severity="warning"] {
+                border-left: 4px solid #ffc107;
+            }
+
+            .finding-item[data-severity="info"] {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .finding-item[data-severity="suggestion"] {
+                border-left: 4px solid #6c757d;
+            }
+
+            .finding-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid #eee;
+            }
+
+            .finding-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .finding-title h3 {
+                margin: 0;
+                font-size: 1.1rem;
+                color: #333;
+            }
+
+            .change-type-badge {
+                background: #e9ecef;
+                color: #495057;
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .finding-location {
+                font-family: 'Courier New', monospace;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .finding-details {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .finding-rule code {
+                background: #f8f9fa;
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                font-size: 0.9rem;
+            }
+
+            .code-changes {
+                margin: 0.5rem 0;
+            }
+
+            .code-changes h4 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1rem;
+                color: #333;
+            }
+
+            .code-block {
+                margin-bottom: 0.75rem;
+            }
+
+            .code-block h5 {
+                margin: 0 0 0.25rem 0;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .code-block.old-code h5 {
+                color: #dc3545;
+            }
+
+            .code-block.new-code h5 {
+                color: #28a745;
+            }
+
+            .code-block pre {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 4px;
+                padding: 0.75rem;
+                margin: 0;
+                overflow-x: auto;
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+
+            .code-block.old-code pre {
+                background: #fff5f5;
+                border-color: #fed7d7;
+            }
+
+            .code-block.new-code pre {
+                background: #f0fff4;
+                border-color: #c6f6d5;
+            }
+
+            .diff-section {
+                margin: 0.5rem 0;
+            }
+
+            .diff-section h4 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1rem;
+                color: #333;
+            }
+
+            .diff-content {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 4px;
+                padding: 0.75rem;
+                margin: 0;
+                overflow-x: auto;
+                font-size: 0.85rem;
+                line-height: 1.4;
+                font-family: 'Courier New', monospace;
+            }
+
+            .documentation-link {
+                background: #f0f8ff;
+                border-radius: 4px;
+                padding: 0.75rem;
+                border-left: 3px solid #0066cc;
+            }
+
+            .documentation-link a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .documentation-link a:hover {
+                text-decoration: underline;
+            }
+
+            .manual-intervention {
+                background: #fff3cd;
+                border-radius: 4px;
+                padding: 0.75rem;
+                border-left: 3px solid #ffc107;
+            }
+
+            .finding-metadata {
+                padding-top: 0.5rem;
+                border-top: 1px solid #f0f0f0;
+                color: #666;
+            }
+
+            .findings-summary {
+                text-align: center;
+                padding: 1rem;
+                background: #f8f9fa;
+                border-radius: 4px;
+                margin-top: 1rem;
+            }
+
+            .error-details {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: #f8f9fa;
+                border-radius: 4px;
+                border-left: 3px solid #dc3545;
+            }
+
+            .error-details h4 {
+                margin: 0 0 0.5rem 0;
+                color: #dc3545;
+            }
+
+            .error-details pre {
+                background: #fff;
+                border: 1px solid #ddd;
+                padding: 0.5rem;
+                border-radius: 3px;
+                overflow-x: auto;
+                font-size: 0.85rem;
+                margin: 0;
+            }
+
+            .severity-grid, .change-type-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+            }
+
+            .severity-item, .change-type-item {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .change-type-label {
+                background: #e9ecef;
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                font-size: 0.8rem;
+            }
+
+            .count {
+                font-weight: bold;
+                color: #495057;
+            }
+            </style>
