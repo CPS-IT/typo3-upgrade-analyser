@@ -135,8 +135,6 @@ class FractorAnalyzerTest extends TestCase
             ->method('set');
 
         $result = $this->analyzer->analyze($extension, $context);
-
-        self::assertInstanceOf(AnalysisResult::class, $result);
         self::assertEquals('fractor', $result->getAnalyzerName());
         self::assertTrue($result->getMetric('analysis_error'));
         self::assertEquals(5.0, $result->getRiskScore());

@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Reporting;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\Entity\ReportingResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager;
@@ -50,11 +49,6 @@ class ReportServiceTest extends TestCase
             $this->fileManager,
             $this->logger,
         );
-    }
-
-    public function testServiceCanBeInstantiated(): void
-    {
-        self::assertInstanceOf(ReportService::class, $this->subject);
     }
 
     public function testGenerateReportCoordinatesServices(): void
@@ -105,7 +99,6 @@ class ReportServiceTest extends TestCase
 
         // Assert
         self::assertCount(1, $results);
-        self::assertInstanceOf(ReportingResult::class, $results[0]);
         self::assertSame('report_markdown', $results[0]->getId());
         self::assertSame('markdown', $results[0]->getValue('format'));
         self::assertSame($files, $results[0]->getValue('output_files'));
@@ -132,7 +125,6 @@ class ReportServiceTest extends TestCase
         // Assert
         self::assertCount(1, $reportResults);
         $result = $reportResults[0];
-        self::assertInstanceOf(ReportingResult::class, $result);
         self::assertNotEmpty($result->getError());
         self::assertStringContainsString('Context building failed', $result->getError());
     }

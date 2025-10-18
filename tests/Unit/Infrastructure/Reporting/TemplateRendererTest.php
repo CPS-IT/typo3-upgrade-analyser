@@ -30,11 +30,6 @@ class TemplateRendererTest extends TestCase
         $this->subject = new TemplateRenderer($this->twig);
     }
 
-    public function testServiceCanBeInstantiated(): void
-    {
-        self::assertInstanceOf(TemplateRenderer::class, $this->subject);
-    }
-
     public function testRenderMainReportMarkdown(): void
     {
         // Arrange
@@ -50,8 +45,6 @@ class TemplateRendererTest extends TestCase
         $result = $this->subject->renderMainReport($context, 'markdown');
 
         // Assert
-        self::assertArrayHasKey('content', $result);
-        self::assertArrayHasKey('filename', $result);
         self::assertSame($expectedContent, $result['content']);
         self::assertSame('analysis-report.md', $result['filename']);
     }
@@ -88,12 +81,11 @@ class TemplateRendererTest extends TestCase
         $result = $this->subject->renderMainReport($context, 'json');
 
         // Assert
-        self::assertArrayHasKey('content', $result);
-        self::assertArrayHasKey('filename', $result);
         self::assertSame('analysis-report.json', $result['filename']);
 
         // Verify JSON content excludes extension_data
         $decodedContent = json_decode($result['content'], true);
+        self::assertIsArray($decodedContent);
         self::assertArrayHasKey('installation', $decodedContent);
         self::assertArrayHasKey('other_data', $decodedContent);
         self::assertArrayNotHasKey('extension_data', $decodedContent);

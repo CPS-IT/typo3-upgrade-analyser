@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Repository;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -27,11 +26,6 @@ class RepositoryUrlHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->subject = new RepositoryUrlHandler();
-    }
-
-    public function testImplementsRepositoryUrlHandlerInterface(): void
-    {
-        self::assertInstanceOf(RepositoryUrlHandlerInterface::class, $this->subject);
     }
 
     #[DataProvider('normalizeUrlProvider')]

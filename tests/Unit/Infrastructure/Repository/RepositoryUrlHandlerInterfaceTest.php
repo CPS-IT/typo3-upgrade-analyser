@@ -175,13 +175,6 @@ class RepositoryUrlHandlerInterfaceTest extends TestCase
         self::assertStringContainsString('Interface for handling repository URLs', $docComment);
     }
 
-    public function testCanCreateMockImplementation(): void
-    {
-        $mock = $this->createMock(RepositoryUrlHandlerInterface::class);
-
-        self::assertInstanceOf(RepositoryUrlHandlerInterface::class, $mock);
-    }
-
     public function testInterfaceNamespaceIsCorrect(): void
     {
         $reflection = new \ReflectionClass(RepositoryUrlHandlerInterface::class);

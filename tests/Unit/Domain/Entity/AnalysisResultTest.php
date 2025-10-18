@@ -34,7 +34,6 @@ class AnalysisResultTest extends TestCase
     {
         self::assertEquals('version_availability', $this->analysisResult->getAnalyzerName());
         self::assertSame($this->extension, $this->analysisResult->getExtension());
-        self::assertInstanceOf(\DateTimeImmutable::class, $this->analysisResult->getExecutedAt());
     }
 
     public function testExecutedAtIsSetOnConstruction(): void
@@ -231,7 +230,7 @@ class AnalysisResultTest extends TestCase
 
         // Try to parse it back to verify format
         $dateTime = \DateTimeImmutable::createFromFormat(\DateTime::ATOM, $executedAt);
-        self::assertInstanceOf(\DateTimeImmutable::class, $dateTime);
+        self::assertNotFalse($dateTime);
     }
 
     public function testMetricTypesHandling(): void

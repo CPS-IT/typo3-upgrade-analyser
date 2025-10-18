@@ -78,8 +78,6 @@ class VersionTest extends TestCase
     public function testFromStringStaticMethod(): void
     {
         $version = Version::fromString('2.1.0');
-
-        self::assertInstanceOf(Version::class, $version);
         self::assertEquals(2, $version->getMajor());
         self::assertEquals(1, $version->getMinor());
         self::assertEquals(0, $version->getPatch());

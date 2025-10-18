@@ -24,12 +24,12 @@ use Psr\Log\LoggerInterface;
  * TYPO3 installations at given filesystem paths. It manages the detection process,
  * handles validation, and provides comprehensive installation discovery results.
  */
-final class InstallationDiscoveryService implements InstallationDiscoveryServiceInterface
+final readonly class InstallationDiscoveryService implements InstallationDiscoveryServiceInterface
 {
     /**
      * @var array<DetectionStrategyInterface> Available detection strategies
      */
-    private readonly array $detectionStrategies;
+    private array $detectionStrategies;
 
     /**
      * @param iterable<DetectionStrategyInterface> $detectionStrategies           Available detection strategies
@@ -41,11 +41,11 @@ final class InstallationDiscoveryService implements InstallationDiscoveryService
      */
     public function __construct(
         iterable $detectionStrategies,
-        private readonly iterable $validationRules,
-        private readonly ?ConfigurationDiscoveryService $configurationDiscoveryService,
-        private readonly LoggerInterface $logger,
-        private readonly ConfigurationService $configService,
-        private readonly CacheService $cacheService,
+        private iterable $validationRules,
+        private ?ConfigurationDiscoveryService $configurationDiscoveryService,
+        private LoggerInterface $logger,
+        private ConfigurationService $configService,
+        private CacheService $cacheService,
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);

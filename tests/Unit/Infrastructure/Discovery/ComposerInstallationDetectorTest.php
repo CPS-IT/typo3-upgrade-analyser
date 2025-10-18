@@ -238,7 +238,6 @@ final class ComposerInstallationDetectorTest extends TestCase
         $result = $workingDetector->detect($this->testDir);
 
         if (null !== $result) {
-            self::assertInstanceOf(Installation::class, $result);
             self::assertSame($this->testDir, $result->getPath());
             self::assertSame(InstallationMode::COMPOSER, $result->getMode());
             self::assertNotNull($result->getMetadata());
@@ -260,9 +259,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         );
 
         $result = $workingDetector->detect($this->testDir);
-        if (null !== $result) {
-            self::assertInstanceOf(Installation::class, $result);
-        }
+        self::assertInstanceOf(Installation::class, $result);
     }
 
     public function testDetectHandlesExceptionGracefully(): void

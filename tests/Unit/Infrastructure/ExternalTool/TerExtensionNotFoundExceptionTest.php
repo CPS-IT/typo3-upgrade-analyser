@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerExtensionNotFoundException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +23,7 @@ class TerExtensionNotFoundExceptionTest extends TestCase
     {
         $exception = new TerExtensionNotFoundException('test_extension');
 
-        self::assertInstanceOf(TerApiException::class, $exception);
+        self::assertSame('Extension "test_extension" not found in TER', $exception->getMessage());
     }
 
     public function testExceptionMessageContainsExtensionKey(): void

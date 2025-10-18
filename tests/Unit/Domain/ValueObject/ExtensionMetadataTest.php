@@ -425,7 +425,6 @@ final class ExtensionMetadataTest extends TestCase
         self::assertSame([], $metadata->getSupportedPhpVersions());
         self::assertSame([], $metadata->getSupportedTypo3Versions());
         self::assertSame([], $metadata->getAdditionalData());
-        self::assertInstanceOf(\DateTimeImmutable::class, $metadata->getLastModified());
     }
 
     public function testCreateEmptyHasRecentTimestamp(): void
@@ -487,8 +486,6 @@ final class ExtensionMetadataTest extends TestCase
         );
 
         $retrievedDate = $metadata->getLastModified();
-
-        self::assertInstanceOf(\DateTimeImmutable::class, $retrievedDate);
         self::assertEquals($date, $retrievedDate);
         self::assertSame($date, $retrievedDate); // Should be the same instance
     }

@@ -12,10 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFindingsCollection;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorResultParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
@@ -93,7 +91,6 @@ class RectorResultParserTest extends TestCase
             $this->assertCount(2, $findings);
 
             $firstFinding = $findings[0];
-            $this->assertInstanceOf(RectorFinding::class, $firstFinding);
             $this->assertEquals('src/Controller/TestController.php', $firstFinding->getFile());
             $this->assertEquals(42, $firstFinding->getLine());
             $this->assertEquals('Replace deprecated method call', $firstFinding->getMessage());
@@ -144,8 +141,6 @@ class RectorResultParserTest extends TestCase
         ];
 
         $summary = $this->parser->aggregateFindings($findings);
-
-        $this->assertInstanceOf(RectorAnalysisSummary::class, $summary);
         $this->assertEquals(3, $summary->getTotalFindings());
         $this->assertEquals(1, $summary->getCriticalIssues());
         $this->assertEquals(1, $summary->getWarnings());
@@ -157,8 +152,6 @@ class RectorResultParserTest extends TestCase
     public function testAggregateEmptyFindings(): void
     {
         $summary = $this->parser->aggregateFindings([]);
-
-        $this->assertInstanceOf(RectorAnalysisSummary::class, $summary);
         $this->assertEquals(0, $summary->getTotalFindings());
         $this->assertEquals(0, $summary->getCriticalIssues());
         $this->assertEquals(0, $summary->getWarnings());
@@ -197,8 +190,6 @@ class RectorResultParserTest extends TestCase
         ];
 
         $collection = $this->parser->categorizeFindings($findings);
-
-        $this->assertInstanceOf(RectorFindingsCollection::class, $collection);
 
         // Test categorization by impact type
         $this->assertCount(1, $collection->getBreakingChanges());

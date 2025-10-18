@@ -12,8 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\PhpConfigurationParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -35,12 +33,6 @@ class PhpConfigurationParserTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->parser = new PhpConfigurationParser($this->logger);
         $this->fixturesPath = __DIR__ . '/../../../../tests/Fixtures/Configuration';
-    }
-
-    public function testImplementsRequiredInterfaces(): void
-    {
-        self::assertInstanceOf(ConfigurationParserInterface::class, $this->parser);
-        self::assertInstanceOf(AbstractConfigurationParser::class, $this->parser);
     }
 
     public function testGetFormat(): void

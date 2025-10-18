@@ -15,7 +15,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
@@ -109,13 +108,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         file_put_contents($emconfPath, $content);
     }
 
-    public function testConstructorWithoutOptionalServices(): void
-    {
-        $pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
-        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService, $pathResolutionService);
-        $this->assertInstanceOf(ExtensionDiscoveryService::class, $service);
-    }
-
     public function testDiscoverExtensionsWithEmptyInstallation(): void
     {
         // Allow any logging calls - we focus on testing functionality, not logging details
@@ -124,7 +116,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $result = $this->service->discoverExtensions($this->tempDir);
 
-        $this->assertInstanceOf(ExtensionDiscoveryResult::class, $result);
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(0, $result->getExtensions());
         $this->assertCount(0, $result->getSuccessfulMethods());

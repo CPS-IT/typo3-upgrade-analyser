@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use PHPUnit\Framework\TestCase;
 
@@ -52,12 +51,6 @@ final class ExtensionDiscoveryResultTest extends TestCase
             null,
         );
         $this->localExtension->setActive(true);
-    }
-
-    public function testImplementsSerializableInterface(): void
-    {
-        $result = ExtensionDiscoveryResult::success([]);
-        $this->assertInstanceOf(SerializableInterface::class, $result);
     }
 
     public function testSuccessFactoryMethod(): void

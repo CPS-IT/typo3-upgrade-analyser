@@ -14,7 +14,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -34,11 +33,6 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient = $this->createMock(HttpClientInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->subject = new HttpClientService($this->httpClient, $this->logger);
-    }
-
-    public function testImplementsHttpClientServiceInterface(): void
-    {
-        self::assertInstanceOf(HttpClientServiceInterface::class, $this->subject);
     }
 
     public function testRequestSuccessful(): void

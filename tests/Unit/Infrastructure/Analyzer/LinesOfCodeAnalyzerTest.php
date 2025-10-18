@@ -15,7 +15,6 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\LinesOfCodeAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
@@ -73,11 +72,6 @@ class LinesOfCodeAnalyzerTest extends TestCase
             $metadata,
             ["Extension '{$extensionKey}' not found"],
         );
-    }
-
-    public function testImplementsAnalyzerInterface(): void
-    {
-        self::assertInstanceOf(AnalyzerInterface::class, $this->subject);
     }
 
     public function testGetNameReturnsCorrectName(): void

@@ -12,8 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-
 /**
  * Validation test to ensure integration test configuration is correct
  * This test can run without real API calls to validate the setup.
@@ -77,7 +75,6 @@ class ConfigurationValidationTestCase extends AbstractIntegrationTestCase
     {
         $extension = $this->createTestExtension('test_key', 'vendor/test-package');
 
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension::class, $extension);
         $this->assertEquals('test_key', $extension->getKey());
         $this->assertEquals('vendor/test-package', $extension->getComposerName());
         $this->assertFalse($extension->isSystemExtension());
@@ -91,29 +88,7 @@ class ConfigurationValidationTestCase extends AbstractIntegrationTestCase
     {
         $context = $this->createTestAnalysisContext('12.4.0');
 
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext::class, $context);
         $this->assertEquals('12.4.0', $context->getTargetVersion()->toString());
-    }
-
-    /**
-     * @coversNothing
-     */
-    public function testLoggerCreation(): void
-    {
-        $logger = $this->createLogger();
-
-        $this->assertInstanceOf(\Psr\Log\LoggerInterface::class, $logger);
-        $this->assertInstanceOf(\Psr\Log\NullLogger::class, $logger);
-    }
-
-    /**
-     * @coversNothing
-     */
-    public function testGitHubClientCreation(): void
-    {
-        $client = $this->createAuthenticatedGitHubClient();
-
-        $this->assertInstanceOf(HttpClientInterface::class, $client);
     }
 
     /**

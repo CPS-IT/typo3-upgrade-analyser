@@ -37,7 +37,7 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
         $logger = new NullLogger();
         $composerVersionStrategy = new ComposerVersionStrategy($logger);
         $this->strategy = new ExtensionPathResolutionStrategy($logger, $composerVersionStrategy);
-        $this->testPath = sys_get_temp_dir() . '/test-path-' . uniqid();
+        $this->testPath = sys_get_temp_dir() . '/test-path-' . uniqid('', true);
     }
 
     protected function tearDown(): void
@@ -123,15 +123,14 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
         $response = $this->strategy->resolve($request);
 
         $this->assertFalse($response->isSuccess());
-        // The response should indicate failure appropriately
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
     }
 
     public function testAutoDetectInstallationType(): void
     {
-        // Create composer installation structure
-        mkdir($this->testPath . '/public/typo3conf/ext', 0o755, true);
+        // Create composer installation structure with the actual extension
+        mkdir($this->testPath . '/public/typo3conf/ext/test_ext', 0o755, true);
         file_put_contents($this->testPath . '/composer.json', '{"name": "test/project"}');
+        file_put_contents($this->testPath . '/public/typo3conf/ext/test_ext/ext_emconf.php', '<?php $EM_CONF[$_EXTKEY] = [];');
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
@@ -143,16 +142,18 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
 
         $response = $this->strategy->resolve($request);
 
-        // Strategy should process AUTO_DETECT requests (the response shows the detected type or original)
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
+        // Strategy should successfully detect and resolve the extension path
+        self::assertTrue($response->isSuccess());
+        self::assertIsString($response->resolvedPath);
+        self::assertStringEndsWith('/test_ext', $response->resolvedPath);
     }
 
     public function testLegacyInstallationDetection(): void
     {
-        // Create legacy installation structure
-        mkdir($this->testPath . '/typo3conf/ext', 0o755, true);
+        // Create legacy installation structure with the actual extension
+        mkdir($this->testPath . '/typo3conf/ext/test_ext', 0o755, true);
         mkdir($this->testPath . '/fileadmin', 0o755, true);
+        file_put_contents($this->testPath . '/typo3conf/ext/test_ext/ext_emconf.php', '<?php $EM_CONF[$_EXTKEY] = [];');
 
         $request = PathResolutionRequest::create(
             PathTypeEnum::EXTENSION,
@@ -164,9 +165,10 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
 
         $response = $this->strategy->resolve($request);
 
-        // Strategy should process AUTO_DETECT requests and provide a valid response
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
+        // Strategy should successfully detect and resolve the extension path
+        self::assertTrue($response->isSuccess());
+        self::assertIsString($response->resolvedPath);
+        self::assertStringEndsWith('/test_ext', $response->resolvedPath);
     }
 
     public function testCustomPathConfiguration(): void
@@ -176,9 +178,7 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
         file_put_contents($customExtPath . '/ext_emconf.php', '<?php $EM_CONF[$_EXTKEY] = [];');
 
         $pathConfig = PathConfiguration::fromArray([
-            'customPaths' => [
-                'extensions' => '/custom/extensions',
-            ],
+            'searchDirectories' => ['custom/extensions'],
         ]);
 
         $request = PathResolutionRequest::create(
@@ -191,9 +191,10 @@ final class ExtensionPathResolutionStrategyTest extends TestCase
 
         $response = $this->strategy->resolve($request);
 
-        // Custom path configuration should be processed (might not always succeed depending on implementation)
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse::class, $response);
-        $this->assertInstanceOf(\CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata::class, $response->metadata);
+        // Custom path configuration with search directories should successfully find the extension
+        self::assertTrue($response->isSuccess());
+        self::assertIsString($response->resolvedPath);
+        self::assertStringEndsWith('/test_ext', $response->resolvedPath);
     }
 
     private function removeDirectory(string $dir): void

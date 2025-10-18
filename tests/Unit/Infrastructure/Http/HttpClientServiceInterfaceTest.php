@@ -201,13 +201,6 @@ class HttpClientServiceInterfaceTest extends TestCase
         }
     }
 
-    public function testCanCreateMockImplementation(): void
-    {
-        $mock = $this->createMock(HttpClientServiceInterface::class);
-
-        self::assertInstanceOf(HttpClientServiceInterface::class, $mock);
-    }
-
     public function testInterfaceNamespaceIsCorrect(): void
     {
         $reflection = new \ReflectionClass(HttpClientServiceInterface::class);
