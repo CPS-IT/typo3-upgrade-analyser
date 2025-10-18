@@ -10,41 +10,52 @@ declare(strict_types=1);
  * of the License or any later version.
  */
 
-namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
+namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingHelperInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingHelperTrait;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingInterface;
 
 /**
- * Represents a single finding from Rector analysis.
+ * Represents a single finding from Fractor analysis.
  */
-class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface
+class FractorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface
 {
     use AnalyzerFindingHelperTrait;
 
     public function __construct(
-        private readonly string $file,
-        private readonly int $line,
+        private readonly string $filePath,
+        private readonly int $lineNumber,
         private readonly string $ruleClass,
         private readonly string $message,
-        private readonly RectorRuleSeverity $severity,
-        private readonly RectorChangeType $changeType,
-        private readonly ?string $suggestedFix = null,
-        private readonly ?string $oldCode = null,
-        private readonly ?string $newCode = null,
+        private readonly FractorRuleSeverity $severity,
+        private readonly FractorChangeType $changeType,
+        private readonly string $codeBefore,
+        private readonly string $codeAfter,
+        private readonly string $diff,
+        private readonly ?string $documentationUrl = null,
         private readonly array $context = [],
     ) {
     }
 
+    public function getFilePath(): string
+    {
+        return $this->filePath;
+    }
+
     public function getFile(): string
     {
-        return $this->file;
+        return $this->filePath;
+    }
+
+    public function getLineNumber(): int
+    {
+        return $this->lineNumber;
     }
 
     public function getLine(): int
     {
-        return $this->line;
+        return $this->lineNumber;
     }
 
     public function getRuleClass(): string
@@ -63,7 +74,7 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
         return $this->message;
     }
 
-    public function getSeverity(): RectorRuleSeverity
+    public function getSeverity(): FractorRuleSeverity
     {
         return $this->severity;
     }
@@ -76,24 +87,29 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
         return $this->severity->value;
     }
 
-    public function getChangeType(): RectorChangeType
+    public function getChangeType(): FractorChangeType
     {
         return $this->changeType;
     }
 
-    public function getSuggestedFix(): ?string
+    public function getCodeBefore(): string
     {
-        return $this->suggestedFix;
+        return $this->codeBefore;
     }
 
-    public function getOldCode(): ?string
+    public function getCodeAfter(): string
     {
-        return $this->oldCode;
+        return $this->codeAfter;
     }
 
-    public function getNewCode(): ?string
+    public function getDiff(): string
     {
-        return $this->newCode;
+        return $this->diff;
+    }
+
+    public function getDocumentationUrl(): ?string
+    {
+        return $this->documentationUrl;
     }
 
     public function getContext(): array
@@ -106,8 +122,8 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
      */
     public function isBreakingChange(): bool
     {
-        return RectorRuleSeverity::CRITICAL === $this->severity
-               || RectorChangeType::BREAKING_CHANGE === $this->changeType;
+        return FractorRuleSeverity::CRITICAL === $this->severity
+               || $this->changeType->requiresManualIntervention();
     }
 
     /**
@@ -115,8 +131,8 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
      */
     public function isDeprecation(): bool
     {
-        return RectorChangeType::DEPRECATION === $this->changeType
-               || RectorRuleSeverity::WARNING === $this->severity;
+        return FractorChangeType::DEPRECATION_REMOVAL === $this->changeType
+               || FractorRuleSeverity::WARNING === $this->severity;
     }
 
     /**
@@ -124,8 +140,9 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
      */
     public function isImprovement(): bool
     {
-        return RectorRuleSeverity::INFO === $this->severity
-               || RectorRuleSeverity::SUGGESTION === $this->severity;
+        return FractorRuleSeverity::INFO === $this->severity
+               || FractorRuleSeverity::SUGGESTION === $this->severity
+               || FractorChangeType::MODERNIZATION === $this->changeType;
     }
 
     /**
@@ -149,7 +166,7 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
      */
     public function getFileLocation(): string
     {
-        return basename($this->file) . ':' . $this->line;
+        return basename($this->filePath) . ':' . $this->lineNumber;
     }
 
     /**
@@ -157,7 +174,7 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
      */
     public function hasDiff(): bool
     {
-        return null !== $this->oldCode && null !== $this->newCode;
+        return '' !== $this->diff;
     }
 
     /**
@@ -166,26 +183,27 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
     public function getPriorityScore(): float
     {
         $severityWeight = $this->severity->getRiskWeight();
+        $changeTypeWeight = $this->changeType->getPriority() / 10.0;
         $effortPenalty = $this->getEstimatedEffort() / 60; // Convert to hours
 
-        // Critical issues get highest priority, but extremely time-consuming ones get lower priority
-        return $severityWeight * (1 / (1 + ($effortPenalty / 2)));
+        // Combine weights with effort consideration
+        return ($severityWeight + $changeTypeWeight) / 2 * (1 / (1 + ($effortPenalty / 4)));
     }
 
     /**
-     * Check if this finding has a suggested fix.
+     * Check if this finding has documentation available.
      */
-    public function hasSuggestedFix(): bool
+    public function hasDocumentation(): bool
     {
-        return null !== $this->suggestedFix && '' !== $this->suggestedFix;
+        return null !== $this->documentationUrl && '' !== $this->documentationUrl;
     }
 
     /**
-     * Check if this finding has both old and new code.
+     * Check if this finding has both before and after code.
      */
     public function hasCodeChange(): bool
     {
-        return null !== $this->oldCode && null !== $this->newCode;
+        return '' !== $this->codeBefore && '' !== $this->codeAfter;
     }
 
     /**
@@ -197,19 +215,23 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
     }
 
     /**
-     * Convert finding to array format.
+     * Convert finding to array format for serialization.
      */
     public function toArray(): array
     {
         // Get base data from trait that provides interface-compliant fields
         $baseData = $this->getBaseArrayData();
 
-        // Add Rector-specific fields
+        // Add Fractor-specific fields
+        $baseData['file_path'] = $this->filePath; // Keep original field name for backward compatibility
+        $baseData['line_number'] = $this->lineNumber; // Keep original field name for backward compatibility
         $baseData['change_type'] = $this->changeType->value;
-        $baseData['suggested_fix'] = $this->suggestedFix;
-        $baseData['old_code'] = $this->oldCode;
-        $baseData['new_code'] = $this->newCode;
+        $baseData['code_before'] = $this->codeBefore;
+        $baseData['code_after'] = $this->codeAfter;
+        $baseData['diff'] = $this->diff;
+        $baseData['documentation_url'] = $this->documentationUrl;
         $baseData['context'] = $this->context;
+        $baseData['requires_manual_intervention'] = $this->requiresManualIntervention();
 
         return $baseData;
     }

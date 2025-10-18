@@ -17,11 +17,14 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorFinding;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleSeverity;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
@@ -152,7 +155,10 @@ class FractorAnalyzerTest extends TestCase
         $summary = new FractorAnalysisSummary(
             filesScanned: 7,
             rulesApplied: 2,
-            findings: ['finding1', 'finding2'],
+            findings: [
+                new FractorFinding('test/file1.php', 10, 'TestRule1', 'Test message 1', FractorRuleSeverity::WARNING, FractorChangeType::MODERNIZATION, '', '', '', null, []),
+                new FractorFinding('test/file2.php', 20, 'TestRule2', 'Test message 2', FractorRuleSeverity::INFO, FractorChangeType::DEPRECATION_REMOVAL, '', '', '', null, []),
+            ],
             successful: true,
             changeBlocks: 10,
             changedLines: 25,
@@ -338,7 +344,7 @@ class FractorAnalyzerTest extends TestCase
         $context = $this->createAnalysisContextWithValidPath();
 
         // Create summary with many findings
-        $manyFindings = array_fill(0, 30, 'finding');
+        $manyFindings = array_fill(0, 30, new FractorFinding('test/file.php', 5, 'TestRule', 'Test message', FractorRuleSeverity::WARNING, FractorChangeType::MODERNIZATION, '', '', '', null, []));
         $summary = new FractorAnalysisSummary(
             filesScanned: 30,
             rulesApplied: 30,
