@@ -96,7 +96,7 @@
 
                 <div class="findings-summary">
                     <p><strong>{{ detailed_findings.findings|length }}</strong> total findings displayed</p>
-                    {% set manualCount = detailed_findings.findings|filter(f => f.requires_manual_intervention)|length %}
+                    {% set manualCount = detailed_findings.findings|filter(f => f is not empty and f.requires_manual_intervention is defined and f.requires_manual_intervention)|length %}
                     {% if manualCount > 0 %}
                     <p><strong>{{ manualCount }}</strong> findings require manual intervention</p>
                     {% endif %}

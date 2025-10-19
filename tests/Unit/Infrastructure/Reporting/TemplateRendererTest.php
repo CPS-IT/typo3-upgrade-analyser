@@ -305,7 +305,7 @@ class TemplateRendererTest extends TestCase
 
         $this->twig->expects(self::once())
             ->method('render')
-            ->with('html/rector-findings-detail.html.twig', self::callback(
+            ->with('html/analyzer-findings-detail.html.twig', self::callback(
                 function (array $context) use ($extension1): bool {
                     return 'ext1' === $context['extension_key']
                         && $context['extension'] === $extension1
@@ -348,7 +348,7 @@ class TemplateRendererTest extends TestCase
 
         $this->twig->expects(self::once())
             ->method('render')
-            ->with('md/rector-findings-detail.md.twig', self::anything())
+            ->with('md/analyzer-findings-detail.md.twig', self::anything())
             ->willReturn('# Rector Findings for test_ext');
 
         // Act
@@ -417,7 +417,7 @@ class TemplateRendererTest extends TestCase
 
         $this->twig->expects(self::once())
             ->method('render')
-            ->with('html/rector-findings-detail.html.twig', self::anything())
+            ->with('html/analyzer-findings-detail.html.twig', self::anything())
             ->willReturn('<h1>Findings</h1>');
 
         // Act
@@ -495,7 +495,7 @@ class TemplateRendererTest extends TestCase
         $this->twig->expects(self::once())
             ->method('render')
             ->with(
-                'html/rector-findings-detail.html.twig',
+                'html/analyzer-findings-detail.html.twig',
                 self::callback(function (array $findingsContext) use ($extension, $detailedFindings, $rectorAnalysis): bool {
                     return 'test_ext' === $findingsContext['extension_key']
                         && $findingsContext['extension'] === $extension

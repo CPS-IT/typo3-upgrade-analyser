@@ -1,0 +1,48 @@
+# Analysis Summary
+
+## Analysis Metadata
+- **Extension:** {{ detailed_findings.metadata.extension_key }}
+- **Analysis Date:** {{ detailed_findings.metadata.analysis_timestamp }}
+- **Fractor Version:** {{ detailed_findings.metadata.fractor_version|default('Unknown') }}
+- **Execution Time:** {{ "%.2f"|format(detailed_findings.metadata.execution_time) }} seconds
+
+## Impact Assessment
+- **Total Findings:** {{ detailed_findings.summary.total_findings }}
+- **Files Scanned:** {{ detailed_findings.summary.files_scanned }}
+- **Rules Applied:** {{ detailed_findings.summary.rules_applied }}
+
+## Modernization Analysis
+{% if detailed_findings.summary.has_findings %}
+- **Status:** 📋 **Modernization Opportunities Available**
+- **Improvement Potential:** 
+  {% if detailed_findings.summary.rules_applied > 20 %}**High**
+  {% elseif detailed_findings.summary.rules_applied > 5 %}**Medium**
+  {% else %}**Low**{% endif %}
+- **Estimated Effort:** 
+  {% set effort_hours = (detailed_findings.summary.rules_applied * 0.25)|round(1) %}
+  {% if effort_hours < 1 %}< 1 hour
+  {% else %}{{ effort_hours }} hours{% endif %}
+{% else %}
+- **Status:** ✅ **Code Already Modern**
+{% endif %}
+
+{% if detailed_findings.summary.change_type_distribution %}
+## Change Type Distribution
+{% for change_type, count in detailed_findings.summary.change_type_distribution %}
+- **{{ change_type|replace('_', ' ')|title }}:** {{ count }} changes
+{% endfor %}
+{% endif %}
+
+{% if detailed_findings.summary.top_issues_by_file %}
+## Top Issues by File
+{% for file, count in detailed_findings.summary.top_issues_by_file %}
+- **{{ file }}:** {{ count }} changes
+{% endfor %}
+{% endif %}
+
+{% if detailed_findings.summary.top_issues_by_rule %}
+## Most Applied Rules
+{% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+- **{{ rule }}:** {{ count }} applications
+{% endfor %}
+{% endif %}

@@ -37,7 +37,7 @@ class FindingsDetailPageRenderer
      *
      * @param string               $analyzerType The analyzer type (e.g., 'fractor', 'rector')
      * @param array<string, mixed> $context      Template context containing findings and metadata
-     * @param string               $format       Output format (currently only 'html' supported)
+     * @param string               $format       Output format ('html' or 'markdown')
      *
      * @return array<string, string> Rendered content indexed by page type
      */
@@ -46,7 +46,7 @@ class FindingsDetailPageRenderer
         array $context,
         string $format = 'html',
     ): array {
-        if ('html' !== $format) {
+        if (!\in_array($format, ['html', 'markdown'], true)) {
             throw new \InvalidArgumentException(\sprintf('Format "%s" not supported', $format));
         }
 
@@ -54,13 +54,14 @@ class FindingsDetailPageRenderer
 
         try {
             // Render main detail page using generic template
-            $detailPageContent = $this->renderMainDetailPage($analyzerType, $context);
+            $detailPageContent = $this->renderMainDetailPage($analyzerType, $context, $format);
             $renderedPages['detail'] = $detailPageContent;
 
             $this->logger->info('Successfully rendered analyzer detail pages', [
                 'analyzer_type' => $analyzerType,
                 'pages_rendered' => \count($renderedPages),
                 'findings_count' => $this->getFindingsCount($context),
+                'in' => __METHOD__,
             ]);
         } catch (\Exception $e) {
             $this->logger->error('Failed to render analyzer detail pages', [
@@ -78,15 +79,19 @@ class FindingsDetailPageRenderer
     /**
      * Render the main detail page for an analyzer.
      */
-    private function renderMainDetailPage(string $analyzerType, array $context): string
+    private function renderMainDetailPage(string $analyzerType, array $context, string $format): string
     {
         // Ensure required template variables are available
         $templateContext = $this->prepareTemplateContext($analyzerType, $context);
 
         // Validate that analyzer-specific partials exist
-        $this->validateAnalyzerTemplates($analyzerType);
+        $this->validateAnalyzerTemplates($analyzerType, $format);
 
-        return $this->twig->render('html/analyzer-findings-detail.html.twig', $templateContext);
+        $templateFile = $format === 'markdown'
+            ? 'md/analyzer-findings-detail.md.twig'
+            : 'html/analyzer-findings-detail.html.twig';
+
+        return $this->twig->render($templateFile, $templateContext);
     }
 
     /**
@@ -128,11 +133,14 @@ class FindingsDetailPageRenderer
     /**
      * Validate that required analyzer-specific templates exist.
      */
-    private function validateAnalyzerTemplates(string $analyzerType): void
+    private function validateAnalyzerTemplates(string $analyzerType, string $format): void
     {
+        $templatePrefix = $format === 'markdown' ? 'md/partials' : 'html/partials';
+        $templateExtension = $format === 'markdown' ? 'md.twig' : 'html.twig';
+
         $requiredPartials = [
-            \sprintf('html/partials/%s-findings/summary-overview.html.twig', $analyzerType),
-            \sprintf('html/partials/%s-findings/findings-table.html.twig', $analyzerType),
+            \sprintf('%s/%s-findings/summary-overview.%s', $templatePrefix, $analyzerType, $templateExtension),
+            \sprintf('%s/%s-findings/findings-table.%s', $templatePrefix, $analyzerType, $templateExtension),
         ];
 
         foreach ($requiredPartials as $template) {

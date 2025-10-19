@@ -1,0 +1,109 @@
+# {{ extension_key }} - {{ analyzer_type|title }} Findings Detail
+
+**{{ detailed_findings.findings|length }} findings** • Generated: {{ generated_at.format('Y-m-d H:i:s T') }}
+
+---
+
+## Summary Overview
+
+### Analysis Metadata
+- **Extension**: {{ detailed_findings.metadata.extension_key }}
+- **Analysis Date**: {{ detailed_findings.metadata.analysis_timestamp }}
+- **{{ analyzer_type|title }} Version**: {{ detailed_findings.metadata[analyzer_type ~ '_version']|default('Unknown') }}
+- **Execution Time**: {{ detailed_findings.metadata.execution_time }} seconds
+
+### Findings Distribution
+{% if detailed_findings.summary.severity_distribution %}
+{% for severity, count in detailed_findings.summary.severity_distribution %}
+{% if count > 0 %}
+- **{{ severity|upper }}**: {{ count }} findings
+{% endif %}
+{% endfor %}
+{% endif %}
+
+### Impact Assessment
+- **Total Findings**: {{ detailed_findings.summary.total_findings }}
+- **Files Scanned**: {{ detailed_findings.summary.files_scanned }}
+- **Rules Applied**: {{ detailed_findings.summary.rules_applied }}
+{% if detailed_findings.summary.modernization_score is defined %}
+- **Modernization Score**: {{ detailed_findings.summary.modernization_score }}/10
+{% endif %}
+{% if detailed_findings.summary.upgrade_readiness_score is defined %}
+- **Upgrade Readiness**: {{ detailed_findings.summary.upgrade_readiness_score }}/10
+{% endif %}
+{% if detailed_findings.summary.risk_level is defined %}
+- **Risk Level**: {{ detailed_findings.summary.risk_level }}
+{% endif %}
+
+---
+
+## Detailed Findings
+
+{% if detailed_findings.findings %}
+{% for finding in detailed_findings.findings %}
+
+### Finding #{{ loop.index }} - {{ finding.severity|upper }}
+
+**File**: `{{ finding.file_basename }}`{% if finding.line %}:{{ finding.line }}{% endif %}  
+**Rule**: {{ finding.rule_name }}  
+**Message**: {{ finding.message }}
+
+{% if finding.has_code_change %}
+#### Code Changes
+
+{% if finding.old_code or finding.code_before %}
+**Before**:
+```{% if analyzer_type == 'fractor' %}yaml{% else %}php{% endif %}
+{{ finding.old_code|default(finding.code_before) }}
+```
+{% endif %}
+
+{% if finding.new_code or finding.code_after %}
+**After**:
+```{% if analyzer_type == 'fractor' %}yaml{% else %}php{% endif %}
+{{ finding.new_code|default(finding.code_after) }}
+```
+{% endif %}
+{% endif %}
+
+{% if finding.suggested_fix is defined %}
+**Suggested Fix**: {{ finding.suggested_fix }}
+{% endif %}
+
+{% if finding.has_documentation %}
+**Documentation**: [Learn more]({{ finding.documentation_url|default(finding.doc_url) }})
+{% endif %}
+
+{% if analyzer_type == 'fractor' and finding.manual_intervention is defined %}
+{% if finding.manual_intervention %}
+⚠️ **Manual intervention required**
+{% endif %}
+{% endif %}
+
+---
+{% endfor %}
+{% else %}
+
+*No detailed findings available.*
+
+{% endif %}
+
+## Top Issues by File
+
+{% if detailed_findings.summary.top_issues_by_file %}
+{% for file, count in detailed_findings.summary.top_issues_by_file %}
+- **{{ file }}**: {{ count }} findings
+{% endfor %}
+{% endif %}
+
+## Top Issues by Rule
+
+{% if detailed_findings.summary.top_issues_by_rule %}
+{% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+- **{{ rule }}**: {{ count }} occurrences
+{% endfor %}
+{% endif %}
+
+---
+
+[← Back to Extension Report](../extensions/{{ extension_key }}.md)

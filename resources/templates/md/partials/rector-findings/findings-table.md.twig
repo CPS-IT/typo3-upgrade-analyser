@@ -1,0 +1,49 @@
+# Detailed Findings
+
+{% if detailed_findings.findings and detailed_findings.findings|length > 0 %}
+
+{% for finding in detailed_findings.findings %}
+## Finding #{{ loop.index }}
+
+**Severity:** {{ finding.severity|default('medium')|upper }}
+
+**Location:** `{{ finding.file }}:{{ finding.line }}`
+
+**Rule:** `{{ finding.rule_name }}`
+
+**Message:** {{ finding.message }}
+
+{% if finding.description %}
+**Description:** {{ finding.description }}
+{% endif %}
+
+{% if finding.before_code and finding.after_code %}
+**Code Change:**
+```php
+// Before
+{{ finding.before_code }}
+
+// After  
+{{ finding.after_code }}
+```
+{% endif %}
+
+{% if finding.documentation_link %}
+**Documentation:** [View Details]({{ finding.documentation_link }})
+{% endif %}
+
+---
+
+{% endfor %}
+
+**Total:** {{ detailed_findings.findings|length }} findings displayed
+
+{% else %}
+
+No specific findings are available for detailed display. This may occur when:
+
+- The analysis completed successfully but found no issues requiring changes
+- All detected issues are at a summary level only
+- The analyzer produced output that doesn't include detailed finding information
+
+{% endif %}

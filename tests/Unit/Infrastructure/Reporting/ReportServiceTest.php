@@ -76,8 +76,8 @@ class ReportServiceTest extends TestCase
             ->with($context, 'markdown')
             ->willReturn($extensionReports);
 
-        // Mock rector detail pages rendering (should return empty array for non-rector tests)
-        $this->templateRenderer->method('renderRectorFindingsDetailPages')
+        // Mock analyzer detail pages rendering (should return empty array for generic tests)
+        $this->templateRenderer->method('renderAllAnalyzerFindingsDetailPages')
             ->with($context, 'markdown')
             ->willReturn([]);
 
@@ -85,7 +85,7 @@ class ReportServiceTest extends TestCase
             ->with('var/reports/', 'markdown')
             ->willReturn('/test/markdown/');
 
-        $this->fileManager->method('writeReportFilesWithRectorPages')
+        $this->fileManager->method('writeReportFilesWithAnalyzerPages')
             ->with($mainReport, $extensionReports, [], '/test/markdown/')
             ->willReturn($files);
 
