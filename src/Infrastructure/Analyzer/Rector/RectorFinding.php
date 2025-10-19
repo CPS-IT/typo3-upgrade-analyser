@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingInterfac
 /**
  * Represents a single finding from Rector analysis.
  */
-class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface
+class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface, \JsonSerializable
 {
     use AnalyzerFindingHelperTrait;
 
@@ -222,5 +222,13 @@ class RectorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperIn
         $baseData['context'] = $this->context;
 
         return $baseData;
+    }
+
+    /**
+     * JsonSerializable implementation - use toArray() for JSON encoding.
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

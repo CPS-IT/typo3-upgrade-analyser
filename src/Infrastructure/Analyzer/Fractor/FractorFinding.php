@@ -19,7 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingInterfac
 /**
  * Represents a single finding from Fractor analysis.
  */
-class FractorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface
+class FractorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperInterface, \JsonSerializable
 {
     use AnalyzerFindingHelperTrait;
 
@@ -234,5 +234,26 @@ class FractorFinding implements AnalyzerFindingInterface, AnalyzerFindingHelperI
         $baseData['requires_manual_intervention'] = $this->requiresManualIntervention();
 
         return $baseData;
+    }
+
+    /**
+     * JsonSerializable implementation - use toArray() for JSON encoding.
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * String representation of the finding for template usage.
+     */
+    public function __toString(): string
+    {
+        return sprintf(
+            '%s:%s - %s',
+            $this->filePath,
+            $this->lineNumber,
+            $this->message
+        );
     }
 }

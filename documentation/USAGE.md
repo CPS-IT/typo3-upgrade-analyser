@@ -476,6 +476,50 @@ jobs:
           path: var/reports/
 ```
 
+### Logging Configuration
+
+The analyzer supports configurable log levels through the `LOG_LEVEL` environment variable. This is particularly useful for debugging and troubleshooting.
+
+#### Available Log Levels
+
+- `DEBUG` - Most verbose, includes all debug messages
+- `INFO` - Default level, includes informational messages
+- `NOTICE` - Important notices and warnings
+- `WARNING` - Warning messages only
+- `ERROR` - Error messages only  
+- `CRITICAL` - Critical errors only
+- `ALERT` - Alert level messages
+- `EMERGENCY` - Emergency level messages only
+
+#### Usage Examples
+
+```bash
+# Enable debug logging for troubleshooting
+LOG_LEVEL=DEBUG ./bin/typo3-analyzer analyze
+
+# Set permanently in shell session
+export LOG_LEVEL=DEBUG
+./bin/typo3-analyzer analyze
+
+# Only show warnings and errors
+LOG_LEVEL=WARNING ./bin/typo3-analyzer analyze
+
+# Use in CI/CD with verbose logging
+env LOG_LEVEL=INFO ./bin/typo3-analyzer analyze --config=ci-config.yaml
+```
+
+#### Log File Location
+
+Logs are written to `var/log/typo3-upgrade-analyzer.log` in your project directory. You can monitor the log in real-time:
+
+```bash
+# Follow log output during analysis
+tail -f var/log/typo3-upgrade-analyzer.log
+
+# View recent log entries
+tail -n 50 var/log/typo3-upgrade-analyzer.log
+```
+
 ### Custom Analyzer Development
 
 Create custom analyzers for specific needs:

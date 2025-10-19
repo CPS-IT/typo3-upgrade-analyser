@@ -1,0 +1,51 @@
+# Detailed Findings
+
+{% if detailed_findings.findings and detailed_findings.findings|length > 0 %}
+
+{% for finding in detailed_findings.findings %}
+## Finding #{{ loop.index }}
+
+**Location:** `{{ finding.file|default(finding.filePath) }}:{{ finding.line|default(finding.lineNumber) }}`
+
+**Rule:** `{{ finding.rule_name|default(finding.ruleName) }}`
+
+**Message:** {{ finding.message }}
+
+{% if finding.change_type %}
+**Change Type:** {{ finding.change_type|replace('_', ' ')|title }}
+{% endif %}
+
+{% if finding.before_code and finding.after_code %}
+**Code Change:**
+```php
+// Before
+{{ finding.before_code }}
+
+// After  
+{{ finding.after_code }}
+```
+{% endif %}
+
+{% if finding.description %}
+**Description:** {{ finding.description }}
+{% endif %}
+
+{% if finding.priority %}
+**Priority:** {{ finding.priority }}/10
+{% endif %}
+
+---
+
+{% endfor %}
+
+**Total:** {{ detailed_findings.findings|length }} modernization opportunities found
+
+{% else %}
+
+No specific findings are available for detailed display. This may occur when:
+
+- The analysis completed successfully but found no modernization opportunities
+- All code is already following modern PHP practices
+- The fractor analyzer produced output that doesn't include detailed finding information
+
+{% endif %}

@@ -65,18 +65,26 @@
                 </div>
                 {% endif %}
 
-                {% if fractor_analysis.findings and fractor_analysis.findings is not empty %}
+                {# Only show Sample Changes if there are actual findings with content #}
+                {% if fractor_analysis.findings and fractor_analysis.findings is not empty and fractor_analysis.rules_applied > 0 %}
+                {% set has_meaningful_findings = false %}
+                {% for finding in fractor_analysis.findings %}
+                    {% if finding is not empty %}
+                        {% set has_meaningful_findings = true %}
+                    {% endif %}
+                {% endfor %}
+                {% if has_meaningful_findings %}
                 <div class="info-card">
                     <h3>Sample Changes</h3>
                     <ul>
                         {% for finding in fractor_analysis.findings|slice(0, 10) %}
-                        <li><code>{{ finding }}</code></li>
-                        {% endfor %}
-                        {% if fractor_analysis.findings|length > 10 %}
-                        <li><em>... and {{ fractor_analysis.findings|length - 10 }} more changes</em></li>
+                        {% if finding is not empty %}
+                        <li><code>{{ finding.file|default(finding.filePath) }}:{{ finding.line|default(finding.lineNumber) }} - {{ finding.message }}</code></li>
                         {% endif %}
+                        {% endfor %}
                     </ul>
                 </div>
+                {% endif %}
                 {% endif %}
 
                 <div class="analysis-grid">
@@ -125,6 +133,21 @@
                         <li>{{ recommendation }}</li>
                         {% endfor %}
                     </ul>
+                </div>
+                {% endif %}
+
+                {% if extension_data.fractor_detailed_findings and extension_data.fractor_detailed_findings.findings|length > 0 %}
+                <div class="findings-actions">
+                    <h3>Detailed Analysis</h3>
+                    <p>{{ extension_data.fractor_detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
+                    <div class="action-buttons">
+                        <a href="../fractor-findings/{{ extension.key }}-fractor-findings.html" class="btn btn-primary">
+                            🔍 View Detailed Findings
+                        </a>
+                        <small class="text-muted">
+                            Includes modernization suggestions, code changes, and improvement opportunities
+                        </small>
+                    </div>
                 </div>
                 {% endif %}
 

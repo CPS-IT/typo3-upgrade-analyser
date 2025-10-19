@@ -69,6 +69,16 @@ class TemplateRenderer
     {
         $reports = [];
 
+        // Ensure extension_data exists
+        if (!isset($context['extension_data']) || !\is_array($context['extension_data'])) {
+            $this->logger->warning('No extension data available for extension reports rendering', [
+                'format' => $format,
+                'context_keys' => array_keys($context),
+            ]);
+
+            return [];
+        }
+
         foreach ($context['extension_data'] as $extensionData) {
             $extensionKey = $extensionData['extension']->getKey();
 
@@ -139,17 +149,28 @@ class TemplateRenderer
 
         $detailPages = [];
 
+        // Ensure extension_data exists
+        if (!isset($context['extension_data']) || !\is_array($context['extension_data'])) {
+            $this->logger->warning('No extension data available for Rector findings rendering', [
+                'format' => $format,
+                'context_keys' => array_keys($context),
+            ]);
+
+            return [];
+        }
+
         foreach ($context['extension_data'] as $extensionData) {
             $rectorAnalysis = $extensionData['rector_analysis'];
+            $rectorDetailedFindings = $extensionData['rector_detailed_findings'];
 
             // Only create detail pages for extensions with detailed findings
-            if ($rectorAnalysis && !empty($rectorAnalysis['detailed_findings'])) {
+            if ($rectorAnalysis && $rectorDetailedFindings && !empty($rectorDetailedFindings['findings'])) {
                 $extensionKey = $extensionData['extension']->getKey();
 
                 $findingsContext = [
                     'extension_key' => $extensionKey,
                     'extension' => $extensionData['extension'],
-                    'detailed_findings' => $rectorAnalysis['detailed_findings'],
+                    'detailed_findings' => $rectorDetailedFindings['findings'],
                     'rector_analysis' => $rectorAnalysis,
                     'generated_at' => $context['generated_at'],
                 ];
@@ -175,14 +196,17 @@ class TemplateRenderer
      */
     private function renderSingleRectorFindingsDetailPage(array $findingsContext, string $format, string $extensionKey): ?array
     {
+        // Add analyzer type to context for generic template
+        $findingsContext['analyzer_type'] = 'rector';
+
         return match ($format) {
             'markdown' => [
-                'content' => $this->twig->render('md/rector-findings-detail.md.twig', $findingsContext),
+                'content' => $this->twig->render('md/analyzer-findings-detail.md.twig', $findingsContext),
                 'filename' => $extensionKey . '.md',
                 'extension' => $extensionKey,
             ],
             'html' => [
-                'content' => $this->twig->render('html/rector-findings-detail.html.twig', $findingsContext),
+                'content' => $this->twig->render('html/analyzer-findings-detail.html.twig', $findingsContext),
                 'filename' => $extensionKey . '.html',
                 'extension' => $extensionKey,
             ],
@@ -220,17 +244,58 @@ class TemplateRenderer
         $detailPages = [];
         $detailedFindingsKey = $analyzerType . '_detailed_findings';
 
+        // Ensure extension_data exists
+        if (!isset($context['extension_data']) || !\is_array($context['extension_data'])) {
+            $this->logger->warning('No extension data available for detailed findings rendering', [
+                'analyzer_type' => $analyzerType,
+                'context_keys' => array_keys($context),
+            ]);
+
+            return [];
+        }
+
+        $this->logger->debug(
+            'Rendering analyzer findings detail pages',
+            [
+                'analyzer_type' => $analyzerType,
+                'context_keys' => array_keys($context),
+                'in' => __METHOD__ . ':' . __LINE__,
+            ],
+        );
         foreach ($context['extension_data'] as $extensionData) {
+            $extensionKey = $extensionData['extension']->getKey();
+            
+            $this->logger->debug('Processing extension for analyzer findings', [
+                'extension_key' => $extensionKey,
+                'analyzer_type' => $analyzerType,
+                'detailed_findings_key' => $detailedFindingsKey,
+                'in' => __METHOD__ . ':' . __LINE__
+            ]);
+            
             // Check if this extension has detailed findings for the specified analyzer
             if (!isset($extensionData[$detailedFindingsKey]) || empty($extensionData[$detailedFindingsKey])) {
+                $this->logger->debug('Skipping extension - no detailed findings', [
+                    'extension_key' => $extensionKey,
+                    'analyzer_type' => $analyzerType,
+                    'has_key' => isset($extensionData[$detailedFindingsKey]),
+                    'is_empty' => empty($extensionData[$detailedFindingsKey]),
+                    'in' => __METHOD__ . ':' . __LINE__
+                ]);
                 continue;
             }
 
-            $extensionKey = $extensionData['extension']->getKey();
             $detailedFindings = $extensionData[$detailedFindingsKey];
 
             // Skip if no actual findings data
             if (empty($detailedFindings['findings']) && empty($detailedFindings['summary'])) {
+                $this->logger->debug('Skipping extension - no findings or summary data', [
+                    'extension_key' => $extensionKey,
+                    'analyzer_type' => $analyzerType,
+                    'has_findings' => !empty($detailedFindings['findings']),
+                    'findings_count' => count($detailedFindings['findings'] ?? []),
+                    'has_summary' => !empty($detailedFindings['summary']),
+                    'in' => __METHOD__ . ':' . __LINE__
+                ]);
                 continue;
             }
 
@@ -262,6 +327,16 @@ class TemplateRenderer
                         'analyzer_type' => $analyzerType,
                         'page_type' => $pageType,
                     ];
+                    $this->logger->debug(
+                        'Rendered analyzer findings detail page',
+                        [
+                            'extension_key' => $extensionKey,
+                            'analyzer_type' => $analyzerType,
+                            'format' => $format,
+                            'filename' => $filename,
+                            'in' => __METHOD__ . ':' . __LINE__,
+                        ],
+                    );
                 }
             } catch (\Exception $e) {
                 $this->logger->error('Failed to render analyzer findings detail page', [
@@ -291,7 +366,7 @@ class TemplateRenderer
 
         foreach ($this->findingsDetailPageRenderer->getSupportedAnalyzers() as $analyzerType) {
             $analyzerPages = $this->renderAnalyzerFindingsDetailPages($context, $analyzerType, $format);
-            $allDetailPages = array_merge($allDetailPages, $analyzerPages);
+            array_push($allDetailPages, ...$analyzerPages);
         }
 
         return $allDetailPages;

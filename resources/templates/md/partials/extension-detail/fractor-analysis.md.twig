@@ -41,12 +41,23 @@ No rules applied.
 {% endif %}
 
 ### Sample Changes
-{% if fractor_analysis.findings and fractor_analysis.findings is not empty %}
-{% for finding in fractor_analysis.findings|slice(0, 10) %}
-- `{{ finding }}`
+{% if fractor_analysis.findings and fractor_analysis.findings is not empty and fractor_analysis.rules_applied > 0 %}
+{% set has_meaningful_findings = false %}
+{% for finding in fractor_analysis.findings %}
+    {% if finding is not empty and finding is iterable and finding|length > 0 %}
+        {% set has_meaningful_findings = true %}
+    {% elseif finding is not empty and finding is not iterable %}
+        {% set has_meaningful_findings = true %}
+    {% endif %}
 {% endfor %}
-{% if fractor_analysis.findings|length > 10 %}
-*... and {{ fractor_analysis.findings|length - 10 }} more changes*
+{% if has_meaningful_findings %}
+{% for finding in fractor_analysis.findings|slice(0, 10) %}
+{% if finding is not empty %}
+- **{{ finding.file|default(finding.filePath) }}:{{ finding.line|default(finding.lineNumber) }}** - {{ finding.message }}
+{% endif %}
+{% endfor %}
+{% else %}
+No sample changes available.
 {% endif %}
 {% else %}
 No sample changes available.
@@ -71,6 +82,18 @@ No sample changes available.
 {% endfor %}
 {% else %}
 No specific Fractor recommendations available.
+{% endif %}
+
+{% if extension_data.fractor_detailed_findings and extension_data.fractor_detailed_findings.findings|length > 0 %}
+
+## Detailed Analysis
+
+**{{ extension_data.fractor_detailed_findings.findings|length }} detailed findings** are available for in-depth review.
+
+[🔍 **View Detailed Findings**](../fractor-findings/{{ extension.key }}-fractor-findings.md)
+
+*Includes modernization suggestions, code changes, and improvement opportunities*
+
 {% endif %}
 
 {% else %}

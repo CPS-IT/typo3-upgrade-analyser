@@ -1,0 +1,41 @@
+# Analysis Summary
+
+## Analysis Metadata
+- **Extension:** {{ detailed_findings.metadata.extension_key }}
+- **Analysis Date:** {{ detailed_findings.metadata.analysis_timestamp }}
+- **Rector Version:** {{ detailed_findings.metadata.rector_version }}
+- **Execution Time:** {{ "%.2f"|format(detailed_findings.metadata.execution_time) }} seconds
+
+## Impact Assessment
+- **Total Findings:** {{ detailed_findings.summary.total_findings }}
+- **Affected Files:** {{ detailed_findings.summary.affected_files }} / {{ detailed_findings.summary.total_files }}
+- **File Impact:** {{ "%.1f"|format(detailed_findings.summary.file_impact_percentage) }}%
+- **Estimated Fix Time:** {{ "%.1f"|format(detailed_findings.summary.estimated_fix_time_hours) }} hours
+
+## Risk Analysis
+- **Readiness Score:** {{ "%.1f"|format(detailed_findings.summary.upgrade_readiness_score) }}/10.0
+- **Risk Level:** **{{ detailed_findings.summary.risk_level|upper }}**
+{% if detailed_findings.summary.has_breaking_changes %}
+- **⚠️ Contains Breaking Changes**
+{% endif %}
+
+{% if detailed_findings.summary.severity_distribution %}
+## Severity Distribution
+{% for severity, count in detailed_findings.summary.severity_distribution %}
+- **{{ severity|capitalize }}:** {{ count }} findings
+{% endfor %}
+{% endif %}
+
+{% if detailed_findings.summary.top_issues_by_file %}
+## Top Issues by File
+{% for file, count in detailed_findings.summary.top_issues_by_file %}
+- **{{ file }}:** {{ count }} findings
+{% endfor %}
+{% endif %}
+
+{% if detailed_findings.summary.top_issues_by_rule %}
+## Most Applied Rules
+{% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+- **{{ rule }}:** {{ count }} applications
+{% endfor %}
+{% endif %}

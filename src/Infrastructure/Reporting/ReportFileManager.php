@@ -212,4 +212,71 @@ class ReportFileManager
 
         return array_merge($files, $rectorFiles);
     }
+
+    /**
+     * Write report files with generic analyzer detail pages.
+     *
+     * @param array{content: string, filename: string}                                $mainReport          Main report data
+     * @param array<int, array{content: string, filename: string, extension: string}> $extensionReports    Extension reports data
+     * @param array<int, array{content: string, filename: string, extension: string}> $analyzerDetailPages Analyzer detail pages data
+     * @param string                                                                  $outputPath          Base output path
+     *
+     * @return array<int, array{type: string, extension?: string, path: string, size: int}> All file metadata
+     */
+    public function writeReportFilesWithAnalyzerPages(
+        array $mainReport,
+        array $extensionReports,
+        array $analyzerDetailPages,
+        string $outputPath,
+    ): array {
+        // Use existing method for main and extension reports
+        $files = $this->writeReportFiles($mainReport, $extensionReports, $outputPath);
+
+        // Add analyzer detail pages by analyzer type
+        $analyzerFiles = $this->writeAnalyzerDetailPages($analyzerDetailPages, $outputPath);
+
+        return array_merge($files, $analyzerFiles);
+    }
+
+    /**
+     * Write generic analyzer detail pages to appropriate directories.
+     *
+     * @param array<int, array{content: string, filename: string, extension: string}> $analyzerDetailPages
+     *
+     * @return array<int, array{type: string, extension?: string, path: string, size: int}>
+     */
+    private function writeAnalyzerDetailPages(array $analyzerDetailPages, string $outputPath): array
+    {
+        $files = [];
+
+        // Group pages by analyzer type
+        $pagesByAnalyzer = [];
+        foreach ($analyzerDetailPages as $page) {
+            $analyzerType = $page['analyzer_type'] ?? 'unknown';
+            $pagesByAnalyzer[$analyzerType][] = $page;
+        }
+
+        // Write files for each analyzer type in its own subdirectory
+        foreach ($pagesByAnalyzer as $analyzerType => $pages) {
+            $analyzerDir = $outputPath . DIRECTORY_SEPARATOR . $analyzerType . '-findings';
+
+            if (!is_dir($analyzerDir)) {
+                mkdir($analyzerDir, 0o755, true);
+            }
+
+            foreach ($pages as $page) {
+                $filePath = $analyzerDir . DIRECTORY_SEPARATOR . $page['filename'];
+                file_put_contents($filePath, $page['content']);
+
+                $files[] = [
+                    'type' => $analyzerType . '_findings',
+                    'extension' => $page['extension'],
+                    'path' => $filePath,
+                    'size' => filesize($filePath) ?: 0,
+                ];
+            }
+        }
+
+        return $files;
+    }
 }

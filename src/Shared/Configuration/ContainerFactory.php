@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Shared\Configuration;
 
 use CPSIT\UpgradeAnalyzer\Shared\Utility\ProjectRootResolver;
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
@@ -59,9 +60,21 @@ class ContainerFactory
             mkdir($logDir, 0o755, true);
         }
 
+        // Configure log level from environment variable
+        $logLevel = match (strtoupper(getenv('LOG_LEVEL') ?: 'INFO')) {
+            'DEBUG' => Level::Debug,
+            'NOTICE' => Level::Notice,
+            'WARNING' => Level::Warning,
+            'ERROR' => Level::Error,
+            'CRITICAL' => Level::Critical,
+            'ALERT' => Level::Alert,
+            'EMERGENCY' => Level::Emergency,
+            default => Level::Info,
+        };
+
         $container->register(Logger::class)
             ->setArguments(['typo3-upgrade-analyzer'])
-            ->addMethodCall('pushHandler', [new StreamHandler($logDir . '/typo3-upgrade-analyzer.log', Logger::INFO)])
+            ->addMethodCall('pushHandler', [new StreamHandler($logDir . '/typo3-upgrade-analyzer.log', $logLevel)])
             ->setPublic(true);
 
         $container->setAlias(LoggerInterface::class, Logger::class)

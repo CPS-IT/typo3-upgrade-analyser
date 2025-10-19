@@ -64,13 +64,13 @@ No rule-specific data available.
 No specific Rector recommendations available.
 {% endif %}
 
-{% if rector_analysis.detailed_findings.findings is defined and rector_analysis.detailed_findings.findings|length > 0 %}
+{% if extension_data.rector_detailed_findings and extension_data.rector_detailed_findings.findings|length > 0 %}
 
 ## Detailed Analysis
 
-**{{ rector_analysis.detailed_findings.findings|length }} detailed findings** are available for in-depth review.
+**{{ extension_data.rector_detailed_findings.findings|length }} detailed findings** are available for in-depth review.
 
-[🔍 **View Detailed Findings**](../rector-findings/{{ extension.key }}.md)
+[🔍 **View Detailed Findings**](../rector-findings/{{ extension.key }}-rector-findings.md)
 
 *Includes code examples, fix suggestions, and file-by-file breakdown*
 
