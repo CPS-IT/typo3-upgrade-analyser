@@ -4500,16 +4500,16 @@
         },
         {
             "name": "cyclonedx/cyclonedx-php-composer",
-            "version": "v5.2.3",
+            "version": "v5.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CycloneDX/cyclonedx-php-composer.git",
-                "reference": "ca283f9823c937d629180b51ab63e18af117916e"
+                "reference": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/ca283f9823c937d629180b51ab63e18af117916e",
-                "reference": "ca283f9823c937d629180b51ab63e18af117916e",
+                "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
+                "reference": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
                 "shasum": ""
             },
             "require": {
@@ -4572,7 +4572,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2025-05-12T12:08:44+00:00"
+            "time": "2025-10-27T08:23:15+00:00"
         },
         {
             "name": "ergebnis/composer-normalize",
