@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "a9f/fractor",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-fractor.git",
-                "reference": "2debb4884a0c015a9e0b12650c90d3e483b7dab7"
+                "reference": "ad4c8593c2cc2e19d22f21a3e624a7e0610bc090"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-fractor/zipball/2debb4884a0c015a9e0b12650c90d3e483b7dab7",
-                "reference": "2debb4884a0c015a9e0b12650c90d3e483b7dab7",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-fractor/zipball/ad4c8593c2cc2e19d22f21a3e624a7e0610bc090",
+                "reference": "ad4c8593c2cc2e19d22f21a3e624a7e0610bc090",
                 "shasum": ""
             },
             "require": {
@@ -63,13 +63,13 @@
             "description": "File Read-Analyse-Change Tool",
             "support": {
                 "issues": "https://github.com/andreaswolf/fractor-fractor/issues",
-                "source": "https://github.com/andreaswolf/fractor-fractor/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-fractor/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/fractor-extension-installer",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-extension-installer.git",
@@ -114,27 +114,27 @@
             ],
             "description": "Installer for Fractor extensions.",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-extension-installer/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-extension-installer/tree/v0.5.7"
             },
             "time": "2025-04-30T21:48:47+00:00"
         },
         {
             "name": "a9f/fractor-fluid",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-fluid.git",
-                "reference": "ee16b4e532056a8128da0a77ab3c9452c1813a92"
+                "reference": "640342a72a202c3246099efd55654d0a2bec760c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-fluid/zipball/ee16b4e532056a8128da0a77ab3c9452c1813a92",
-                "reference": "ee16b4e532056a8128da0a77ab3c9452c1813a92",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-fluid/zipball/640342a72a202c3246099efd55654d0a2bec760c",
+                "reference": "640342a72a202c3246099efd55654d0a2bec760c",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
                 "nette/utils": "^4.0",
                 "php": "^8.2",
                 "symplify/rule-doc-generator-contracts": "^11.2",
@@ -165,27 +165,27 @@
             "description": "Fluid extension for the File Read-Analyse-Change Tool. Allows modifying Fluid files",
             "support": {
                 "issues": "https://github.com/andreaswolf/fractor-fluid/issues",
-                "source": "https://github.com/andreaswolf/fractor-fluid/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-fluid/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/fractor-htaccess",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-htaccess.git",
-                "reference": "cb2d48015157814d34884d33edd2c4472097a537"
+                "reference": "fd5993e3cd4b0ed206c07bedbf0b37aebac0e258"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-htaccess/zipball/cb2d48015157814d34884d33edd2c4472097a537",
-                "reference": "cb2d48015157814d34884d33edd2c4472097a537",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-htaccess/zipball/fd5993e3cd4b0ed206c07bedbf0b37aebac0e258",
+                "reference": "fd5993e3cd4b0ed206c07bedbf0b37aebac0e258",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
                 "nette/utils": "^4.0",
                 "php": "^8.2",
                 "symplify/rule-doc-generator-contracts": "^11.2",
@@ -216,27 +216,27 @@
             ],
             "description": "htaccess extension for the File Read-Analyse-Change Tool. Allows modifying htaccess files",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-htaccess/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-htaccess/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/fractor-typoscript",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-typoscript.git",
-                "reference": "0fd56b08084c888f28a24229cbe5694fee9c7a50"
+                "reference": "429a2dca3d293f0d6e7c5ba1ee7c0959bd9797e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-typoscript/zipball/0fd56b08084c888f28a24229cbe5694fee9c7a50",
-                "reference": "0fd56b08084c888f28a24229cbe5694fee9c7a50",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-typoscript/zipball/429a2dca3d293f0d6e7c5ba1ee7c0959bd9797e4",
+                "reference": "429a2dca3d293f0d6e7c5ba1ee7c0959bd9797e4",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
                 "helmich/typo3-typoscript-parser": "^2.8.0",
                 "php": "^8.2",
                 "symplify/rule-doc-generator-contracts": "^11.2",
@@ -266,27 +266,27 @@
             ],
             "description": "TypoScript extension for the File Read-Analyse-Change Tool. Allows modifying TYPO3 TypoScript configuration files",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-typoscript/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-typoscript/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/fractor-xml",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-xml.git",
-                "reference": "2b8799f6f2731754f280d11504b3157c5c8b5a29"
+                "reference": "5505f61019f712f5e1d39f53d0e3e65877180abe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-xml/zipball/2b8799f6f2731754f280d11504b3157c5c8b5a29",
-                "reference": "2b8799f6f2731754f280d11504b3157c5c8b5a29",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-xml/zipball/5505f61019f712f5e1d39f53d0e3e65877180abe",
+                "reference": "5505f61019f712f5e1d39f53d0e3e65877180abe",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
                 "ext-dom": "*",
                 "ext-xml": "*",
                 "php": "^8.2",
@@ -318,27 +318,27 @@
             ],
             "description": "XML extension for the File Read-Analyse-Change Tool. Allows modifying XML files",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-xml/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-xml/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/fractor-yaml",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-yaml.git",
-                "reference": "4a665dfa5c3e91f4f8306f02cfb68db3f6fec8ab"
+                "reference": "94e2fe9d4cfbfe53a62e0984beffefb6611c1c2e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-yaml/zipball/4a665dfa5c3e91f4f8306f02cfb68db3f6fec8ab",
-                "reference": "4a665dfa5c3e91f4f8306f02cfb68db3f6fec8ab",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-yaml/zipball/94e2fe9d4cfbfe53a62e0984beffefb6611c1c2e",
+                "reference": "94e2fe9d4cfbfe53a62e0984beffefb6611c1c2e",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
                 "php": "^8.2",
                 "symfony/yaml": "^5.4 || ^6.4 || ^7.0",
                 "symplify/rule-doc-generator-contracts": "^11.2",
@@ -368,36 +368,39 @@
             ],
             "description": "YAML extension for the File Read-Analyse-Change Tool. Allows modifying YAML files",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-yaml/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-yaml/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "a9f/typo3-fractor",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreaswolf/fractor-typo3-fractor.git",
-                "reference": "2d691d50cc7f3799f423097f4decb51f59206ffc"
+                "reference": "199b29e703e5e04d3672210ed89c2da5155bd4d8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreaswolf/fractor-typo3-fractor/zipball/2d691d50cc7f3799f423097f4decb51f59206ffc",
-                "reference": "2d691d50cc7f3799f423097f4decb51f59206ffc",
+                "url": "https://api.github.com/repos/andreaswolf/fractor-typo3-fractor/zipball/199b29e703e5e04d3672210ed89c2da5155bd4d8",
+                "reference": "199b29e703e5e04d3672210ed89c2da5155bd4d8",
                 "shasum": ""
             },
             "require": {
-                "a9f/fractor": "^0.5.6",
-                "a9f/fractor-extension-installer": "^0.5.6",
-                "a9f/fractor-fluid": "^0.5.6",
-                "a9f/fractor-htaccess": "^0.5.6",
-                "a9f/fractor-typoscript": "^0.5.6",
-                "a9f/fractor-xml": "^0.5.6",
-                "a9f/fractor-yaml": "^0.5.6",
+                "a9f/fractor": "^0.5.7",
+                "a9f/fractor-extension-installer": "^0.5.7",
+                "a9f/fractor-fluid": "^0.5.7",
+                "a9f/fractor-htaccess": "^0.5.7",
+                "a9f/fractor-typoscript": "^0.5.7",
+                "a9f/fractor-xml": "^0.5.7",
+                "a9f/fractor-yaml": "^0.5.7",
                 "ext-dom": "*",
                 "php": "^8.2",
                 "symplify/rule-doc-generator-contracts": "^11.2"
             },
+            "bin": [
+                "bin/typo3-fractor-init"
+            ],
             "type": "fractor-extension",
             "extra": {
                 "branch-alias": {
@@ -425,9 +428,9 @@
             ],
             "description": "TYPO3 extension for the File Read-Analyse-Change Tool. Allows modifying XML files",
             "support": {
-                "source": "https://github.com/andreaswolf/fractor-typo3-fractor/tree/v0.5.6"
+                "source": "https://github.com/andreaswolf/fractor-typo3-fractor/tree/v0.5.7"
             },
-            "time": "2025-08-14T09:50:12+00:00"
+            "time": "2025-11-04T21:00:24+00:00"
         },
         {
             "name": "composer/semver",
