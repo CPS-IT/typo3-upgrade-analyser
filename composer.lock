@@ -2067,16 +2067,16 @@
         },
         {
             "name": "ssch/typo3-rector",
-            "version": "v3.7.0",
+            "version": "v3.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabbelasichon/typo3-rector.git",
-                "reference": "01b5b2dd745ed1bd8b4d821aa583060a11dcce0e"
+                "reference": "87d8126d5279a75a04c66cf3b56830353d5547a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabbelasichon/typo3-rector/zipball/01b5b2dd745ed1bd8b4d821aa583060a11dcce0e",
-                "reference": "01b5b2dd745ed1bd8b4d821aa583060a11dcce0e",
+                "url": "https://api.github.com/repos/sabbelasichon/typo3-rector/zipball/87d8126d5279a75a04c66cf3b56830353d5547a1",
+                "reference": "87d8126d5279a75a04c66cf3b56830353d5547a1",
                 "shasum": ""
             },
             "require": {
@@ -2095,9 +2095,6 @@
                 "symfony/polyfill-php81": "^1.28.0",
                 "symfony/string": "^5.4 || ^6.4 || ^7.0",
                 "webmozart/assert": "^1.11.0"
-            },
-            "conflict": {
-                "rector/rector": "2.2.0"
             },
             "require-dev": {
                 "ergebnis/composer-normalize": "^2.42.0",
@@ -2182,7 +2179,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-10-29T16:29:56+00:00"
+            "time": "2025-11-11T22:53:58+00:00"
         },
         {
             "name": "symfony/config",
