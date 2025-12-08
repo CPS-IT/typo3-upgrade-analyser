@@ -279,16 +279,10 @@ class RectorConfigGenerator
             // Common directories to skip
             '*/vendor/*',
             '*/node_modules/*',
-            '*/var/*',
-            '*/public/*',
             '*/.Build/*',
 
             // Documentation
             '*/Documentation/*',
-            '*/doc/*',
-
-            // Configuration files that might contain legacy patterns intentionally
-            '*/Configuration/TCA/Overrides/*',
         ];
 
         // Only skip test directories for non-test extensions

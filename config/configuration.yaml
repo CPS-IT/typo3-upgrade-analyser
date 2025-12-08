@@ -1,0 +1,43 @@
+analysis:
+  installationPath:   /var/www/html/
+  targetVersion: '12.4'
+  resultCache:
+    enabled: true
+  phpVersions:
+    - '8.3'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, github]
+      timeout: 30
+    static_analysis:
+      enabled: true
+      tools: { phpstan: { level: 6, config: null } }
+    deprecation_scanner:
+      enabled: true
+    tca_migration:
+      enabled: true
+    code_quality:
+      enabled: true
+      complexity_threshold: 10
+      loc_threshold: 1000
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
+reporting:
+  formats:
+    - html
+    - markdown
+  output_directory: var/reports/
+  includeCharts: false
+externalTools:
+  rector:
+    binary: vendor/bin/rector
+    config: null
+  fractor:
+    binary: vendor/bin/fractor
+    config: null
+  typoscript_lint:
+    binary: vendor/bin/typoscript-lint
+    config: typoscript-lint.yml
