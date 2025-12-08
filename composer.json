@@ -29,7 +29,7 @@
   },
   "require-dev": {
     "armin/editorconfig-cli": "^2.1",
-    "cyclonedx/cyclonedx-php-composer": "^5.2",
+    "cyclonedx/cyclonedx-php-composer": "^6.0",
     "ergebnis/composer-normalize": "^2.47",
     "friendsofphp/php-cs-fixer": "^3.45",
     "mikey179/vfsstream": "^1.6",
