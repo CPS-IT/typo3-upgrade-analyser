@@ -1,0 +1,26 @@
+            <div class="section">
+                <h2>Installationsübersicht</h2>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h3>Installationsdetails</h3>
+                        <p><strong>Pfad:</strong> {{ installation.path }}</p>
+                        <p><strong>Aktuelle Version:</strong> {{ installation.version.toString() }}</p>
+                        <p><strong>Zielversion:</strong> {{ target_version }}</p>
+                        <p><strong>Typ:</strong> {{ installation.type }}</p>
+                    </div>
+
+                    <div class="summary-card">
+                        <h3>Extensions-Übersicht</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">{{ statistics.total_extensions }}</div>
+                                <div class="stat-label">Gesamt Extensions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">{{ statistics.critical_extensions }}</div>
+                                <div class="stat-label">Benötigen Aufmerksamkeit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

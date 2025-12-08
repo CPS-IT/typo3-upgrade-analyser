@@ -55,6 +55,21 @@ class TemplateRenderer
     }
 
     /**
+     * Render German client report (no links, simplified for clients).
+     *
+     * @param array<string, mixed> $context Report context data
+     *
+     * @return array{content: string, filename: string} Rendered content and suggested filename
+     */
+    public function renderClientReportDe(array $context): array
+    {
+        return [
+            'content' => $this->twig->render('html/client-report-de.html.twig', $context),
+            'filename' => 'client-report-de.html',
+        ];
+    }
+
+    /**
      * Render extension reports for all extensions in the specified format.
      *
      * @param array<string, mixed> $context Report context data

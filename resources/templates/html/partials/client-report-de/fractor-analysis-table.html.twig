@@ -1,0 +1,38 @@
+                <h3>Fractor Analysis</h3>
+                <p>This analyzer uses Fractor to identify code modernization opportunities and detect outdated patterns that can be automatically improved.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Files Changed</th>
+                            <th>Rules Applied</th>
+                            <th>Total Issues</th>
+                            <th>Modernization</th>
+                            <th>Risk Score</th>
+                            <th>Effort (hrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in extension_data %}
+                        <tr>
+                            <td><strong>{{ data.extension.key }}</strong></td>
+                            {% if data.fractor_analysis %}
+                            <td>{{ data.fractor_analysis.files_changed }}</td>
+                            <td>{{ data.fractor_analysis.rules_applied }}</td>
+                            <td>{{ data.fractor_analysis.total_issues }}</td>
+                            <td>{% if not data.fractor_analysis.analysis_successful %}❓ Unknown{% elseif data.fractor_analysis.has_findings %}📋 Opportunities{% else %}✅ Modern{% endif %}</td>
+                            <td>{{ "%.1f"|format(data.fractor_analysis.risk_score) }}/10</td>
+                            <td>{{ "%.1f"|format(data.fractor_analysis.rules_applied * 0.25) }}</td>
+                            {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>❓</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYPO3 Upgrade Analyse Bericht</title>
+    {% include 'html/partials/shared/styles.html.twig' %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TYPO3 Upgrade Analyse Bericht</h1>
+            <p>Erstellt am: {{ generated_at.format('d.m.Y H:i:s T') }}</p>
+        </div>
+
+        <div class="content">
+            {% include 'html/partials/client-report-de/installation-overview.html.twig' %}
+
+            {% include 'html/partials/client-report-de/risk-distribution.html.twig' %}
+
+            {% include 'html/partials/client-report-de/discovery-results.html.twig' %}
+
+            <div class="section">
+                <h2>Analyseergebnisse</h2>
+
+                {% include 'html/partials/client-report-de/version-availability-table.html.twig' %}
+
+                {% include 'html/partials/client-report-de/lines-of-code-table.html.twig' %}
+
+                {% include 'html/partials/client-report-de/rector-analysis-table.html.twig' %}
+
+                {% include 'html/partials/client-report-de/fractor-analysis-table.html.twig' %}
+            </div>
+
+            {% include 'html/partials/client-report-de/recommendations.html.twig' %}
+
+            <div class="footer">
+                <p>Bericht erstellt durch TYPO3 Upgrade Analyzer</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

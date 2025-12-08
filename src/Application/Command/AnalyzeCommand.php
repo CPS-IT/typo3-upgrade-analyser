@@ -118,7 +118,7 @@ class AnalyzeCommand extends Command
 
             // Phase 1: Discovery
             $io->text('Phase 1: Discovering installation and extensions...');
-            [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $io);
+            [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $configService, $io);
             $io->progressAdvance();
 
             // Phase 2: Analysis
@@ -152,7 +152,7 @@ class AnalyzeCommand extends Command
      *
      * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>, 2: mixed}
      */
-    private function executeDiscoveryPhase(string $installationPath, SymfonyStyle $io): array
+    private function executeDiscoveryPhase(string $installationPath, ConfigurationServiceInterface $configService, SymfonyStyle $io): array
     {
         // Discover installation
         $io->text('Discovering TYPO3 installation...');
@@ -180,6 +180,27 @@ class AnalyzeCommand extends Command
 
         $extensions = $extensionResult->getExtensions();
         $io->text(\sprintf('Discovered %d extensions', \count($extensions)));
+
+        // Apply extension filter if configured
+        $extensionFilter = $configService->get('analysis.extensionFilter');
+        $this->logger->debug('Extension filter check', [
+            'filter_value' => $extensionFilter,
+            'is_array' => \is_array($extensionFilter),
+            'is_empty' => empty($extensionFilter),
+        ]);
+
+        if (\is_array($extensionFilter) && !empty($extensionFilter)) {
+            $extensions = array_filter($extensions, function ($extension) use ($extensionFilter) {
+                return \in_array($extension->getKey(), $extensionFilter, true);
+            });
+            $io->text(\sprintf('Filtered to %d extensions (filter applied)', \count($extensions)));
+            $this->logger->info('Extension filter applied', [
+                'filter' => $extensionFilter,
+                'filtered_count' => \count($extensions),
+            ]);
+        } else {
+            $this->logger->debug('No extension filter applied - filter is null, not an array, or empty');
+        }
 
         $this->logger->info('Discovery phase completed', [
             'installation_discovered' => null !== $installation,

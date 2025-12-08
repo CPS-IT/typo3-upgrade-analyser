@@ -141,6 +141,13 @@ class ReportService
         $this->logger->debug('Rendering main report', ['format' => $format]);
         $mainReport = $this->templateRenderer->renderMainReport($context, $format);
 
+        // Render German client report (only for HTML format)
+        $clientReportDe = null;
+        if ('html' === $format) {
+            $this->logger->debug('Rendering German client report');
+            $clientReportDe = $this->templateRenderer->renderClientReportDe($context);
+        }
+
         $this->logger->debug('Rendering extension reports', ['format' => $format]);
         $extensionReports = $this->templateRenderer->renderExtensionReports($context, $format);
 
@@ -153,8 +160,21 @@ class ReportService
             'format' => $format,
             'extension_reports_count' => \count($extensionReports),
             'rector_detail_pages_count' => \count($rectorDetailPages),
+            'has_client_report_de' => null !== $clientReportDe,
         ]);
         $allFiles = $this->fileManager->writeReportFilesWithRectorPages($mainReport, $extensionReports, $rectorDetailPages, $formatOutputPath);
+
+        // Write German client report if rendered
+        if (null !== $clientReportDe) {
+            $clientReportPath = $formatOutputPath . '/' . $clientReportDe['filename'];
+            file_put_contents($clientReportPath, $clientReportDe['content']);
+            $allFiles[] = [
+                'path' => $clientReportPath,
+                'size' => \strlen($clientReportDe['content']),
+                'type' => 'client_report_de',
+            ];
+            $this->logger->info('German client report written', ['path' => $clientReportPath]);
+        }
 
         // 4. Create result object
         $result = new ReportingResult(
