@@ -175,6 +175,7 @@ class RectorExecutor
         $command = [
             $this->rectorBinaryPath,
             'process',
+            $targetPath,
             '--config',
             $configPath,
             '--dry-run', // Never modify files, only analyze
