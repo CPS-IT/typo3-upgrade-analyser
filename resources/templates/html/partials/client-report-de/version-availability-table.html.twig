@@ -1,16 +1,14 @@
-                <h3>Version Availability Analysis</h3>
-                <p>This analyzer checks if extensions are available in TYPO3 Extension Repository (TER), Packagist, and Git repositories for the target TYPO3 version.</p>
+                <h3>Extension Verfügbarkeit</h3>
+                <p>Diese Analyse prüft, welche Extensions für die Zielversion verfügbar sind.</p>
 
                 <table>
                     <thead>
                         <tr>
                             <th>Extension</th>
-                            <th>Current Version</th>
-                            <th>TER</th>
-                            <th>Packagist</th>
-                            <th>Git</th>
-                            <th>Risk Level</th>
-                            <th>Latest Version</th>
+                            <th>Aktuelle Version</th>
+                            <th>Verfügbar</th>
+                            <th>Risikolevel</th>
+                            <th>Neueste Version</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -18,16 +16,11 @@
                         <tr>
                             <td><strong>{{ data.extension.key }}</strong></td>
                             <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
+                            <td><span class="{{ data.extension.key in extensionAvailableInTargetVersion ? 'status-available' : 'status-unavailable' }}">{{ data.extension.key in extensionAvailableInTargetVersion ? '✅' : '❌' }}</span></td>
                             {% if data.version_analysis %}
-                            <td><span class="{{ data.version_analysis.ter_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.ter_available ? '✅' : '❌' }}</span></td>
-                            <td><span class="{{ data.version_analysis.packagist_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.packagist_available ? '✅' : '❌' }}</span></td>
-                            <td><span class="{{ data.version_analysis.git_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.git_available ? '✅' : '❌' }}</span></td>
                             <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
-                            <td>{{ data.version_analysis.git_latest_version ?: 'N/A' }}</td>
+                            <td>{{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }}</td>
                             {% else %}
-                            <td><span class="status-unknown">❓</span></td>
-                            <td><span class="status-unknown">❓</span></td>
-                            <td><span class="status-unknown">❓</span></td>
                             <td><span class="badge badge-unknown">UNKNOWN</span></td>
                             <td>N/A</td>
                             {% endif %}

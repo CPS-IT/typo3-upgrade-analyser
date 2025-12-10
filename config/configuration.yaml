@@ -1,12 +1,16 @@
 analysis:
   installationPath:   /var/www/html/
-  targetVersion: '13.4'
+  targetVersion: '13.4.22'
   extensionFilter:
     - mailqueue
     - t3events
     - abda_ce
     - solr
     - tika
+  extensionAvailableInTargetVersion:
+    - mailqueue
+    - tika
+    - solr
   resultCache:
     enabled: true
   phpVersions:

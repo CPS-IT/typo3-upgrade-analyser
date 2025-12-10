@@ -31,12 +31,14 @@ class ReportContextBuilder
      *
      * @param array<Extension>                      $extensions
      * @param array<string, array<ResultInterface>> $groupedResults
+     * @param array<string>                         $extensionAvailableInTargetVersion
      */
     public function buildReportContext(
         Installation $installation,
         array $extensions,
         array $groupedResults,
         ?string $targetVersion = null,
+        array $extensionAvailableInTargetVersion = [],
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
@@ -83,6 +85,7 @@ class ReportContextBuilder
             'extensions' => $extensions,
             'extension_data' => $extensionData,
             'target_version' => $targetVersion ?? '13.4', // Default fallback
+            'extensionAvailableInTargetVersion' => $extensionAvailableInTargetVersion,
             'discovery' => [
                 'installation' => reset($installationDiscovery) ?: null,
                 'extensions' => reset($extensionDiscovery) ?: null,
@@ -205,6 +208,7 @@ class ReportContextBuilder
             'git_repository_url' => $result->getMetric('git_repository_url'),
             'git_repository_health' => $result->getMetric('git_repository_health'),
             'git_latest_version' => $result->getMetric('git_latest_version'),
+            'latest_version' => $result->getMetric('latest_version'),
             'risk_score' => $result->getRiskScore(),
             'risk_level' => $result->getRiskLevel(),
             'recommendations' => $result->getRecommendations(),

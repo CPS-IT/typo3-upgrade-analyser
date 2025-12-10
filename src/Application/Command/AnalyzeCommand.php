@@ -240,6 +240,9 @@ class AnalyzeCommand extends Command
         // Get custom paths from installation metadata
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
 
+        // Get extensions available in target version from config
+        $extensionAvailableInTargetVersion = $this->configService->get('analysis.extensionAvailableInTargetVersion', []);
+
         $context = new AnalysisContext(
             $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
@@ -247,6 +250,7 @@ class AnalyzeCommand extends Command
             [
                 'installation_path' => $installation?->getPath() ?? '',
                 'custom_paths' => $customPaths,
+                'extensionAvailableInTargetVersion' => $extensionAvailableInTargetVersion,
             ],
         );
         $results = [];
@@ -267,6 +271,17 @@ class AnalyzeCommand extends Command
             foreach ($extensions as $extension) {
                 if (!$analyzer->supports($extension)) {
                     continue;
+                }
+
+                // Skip rector and fractor analysis for extensions available in target version
+                if (\in_array($analyzerName, ['typo3_rector', 'fractor'], true)) {
+                    if (\in_array($extension->getKey(), $extensionAvailableInTargetVersion, true)) {
+                        $this->logger->debug('Skipping analyzer for extension available in target version', [
+                            'analyzer' => $analyzerName,
+                            'extension' => $extension->getKey(),
+                        ]);
+                        continue;
+                    }
                 }
 
                 try {
@@ -351,6 +366,9 @@ class AnalyzeCommand extends Command
         $combinedResults = array_merge($discoveryResults, $allResults);
 
         try {
+            // Get extensions available in target version from config
+            $extensionAvailableInTargetVersion = $configService->get('analysis.extensionAvailableInTargetVersion', []);
+
             // Generate detailed reports using the ReportService
             $reportResults = $this->reportService->generateReport(
                 $installation,
@@ -359,6 +377,7 @@ class AnalyzeCommand extends Command
                 $formats,
                 $outputDir,
                 $configService->getTargetVersion(),
+                $extensionAvailableInTargetVersion,
             );
 
             // Log report generation results

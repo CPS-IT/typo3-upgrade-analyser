@@ -40,6 +40,7 @@ class ReportService
      * @param array<Extension>       $extensions
      * @param array<ResultInterface> $results
      * @param array<string>          $formats
+     * @param array<string>          $extensionAvailableInTargetVersion
      *
      * @return array<ReportingResult>
      */
@@ -50,6 +51,7 @@ class ReportService
         array $formats = ['markdown'],
         string $outputDirectory = 'var/reports/',
         ?string $targetVersion = null,
+        array $extensionAvailableInTargetVersion = [],
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => \count($extensions),
@@ -67,7 +69,7 @@ class ReportService
             try {
                 // Generate context for templates using ReportContextBuilder
                 $this->logger->debug('Building report context for templates');
-                $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
+                $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion, $extensionAvailableInTargetVersion);
                 $this->logger->debug('Report context built successfully');
 
                 $this->logger->debug('Generating report for format', ['format' => $format]);
