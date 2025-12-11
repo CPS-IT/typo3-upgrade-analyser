@@ -16,13 +16,16 @@
                         <tr>
                             <td><strong>{{ data.extension.key }}</strong></td>
                             <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
-                            <td><span class="{{ data.extension.key in extensionAvailableInTargetVersion ? 'status-available' : 'status-unavailable' }}">{{ data.extension.key in extensionAvailableInTargetVersion ? '✅' : '❌' }}</span></td>
                             {% if data.version_analysis %}
-                            <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
-                            <td>{{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }}</td>
+                                {# Only trust TER for TYPO3 compatibility - Packagist/Git may have incorrect constraints #}
+                                {% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or data.version_analysis.ter_available %}
+                                <td><span class="{{ isAvailable ? 'status-available' : 'status-unavailable' }}">{{ isAvailable ? '✅' : '❌' }}</span></td>
+                                <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
+                                <td>{{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }}</td>
                             {% else %}
-                            <td><span class="badge badge-unknown">UNKNOWN</span></td>
-                            <td>N/A</td>
+                                <td><span class="{{ data.extension.key in extensionAvailableInTargetVersion ? 'status-available' : 'status-unavailable' }}">{{ data.extension.key in extensionAvailableInTargetVersion ? '✅' : '❌' }}</span></td>
+                                <td><span class="badge badge-unknown">UNKNOWN</span></td>
+                                <td>N/A</td>
                             {% endif %}
                         </tr>
                         {% endfor %}

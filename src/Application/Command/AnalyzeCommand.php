@@ -275,10 +275,26 @@ class AnalyzeCommand extends Command
 
                 // Skip rector and fractor analysis for extensions available in target version
                 if (\in_array($analyzerName, ['typo3_rector', 'fractor'], true)) {
-                    if (\in_array($extension->getKey(), $extensionAvailableInTargetVersion, true)) {
+                    // Check manual configuration list
+                    $inManualList = \in_array($extension->getKey(), $extensionAvailableInTargetVersion, true);
+
+                    // Check if version_availability analyzer already ran and found the extension available in TER
+                    // Only trust TER for TYPO3 compatibility - Packagist/Git may have incorrect constraints
+                    $isAvailableInTer = false;
+                    if (isset($results['version_availability'])) {
+                        foreach ($results['version_availability'] as $versionResult) {
+                            if ($versionResult->getExtension()->getKey() === $extension->getKey()) {
+                                $isAvailableInTer = $versionResult->getMetric('ter_available') === true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($inManualList || $isAvailableInTer) {
                         $this->logger->debug('Skipping analyzer for extension available in target version', [
                             'analyzer' => $analyzerName,
                             'extension' => $extension->getKey(),
+                            'reason' => $inManualList ? 'manual_config' : 'ter_available',
                         ]);
                         continue;
                     }
