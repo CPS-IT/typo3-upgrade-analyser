@@ -106,11 +106,8 @@ class TemplateRenderer
      */
     public function renderClientReportDeXWiki(array $context): array
     {
-        // First render the HTML
-        $html = $this->twig->render('html/client-report-de.html.twig', $context);
-
-        // Convert HTML to XWiki syntax
-        $xwiki = $this->convertHtmlToXWiki($html);
+        // Render directly from XWiki template
+        $xwiki = $this->twig->render('xwiki/client-report-de.xwiki.twig', $context);
 
         return [
             'content' => $xwiki,

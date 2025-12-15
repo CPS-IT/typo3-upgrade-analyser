@@ -45,3 +45,7 @@ externalTools:
   typoscript_lint:
     binary: vendor/bin/typoscript-lint
     config: typoscript-lint.yml
+extension:
+  abda_sitepackage:
+    required-hours: 24
+

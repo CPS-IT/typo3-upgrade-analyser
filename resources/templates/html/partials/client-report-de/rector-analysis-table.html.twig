@@ -15,6 +15,9 @@
                     </thead>
                     <tbody>
                         {% for data in extension_data %}
+                            {# Skip extensions that are available in target version (TER or manual config) #}
+                            {% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or (data.version_analysis and data.version_analysis.ter_available) %}
+                            {% if not isAvailable %}
                         <tr>
                             <td><strong>{{ data.extension.key }}</strong></td>
                             {% if data.rector_analysis %}
@@ -33,6 +36,7 @@
                             <td>N/A</td>
                             {% endif %}
                         </tr>
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
