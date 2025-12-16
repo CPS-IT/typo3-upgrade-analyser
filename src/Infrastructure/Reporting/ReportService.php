@@ -37,10 +37,12 @@ class ReportService
     /**
      * Generate comprehensive report from all phases.
      *
-     * @param array<Extension>       $extensions
-     * @param array<ResultInterface> $results
-     * @param array<string>          $formats
-     * @param array<string>          $extensionAvailableInTargetVersion
+     * @param array<Extension>                    $extensions
+     * @param array<ResultInterface>              $results
+     * @param array<string>                       $formats
+     * @param array<string>                       $extensionAvailableInTargetVersion
+     * @param array<string, array<string, mixed>> $extensionConfiguration
+     * @param array<string, mixed>                $estimatedHours
      *
      * @return array<ReportingResult>
      */
@@ -52,6 +54,9 @@ class ReportService
         string $outputDirectory = 'var/reports/',
         ?string $targetVersion = null,
         array $extensionAvailableInTargetVersion = [],
+        array $extensionConfiguration = [],
+        array $estimatedHours = [],
+        int|float $hourlyRate = 960,
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => \count($extensions),
@@ -69,7 +74,16 @@ class ReportService
             try {
                 // Generate context for templates using ReportContextBuilder
                 $this->logger->debug('Building report context for templates');
-                $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion, $extensionAvailableInTargetVersion);
+                $context = $this->contextBuilder->buildReportContext(
+                    $installation,
+                    $extensions,
+                    $groupedResults,
+                    $targetVersion,
+                    $extensionAvailableInTargetVersion,
+                    $extensionConfiguration,
+                    $estimatedHours,
+                    $hourlyRate
+                );
                 $this->logger->debug('Report context built successfully');
 
                 $this->logger->debug('Generating report for format', ['format' => $format]);

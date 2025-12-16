@@ -45,7 +45,15 @@ externalTools:
   typoscript_lint:
     binary: vendor/bin/typoscript-lint
     config: typoscript-lint.yml
-extension:
-  abda_sitepackage:
-    required-hours: 24
-
+client-report:
+  hourly-rate: 120
+  extension:
+    abda_sitepackage:
+      estimated-hours: 24
+  estimated-hours:
+    server-setup: 24
+    typo3-bundle-upgrade: 16
+    extension-update: 400
+    upgrade-documentation: 12
+    component-testing: 24
+    final-migration: 16

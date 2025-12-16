@@ -64,7 +64,7 @@ class ReportServiceTest extends TestCase
 
         // Mock the service coordination
         $this->contextBuilder->method('buildReportContext')
-            ->with($installation, $extensions, self::anything(), null)
+            ->with($installation, $extensions, self::anything(), null, [], [], [], 960)
             ->willReturn($context);
 
         $this->templateRenderer->method('renderMainReport')

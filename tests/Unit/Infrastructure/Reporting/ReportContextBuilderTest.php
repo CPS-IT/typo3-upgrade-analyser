@@ -17,16 +17,20 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use PHPUnit\Framework\TestCase;
 
 class ReportContextBuilderTest extends TestCase
 {
     private ReportContextBuilder $subject;
+    private ConfigurationServiceInterface $configService;
 
     protected function setUp(): void
     {
-        $this->subject = new ReportContextBuilder();
+        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configService->method('get')->willReturn(null);
+        $this->subject = new ReportContextBuilder($this->configService);
     }
 
     public function testBuildReportContextCreatesBasicStructure(): void

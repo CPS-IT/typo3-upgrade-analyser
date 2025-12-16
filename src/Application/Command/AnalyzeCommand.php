@@ -385,6 +385,18 @@ class AnalyzeCommand extends Command
             // Get extensions available in target version from config
             $extensionAvailableInTargetVersion = $configService->get('analysis.extensionAvailableInTargetVersion', []);
 
+            // Get client-report config
+            $clientReport = $configService->get('client-report', []);
+
+            // Get extension configuration (for estimated-hours overrides, etc.)
+            $extensionConfiguration = $clientReport['extension'] ?? [];
+
+            // Get estimated hours configuration for effort estimation
+            $estimatedHours = $clientReport['estimated-hours'] ?? [];
+
+            // Get hourly rate for cost calculation
+            $hourlyRate = $clientReport['hourly-rate'] ?? 960;
+
             // Generate detailed reports using the ReportService
             $reportResults = $this->reportService->generateReport(
                 $installation,
@@ -394,6 +406,9 @@ class AnalyzeCommand extends Command
                 $outputDir,
                 $configService->getTargetVersion(),
                 $extensionAvailableInTargetVersion,
+                $extensionConfiguration,
+                $estimatedHours,
+                $hourlyRate,
             );
 
             // Log report generation results

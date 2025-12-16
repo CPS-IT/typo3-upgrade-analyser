@@ -1,0 +1,40 @@
+= Vorbemerkungen =
+
+**Ziel dieses Dokuments ist die Definition von Anforderungen im Rahmen eines TYPO3-Upgrades der Webseite** [[https://www.abda.de>>https://www.abda.de/]] **von Version TYPO3 v11 auf TYPO3 v13**
+
+== Grundlage ==
+
+Als Grundlage wird aktuelle Produktivumgebung (TYPO3 v11) [[https://www.abda.de/typo3>>https://www.abda.de/typo3]] benutzt.
+
+Basierend darauf prüft coding. powerful. systems. CPS GmbH die verwendeten Komponenten inkl. der Datenbankstruktur sowie -beziehungen und trifft Aussagen für die technische Modernisierung.
+
+Dabei werden Möglichkeiten einer weiteren Verwendung von vorhandenen Modulen, Extensions und Features geprüft.
+
+Der Umfang benötigter Anpassungen für ein Upgrade hin zur TYPO3 LTS v13 wird in dieser Aufwandschätzung zusammengetragen.
+
+= Basis-CMS-Funktionen =
+
+Es gelten die für die Version 13.x LTS beschriebene Standardfunktionalitäten.
+
+= Upgrade - Schritte auf LTS v13 =
+
+* Upgrade vorbereiten
+* Das Upgrade durchführen
+* Extensions aktualisieren
+* Korrekturen in den Templates der Extensions
+* Sprachpakete aktualisieren
+* Aufräumen
+
+= Aufwandsschätzung =
+
+|= Tätigkeit |= TYPO3 v13 (AT) |= TYPO3 v13 (€)
+| Aufsetzen neuer Server und Anpassung der Deployment-Struktur (ServerAdmin) | 3,00 | 2.880,00
+| Upgrade des TYPO3-Systems (bundle update) (Entwicklung) | 2,00 | 1.920,00
+| Sukzessive Arbeiten am Extensions-Update (inkl. Migration) (Entwicklung) | 45,50 | 43.680,00
+| Upgrade-Dokumentation (Änderungen protokollieren) (Entwicklung) | 1,50 | 1.440,00
+| Testing der Komponenten (QS) | 3,00 | 2.880,00
+| Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung (QS) | 2,00 | 1.920,00
+| **Gesamt:** | **57,00** | **54.720,00**
+
+----
+

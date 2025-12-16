@@ -1,0 +1,21 @@
+= TYPO3 Upgrade Analyse Bericht =
+
+**Erstellt am:** {{ generated_at.format('d.m.Y H:i:s T') }}
+
+{% include 'xwiki/partials/client-report-de/preamble.xwiki.twig' %}
+
+{% include 'xwiki/partials/client-report-de/installation-overview.html.twig' %}
+
+{% include 'xwiki/partials/client-report-de/risk-distribution.html.twig' %}
+
+== Analyseergebnisse ==
+
+{% include 'xwiki/partials/client-report-de/version-availability-table.html.twig' %}
+
+== Code-Analyse & Modernisierung ==
+
+{% include 'xwiki/partials/client-report-de/combined-analysis-table.html.twig' %}
+
+----
+
+Bericht erstellt durch TYPO3 Upgrade Analyzer

@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
 
 /**
  * Service responsible for building report context data from analysis results.
@@ -26,12 +27,18 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
  */
 class ReportContextBuilder
 {
+    public function __construct(
+        private readonly ConfigurationServiceInterface $configurationService,
+    ) {
+    }
     /**
      * Build the report context from installation, extensions and analysis results.
      *
      * @param array<Extension>                      $extensions
      * @param array<string, array<ResultInterface>> $groupedResults
      * @param array<string>                         $extensionAvailableInTargetVersion
+     * @param array<string, array<string, mixed>>   $extensionConfiguration
+     * @param array<string, mixed>                  $estimatedHours
      */
     public function buildReportContext(
         Installation $installation,
@@ -39,7 +46,13 @@ class ReportContextBuilder
         array $groupedResults,
         ?string $targetVersion = null,
         array $extensionAvailableInTargetVersion = [],
+        array $extensionConfiguration = [],
+        array $estimatedHours = [],
+        int|float $hourlyRate = 960,
     ): array {
+        error_log('ReportContextBuilder: estimatedHours = ' . json_encode($estimatedHours));
+        error_log('ReportContextBuilder: hourlyRate = ' . $hourlyRate);
+
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
@@ -66,6 +79,10 @@ class ReportContextBuilder
                 fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
             );
 
+            // Check for configured estimated-hours override
+            $extensionKey = $extension->getKey();
+            $extensionEstimatedHours = $extensionConfiguration[$extensionKey]['estimated-hours'] ?? null;
+
             $extensionData[] = [
                 'extension' => $extension,
                 'results' => $extensionResults,
@@ -74,6 +91,7 @@ class ReportContextBuilder
                 'rector_analysis' => $this->extractRectorAnalysis($extensionResults),
                 'fractor_analysis' => $this->extractFractorAnalysis($extensionResults),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
+                'estimated_hours' => $extensionEstimatedHours,
             ];
         }
 
@@ -95,6 +113,8 @@ class ReportContextBuilder
             ],
             'statistics' => $stats,
             'generated_at' => new \DateTimeImmutable(),
+            'estimated_hours' => $estimatedHours,
+            'hourly_rate' => $hourlyRate,
         ];
     }
 
