@@ -10,15 +10,23 @@
 
 |= Codezeilen |= PHP-Dateien |= Rector Findings |= Breaking Changes |= Veraltete Patterns |= Upgrade-Bereitschaft |= Aufwand (Std.)
 {% if data.loc_analysis and data.rector_analysis -%}
+{% if data.estimated_hours -%}
+{% set adjustedHours = data.estimated_hours -%}
+{% else -%}
 {% set adjustedHours = (data.rector_analysis.estimated_fix_time_hours * 3) + 8 -%}
+{% endif -%}
 {% set totalHours = totalHours + adjustedHours -%}
-| {{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} | {{ data.loc_analysis.php_files }} | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ "%.1f"|format(adjustedHours) }}**
+| {{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} | {{ data.loc_analysis.php_files }} | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ adjustedHours|number_format(1, ',', '.') }}**
 {% elseif data.loc_analysis -%}
 | {{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} | {{ data.loc_analysis.php_files }} | N/A | N/A | N/A | N/A | N/A
 {% elseif data.rector_analysis -%}
+{% if data.estimated_hours -%}
+{% set adjustedHours = data.estimated_hours -%}
+{% else -%}
 {% set adjustedHours = (data.rector_analysis.estimated_fix_time_hours * 3) + 8 -%}
+{% endif -%}
 {% set totalHours = totalHours + adjustedHours -%}
-| N/A | N/A | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ "%.1f"|format(adjustedHours) }}**
+| N/A | N/A | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ adjustedHours|number_format(1, ',', '.') }}**
 {% else -%}
 | N/A | N/A | N/A | N/A | N/A | N/A | N/A
 {% endif %}
@@ -27,7 +35,7 @@
 
 {% if data.version_analysis and data.version_analysis.recommendations -%}
 {% for recommendation in data.version_analysis.recommendations -%}
-{% if 'not available' in recommendation %}* Extension ist in keinem bekannten Repository verfügbar. Erwägen Sie eine Alternative oder kontaktieren Sie den Autor.
+{% if 'not available' in recommendation %}* Extension ist in keinem bekannten Repository verfügbar.
 {% elseif 'only available via Git' in recommendation %}* Extension nur über Git-Repository verfügbar. {% if 'well-maintained' in recommendation %}Repository scheint gut gepflegt.{% else %}Prüfen Sie den Wartungsstatus vor dem Upgrade.{% endif %}
 {% elseif 'Git repository:' in recommendation %}* Git-Repository: {{ recommendation|replace({'Git repository: ': ''}) }}
 {% elseif 'available in multiple sources' in recommendation %}* Extension in mehreren Quellen verfügbar. Nutzen Sie die stabilste Quelle für Produktion.
@@ -54,6 +62,7 @@
 {% endfor -%}
 {% endif -%}
 {% if data.rector_analysis and data.rector_analysis.recommendations -%}
+{% set displayHours = data.estimated_hours ?? null -%}
 {% for recommendation in data.rector_analysis.recommendations -%}
 {% if 'breaking changes must be fixed' in recommendation -%}
 {% set count = recommendation|split(' ')[1] -%}
@@ -62,21 +71,45 @@
 {% set count = recommendation|split(' ')[1] -%}
 * Aktualisieren Sie {{ count }} veraltete Code-Patterns für Kompatibilität mit zukünftigen TYPO3-Versionen.
 {% elseif 'Moderate changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
 {% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
 {% set adjustedHours = (originalHours * 3) + 8 -%}
-* Moderate Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Gründlich überprüfen und testen.
+{% endif -%}
+* Moderate Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Gründlich überprüfen und testen.
 {% elseif 'Significant changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
 {% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
 {% set adjustedHours = (originalHours * 3) + 8 -%}
-* Umfangreiche Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Detaillierte Planung notwendig.
+{% endif -%}
+* Umfangreiche Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Detaillierte Planung notwendig.
 {% elseif 'Minor changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
 {% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
 {% set adjustedHours = (originalHours * 3) + 8 -%}
-* Kleinere Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Schnelle Überprüfung empfohlen.
+{% endif -%}
+* Kleinere Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Schnelle Überprüfung empfohlen.
 {% elseif 'Large refactoring effort required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
 {% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
 {% set adjustedHours = (originalHours * 3) + 8 -%}
-* Umfangreiches Refactoring erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Erwägen Sie gestaffelte Implementierung über mehrere Releases.
+{% endif -%}
+* Umfangreiches Refactoring erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Erwägen Sie gestaffelte Implementierung über mehrere Releases.
+{% elseif 'Erheblicher Refactoring-Aufwand' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = originalHours -%}
+{% endif -%}
+* Erheblicher Refactoring-Aufwand (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Dedizierte Entwicklungszeit für Upgrade einplanen
 {% elseif 'High complexity changes' in recommendation %}* Hochkomplexe Änderungen erkannt. Code-Review und umfangreiche Tests in Betracht ziehen.
 {% elseif 'Medium complexity changes' in recommendation %}* Mittlere Komplexität der Änderungen. Sorgfältiges Testen empfohlen.
 {% elseif 'half of extension files are affected' in recommendation %}* Mehr als die Hälfte der Extension-Dateien betroffen. Umfassende Teststrategie erforderlich.
@@ -91,6 +124,10 @@
 {% set rectorName = parts[0]|replace({'Focus on ': ''}) -%}
 * Fokus auf {{ rectorName }}: {{ parts[1]|trim }}
 {% elseif 'Extension requires significant work' in recommendation %}* Extension erfordert erhebliche Arbeit vor dem Upgrade. Erwägen Sie Alternativen oder umfangreiches Refactoring.
+{% elseif 'Code appears to follow modern patterns' in recommendation -%}
+{# Filter out - do not display #}
+{% elseif 'Extension needs moderate changes but should be upgradeable' in recommendation -%}
+{# Filter out - do not display #}
 {% else %}* {{ recommendation }}
 {% endif -%}
 {% endfor -%}
@@ -99,7 +136,6 @@
 {% for recommendation in data.fractor_analysis.recommendations -%}
 {% if 'Review specific Fractor suggestions' not in recommendation and 'Analysis covered' not in recommendation and 'Fractor analysis failed' not in recommendation -%}
 {% if 'Minor modernization opportunities found' in recommendation %}* Kleinere Modernisierungsmöglichkeiten gefunden - niedrige Priorität für Upgrade.
-{% elseif 'Code appears to follow modern patterns' in recommendation %}* Code folgt modernen Patterns - minimale Refactoring-Aufwände notwendig.
 {% elseif 'modernization opportunities identified' in recommendation %}* Modernisierungsmöglichkeiten identifiziert - erwägen Sie Code-Updates.
 {% elseif 'significant modernization potential' in recommendation %}* Erhebliches Modernisierungspotenzial erkannt - Code-Aktualisierung empfohlen.
 {% elseif 'outdated patterns detected' in recommendation %}* Veraltete Patterns erkannt - Modernisierung dringend empfohlen.
@@ -121,4 +157,4 @@
 
 === Gesamt Aufwand ===
 
-**{{ "%.1f"|format(totalHours) }} Std.**
+**{{ totalHours|number_format(1, ',', '.') }} Std.**

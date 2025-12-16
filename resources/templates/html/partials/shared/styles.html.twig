@@ -352,27 +352,6 @@
             margin-top: 1cm;
         }
 
-        /* PDF page number footer - hidden in HTML, shown in PDF */
-        .pdf-page-number {
-            position: running(footer);
-            text-align: center;
-            font-size: 10pt;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .pdf-page-number:before {
-            content: "-" counter(page) "-";
-        }
-        @media print {
-            .pdf-page-number {
-                display: block;
-                position: fixed;
-                bottom: 10mm;
-                left: 0;
-                right: 0;
-                text-align: center;
-            }
-        }
-
         /* Media query for PDF/print only */
         @media print {
             .page-break-before {

@@ -44,7 +44,7 @@
                     {% set adjustedHours = (data.rector_analysis.estimated_fix_time_hours * 3) + 8 %}
                 {% endif %}
                 {% set totalHours = totalHours + adjustedHours %}
-                <td><strong>{{ "%.1f"|format(adjustedHours) }}</strong></td>
+                <td><strong>{{ adjustedHours|number_format(1, ',', '.') }}</strong></td>
                 {% else %}
                 <td>N/A</td>
                 <td>N/A</td>
@@ -62,7 +62,7 @@
 {% if data.version_analysis and data.version_analysis.recommendations %}
 {% for recommendation in data.version_analysis.recommendations %}
 <li>
-{% if 'not available' in recommendation %}Extension ist in keinem bekannten Repository verfügbar. Erwägen Sie eine Alternative oder kontaktieren Sie den Autor.
+{% if 'not available' in recommendation %}Extension ist in keinem bekannten Repository verfügbar.
 {% elseif 'only available via Git' in recommendation %}Extension nur über Git-Repository verfügbar. {% if 'well-maintained' in recommendation %}Repository scheint gut gepflegt.{% else %}Prüfen Sie den Wartungsstatus vor dem Upgrade.{% endif %}
 {% elseif 'Git repository:' in recommendation %}
                                                     Git-Repository: {{ recommendation|replace({'Git repository: ': ''}) }}
@@ -112,6 +112,8 @@
 
                                     {# Rector recommendations #}
                                     {% if data.rector_analysis and data.rector_analysis.recommendations %}
+                                        {# Determine which hours value to use for recommendations #}
+                                        {% set displayHours = data.estimated_hours ?? null %}
                                         {% for recommendation in data.rector_analysis.recommendations %}
 <li>
 {% if 'breaking changes must be fixed' in recommendation %}
@@ -121,21 +123,45 @@
                                                     {% set count = recommendation|split(' ')[1] %}
                                                     Aktualisieren Sie {{ count }} veraltete Code-Patterns für Kompatibilität mit zukünftigen TYPO3-Versionen.
 {% elseif 'Moderate changes required' in recommendation %}
-                                                    {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
-                                                    {% set adjustedHours = (originalHours * 3) + 8 %}
-                                                    Moderate Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Gründlich überprüfen und testen.
+                                                    {% if displayHours %}
+                                                        {% set adjustedHours = displayHours %}
+                                                    {% else %}
+                                                        {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
+                                                        {% set adjustedHours = (originalHours * 3) + 8 %}
+                                                    {% endif %}
+                                                    Moderate Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Gründlich überprüfen und testen.
 {% elseif 'Significant changes required' in recommendation %}
-                                                    {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
-                                                    {% set adjustedHours = (originalHours * 3) + 8 %}
-                                                    Umfangreiche Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Detaillierte Planung notwendig.
+                                                    {% if displayHours %}
+                                                        {% set adjustedHours = displayHours %}
+                                                    {% else %}
+                                                        {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
+                                                        {% set adjustedHours = (originalHours * 3) + 8 %}
+                                                    {% endif %}
+                                                    Umfangreiche Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Detaillierte Planung notwendig.
 {% elseif 'Minor changes required' in recommendation %}
-                                                    {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
-                                                    {% set adjustedHours = (originalHours * 3) + 8 %}
-                                                    Kleinere Änderungen erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Schnelle Überprüfung empfohlen.
+                                                    {% if displayHours %}
+                                                        {% set adjustedHours = displayHours %}
+                                                    {% else %}
+                                                        {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
+                                                        {% set adjustedHours = (originalHours * 3) + 8 %}
+                                                    {% endif %}
+                                                    Kleinere Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Schnelle Überprüfung empfohlen.
 {% elseif 'Large refactoring effort required' in recommendation %}
-                                                    {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
-                                                    {% set adjustedHours = (originalHours * 3) + 8 %}
-                                                    Umfangreiches Refactoring erforderlich (~{{ "%.1f"|format(adjustedHours) }} Stunden). Erwägen Sie gestaffelte Implementierung über mehrere Releases.
+                                                    {% if displayHours %}
+                                                        {% set adjustedHours = displayHours %}
+                                                    {% else %}
+                                                        {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
+                                                        {% set adjustedHours = (originalHours * 3) + 8 %}
+                                                    {% endif %}
+                                                    Umfangreiches Refactoring erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Erwägen Sie gestaffelte Implementierung über mehrere Releases.
+{% elseif 'Erheblicher Refactoring-Aufwand' in recommendation %}
+                                                    {% if displayHours %}
+                                                        {% set adjustedHours = displayHours %}
+                                                    {% else %}
+                                                        {% set originalHours = recommendation|split('~')[1]|split(' ')[0] %}
+                                                        {% set adjustedHours = originalHours %}
+                                                    {% endif %}
+                                                    Erheblicher Refactoring-Aufwand (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Dedizierte Entwicklungszeit für Upgrade einplanen
 {% elseif 'High complexity changes' in recommendation %}
                                                     Hochkomplexe Änderungen erkannt. Code-Review und umfangreiche Tests in Betracht ziehen.
 {% elseif 'Medium complexity changes' in recommendation %}
@@ -158,6 +184,10 @@
                                                     Fokus auf {{ rectorName }}: {{ parts[1]|trim }}
 {% elseif 'Extension requires significant work' in recommendation %}
                                                     Extension erfordert erhebliche Arbeit vor dem Upgrade. Erwägen Sie Alternativen oder umfangreiches Refactoring.
+{% elseif 'Code appears to follow modern patterns' in recommendation %}
+                                                    {# Filter out - do not display #}
+{% elseif 'Extension needs moderate changes but should be upgradeable' in recommendation %}
+                                                    {# Filter out - do not display #}
                                                 {% else %}
                                                     {{ recommendation }}
 {% endif %}
@@ -170,9 +200,7 @@
                                         {% for recommendation in data.fractor_analysis.recommendations %}
                                             {% if 'Review specific Fractor suggestions' not in recommendation and 'Analysis covered' not in recommendation and 'Fractor analysis failed' not in recommendation and 'Minor modernization opportunities found' not in recommendation %}
 <li>
-{% if 'Code appears to follow modern patterns' in recommendation %}
-                                                    Code folgt modernen Patterns - minimale Refactoring-Aufwände notwendig.
-{% elseif 'modernization opportunities identified' in recommendation %}
+{% if 'modernization opportunities identified' in recommendation %}
                                                     Modernisierungsmöglichkeiten identifiziert - erwägen Sie Code-Updates.
 {% elseif 'significant modernization potential' in recommendation %}
                                                     Erhebliches Modernisierungspotenzial erkannt - Code-Aktualisierung empfohlen.
@@ -208,7 +236,7 @@
                 <strong style="font-size: 1.1em;">Aufwand Extensions-Update:</strong>
             </td>
             <td style="padding: 12px;">
-                <strong style="font-size: 1.2em; color: #ff8700;">{{ "%.1f"|format(totalHours) }} Std.</strong>
+                <strong style="font-size: 1.2em; color: #ff8700;">{{ totalHours|number_format(1, ',', '.') }} Std.</strong>
             </td>
         </tr>
     </tbody>

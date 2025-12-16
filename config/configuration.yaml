@@ -48,12 +48,34 @@ externalTools:
 client-report:
   hourly-rate: 120
   extension:
+    ajaxmap:
+      estimated-hours: 56
+    abda_course:
+      estimated-hours: 40
+    geo_location_service:
+      estimated-hours: 12
+    solrfal:
+      estimated-hours: 12
+    t3events:
+      estimated-hours: 92
+    t3extension_tools:
+      estimated-hours: 20
+    abda_address_map:
+      estimated-hours: 12
+    abda_ce:
+      estimated-hours: 56
+    abda_gallery:
+      estimated-hours: 32
+    abda_motion:
+      estimated-hours: 28
     abda_sitepackage:
-      estimated-hours: 24
+      estimated-hours: 40
+    numbered_pagination:
+      estimated-hours: 8
   estimated-hours:
     server-setup: 24
-    typo3-bundle-upgrade: 16
-    extension-update: 400
+    typo3-bundle-upgrade: 24
+    extension-update: 408
     upgrade-documentation: 12
     component-testing: 24
     final-migration: 16

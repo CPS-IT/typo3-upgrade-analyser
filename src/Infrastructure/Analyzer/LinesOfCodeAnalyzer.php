@@ -296,7 +296,7 @@ class LinesOfCodeAnalyzer extends AbstractCachedAnalyzer
         } elseif ($totalLines > 5000) {
             $recommendations[] = "Medium-large codebase ({$totalLines} lines) - allocate sufficient time for testing";
         } elseif ($totalLines > 1000) {
-            $recommendations[] = "Medium codebase ({$totalLines} lines) - standard testing approach should suffice";
+            $recommendations[] = "Mittlere Codebasis ({$totalLines} Zeilen) - Standardtest-Ansatz sollte ausreichen";
         } else {
             $recommendations[] = "Small codebase ({$totalLines} lines) - low complexity upgrade expected";
         }

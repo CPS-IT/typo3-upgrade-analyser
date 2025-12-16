@@ -19,12 +19,15 @@
     <h3>Upgrade - Schritte auf LTS v13</h3>
 
     <ul>
-        <li>Upgrade vorbereiten</li>
-        <li>Das Upgrade durchführen</li>
-        <li>Extensions aktualisieren</li>
-        <li>Korrekturen in den Templates der Extensions</li>
-        <li>Sprachpakete aktualisieren</li>
-        <li>Aufräumen</li>
+        <li>Upgrade vorbereiten (Backup, Branching, Abhängigkeiten)</li>
+        <li>TYPO3-Core zuerst auf LTS v12 upgraden & Extensions für v12 anpassen</li>
+        <li>TYPO3-Core auf LTS v13 upgraden</li>
+        <li>Extensions aktualisieren & migrieren</li>
+        <li>Migrationslösung für den Livegang entwickeln</li>
+        <li>Templates der Extensions anpassen</li>
+        <li>Technische Tests & Qualitätssicherung</li>
+        <li>Änderungen dokumentieren</li>
+        <li>Aufräumen & Bereinigung veralteter Konfigurationen</li>
     </ul>
 
     <div class="page-break-after"></div>
@@ -48,44 +51,44 @@
         <thead>
             <tr>
                 <th style="text-align: left;">Tätigkeit</th>
-                <th style="text-align: right;">TYPO3 v13 (AT)</th>
+                <th style="text-align: right;">TYPO3 v13 (PT)</th>
                 <th style="text-align: right;">TYPO3 v13 (€)</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>Aufsetzen neuer Server und Anpassung der Deployment-Struktur (ServerAdmin)</td>
-                <td style="text-align: right;">{{ server_setup_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (server_setup_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (server_setup_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Upgrade des TYPO3-Systems (bundle update) (Entwicklung)</td>
-                <td style="text-align: right;">{{ typo3_upgrade_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (typo3_upgrade_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (typo3_upgrade_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Extensions-Update (inkl. Migration) (Entwicklung)</td>
-                <td style="text-align: right;">{{ extension_update_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (extension_update_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (extension_update_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Upgrade-Dokumentation (Änderungen protokollieren) (Entwicklung)</td>
-                <td style="text-align: right;">{{ upgrade_doc_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (upgrade_doc_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (upgrade_doc_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Testing der Komponenten (QS)</td>
-                <td style="text-align: right;">{{ testing_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (testing_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (testing_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung (QS)</td>
-                <td style="text-align: right;">{{ final_migration_hours|number_format(2, ',', '.') }}</td>
+                <td style="text-align: right;">{{ (final_migration_hours / 8)|number_format(2, ',', '.') }}</td>
                 <td style="text-align: right;">{{ (final_migration_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
             </tr>
             <tr style="border-top: 2px solid #333; font-weight: bold;">
                 <td><strong>Gesamt:</strong></td>
-                <td style="text-align: right;"><strong>{{ total_hours|number_format(2, ',', '.') }}</strong></td>
+                <td style="text-align: right;"><strong>{{ (total_hours / 8)|number_format(2, ',', '.') }}</strong></td>
                 <td style="text-align: right;"><strong>{{ total_cost|number_format(2, ',', '.') }}</strong></td>
             </tr>
         </tbody>

@@ -463,7 +463,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
             );
         } elseif ($effortHours > 8) {
             $recommendations[] = \sprintf(
-                'Significant refactoring needed (~%.1f hours). Plan dedicated development time for upgrade',
+                'Erheblicher Refactoring-Aufwand (~%.1f Stunden). Dedizierte Entwicklungszeit für Upgrade einplanen',
                 $effortHours,
             );
         } elseif ($effortHours > 2) {
@@ -477,12 +477,12 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         if ($summary->getComplexityScore() > 7.0) {
             $recommendations[] = 'High complexity changes detected. Consider code review and extensive testing';
         } elseif ($summary->getComplexityScore() > 5.0) {
-            $recommendations[] = 'Moderate complexity changes. Test all affected functionality thoroughly';
+            $recommendations[] = 'Änderungen mittlerer Komplexität. Alle betroffenen Funktionalitäten gründlich testen';
         }
 
         // File impact recommendations
         if ($summary->getFileImpactPercentage() > 50) {
-            $recommendations[] = 'More than half of extension files are affected. Consider comprehensive testing strategy';
+            $recommendations[] = 'Mehr als die Hälfte der Extensiondateien sind betroffen.';
         } elseif ($summary->getFileImpactPercentage() > 25) {
             $recommendations[] = 'Significant portion of files affected. Focus testing on modified components';
         }
@@ -506,10 +506,8 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         $readinessScore = $summary->getUpgradeReadinessScore();
         if ($readinessScore < 4.0) {
             $recommendations[] = 'Extension requires significant work before upgrade. Consider alternatives or extensive refactoring';
-        } elseif ($readinessScore < 6.0) {
-            $recommendations[] = 'Extension needs moderate changes but should be upgradeable with effort';
         } else {
-            $recommendations[] = 'Extension is in good shape for upgrade with minimal changes required';
+            $recommendations[] = 'Extension ist gut für Upgrade vorbereitet, minimale Änderungen erforderlich';
         }
 
         return $recommendations;
@@ -522,13 +520,13 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
     {
         // Simple heuristic-based descriptions for common patterns
         if (str_contains($rule, 'Remove')) {
-            return 'Deprecated method or class removal';
+            return 'Entfernung veralteter Methoden oder Klassen';
         } elseif (str_contains($rule, 'Substitute') || str_contains($rule, 'Replace')) {
             return 'Method or class replacement required';
         } elseif (str_contains($rule, 'Migrate')) {
-            return 'Configuration migration needed';
+            return 'Konfigurationsmigration erforderlich';
         } elseif (str_contains($rule, 'Annotation')) {
-            return 'Annotation changes required';
+            return 'Annotationsänderungen erforderlich';
         } else {
             return 'Code modernization required';
         }
