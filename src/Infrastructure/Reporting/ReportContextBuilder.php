@@ -205,6 +205,7 @@ class ReportContextBuilder
             'git_repository_url' => $result->getMetric('git_repository_url'),
             'git_repository_health' => $result->getMetric('git_repository_health'),
             'git_latest_version' => $result->getMetric('git_latest_version'),
+            'latest_version' => $result->getMetric('latest_version'),
             'risk_score' => $result->getRiskScore(),
             'risk_level' => $result->getRiskLevel(),
             'recommendations' => $result->getRecommendations(),

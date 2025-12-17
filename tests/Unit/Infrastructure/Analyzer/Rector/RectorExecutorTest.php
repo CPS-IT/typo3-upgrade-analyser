@@ -104,7 +104,7 @@ class RectorExecutorTest extends TestCase
             'basic command' => [
                 '/tmp/config.php',
                 '/tmp/target',
-                [],
+                ['include_target_path' => true],
                 ['/usr/bin/rector', 'process', '/tmp/target', '--config', '/tmp/config.php', '--dry-run', '--output-format', 'json', '--no-progress-bar'],
             ],
             'with memory limit' => [
