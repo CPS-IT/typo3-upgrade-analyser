@@ -150,8 +150,9 @@ class FractorExecutor
 
         for ($i = 0; $i < $maxLevels; ++$i) {
             // Check for characteristic project files
-            if (file_exists($currentDir . '/composer.json') ||
-                file_exists($currentDir . '/bin/typo3-analyzer')) {
+            if (file_exists($currentDir . '/composer.json')
+                || file_exists($currentDir . '/bin/typo3-analyzer')
+            ) {
                 return $currentDir;
             }
 

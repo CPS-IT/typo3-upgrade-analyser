@@ -109,10 +109,11 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         }
 
         // Get latest version from Packagist if available
-        if ($extension->hasComposerName() && $result->getMetric('packagist_available')) {
+        $composerName = $extension->getComposerName();
+        if ($composerName && $result->getMetric('packagist_available')) {
             try {
                 $packagistLatestVersion = $this->packagistClient->getLatestVersion(
-                    $extension->getComposerName(),
+                    $composerName,
                     $context->getTargetVersion(),
                 );
                 if ($packagistLatestVersion) {
