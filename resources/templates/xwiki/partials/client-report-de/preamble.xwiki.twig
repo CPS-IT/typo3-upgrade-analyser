@@ -1,0 +1,53 @@
+= Vorbemerkungen =
+
+**Ziel dieses Dokuments ist die Definition von Anforderungen im Rahmen eines TYPO3-Upgrades der Webseite** [[https://www.abda.de>>https://www.abda.de/]] **von Version TYPO3 v11 auf TYPO3 v13**
+
+== Grundlage ==
+
+Als Grundlage wird aktuelle Produktivumgebung (TYPO3 v11) [[https://www.abda.de/typo3>>https://www.abda.de/typo3]] benutzt.
+
+Basierend darauf prüft coding. powerful. systems. CPS GmbH die verwendeten Komponenten inkl. der Datenbankstruktur sowie -beziehungen und trifft Aussagen für die technische Modernisierung.
+
+Dabei werden Möglichkeiten einer weiteren Verwendung von vorhandenen Modulen, Extensions und Features geprüft.
+
+Der Umfang benötigter Anpassungen für ein Upgrade hin zur TYPO3 LTS v13 wird in dieser Aufwandschätzung zusammengetragen.
+
+= Basis-CMS-Funktionen =
+
+Es gelten die für die Version 13.x LTS beschriebene Standardfunktionalitäten.
+
+= Upgrade - Schritte auf LTS v13 =
+
+* Upgrade vorbereiten (Backup, Branching, Abhängigkeiten)
+* TYPO3-Core zuerst auf LTS v12 upgraden & Extensions für v12 anpassen
+* TYPO3-Core auf LTS v13 upgraden
+* Extensions aktualisieren & migrieren
+* Migrationslösung für den Livegang entwickeln
+* Templates der Extensions anpassen
+* Technische Tests & Qualitätssicherung
+* Änderungen dokumentieren
+* Aufräumen & Bereinigung veralteter Konfigurationen
+
+= Aufwandsschätzung =
+
+{% set hourly_rate = hourly_rate ?? 960 %}
+{% set server_setup_hours = estimated_hours['server-setup'] ?? 0 %}
+{% set typo3_upgrade_hours = estimated_hours['typo3-bundle-upgrade'] ?? 0 %}
+{% set extension_update_hours = estimated_hours['extension-update'] ?? 0 %}
+{% set upgrade_doc_hours = estimated_hours['upgrade-documentation'] ?? 0 %}
+{% set testing_hours = estimated_hours['component-testing'] ?? 0 %}
+{% set final_migration_hours = estimated_hours['final-migration'] ?? 0 %}
+{% set total_hours = server_setup_hours + typo3_upgrade_hours + extension_update_hours + upgrade_doc_hours + testing_hours + final_migration_hours %}
+{% set total_cost = total_hours * hourly_rate %}
+
+|= Tätigkeit |= TYPO3 v13 (PT) |= TYPO3 v13 (€)
+| Aufsetzen neuer Server und Anpassung der Deployment-Struktur (ServerAdmin) | {{ (server_setup_hours / 8)|number_format(2, ',', '.') }} | {{ (server_setup_hours * hourly_rate)|number_format(2, ',', '.') }}
+| Upgrade des TYPO3-Systems (bundle update) (Entwicklung) | {{ (typo3_upgrade_hours / 8)|number_format(2, ',', '.') }} | {{ (typo3_upgrade_hours * hourly_rate)|number_format(2, ',', '.') }}
+| Extensions-Update (inkl. Migration) (Entwicklung) | {{ (extension_update_hours / 8)|number_format(2, ',', '.') }} | {{ (extension_update_hours * hourly_rate)|number_format(2, ',', '.') }}
+| Upgrade-Dokumentation (Änderungen protokollieren) (Entwicklung) | {{ (upgrade_doc_hours / 8)|number_format(2, ',', '.') }} | {{ (upgrade_doc_hours * hourly_rate)|number_format(2, ',', '.') }}
+| Testing der Komponenten (QS) | {{ (testing_hours / 8)|number_format(2, ',', '.') }} | {{ (testing_hours * hourly_rate)|number_format(2, ',', '.') }}
+| Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung (QS) | {{ (final_migration_hours / 8)|number_format(2, ',', '.') }} | {{ (final_migration_hours * hourly_rate)|number_format(2, ',', '.') }}
+| **Gesamt:** | **{{ (total_hours / 8)|number_format(2, ',', '.') }}** | **{{ total_cost|number_format(2, ',', '.') }}**
+
+----
+

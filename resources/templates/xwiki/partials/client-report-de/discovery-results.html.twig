@@ -1,0 +1,25 @@
+            <div class="section">
+                <h2>Discovery Results</h2>
+
+                <h3>Installation Discovery</h3>
+                {% if discovery.installation %}
+                <p><strong>Status:</strong> <span class="{{ discovery.installation.isSuccessful ? 'status-available' : 'status-unavailable' }}">{{ discovery.installation.isSuccessful ? '✅ Success' : '❌ Failed' }}</span></p>
+                <p><strong>Summary:</strong> {{ discovery.installation.summary }}</p>
+                {% if not discovery.installation.isSuccessful and discovery.installation.getError() %}
+                <p><strong>Error:</strong> {{ discovery.installation.getError() }}</p>
+                {% endif %}
+                {% else %}
+                <p><strong>Status:</strong> <span class="status-unavailable">❌ No installation discovery data available</span></p>
+                {% endif %}
+
+                <h3>Extension Discovery</h3>
+                {% if discovery.extensions %}
+                <p><strong>Status:</strong> <span class="{{ discovery.extensions.isSuccessful ? 'status-available' : 'status-unavailable' }}">{{ discovery.extensions.isSuccessful ? '✅ Success' : '❌ Failed' }}</span></p>
+                <p><strong>Summary:</strong> {{ discovery.extensions.summary }}</p>
+                {% if not discovery.extensions.isSuccessful and discovery.extensions.getError() %}
+                <p><strong>Error:</strong> {{ discovery.extensions.getError() }}</p>
+                {% endif %}
+                {% else %}
+                <p><strong>Status:</strong> <span class="status-unavailable">❌ No extension discovery data available</span></p>
+                {% endif %}
+            </div>

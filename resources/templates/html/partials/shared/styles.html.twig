@@ -21,14 +21,16 @@
         }
         .header {
             background: linear-gradient(135deg, #ff8700 0%, #d63939 100%);
+            background-color: #ff8700; /* Fallback für PDF */
             color: white;
             padding: 40px;
             text-align: center;
         }
         .header h1 {
             font-size: 2.5em;
-            font-weight: 300;
+            font-weight: bold;
             margin-bottom: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .content {
             padding: 40px;
@@ -39,6 +41,7 @@
         .section h2 {
             color: #ff8700;
             border-bottom: 2px solid #ff8700;
+            padding-top: 15px;
             padding-bottom: 10px;
             margin-bottom: 20px;
             font-size: 1.8em;
@@ -47,6 +50,15 @@
             color: #666;
             margin: 20px 0 15px 0;
             font-size: 1.4em;
+        }
+        /* Global styles for lists and headings */
+        ul {
+            margin-left: 40px;
+            padding-left: 0;
+        }
+        h1 {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
         }
         .summary-grid, .overview-grid {
             display: grid;
@@ -100,6 +112,7 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            font-family: Arial, sans-serif;
         }
         th {
             background: #f8f9fa;
@@ -310,5 +323,64 @@
             color: #dc3545;
             margin-top: 0;
             margin-bottom: 15px;
+        }
+
+        /* PDF Page Break Classes */
+        .page-break-before {
+            page-break-before: always;
+        }
+        .page-break-after {
+            page-break-after: always;
+        }
+        .page-break-inside-avoid {
+            page-break-inside: avoid;
+        }
+
+        /* PDF page setup */
+        @page {
+            margin-top: 2.5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+            @bottom-center {
+                content: "-" counter(page) "-";
+                font-size: 10pt;
+                font-family: Arial, sans-serif;
+            }
+        }
+        @page :first {
+            margin-top: 1cm;
+        }
+
+        /* Media query for PDF/print only */
+        @media print {
+            .page-break-before {
+                page-break-before: always;
+            }
+            .page-break-after {
+                page-break-after: always;
+            }
+            .page-break-inside-avoid {
+                page-break-inside: avoid;
+            }
+
+            /* Fix stats-grid for PDF - use table layout */
+            .stats-grid {
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+            .stat-card {
+                display: table-cell !important;
+                width: 25% !important;
+                padding: 10px !important;
+                vertical-align: top !important;
+            }
+
+            /* Fix bullet points margin */
+            ul {
+                margin-left: 40px;
+                padding-left: 0;
+            }
         }
     </style>

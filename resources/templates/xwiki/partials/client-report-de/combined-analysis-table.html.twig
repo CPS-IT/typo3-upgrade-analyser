@@ -1,0 +1,160 @@
+Übersicht über Code-Umfang, notwendige Anpassungen und Modernisierungsbedarf für Extensions ohne verfügbare Version.
+
+{% set totalHours = 0 %}
+{% for data in extension_data %}
+{# Skip extensions that are available in target version (TER or manual config) #}
+{% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or (data.version_analysis and data.version_analysis.ter_available) %}
+{% if not isAvailable %}
+
+==== {{ data.extension.key }} ====
+
+|= Codezeilen |= PHP-Dateien |= Rector Findings |= Breaking Changes |= Veraltete Patterns |= Upgrade-Bereitschaft |= Aufwand (Std.)
+{% if data.loc_analysis and data.rector_analysis -%}
+{% if data.estimated_hours -%}
+{% set adjustedHours = data.estimated_hours -%}
+{% else -%}
+{% set adjustedHours = (data.rector_analysis.estimated_fix_time_hours * 3) + 8 -%}
+{% endif -%}
+{% set totalHours = totalHours + adjustedHours -%}
+| {{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} | {{ data.loc_analysis.php_files }} | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ adjustedHours|number_format(1, ',', '.') }}**
+{% elseif data.loc_analysis -%}
+| {{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} | {{ data.loc_analysis.php_files }} | N/A | N/A | N/A | N/A | N/A
+{% elseif data.rector_analysis -%}
+{% if data.estimated_hours -%}
+{% set adjustedHours = data.estimated_hours -%}
+{% else -%}
+{% set adjustedHours = (data.rector_analysis.estimated_fix_time_hours * 3) + 8 -%}
+{% endif -%}
+{% set totalHours = totalHours + adjustedHours -%}
+| N/A | N/A | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Ja' : '✅ Nein' }} | {{ data.rector_analysis.has_deprecations ? '📋 Ja' : '✅ Nein' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | **{{ adjustedHours|number_format(1, ',', '.') }}**
+{% else -%}
+| N/A | N/A | N/A | N/A | N/A | N/A | N/A
+{% endif %}
+
+**📋 Empfehlungen:**
+
+{% if data.version_analysis and data.version_analysis.recommendations -%}
+{% for recommendation in data.version_analysis.recommendations -%}
+{% if 'not available' in recommendation %}* Extension ist in keinem bekannten Repository verfügbar.
+{% elseif 'only available via Git' in recommendation %}* Extension nur über Git-Repository verfügbar. {% if 'well-maintained' in recommendation %}Repository scheint gut gepflegt.{% else %}Prüfen Sie den Wartungsstatus vor dem Upgrade.{% endif %}
+{% elseif 'Git repository:' in recommendation %}* Git-Repository: {{ recommendation|replace({'Git repository: ': ''}) }}
+{% elseif 'available in multiple sources' in recommendation %}* Extension in mehreren Quellen verfügbar. Nutzen Sie die stabilste Quelle für Produktion.
+{% elseif 'Composer' in recommendation or 'Packagist' in recommendation %}* Extension nur über Composer/Packagist verfügbar. Stellen Sie sicher, dass Composer-Modus verwendet wird.
+{% elseif 'only available in TER' in recommendation %}* Extension nur im TER verfügbar. Erwägen Sie Migration zu Composer falls nötig.
+{% elseif 'poor maintenance' in recommendation %}* Git-Repository zeigt Anzeichen mangelhafter Wartung. Erwägen Sie alternative Quellen oder Extensions.
+{% elseif 'Local extension' in recommendation %}* Lokale Extension hat öffentliche Alternativen. Erwägen Sie die Nutzung der offiziellen Version.
+{% else %}* {{ recommendation }}
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% if data.loc_analysis and data.loc_analysis.recommendations -%}
+{% for recommendation in data.loc_analysis.recommendations -%}
+{% if 'Small codebase' in recommendation %}* Kleine Codebasis ({{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} Zeilen) - geringer Komplexitätsaufwand beim Upgrade erwartet.
+{% elseif 'Medium-large codebase' in recommendation %}* Mittelgroße bis große Codebasis ({{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} Zeilen) - planen Sie ausreichend Zeit für Tests ein.
+{% elseif 'Large codebase' in recommendation %}* Große Codebasis ({{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} Zeilen) - umfangreiche Tests erforderlich.
+{% elseif 'Very large codebase' in recommendation %}* Sehr große Codebasis ({{ data.loc_analysis.total_lines|number_format(0, ',', '.') }} Zeilen) - sorgfältige Planung und ausführliche Tests notwendig.
+{% elseif 'Medium-large file detected' in recommendation %}* Mittelgroße Datei erkannt ({{ data.loc_analysis.largest_file_lines|number_format(0, ',', '.') }} Zeilen) - auf potenzielle Probleme prüfen.
+{% elseif 'Large file detected' in recommendation %}* Große Datei erkannt ({{ data.loc_analysis.largest_file_lines|number_format(0, ',', '.') }} Zeilen) - gründliche Überprüfung empfohlen.
+{% elseif 'Very large file' in recommendation %}* Sehr große Datei ({{ data.loc_analysis.largest_file_lines|number_format(0, ',', '.') }} Zeilen) - Refactoring in Betracht ziehen.
+{% elseif 'Large number of files' in recommendation %}* Große Anzahl von Dateien ({{ data.loc_analysis.php_files }}) - systematischer Testansatz empfohlen.
+{% else %}* {{ recommendation }}
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% if data.rector_analysis and data.rector_analysis.recommendations -%}
+{% set displayHours = data.estimated_hours ?? null -%}
+{% for recommendation in data.rector_analysis.recommendations -%}
+{% if 'breaking changes must be fixed' in recommendation -%}
+{% set count = recommendation|split(' ')[1] -%}
+* Kritisch: {{ count }} Breaking Changes müssen vor dem Upgrade auf TYPO3 {{ target_version }} behoben werden.
+{% elseif 'deprecated code patterns' in recommendation -%}
+{% set count = recommendation|split(' ')[1] -%}
+* Aktualisieren Sie {{ count }} veraltete Code-Patterns für Kompatibilität mit zukünftigen TYPO3-Versionen.
+{% elseif 'Moderate changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = (originalHours * 3) + 8 -%}
+{% endif -%}
+* Moderate Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Gründlich überprüfen und testen.
+{% elseif 'Significant changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = (originalHours * 3) + 8 -%}
+{% endif -%}
+* Umfangreiche Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Detaillierte Planung notwendig.
+{% elseif 'Minor changes required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = (originalHours * 3) + 8 -%}
+{% endif -%}
+* Kleinere Änderungen erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Schnelle Überprüfung empfohlen.
+{% elseif 'Large refactoring effort required' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = (originalHours * 3) + 8 -%}
+{% endif -%}
+* Umfangreiches Refactoring erforderlich (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Erwägen Sie gestaffelte Implementierung über mehrere Releases.
+{% elseif 'Erheblicher Refactoring-Aufwand' in recommendation -%}
+{% if displayHours -%}
+{% set adjustedHours = displayHours -%}
+{% else -%}
+{% set originalHours = recommendation|split('~')[1]|split(' ')[0] -%}
+{% set adjustedHours = originalHours -%}
+{% endif -%}
+* Erheblicher Refactoring-Aufwand (~{{ adjustedHours|number_format(1, ',', '.') }} Stunden). Dedizierte Entwicklungszeit für Upgrade einplanen
+{% elseif 'High complexity changes' in recommendation %}* Hochkomplexe Änderungen erkannt. Code-Review und umfangreiche Tests in Betracht ziehen.
+{% elseif 'Medium complexity changes' in recommendation %}* Mittlere Komplexität der Änderungen. Sorgfältiges Testen empfohlen.
+{% elseif 'half of extension files are affected' in recommendation %}* Mehr als die Hälfte der Extension-Dateien betroffen. Umfassende Teststrategie erforderlich.
+{% elseif 'quarter of extension files are affected' in recommendation %}* Mehr als ein Viertel der Extension-Dateien betroffen. Systematisches Testen empfohlen.
+{% elseif 'Multiple files affected' in recommendation %}* Mehrere Dateien betroffen. Gründliches Testen vor Migration.
+{% elseif 'Apply Rector' in recommendation %}* Wenden Sie TYPO3 Rector an, um Anpassungen zu automatisieren.
+{% elseif 'breaking changes detected' in recommendation %}* Breaking Changes erkannt - Code-Anpassungen erforderlich vor Migration.
+{% elseif 'deprecations found' in recommendation %}* Veraltete Code-Patterns gefunden - Aktualisierung empfohlen.
+{% elseif 'significant effort' in recommendation %}* Erheblicher Aufwand erforderlich - detaillierte Planung notwendig.
+{% elseif 'Focus on' in recommendation and 'Rector' in recommendation and 'occurrences' in recommendation -%}
+{% set parts = recommendation|split(':') -%}
+{% set rectorName = parts[0]|replace({'Focus on ': ''}) -%}
+* Fokus auf {{ rectorName }}: {{ parts[1]|trim }}
+{% elseif 'Extension requires significant work' in recommendation %}* Extension erfordert erhebliche Arbeit vor dem Upgrade. Erwägen Sie Alternativen oder umfangreiches Refactoring.
+{% elseif 'Code appears to follow modern patterns' in recommendation -%}
+{# Filter out - do not display #}
+{% elseif 'Extension needs moderate changes but should be upgradeable' in recommendation -%}
+{# Filter out - do not display #}
+{% else %}* {{ recommendation }}
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% if data.fractor_analysis and data.fractor_analysis.recommendations -%}
+{% for recommendation in data.fractor_analysis.recommendations -%}
+{% if 'Review specific Fractor suggestions' not in recommendation and 'Analysis covered' not in recommendation and 'Fractor analysis failed' not in recommendation -%}
+{% if 'Minor modernization opportunities found' in recommendation %}* Kleinere Modernisierungsmöglichkeiten gefunden - niedrige Priorität für Upgrade.
+{% elseif 'modernization opportunities identified' in recommendation %}* Modernisierungsmöglichkeiten identifiziert - erwägen Sie Code-Updates.
+{% elseif 'significant modernization potential' in recommendation %}* Erhebliches Modernisierungspotenzial erkannt - Code-Aktualisierung empfohlen.
+{% elseif 'outdated patterns detected' in recommendation %}* Veraltete Patterns erkannt - Modernisierung dringend empfohlen.
+{% elseif 'Apply Fractor' in recommendation %}* Wenden Sie Fractor an, um Code-Modernisierung zu automatisieren.
+{% elseif 'No issues found' in recommendation %}* Keine Probleme gefunden - Code entspricht modernen Standards.
+{% else %}* {{ recommendation }}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% if not ((data.version_analysis and data.version_analysis.recommendations) or (data.loc_analysis and data.loc_analysis.recommendations) or (data.rector_analysis and data.rector_analysis.recommendations) or (data.fractor_analysis and data.fractor_analysis.recommendations)) -%}
+* ✅ Keine spezifischen Empfehlungen - Extension erscheint bereit für Migration.
+{% endif %}
+
+---
+
+{% endif %}
+{% endfor %}
+
+=== Gesamt Aufwand ===
+
+**{{ totalHours|number_format(1, ',', '.') }} Std.**

@@ -1,0 +1,13 @@
+=== Extension Verfügbarkeit ===
+
+Diese Analyse prüft, welche Extensions für die Zielversion verfügbar sind.
+
+|= Extension |= Aktuelle Version |= Verfügbar |= Risikolevel |= Neueste Version
+{% for data in extension_data -%}
+{% if data.version_analysis -%}
+{% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or data.version_analysis.ter_available -%}
+| **{{ data.extension.key }}** | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ isAvailable ? '✅' : '❌' }} | {{ data.version_analysis.risk_level|upper }} | {{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }}
+{% else -%}
+| **{{ data.extension.key }}** | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.extension.key in extensionAvailableInTargetVersion ? '✅' : '❌' }} | UNKNOWN | N/A
+{% endif -%}
+{% endfor %}

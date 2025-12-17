@@ -118,7 +118,7 @@ class AnalyzeCommand extends Command
 
             // Phase 1: Discovery
             $io->text('Phase 1: Discovering installation and extensions...');
-            [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $io);
+            [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $configService, $io);
             $io->progressAdvance();
 
             // Phase 2: Analysis
@@ -152,7 +152,7 @@ class AnalyzeCommand extends Command
      *
      * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>, 2: mixed}
      */
-    private function executeDiscoveryPhase(string $installationPath, SymfonyStyle $io): array
+    private function executeDiscoveryPhase(string $installationPath, ConfigurationServiceInterface $configService, SymfonyStyle $io): array
     {
         // Discover installation
         $io->text('Discovering TYPO3 installation...');
@@ -180,6 +180,27 @@ class AnalyzeCommand extends Command
 
         $extensions = $extensionResult->getExtensions();
         $io->text(\sprintf('Discovered %d extensions', \count($extensions)));
+
+        // Apply extension filter if configured
+        $extensionFilter = $configService->get('analysis.extensionFilter');
+        $this->logger->debug('Extension filter check', [
+            'filter_value' => $extensionFilter,
+            'is_array' => \is_array($extensionFilter),
+            'is_empty' => empty($extensionFilter),
+        ]);
+
+        if (\is_array($extensionFilter) && !empty($extensionFilter)) {
+            $extensions = array_filter($extensions, function ($extension) use ($extensionFilter) {
+                return \in_array($extension->getKey(), $extensionFilter, true);
+            });
+            $io->text(\sprintf('Filtered to %d extensions (filter applied)', \count($extensions)));
+            $this->logger->info('Extension filter applied', [
+                'filter' => $extensionFilter,
+                'filtered_count' => \count($extensions),
+            ]);
+        } else {
+            $this->logger->debug('No extension filter applied - filter is null, not an array, or empty');
+        }
 
         $this->logger->info('Discovery phase completed', [
             'installation_discovered' => null !== $installation,
@@ -219,6 +240,9 @@ class AnalyzeCommand extends Command
         // Get custom paths from installation metadata
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
 
+        // Get extensions available in target version from config
+        $extensionAvailableInTargetVersion = $this->configService->get('analysis.extensionAvailableInTargetVersion', []);
+
         $context = new AnalysisContext(
             $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
@@ -226,6 +250,7 @@ class AnalyzeCommand extends Command
             [
                 'installation_path' => $installation?->getPath() ?? '',
                 'custom_paths' => $customPaths,
+                'extensionAvailableInTargetVersion' => $extensionAvailableInTargetVersion,
             ],
         );
         $results = [];
@@ -246,6 +271,33 @@ class AnalyzeCommand extends Command
             foreach ($extensions as $extension) {
                 if (!$analyzer->supports($extension)) {
                     continue;
+                }
+
+                // Skip rector and fractor analysis for extensions available in target version
+                if (\in_array($analyzerName, ['typo3_rector', 'fractor'], true)) {
+                    // Check manual configuration list
+                    $inManualList = \in_array($extension->getKey(), $extensionAvailableInTargetVersion, true);
+
+                    // Check if version_availability analyzer already ran and found the extension available in TER
+                    // Only trust TER for TYPO3 compatibility - Packagist/Git may have incorrect constraints
+                    $isAvailableInTer = false;
+                    if (isset($results['version_availability'])) {
+                        foreach ($results['version_availability'] as $versionResult) {
+                            if ($versionResult->getExtension()->getKey() === $extension->getKey()) {
+                                $isAvailableInTer = $versionResult->getMetric('ter_available') === true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($inManualList || $isAvailableInTer) {
+                        $this->logger->debug('Skipping analyzer for extension available in target version', [
+                            'analyzer' => $analyzerName,
+                            'extension' => $extension->getKey(),
+                            'reason' => $inManualList ? 'manual_config' : 'ter_available',
+                        ]);
+                        continue;
+                    }
                 }
 
                 try {
@@ -330,6 +382,21 @@ class AnalyzeCommand extends Command
         $combinedResults = array_merge($discoveryResults, $allResults);
 
         try {
+            // Get extensions available in target version from config
+            $extensionAvailableInTargetVersion = $configService->get('analysis.extensionAvailableInTargetVersion', []);
+
+            // Get client-report config
+            $clientReport = $configService->get('client-report', []);
+
+            // Get extension configuration (for estimated-hours overrides, etc.)
+            $extensionConfiguration = $clientReport['extension'] ?? [];
+
+            // Get estimated hours configuration for effort estimation
+            $estimatedHours = $clientReport['estimated-hours'] ?? [];
+
+            // Get hourly rate for cost calculation
+            $hourlyRate = $clientReport['hourly-rate'] ?? 960;
+
             // Generate detailed reports using the ReportService
             $reportResults = $this->reportService->generateReport(
                 $installation,
@@ -338,6 +405,10 @@ class AnalyzeCommand extends Command
                 $formats,
                 $outputDir,
                 $configService->getTargetVersion(),
+                $extensionAvailableInTargetVersion,
+                $extensionConfiguration,
+                $estimatedHours,
+                $hourlyRate,
             );
 
             // Log report generation results

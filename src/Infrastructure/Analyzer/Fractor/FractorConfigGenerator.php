@@ -80,8 +80,9 @@ class FractorConfigGenerator
                     '*/tests/*',
                     '*/vendor/*',
                     '*/node_modules/*',
-                    // Skip build and cache directories
+                    // Skip build directories
                     '*/Resources/Public/*',
+                    // Skip build and cache directories
                     '*/.Build/*',
                     // Skip documentation
                     '*/Documentation/*',

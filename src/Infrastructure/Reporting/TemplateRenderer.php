@@ -55,6 +55,165 @@ class TemplateRenderer
     }
 
     /**
+     * Render German client report (no links, simplified for clients).
+     *
+     * @param array<string, mixed> $context Report context data
+     *
+     * @return array{content: string, filename: string} Rendered content and suggested filename
+     */
+    public function renderClientReportDe(array $context): array
+    {
+        return [
+            'content' => $this->twig->render('html/client-report-de.html.twig', $context),
+            'filename' => 'client-report-de.html',
+        ];
+    }
+
+    /**
+     * Render German client report as PDF.
+     *
+     * @param array<string, mixed> $context Report context data
+     *
+     * @return array{content: string, filename: string} Rendered PDF content and filename
+     */
+    public function renderClientReportDePdf(array $context): array
+    {
+        // First render the HTML
+        $html = $this->twig->render('html/client-report-de.html.twig', $context);
+
+        // Convert to PDF using Dompdf
+        $dompdf = new \Dompdf\Dompdf([
+            'enable_remote' => false,
+            'chroot' => getcwd(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return [
+            'content' => $dompdf->output(),
+            'filename' => 'client-report-de.pdf',
+        ];
+    }
+
+    /**
+     * Render German client report as XWiki page.
+     *
+     * @param array<string, mixed> $context Report context data
+     *
+     * @return array{content: string, filename: string} Rendered XWiki content and filename
+     */
+    public function renderClientReportDeXWiki(array $context): array
+    {
+        // Render directly from XWiki template
+        $xwiki = $this->twig->render('xwiki/client-report-de.xwiki.twig', $context);
+
+        return [
+            'content' => $xwiki,
+            'filename' => 'client-report-de.xwiki',
+        ];
+    }
+
+    /**
+     * Convert HTML to XWiki 2.0 syntax.
+     *
+     * @param string $html HTML content
+     *
+     * @return string XWiki formatted content
+     */
+    private function convertHtmlToXWiki(string $html): string
+    {
+        // Remove HTML/head/body tags and get content
+        $html = preg_replace('/<\?xml[^>]*>/i', '', $html);
+        $html = preg_replace('/<!DOCTYPE[^>]*>/i', '', $html);
+        $html = preg_replace('/<html[^>]*>(.*?)<\/html>/is', '$1', $html);
+        $html = preg_replace('/<head[^>]*>.*?<\/head>/is', '', $html);
+        $html = preg_replace('/<body[^>]*>(.*?)<\/body>/is', '$1', $html);
+
+        // Convert headings
+        $html = preg_replace('/<h1[^>]*>(.*?)<\/h1>/i', '= $1 =', $html);
+        $html = preg_replace('/<h2[^>]*>(.*?)<\/h2>/i', '== $1 ==', $html);
+        $html = preg_replace('/<h3[^>]*>(.*?)<\/h3>/i', '=== $1 ===', $html);
+        $html = preg_replace('/<h4[^>]*>(.*?)<\/h4>/i', '==== $1 ====', $html);
+
+        // Convert paragraphs
+        $html = preg_replace('/<p[^>]*>(.*?)<\/p>/i', "\n$1\n", $html);
+
+        // Convert bold and italic
+        $html = preg_replace('/<strong[^>]*>(.*?)<\/strong>/i', '**$1**', $html);
+        $html = preg_replace('/<b[^>]*>(.*?)<\/b>/i', '**$1**', $html);
+        $html = preg_replace('/<em[^>]*>(.*?)<\/em>/i', '//$1//', $html);
+        $html = preg_replace('/<i[^>]*>(.*?)<\/i>/i', '//$1//', $html);
+
+        // Convert tables - this is complex, handle basic structure
+        $html = $this->convertTablesToXWiki($html);
+
+        // Convert divs to newlines
+        $html = preg_replace('/<div[^>]*>/i', "\n", $html);
+        $html = preg_replace('/<\/div>/i', "\n", $html);
+
+        // Remove remaining HTML tags
+        $html = strip_tags($html);
+
+        // Clean up multiple newlines
+        $html = preg_replace("/\n{3,}/", "\n\n", $html);
+
+        // Trim whitespace
+        $html = trim($html);
+
+        return $html;
+    }
+
+    /**
+     * Convert HTML tables to XWiki table syntax.
+     *
+     * @param string $html HTML content with tables
+     *
+     * @return string HTML with tables converted to XWiki syntax
+     */
+    private function convertTablesToXWiki(string $html): string
+    {
+        // Use DOMDocument to parse tables properly
+        $dom = new \DOMDocument();
+        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+        $tables = $dom->getElementsByTagName('table');
+
+        foreach ($tables as $table) {
+            $xwikiTable = "\n";
+
+            // Process table rows
+            $rows = $table->getElementsByTagName('tr');
+            foreach ($rows as $row) {
+                $cells = [];
+
+                // Get header cells
+                $headerCells = $row->getElementsByTagName('th');
+                foreach ($headerCells as $cell) {
+                    $cells[] = '|=' . trim($cell->textContent);
+                }
+
+                // Get data cells
+                $dataCells = $row->getElementsByTagName('td');
+                foreach ($dataCells as $cell) {
+                    $cells[] = '|' . trim($cell->textContent);
+                }
+
+                if (!empty($cells)) {
+                    $xwikiTable .= implode('', $cells) . "\n";
+                }
+            }
+
+            // Replace table with XWiki table
+            $tableHtml = $dom->saveHTML($table);
+            $html = str_replace($tableHtml, $xwikiTable, $html);
+        }
+
+        return $html;
+    }
+
+    /**
      * Render extension reports for all extensions in the specified format.
      *
      * @param array<string, mixed> $context Report context data

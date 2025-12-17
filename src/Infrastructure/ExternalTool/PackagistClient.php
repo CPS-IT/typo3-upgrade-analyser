@@ -189,8 +189,14 @@ class PackagistClient
         $typo3Requirements = $this->constraintChecker->findTypo3Requirements($requirements);
 
         if (empty($typo3Requirements)) {
-            // If no explicit TYPO3 requirement found, assume compatible
-            return true;
+            // If no explicit TYPO3 requirement found, cannot determine compatibility
+            // Be conservative and assume NOT compatible
+            $this->logger->debug('No TYPO3 requirement found in composer.json, assuming incompatible', [
+                'package' => $packageName,
+                'version' => $packageVersion,
+            ]);
+
+            return false;
         }
 
         // Check if any TYPO3 requirement is compatible with target version

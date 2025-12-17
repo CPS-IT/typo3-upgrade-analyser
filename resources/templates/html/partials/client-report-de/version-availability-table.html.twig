@@ -1,0 +1,33 @@
+                <h3>Extension Verfügbarkeit</h3>
+                <p>Diese Analyse prüft, welche Extensions für die Zielversion verfügbar sind.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Aktuelle Version</th>
+                            <th>Verfügbar</th>
+                            <th>Risikolevel</th>
+                            <th>Neueste Version</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in extension_data %}
+                        <tr>
+                            <td><strong>{{ data.extension.key }}</strong></td>
+                            <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
+                            {% if data.version_analysis %}
+                                {# Only trust TER for TYPO3 compatibility - Packagist/Git may have incorrect constraints #}
+                                {% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or data.version_analysis.ter_available %}
+                                <td><span class="{{ isAvailable ? 'status-available' : 'status-unavailable' }}">{{ isAvailable ? 'Ja' : 'Nein' }}</span></td>
+                                <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
+                                <td>{{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }}</td>
+                            {% else %}
+                                <td><span class="{{ data.extension.key in extensionAvailableInTargetVersion ? 'status-available' : 'status-unavailable' }}">{{ data.extension.key in extensionAvailableInTargetVersion ? 'Ja' : 'Nein' }}</span></td>
+                                <td><span class="badge badge-unknown">UNKNOWN</span></td>
+                                <td>N/A</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>

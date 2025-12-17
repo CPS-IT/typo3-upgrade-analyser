@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5690dd6e2a3e981dacae65d040964069",
+    "content-hash": "670a169e6437808a0c584ef5b3de1f17",
     "packages": [
         {
             "name": "a9f/fractor",
@@ -9629,5 +9629,5 @@
     "platform-overrides": {
         "php": "8.3"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
