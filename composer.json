@@ -36,6 +36,7 @@
     "phpstan/phpstan": "^2.0",
     "phpstan/phpstan-phpunit": "^2.0",
     "phpunit/phpunit": "^12.3",
+    "rector/rector": "^2.2.14",
     "roave/security-advisories": "dev-latest"
   },
   "autoload": {

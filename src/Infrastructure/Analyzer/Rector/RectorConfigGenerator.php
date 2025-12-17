@@ -279,7 +279,6 @@ class RectorConfigGenerator
             // Common directories to skip
             '*/vendor/*',
             '*/node_modules/*',
-            '*/var/*',
             '*/public/*',
             '*/.Build/*',
 
