@@ -145,7 +145,7 @@ class FractorExecutor
      */
     private function findProjectRoot(): string
     {
-        $currentDir = dirname($this->fractorBinaryPath);
+        $currentDir = \dirname($this->fractorBinaryPath);
         $maxLevels = 10; // Prevent infinite loops
 
         for ($i = 0; $i < $maxLevels; ++$i) {
@@ -156,7 +156,7 @@ class FractorExecutor
                 return $currentDir;
             }
 
-            $parentDir = dirname($currentDir);
+            $parentDir = \dirname($currentDir);
 
             // Reached filesystem root
             if ($parentDir === $currentDir) {
@@ -167,6 +167,6 @@ class FractorExecutor
         }
 
         // Fallback: Use the directory 3 levels up from binary (backwards compatibility)
-        return dirname($this->fractorBinaryPath, 3);
+        return \dirname($this->fractorBinaryPath, 3);
     }
 }
