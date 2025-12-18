@@ -5,9 +5,13 @@ This analyzer uses Fractor to identify code modernization opportunities and dete
 | Extension | Files Changed | Rules Applied | Total Issues | Modernization | Risk Score | Effort (hrs) |
 |-----------|---------------|---------------|--------------|---------------|------------|--------------|
 {% for data in extension_data %}
+{# Skip extensions that are available in target version (TER, Packagist, Git or manual config) #}
+{% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or (data.version_analysis and (data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available)) %}
+{% if not isAvailable %}
 {% if data.fractor_analysis %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#fractor-analysis) | {{ data.fractor_analysis.files_changed }} | {{ data.fractor_analysis.rules_applied }} | {{ data.fractor_analysis.total_issues }} | {% if not data.fractor_analysis.analysis_successful %}❓ Unknown{% elseif data.fractor_analysis.has_findings %}📋 Opportunities{% else %}✅ Modern{% endif %} | {{ "%.1f"|format(data.fractor_analysis.risk_score) }}/10 | {{ "%.1f"|format(data.fractor_analysis.rules_applied * 0.25) }} |
 {% else %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#fractor-analysis) | N/A | N/A | N/A | ❓ | N/A | N/A |
+{% endif %}
 {% endif %}
 {% endfor %}

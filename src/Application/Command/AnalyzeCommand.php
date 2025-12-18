@@ -219,6 +219,9 @@ class AnalyzeCommand extends Command
         // Get custom paths from installation metadata
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
 
+        // Get extensions available in target version from config
+        $extensionAvailableInTargetVersion = $this->configService->get('analysis.extensionAvailableInTargetVersion', []);
+
         $context = new AnalysisContext(
             $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
@@ -226,6 +229,7 @@ class AnalyzeCommand extends Command
             [
                 'installation_path' => $installation?->getPath() ?? '',
                 'custom_paths' => $customPaths,
+                'extensionAvailableInTargetVersion' => $extensionAvailableInTargetVersion,
             ],
         );
         $results = [];
@@ -246,6 +250,34 @@ class AnalyzeCommand extends Command
             foreach ($extensions as $extension) {
                 if (!$analyzer->supports($extension)) {
                     continue;
+                }
+
+                // Skip rector and fractor analysis for extensions available in target version
+                if (\in_array($analyzerName, ['typo3_rector', 'fractor'], true)) {
+                    // Check manual configuration list
+                    $inManualList = \in_array($extension->getKey(), $extensionAvailableInTargetVersion, true);
+
+                    // Check if version_availability analyzer already ran and found the extension available anywhere
+                    $isAvailableAnywhere = false;
+                    if (isset($results['version_availability'])) {
+                        foreach ($results['version_availability'] as $versionResult) {
+                            if ($versionResult->getExtension()->getKey() === $extension->getKey()) {
+                                $isAvailableAnywhere = true === $versionResult->getMetric('ter_available')
+                                    || true === $versionResult->getMetric('packagist_available')
+                                    || true === $versionResult->getMetric('git_available');
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($inManualList || $isAvailableAnywhere) {
+                        $io->comment(\sprintf(
+                            'Skipping %s for %s - extension available in target version',
+                            $analyzerName,
+                            $extension->getKey(),
+                        ));
+                        continue;
+                    }
                 }
 
                 try {
@@ -287,6 +319,9 @@ class AnalyzeCommand extends Command
     ): void {
         $outputDir = $configService->get('reporting.output_directory', 'var/reports/');
         $formats = $configService->get('reporting.formats', ['markdown']);
+
+        // Get extensions available in target version from config
+        $extensionAvailableInTargetVersion = $configService->get('analysis.extensionAvailableInTargetVersion', []);
 
         if (!$installation) {
             $io->warning('No installation data available - generating basic report');
@@ -338,6 +373,7 @@ class AnalyzeCommand extends Command
                 $formats,
                 $outputDir,
                 $configService->getTargetVersion(),
+                $extensionAvailableInTargetVersion,
             );
 
             // Log report generation results

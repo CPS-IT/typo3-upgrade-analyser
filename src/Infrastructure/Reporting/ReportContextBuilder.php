@@ -31,12 +31,14 @@ class ReportContextBuilder
      *
      * @param array<Extension>                      $extensions
      * @param array<string, array<ResultInterface>> $groupedResults
+     * @param array<string>                         $extensionAvailableInTargetVersion
      */
     public function buildReportContext(
         Installation $installation,
         array $extensions,
         array $groupedResults,
         ?string $targetVersion = null,
+        array $extensionAvailableInTargetVersion = [],
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
@@ -83,6 +85,7 @@ class ReportContextBuilder
             'extensions' => $extensions,
             'extension_data' => $extensionData,
             'target_version' => $targetVersion ?? '13.4', // Default fallback
+            'extensionAvailableInTargetVersion' => $extensionAvailableInTargetVersion,
             'discovery' => [
                 'installation' => reset($installationDiscovery) ?: null,
                 'extensions' => reset($extensionDiscovery) ?: null,

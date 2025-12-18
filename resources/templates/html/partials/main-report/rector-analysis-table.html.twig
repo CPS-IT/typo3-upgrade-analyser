@@ -15,6 +15,9 @@
                     </thead>
                     <tbody>
                         {% for data in extension_data %}
+                        {# Skip extensions that are available in target version (TER, Packagist, Git or manual config) #}
+                        {% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or (data.version_analysis and (data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available)) %}
+                        {% if not isAvailable %}
                         <tr>
                             <td><strong><a href="extensions/{{ data.extension.key }}.html#typo3-rector-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
                             {% if data.rector_analysis %}
@@ -33,6 +36,7 @@
                             <td>N/A</td>
                             {% endif %}
                         </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>

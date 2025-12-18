@@ -5,9 +5,13 @@ This analyzer uses TYPO3 Rector to detect deprecated code patterns, breaking cha
 | Extension | Processed Files | Total Findings | Breaking Changes | Deprecations | Upgrade Readiness | Fix Time (hrs) |
 |-----------|-----------------|----------------|------------------|--------------|-------------------|----------------|
 {% for data in extension_data %}
+{# Skip extensions that are available in target version (TER, Packagist, Git or manual config) #}
+{% set isAvailable = data.extension.key in extensionAvailableInTargetVersion or (data.version_analysis and (data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available)) %}
+{% if not isAvailable %}
 {% if data.rector_analysis %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#typo3-rector-analysis) | {{ data.rector_analysis.processed_files }} | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }} | {{ data.rector_analysis.has_deprecations ? '📋 Yes' : '✅ No' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | {{ "%.1f"|format(data.rector_analysis.estimated_fix_time_hours) }} |
 {% else %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#typo3-rector-analysis) | N/A | N/A | ❓ | ❓ | N/A | N/A |
+{% endif %}
 {% endif %}
 {% endfor %}
