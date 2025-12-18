@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
 
 /**
  * Service responsible for building report context data from analysis results.
@@ -27,7 +26,6 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInter
  */
 class ReportContextBuilder
 {
-
     /**
      * Build the report context from installation, extensions and analysis results.
      *

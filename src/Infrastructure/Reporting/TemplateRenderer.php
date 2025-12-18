@@ -207,7 +207,7 @@ class TemplateRenderer
 
             // Replace table with XWiki table
             $tableHtml = $dom->saveHTML($table);
-            if ($tableHtml !== false) {
+            if (false !== $tableHtml) {
                 $html = str_replace($tableHtml, $xwikiTable, $html);
             }
         }
