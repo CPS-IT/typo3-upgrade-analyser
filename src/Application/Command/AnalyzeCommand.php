@@ -262,9 +262,7 @@ class AnalyzeCommand extends Command
                     if (isset($results['version_availability'])) {
                         foreach ($results['version_availability'] as $versionResult) {
                             if ($versionResult->getExtension()->getKey() === $extension->getKey()) {
-                                $isAvailableAnywhere = true === $versionResult->getMetric('ter_available')
-                                    || true === $versionResult->getMetric('packagist_available')
-                                    || true === $versionResult->getMetric('git_available');
+                                $isAvailableAnywhere = \in_array(true, [$versionResult->getMetric('ter_available'), $versionResult->getMetric('packagist_available'), $versionResult->getMetric('git_available')], true);
                                 break;
                             }
                         }
