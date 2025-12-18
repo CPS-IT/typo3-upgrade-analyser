@@ -284,7 +284,7 @@ class AnalyzeCommand extends Command
                     if (isset($results['version_availability'])) {
                         foreach ($results['version_availability'] as $versionResult) {
                             if ($versionResult->getExtension()->getKey() === $extension->getKey()) {
-                                $isAvailableInTer = $versionResult->getMetric('ter_available') === true;
+                                $isAvailableInTer = true === $versionResult->getMetric('ter_available');
                                 break;
                             }
                         }

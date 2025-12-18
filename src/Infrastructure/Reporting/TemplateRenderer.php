@@ -121,48 +121,48 @@ class TemplateRenderer
      * @param string $html HTML content
      *
      * @return string XWiki formatted content
+     *
+     * @phpstan-ignore method.unused
      */
     private function convertHtmlToXWiki(string $html): string
     {
         // Remove HTML/head/body tags and get content
-        $html = preg_replace('/<\?xml[^>]*>/i', '', $html);
-        $html = preg_replace('/<!DOCTYPE[^>]*>/i', '', $html);
-        $html = preg_replace('/<html[^>]*>(.*?)<\/html>/is', '$1', $html);
-        $html = preg_replace('/<head[^>]*>.*?<\/head>/is', '', $html);
-        $html = preg_replace('/<body[^>]*>(.*?)<\/body>/is', '$1', $html);
+        $html = (string) preg_replace('/<\?xml[^>]*>/i', '', $html);
+        $html = (string) preg_replace('/<!DOCTYPE[^>]*>/i', '', $html);
+        $html = (string) preg_replace('/<html[^>]*>(.*?)<\/html>/is', '$1', $html);
+        $html = (string) preg_replace('/<head[^>]*>.*?<\/head>/is', '', $html);
+        $html = (string) preg_replace('/<body[^>]*>(.*?)<\/body>/is', '$1', $html);
 
         // Convert headings
-        $html = preg_replace('/<h1[^>]*>(.*?)<\/h1>/i', '= $1 =', $html);
-        $html = preg_replace('/<h2[^>]*>(.*?)<\/h2>/i', '== $1 ==', $html);
-        $html = preg_replace('/<h3[^>]*>(.*?)<\/h3>/i', '=== $1 ===', $html);
-        $html = preg_replace('/<h4[^>]*>(.*?)<\/h4>/i', '==== $1 ====', $html);
+        $html = (string) preg_replace('/<h1[^>]*>(.*?)<\/h1>/i', '= $1 =', $html);
+        $html = (string) preg_replace('/<h2[^>]*>(.*?)<\/h2>/i', '== $1 ==', $html);
+        $html = (string) preg_replace('/<h3[^>]*>(.*?)<\/h3>/i', '=== $1 ===', $html);
+        $html = (string) preg_replace('/<h4[^>]*>(.*?)<\/h4>/i', '==== $1 ====', $html);
 
         // Convert paragraphs
-        $html = preg_replace('/<p[^>]*>(.*?)<\/p>/i', "\n$1\n", $html);
+        $html = (string) preg_replace('/<p[^>]*>(.*?)<\/p>/i', "\n$1\n", $html);
 
         // Convert bold and italic
-        $html = preg_replace('/<strong[^>]*>(.*?)<\/strong>/i', '**$1**', $html);
-        $html = preg_replace('/<b[^>]*>(.*?)<\/b>/i', '**$1**', $html);
-        $html = preg_replace('/<em[^>]*>(.*?)<\/em>/i', '//$1//', $html);
-        $html = preg_replace('/<i[^>]*>(.*?)<\/i>/i', '//$1//', $html);
+        $html = (string) preg_replace('/<strong[^>]*>(.*?)<\/strong>/i', '**$1**', $html);
+        $html = (string) preg_replace('/<b[^>]*>(.*?)<\/b>/i', '**$1**', $html);
+        $html = (string) preg_replace('/<em[^>]*>(.*?)<\/em>/i', '//$1//', $html);
+        $html = (string) preg_replace('/<i[^>]*>(.*?)<\/i>/i', '//$1//', $html);
 
         // Convert tables - this is complex, handle basic structure
         $html = $this->convertTablesToXWiki($html);
 
         // Convert divs to newlines
-        $html = preg_replace('/<div[^>]*>/i', "\n", $html);
-        $html = preg_replace('/<\/div>/i', "\n", $html);
+        $html = (string) preg_replace('/<div[^>]*>/i', "\n", $html);
+        $html = (string) preg_replace('/<\/div>/i', "\n", $html);
 
         // Remove remaining HTML tags
         $html = strip_tags($html);
 
         // Clean up multiple newlines
-        $html = preg_replace("/\n{3,}/", "\n\n", $html);
+        $html = (string) preg_replace("/\n{3,}/", "\n\n", $html);
 
         // Trim whitespace
-        $html = trim($html);
-
-        return $html;
+        return trim($html);
     }
 
     /**
@@ -207,7 +207,9 @@ class TemplateRenderer
 
             // Replace table with XWiki table
             $tableHtml = $dom->saveHTML($table);
-            $html = str_replace($tableHtml, $xwikiTable, $html);
+            if ($tableHtml !== false) {
+                $html = str_replace($tableHtml, $xwikiTable, $html);
+            }
         }
 
         return $html;

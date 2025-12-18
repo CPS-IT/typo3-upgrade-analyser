@@ -24,13 +24,10 @@ use PHPUnit\Framework\TestCase;
 class ReportContextBuilderTest extends TestCase
 {
     private ReportContextBuilder $subject;
-    private ConfigurationServiceInterface $configService;
 
     protected function setUp(): void
     {
-        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
-        $this->configService->method('get')->willReturn(null);
-        $this->subject = new ReportContextBuilder($this->configService);
+        $this->subject = new ReportContextBuilder();
     }
 
     public function testBuildReportContextCreatesBasicStructure(): void

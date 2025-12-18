@@ -82,7 +82,7 @@ class ReportService
                     $extensionAvailableInTargetVersion,
                     $extensionConfiguration,
                     $estimatedHours,
-                    $hourlyRate
+                    $hourlyRate,
                 );
                 $this->logger->debug('Report context built successfully');
 

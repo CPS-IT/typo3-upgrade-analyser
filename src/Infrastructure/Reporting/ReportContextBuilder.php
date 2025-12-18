@@ -27,10 +27,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInter
  */
 class ReportContextBuilder
 {
-    public function __construct(
-        private readonly ConfigurationServiceInterface $configurationService,
-    ) {
-    }
+
     /**
      * Build the report context from installation, extensions and analysis results.
      *
