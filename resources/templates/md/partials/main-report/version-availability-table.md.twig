@@ -6,7 +6,7 @@ This analyzer checks if extensions are available in TYPO3 Extension Repository (
 |-----------|----------------|-----|-----------|-----|------------|----------------|
 {% for data in extension_data %}
 {% if data.version_analysis %}
-| [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#version-availability-analysis) | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.version_analysis.ter_available ? '✅' : '❌' }} | {{ data.version_analysis.packagist_available ? '✅' : '❌' }} | {{ data.version_analysis.git_available ? '✅' : '❌' }} | {{ data.version_analysis.risk_level|upper }} | {{ data.version_analysis.git_latest_version ?: 'N/A' }} |
+| [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#version-availability-analysis) | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | {{ data.version_analysis.ter_available ? '✅' : '❌' }} | {{ data.version_analysis.packagist_available ? '✅' : '❌' }} | {{ data.version_analysis.git_available ? '✅' : '❌' }} | {{ data.version_analysis.risk_level|upper }} | {{ data.version_analysis.latest_version ?: (data.version_analysis.git_latest_version ?: 'N/A') }} |
 {% else %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#version-availability-analysis) | {{ data.extension.version ? data.extension.version.toString() : 'N/A' }} | ❓ | ❓ | ❓ | UNKNOWN | N/A |
 {% endif %}
