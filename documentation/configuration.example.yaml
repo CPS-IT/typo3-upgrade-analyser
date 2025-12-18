@@ -41,3 +41,25 @@ externalTools:
   typoscript_lint:
     binary: vendor/bin/typoscript-lint
     config: typoscript-lint.yml
+client-report:
+  hourly-rate: 120
+  extension:
+    ajaxmap:
+      estimated-hours: 16
+    abda_course:
+      estimated-hours: 12
+    geo_location_service:
+      estimated-hours: 6
+    solrfal:
+      estimated-hours: 6
+    t3events:
+      estimated-hours: 40
+    t3extension_tools:
+      estimated-hours: 12
+  estimated-hours:
+    server-setup: 24
+    typo3-bundle-upgrade: 24
+    extension-update: 168
+    upgrade-documentation: 12
+    component-testing: 24
+    final-migration: 16

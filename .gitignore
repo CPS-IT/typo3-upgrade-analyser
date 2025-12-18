@@ -44,6 +44,7 @@ Thumbs.db
 
 # Configuration overrides
 /config/local.yaml
+/config/configuration.yaml
 /typo3-analyzer.yaml
 
 # Test output
