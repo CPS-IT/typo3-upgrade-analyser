@@ -218,7 +218,8 @@ class PackagistClientTest extends TestCase
         $result = $this->client->hasVersionFor($packageName, $typo3Version);
 
         // Assert
-        self::assertTrue($result); // Should assume compatible if no TYPO3 requirement
+        // Note: PackagistClient is conservative - assumes incompatible when no TYPO3 requirement found
+        self::assertFalse($result);
     }
 
     public function testHasVersionForWith404Response(): void

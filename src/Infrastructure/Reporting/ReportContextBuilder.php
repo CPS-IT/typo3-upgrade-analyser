@@ -47,9 +47,6 @@ class ReportContextBuilder
         array $estimatedHours = [],
         int|float $hourlyRate = 960,
     ): array {
-        error_log('ReportContextBuilder: estimatedHours = ' . json_encode($estimatedHours));
-        error_log('ReportContextBuilder: hourlyRate = ' . $hourlyRate);
-
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
