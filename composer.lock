@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "01c96676aa1a8f764fa2b5af61ca3116",
+    "content-hash": "821a6a0fdc63e3f1f32482c242376b67",
     "packages": [
         {
             "name": "a9f/fractor",
@@ -4567,26 +4567,27 @@
         },
         {
             "name": "cyclonedx/cyclonedx-php-composer",
-            "version": "v5.3.0",
+            "version": "v6.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CycloneDX/cyclonedx-php-composer.git",
-                "reference": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                "reference": "d718efc4c201acd0da7d2c2e5690864b2a5c7116"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
-                "reference": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
+                "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/d718efc4c201acd0da7d2c2e5690864b2a5c7116",
+                "reference": "d718efc4c201acd0da7d2c2e5690864b2a5c7116",
                 "shasum": ""
             },
             "require": {
                 "composer-plugin-api": "^2.3",
-                "cyclonedx/cyclonedx-library": "^3.3",
+                "cyclonedx/cyclonedx-library": "^3.9",
                 "package-url/packageurl-php": "^1.0",
                 "php": "^8.1"
             },
             "require-dev": {
                 "composer/composer": "^2.3.0",
+                "marc-mabe/php-enum": "^4.6",
                 "roave/security-advisories": "dev-latest"
             },
             "type": "composer-plugin",
@@ -4639,7 +4640,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2025-10-27T08:23:15+00:00"
+            "time": "2026-01-07T13:45:28+00:00"
         },
         {
             "name": "ergebnis/composer-normalize",
@@ -9632,5 +9633,5 @@
     "platform-overrides": {
         "php": "8.3"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
