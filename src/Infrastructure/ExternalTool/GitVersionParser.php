@@ -37,15 +37,17 @@ class GitVersionParser
      */
     public function findCompatibleVersions(array $tags, Version $targetVersion, ?array $composerJson = null): array
     {
-        // If we have composer.json from the main branch, check if it's compatible
-        if ($composerJson && $this->isComposerCompatible($composerJson, $targetVersion)) {
-            // If main branch is compatible, return all stable tags
-            // This is a simplified approach - ideally we'd check composer.json for each tag
-            return array_filter($tags, fn ($tag): bool => !$tag->isPreRelease());
-        }
+        // We cannot reliably determine tag compatibility without checking composer.json for EACH tag
+        // The main branch's composer.json might be compatible, but older tags might not be
+        // For example, main branch might support TYPO3 13, but v1.0.0 tag might only support TYPO3 11
+        //
+        // To properly determine compatibility, we would need to:
+        // 1. Fetch composer.json for each tag (expensive - many API calls)
+        // 2. Check TYPO3 constraints for each version
+        //
+        // Since we cannot do this efficiently, be conservative and return empty array
+        // This means Git availability will be false unless we can verify compatibility
 
-        // Fallback: without composer.json analysis, we can't reliably determine compatibility
-        // Return empty array to be conservative
         return [];
     }
 

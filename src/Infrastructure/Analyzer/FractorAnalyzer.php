@@ -280,9 +280,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         $rulesApplied = $summary->rulesApplied;
         $filesScanned = $summary->filesScanned;
 
-        if (0 === $rulesApplied) {
-            $recommendations[] = 'Code appears to follow modern patterns - minimal refactoring needed';
-        } elseif ($rulesApplied > 50) {
+        if ($rulesApplied > 50) {
             $recommendations[] = "Many modernization opportunities found ({$rulesApplied} rules) - consider systematic refactoring";
             $recommendations[] = 'Plan extensive testing after applying Fractor suggestions';
         } elseif ($rulesApplied > 20) {

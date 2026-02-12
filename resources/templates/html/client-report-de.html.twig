@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aufwandschätzung TYPO3 Upgrade</title>
+    {% include 'html/partials/shared/styles.html.twig' %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Aufwandschätzung TYPO3 Upgrade</h1>
+            <p>Erstellt am: {{ generated_at.format('d.m.Y H:i:s T') }}</p>
+        </div>
+
+        <div class="content">
+            {% include 'html/partials/client-report-de/preamble.html.twig' %}
+
+            {% include 'html/partials/client-report-de/installation-overview.html.twig' %}
+
+            {% include 'html/partials/client-report-de/risk-distribution.html.twig' %}
+
+            <div class="section page-break-before">
+                <h2>Analyseergebnisse</h2>
+
+                {% include 'html/partials/client-report-de/version-availability-table.html.twig' %}
+            </div>
+
+            <div class="section page-break-before">
+                <h2>Code-Analyse & Modernisierung</h2>
+
+                {% include 'html/partials/client-report-de/combined-analysis-table.html.twig' %}
+            </div>
+
+            <div class="footer">
+                <p>Bericht erstellt durch TYPO3 Upgrade Analyzer</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

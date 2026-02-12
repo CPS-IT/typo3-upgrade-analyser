@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:1674b3bc-38be-4578-8b2e-09706fc9b2c3",
+    "serialNumber": "urn:uuid:33543779-ec93-4f02-aa84-09793e75c5c6",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-12-17T11:25:44Z",
+        "timestamp": "2025-12-17T14:54:12Z",
         "tools": [
             {
                 "name": "composer",
@@ -85,7 +85,7 @@
             "bom-ref": "cpsit/typo3-upgrade-analyser-1.0.9999999.9999999-dev",
             "type": "application",
             "name": "typo3-upgrade-analyser",
-            "version": "1.0.x-dev d2cc7d5",
+            "version": "1.0.x-dev 9a37154",
             "group": "cpsit",
             "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
             "author": "Dirk Wenzel",
@@ -96,15 +96,15 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@1.0.x-dev%20d2cc7d5",
+            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@1.0.x-dev%209a37154",
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "d2cc7d59a2c4e1046e8eff647541eb965de25fb1"
+                    "value": "9a37154fa3b60ef00d7a6a899a9fa9980e814db9"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "d2cc7d59a2c4e1046e8eff647541eb965de25fb1"
+                    "value": "9a37154fa3b60ef00d7a6a899a9fa9980e814db9"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -997,6 +997,180 @@
                 {
                     "name": "cdx:composer:package:isDevRequirement",
                     "value": "true"
+                }
+            ]
+        },
+        {
+            "bom-ref": "dompdf/dompdf-3.1.4.0",
+            "type": "library",
+            "name": "dompdf",
+            "version": "v3.1.4",
+            "group": "dompdf",
+            "description": "DOMPDF is a CSS 2.1 compliant HTML to PDF converter",
+            "author": "The Dompdf Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/dompdf/dompdf@v3.1.4",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/dompdf/dompdf/zipball/db712c90c5b9868df3600e64e68da62e78a34623",
+                    "comment": "dist reference: db712c90c5b9868df3600e64e68da62e78a34623"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/dompdf.git",
+                    "comment": "source reference: db712c90c5b9868df3600e64e68da62e78a34623"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/dompdf/dompdf",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/dompdf/dompdf/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/dompdf/tree/v3.1.4",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "db712c90c5b9868df3600e64e68da62e78a34623"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "db712c90c5b9868df3600e64e68da62e78a34623"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "dompdf/php-font-lib-1.0.1.0",
+            "type": "library",
+            "name": "php-font-lib",
+            "version": "1.0.1",
+            "group": "dompdf",
+            "description": "A library to read, parse, export and make subsets of different types of font files.",
+            "author": "The FontLib Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/dompdf/php-font-lib@1.0.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/dompdf/php-font-lib/zipball/6137b7d4232b7f16c882c75e4ca3991dbcf6fe2d",
+                    "comment": "dist reference: 6137b7d4232b7f16c882c75e4ca3991dbcf6fe2d"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/php-font-lib.git",
+                    "comment": "source reference: 6137b7d4232b7f16c882c75e4ca3991dbcf6fe2d"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/dompdf/php-font-lib",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/dompdf/php-font-lib/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/php-font-lib/tree/1.0.1",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "6137b7d4232b7f16c882c75e4ca3991dbcf6fe2d"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "6137b7d4232b7f16c882c75e4ca3991dbcf6fe2d"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "dompdf/php-svg-lib-1.0.0.0",
+            "type": "library",
+            "name": "php-svg-lib",
+            "version": "1.0.0",
+            "group": "dompdf",
+            "description": "A library to read, parse and export to PDF SVG files.",
+            "author": "The SvgLib Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-3.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/dompdf/php-svg-lib@1.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/dompdf/php-svg-lib/zipball/eb045e518185298eb6ff8d80d0d0c6b17aecd9af",
+                    "comment": "dist reference: eb045e518185298eb6ff8d80d0d0c6b17aecd9af"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/php-svg-lib.git",
+                    "comment": "source reference: eb045e518185298eb6ff8d80d0d0c6b17aecd9af"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/dompdf/php-svg-lib",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/dompdf/php-svg-lib/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/dompdf/php-svg-lib/tree/1.0.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "eb045e518185298eb6ff8d80d0d0c6b17aecd9af"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "eb045e518185298eb6ff8d80d0d0c6b17aecd9af"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
                 }
             ]
         },
@@ -2232,6 +2406,64 @@
                 {
                     "name": "cdx:composer:package:isDevRequirement",
                     "value": "true"
+                }
+            ]
+        },
+        {
+            "bom-ref": "masterminds/html5-2.10.0.0",
+            "type": "library",
+            "name": "html5",
+            "version": "2.10.0",
+            "group": "masterminds",
+            "description": "An HTML5 parser and serializer.",
+            "author": "Matt Butcher, Matt Farina, Asmir Mustafic",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/masterminds/html5@2.10.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Masterminds/html5-php/zipball/fcf91eb64359852f00d921887b219479b4f21251",
+                    "comment": "dist reference: fcf91eb64359852f00d921887b219479b4f21251"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Masterminds/html5-php.git",
+                    "comment": "source reference: fcf91eb64359852f00d921887b219479b4f21251"
+                },
+                {
+                    "type": "website",
+                    "url": "http://masterminds.github.io/html5-php",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Masterminds/html5-php/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Masterminds/html5-php/tree/2.10.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "fcf91eb64359852f00d921887b219479b4f21251"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "fcf91eb64359852f00d921887b219479b4f21251"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
                 }
             ]
         },
@@ -4361,6 +4593,64 @@
                 {
                     "name": "cdx:composer:package:isDevRequirement",
                     "value": "true"
+                }
+            ]
+        },
+        {
+            "bom-ref": "sabberworm/php-css-parser-8.9.0.0",
+            "type": "library",
+            "name": "php-css-parser",
+            "version": "v8.9.0",
+            "group": "sabberworm",
+            "description": "Parser for CSS Files written in PHP",
+            "author": "Raphael Schweikert, Oliver Klee, Jake Hotson",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/sabberworm/php-css-parser@v8.9.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/MyIntervals/PHP-CSS-Parser/zipball/d8e916507b88e389e26d4ab03c904a082aa66bb9",
+                    "comment": "dist reference: d8e916507b88e389e26d4ab03c904a082aa66bb9"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/MyIntervals/PHP-CSS-Parser.git",
+                    "comment": "source reference: d8e916507b88e389e26d4ab03c904a082aa66bb9"
+                },
+                {
+                    "type": "website",
+                    "url": "https://www.sabberworm.com/blog/2010/6/10/php-css-parser",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/MyIntervals/PHP-CSS-Parser/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v8.9.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "d8e916507b88e389e26d4ab03c904a082aa66bb9"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "d8e916507b88e389e26d4ab03c904a082aa66bb9"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
                 }
             ]
         },
@@ -7326,6 +7616,23 @@
             ]
         },
         {
+            "ref": "dompdf/dompdf-3.1.4.0",
+            "dependsOn": [
+                "dompdf/php-font-lib-1.0.1.0",
+                "dompdf/php-svg-lib-1.0.0.0",
+                "masterminds/html5-2.10.0.0"
+            ]
+        },
+        {
+            "ref": "dompdf/php-font-lib-1.0.1.0"
+        },
+        {
+            "ref": "dompdf/php-svg-lib-1.0.0.0",
+            "dependsOn": [
+                "sabberworm/php-css-parser-8.9.0.0"
+            ]
+        },
+        {
             "ref": "ergebnis/composer-normalize-2.48.2.0",
             "dependsOn": [
                 "ergebnis/json-1.6.0.0",
@@ -7459,6 +7766,9 @@
         },
         {
             "ref": "marc-mabe/php-enum-4.7.2.0"
+        },
+        {
+            "ref": "masterminds/html5-2.10.0.0"
         },
         {
             "ref": "mikey179/vfsstream-1.6.12.0"
@@ -7646,6 +7956,9 @@
         },
         {
             "ref": "roave/security-advisories-dev-latest"
+        },
+        {
+            "ref": "sabberworm/php-css-parser-8.9.0.0"
         },
         {
             "ref": "sebastian/cli-parser-4.2.0.0"
@@ -7909,6 +8222,7 @@
             "dependsOn": [
                 "a9f/typo3-fractor-0.5.8.0",
                 "composer/semver-3.4.4.0",
+                "dompdf/dompdf-3.1.4.0",
                 "guzzlehttp/guzzle-7.10.0.0",
                 "monolog/monolog-3.9.0.0",
                 "nikic/php-parser-5.7.0.0",

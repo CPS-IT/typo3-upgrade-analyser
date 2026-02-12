@@ -37,9 +37,12 @@ class ReportService
     /**
      * Generate comprehensive report from all phases.
      *
-     * @param array<Extension>       $extensions
-     * @param array<ResultInterface> $results
-     * @param array<string>          $formats
+     * @param array<Extension>                    $extensions
+     * @param array<ResultInterface>              $results
+     * @param array<string>                       $formats
+     * @param array<string>                       $extensionAvailableInTargetVersion
+     * @param array<string, array<string, mixed>> $extensionConfiguration
+     * @param array<string, mixed>                $estimatedHours
      *
      * @return array<ReportingResult>
      */
@@ -50,6 +53,10 @@ class ReportService
         array $formats = ['markdown'],
         string $outputDirectory = 'var/reports/',
         ?string $targetVersion = null,
+        array $extensionAvailableInTargetVersion = [],
+        array $extensionConfiguration = [],
+        array $estimatedHours = [],
+        int|float $hourlyRate = 960,
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => \count($extensions),
@@ -67,7 +74,16 @@ class ReportService
             try {
                 // Generate context for templates using ReportContextBuilder
                 $this->logger->debug('Building report context for templates');
-                $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
+                $context = $this->contextBuilder->buildReportContext(
+                    $installation,
+                    $extensions,
+                    $groupedResults,
+                    $targetVersion,
+                    $extensionAvailableInTargetVersion,
+                    $extensionConfiguration,
+                    $estimatedHours,
+                    $hourlyRate,
+                );
                 $this->logger->debug('Report context built successfully');
 
                 $this->logger->debug('Generating report for format', ['format' => $format]);
@@ -141,6 +157,21 @@ class ReportService
         $this->logger->debug('Rendering main report', ['format' => $format]);
         $mainReport = $this->templateRenderer->renderMainReport($context, $format);
 
+        // Render German client report in multiple formats (only for HTML format)
+        $clientReportDe = null;
+        $clientReportDePdf = null;
+        $clientReportDeXWiki = null;
+        if ('html' === $format) {
+            $this->logger->debug('Rendering German client report (HTML)');
+            $clientReportDe = $this->templateRenderer->renderClientReportDe($context);
+
+            $this->logger->debug('Rendering German client report (PDF)');
+            $clientReportDePdf = $this->templateRenderer->renderClientReportDePdf($context);
+
+            $this->logger->debug('Rendering German client report (XWiki)');
+            $clientReportDeXWiki = $this->templateRenderer->renderClientReportDeXWiki($context);
+        }
+
         $this->logger->debug('Rendering extension reports', ['format' => $format]);
         $extensionReports = $this->templateRenderer->renderExtensionReports($context, $format);
 
@@ -153,8 +184,43 @@ class ReportService
             'format' => $format,
             'extension_reports_count' => \count($extensionReports),
             'rector_detail_pages_count' => \count($rectorDetailPages),
+            'has_client_report_de' => null !== $clientReportDe,
         ]);
         $allFiles = $this->fileManager->writeReportFilesWithRectorPages($mainReport, $extensionReports, $rectorDetailPages, $formatOutputPath);
+
+        // Write German client reports if rendered (HTML, PDF, XWiki)
+        if (null !== $clientReportDe) {
+            $clientReportPath = $formatOutputPath . '/' . $clientReportDe['filename'];
+            file_put_contents($clientReportPath, $clientReportDe['content']);
+            $allFiles[] = [
+                'path' => $clientReportPath,
+                'size' => \strlen($clientReportDe['content']),
+                'type' => 'client_report_de_html',
+            ];
+            $this->logger->info('German client report (HTML) written', ['path' => $clientReportPath]);
+        }
+
+        if (null !== $clientReportDePdf) {
+            $clientReportPdfPath = $formatOutputPath . '/' . $clientReportDePdf['filename'];
+            file_put_contents($clientReportPdfPath, $clientReportDePdf['content']);
+            $allFiles[] = [
+                'path' => $clientReportPdfPath,
+                'size' => \strlen($clientReportDePdf['content']),
+                'type' => 'client_report_de_pdf',
+            ];
+            $this->logger->info('German client report (PDF) written', ['path' => $clientReportPdfPath]);
+        }
+
+        if (null !== $clientReportDeXWiki) {
+            $clientReportXWikiPath = $formatOutputPath . '/' . $clientReportDeXWiki['filename'];
+            file_put_contents($clientReportXWikiPath, $clientReportDeXWiki['content']);
+            $allFiles[] = [
+                'path' => $clientReportXWikiPath,
+                'size' => \strlen($clientReportDeXWiki['content']),
+                'type' => 'client_report_de_xwiki',
+            ];
+            $this->logger->info('German client report (XWiki) written', ['path' => $clientReportXWikiPath]);
+        }
 
         // 4. Create result object
         $result = new ReportingResult(
