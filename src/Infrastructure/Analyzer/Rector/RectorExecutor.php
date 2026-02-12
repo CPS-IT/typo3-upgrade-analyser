@@ -175,14 +175,22 @@ class RectorExecutor
         $command = [
             $this->rectorBinaryPath,
             'process',
-            $targetPath,
+        ];
+
+        // Add target path if explicitly requested (e.g., in tests)
+        // In production, path is specified in config file
+        if (!empty($options['include_target_path'])) {
+            $command[] = $targetPath;
+        }
+
+        $command = array_merge($command, [
             '--config',
             $configPath,
             '--dry-run', // Never modify files, only analyze
             '--output-format',
             'json',
             '--no-progress-bar',
-        ];
+        ]);
 
         // Add memory limit if specified
         if (isset($options['memory_limit'])) {

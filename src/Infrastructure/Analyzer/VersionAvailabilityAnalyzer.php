@@ -83,6 +83,70 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             $result->addMetric('git_latest_version', $gitInfo['latest_version']);
         }
 
+        // Get latest versions from all sources
+        $versions = [];
+
+        // Get latest version from TER if available
+        if ($terAvailable) {
+            try {
+                $terLatestVersion = $this->terClient->getLatestVersion(
+                    $extension->getKey(),
+                    $context->getTargetVersion(),
+                );
+                if ($terLatestVersion) {
+                    $versions['ter'] = $terLatestVersion;
+                    $this->logger->debug('TER latest version found', [
+                        'extension' => $extension->getKey(),
+                        'version' => $terLatestVersion,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                $this->logger->debug('Could not get latest version from TER', [
+                    'extension' => $extension->getKey(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Get latest version from Packagist if available
+        $composerName = $extension->getComposerName();
+        if ($composerName && $result->getMetric('packagist_available')) {
+            try {
+                $packagistLatestVersion = $this->packagistClient->getLatestVersion(
+                    $composerName,
+                    $context->getTargetVersion(),
+                );
+                if ($packagistLatestVersion) {
+                    $versions['packagist'] = $packagistLatestVersion;
+                    $this->logger->debug('Packagist latest version found', [
+                        'extension' => $extension->getKey(),
+                        'version' => $packagistLatestVersion,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                $this->logger->debug('Could not get latest version from Packagist', [
+                    'extension' => $extension->getKey(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Add Git version if available
+        if ($gitInfo['latest_version']) {
+            $versions['git'] = $gitInfo['latest_version'];
+        }
+
+        // Find the highest version among all sources
+        $latestVersion = $this->findHighestVersion($versions);
+        if ($latestVersion) {
+            $result->addMetric('latest_version', $latestVersion);
+            $this->logger->info('Latest version determined from all sources', [
+                'extension' => $extension->getKey(),
+                'latest_version' => $latestVersion,
+                'sources_checked' => array_keys($versions),
+            ]);
+        }
+
         // Calculate risk score based on availability
         $riskScore = $this->calculateRiskScore($result->getMetrics(), $extension);
         $result->setRiskScore($riskScore);
@@ -300,5 +364,50 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         if ($extension->isLocalExtension() && ($terAvailable || $packagistAvailable || $gitAvailable)) {
             $result->addRecommendation('Local extension has public alternatives available. Consider using official version.');
         }
+    }
+
+    /**
+     * Find the highest version among versions from different sources.
+     *
+     * @param array<string, string> $versions Associative array of source => version
+     *
+     * @return string|null The highest version number, or null if no versions
+     */
+    private function findHighestVersion(array $versions): ?string
+    {
+        if (empty($versions)) {
+            return null;
+        }
+
+        // If only one version, return it
+        if (1 === \count($versions)) {
+            return reset($versions);
+        }
+
+        // Compare versions using version_compare
+        $highestVersion = null;
+        $highestSource = null;
+
+        foreach ($versions as $source => $version) {
+            if (null === $highestVersion) {
+                $highestVersion = $version;
+                $highestSource = $source;
+                continue;
+            }
+
+            // version_compare returns 1 if first version is higher, -1 if second is higher, 0 if equal
+            if (version_compare($version, $highestVersion, '>')) {
+                $highestVersion = $version;
+                $highestSource = $source;
+            }
+        }
+
+        $this->logger->debug('Version comparison completed', [
+            'versions' => $versions,
+            'highest_version' => $highestVersion,
+            'source' => $highestSource,
+        ]);
+
+        return $highestVersion;
     }
 }

@@ -23,7 +23,7 @@
                             <td><span class="{{ data.version_analysis.packagist_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.packagist_available ? '✅' : '❌' }}</span></td>
                             <td><span class="{{ data.version_analysis.git_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.git_available ? '✅' : '❌' }}</span></td>
                             <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
-                            <td>{{ data.version_analysis.git_latest_version ?: 'N/A' }}</td>
+                            <td>{{ data.version_analysis.latest_version ?: 'N/A' }}</td>
                             {% else %}
                             <td><span class="status-unknown">❓</span></td>
                             <td><span class="status-unknown">❓</span></td>

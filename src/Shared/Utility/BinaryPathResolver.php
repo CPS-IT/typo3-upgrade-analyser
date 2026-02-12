@@ -160,6 +160,7 @@ class BinaryPathResolver
             $binaryPath,
             $logger,
             $timeoutSeconds,
+            $projectRoot,  // Pass project root to executor
         );
     }
 

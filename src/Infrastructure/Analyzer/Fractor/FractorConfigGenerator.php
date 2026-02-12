@@ -83,7 +83,6 @@ class FractorConfigGenerator
                     // Skip build and cache directories
                     '*/Resources/Public/*',
                     '*/.Build/*',
-                    '*/var/*',
                     // Skip documentation
                     '*/Documentation/*',
                 ])

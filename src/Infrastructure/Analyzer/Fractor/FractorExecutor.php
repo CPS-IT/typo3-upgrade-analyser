@@ -25,6 +25,7 @@ class FractorExecutor
         private readonly string $fractorBinaryPath,
         private readonly LoggerInterface $logger,
         private readonly int $timeoutSeconds = 300,
+        private readonly ?string $projectRoot = null,
     ) {
     }
 
@@ -106,6 +107,9 @@ class FractorExecutor
 
         $process = new Process($command);
         $process->setTimeout($this->timeoutSeconds);
+        // Set working directory to project root to ensure consistent path resolution
+        $workingDirectory = $this->projectRoot ?? $this->findProjectRoot();
+        $process->setWorkingDirectory($workingDirectory);
 
         try {
             $process->run();
@@ -133,5 +137,36 @@ class FractorExecutor
 
             throw new FractorExecutionException('Fractor execution failed: ' . $e->getMessage(), previous: $e);
         }
+    }
+
+    /**
+     * Find project root by searching upwards for characteristic files.
+     * Searches from the binary path upwards until it finds composer.json or bin/typo3-analyzer.
+     */
+    private function findProjectRoot(): string
+    {
+        $currentDir = \dirname($this->fractorBinaryPath);
+        $maxLevels = 10; // Prevent infinite loops
+
+        for ($i = 0; $i < $maxLevels; ++$i) {
+            // Check for characteristic project files
+            if (file_exists($currentDir . '/composer.json')
+                || file_exists($currentDir . '/bin/typo3-analyzer')
+            ) {
+                return $currentDir;
+            }
+
+            $parentDir = \dirname($currentDir);
+
+            // Reached filesystem root
+            if ($parentDir === $currentDir) {
+                break;
+            }
+
+            $currentDir = $parentDir;
+        }
+
+        // Fallback: Use the directory 3 levels up from binary (backwards compatibility)
+        return \dirname($this->fractorBinaryPath, 3);
     }
 }
