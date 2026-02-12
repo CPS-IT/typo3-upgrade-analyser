@@ -72,6 +72,8 @@ To create a GitHub Personal Access Token:
 3. Copy the token to your environment file
 
 **TYPO3 Extension Repository (TER) Token** (Optional):
+
+To create a token visit https://extensions.typo3.org/my-access-tokens and log in
 ```bash
 TER_ACCESS_TOKEN=your_ter_access_token
 ```
@@ -185,33 +187,53 @@ composer install --no-dev --no-interaction --optimize-autoloader
    ```
 
 2. **Edit Configuration** (`config/configuration.yaml`):
+
+Example in documentation/configuration.example.yaml
    ```yaml
-   installation:
-     path: '/path/to/your/typo3/installation'
+    analysis:
+      installationPath: path/to/instance/
+      targetVersion: '13.4'
+      resultCache:
+        enabled: true
+      phpVersions:
+        - '8.3'
+        - '8.4'
+      analyzers:
+        version_availability:
+          enabled: true
+          sources: [ter, packagist, github]
+          timeout: 30
+        static_analysis:
+          enabled: true
+          tools: { phpstan: { level: 6, config: null } }
+        deprecation_scanner:
+          enabled: true
+        tca_migration:
+          enabled: true
+        code_quality:
+          enabled: true
+          complexity_threshold: 10
+          loc_threshold: 1000
+        typo3_rector:
+          enabled: true
+        fractor:
+          enabled: true
+    reporting:
+      formats:
+        - markdown
+      output_directory: var/reports/
+      includeCharts: false
+    externalTools:
+      rector:
+        binary: vendor/bin/rector
+        config: null
+      fractor:
+        binary: vendor/bin/fractor
+        config: null
+      typoscript_lint:
+        binary: vendor/bin/typoscript-lint
+        config: typoscript-lint.yml
 
-   target_version: '13.0'
-
-   output:
-     directory: 'var/analysis-results'
-     formats: ['html', 'markdown']
-
-   analyzers:
-     version_availability:
-       enabled: true
-       check_ter: true
-       check_packagist: true
-       check_git: true
-
-     typo3_rector:
-       enabled: true
-       timeout: 300
-
-     fractor:
-       enabled: true
-       timeout: 300
-
-     lines_of_code:
-       enabled: true
    ```
 
 ### Environment-Specific Configuration
@@ -294,6 +316,9 @@ project-root/
 
 # Initialize configuration (interactive)
 ./bin/typo3-analyzer init-config --interactive
+
+# List extensions
+./bin/typo3-analyzer list-extensions
 ```
 
 ### Test Installation with Sample Data
