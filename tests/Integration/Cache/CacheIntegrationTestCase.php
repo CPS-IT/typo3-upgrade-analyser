@@ -202,7 +202,7 @@ class CacheIntegrationTestCase extends AbstractIntegrationTestCase
 
         // Generate cache keys to test if entries exist
         $installationCacheKey = $this->cacheService->generateKey('installation_discovery', $installationPath, ['validate' => true]);
-        $extensionCacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, ['custom_paths' => []]);
+        $extensionCacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, ['custom_paths' => [], 'extensions_to_skip' => []]);
 
         // Verify both services have cached results
         $this->assertTrue(
@@ -267,8 +267,8 @@ class CacheIntegrationTestCase extends AbstractIntegrationTestCase
 
         if ($result2->isSuccessful()) {
             // Generate cache keys for different paths
-            $cacheKey1 = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => []]);
-            $cacheKey2 = $this->cacheService->generateKey('extension_discovery', $installationPath2, ['custom_paths' => []]);
+            $cacheKey1 = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => [], 'extensions_to_skip' => []]);
+            $cacheKey2 = $this->cacheService->generateKey('extension_discovery', $installationPath2, ['custom_paths' => [], 'extensions_to_skip' => []]);
 
             // Should have separate cache entries for different paths
             $this->assertTrue(
@@ -293,8 +293,8 @@ class CacheIntegrationTestCase extends AbstractIntegrationTestCase
         $this->assertTrue($result3->isSuccessful());
 
         // Should create another cache entry due to different custom paths
-        $cacheKeyDefault = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => []]);
-        $cacheKeyCustom = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => $customPaths]);
+        $cacheKeyDefault = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => [], 'extensions_to_skip' => []]);
+        $cacheKeyCustom = $this->cacheService->generateKey('extension_discovery', $installationPath1, ['custom_paths' => $customPaths, 'extensions_to_skip' => []]);
 
         $this->assertTrue(
             $this->cacheService->has($cacheKeyDefault),

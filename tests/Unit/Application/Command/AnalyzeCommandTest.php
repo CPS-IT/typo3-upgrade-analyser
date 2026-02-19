@@ -168,7 +168,7 @@ class AnalyzeCommandTest extends TestCase
         $definition = $this->command->getDefinition();
 
         // Check default config path
-        self::assertEquals('typo3-analyzer.yaml', $definition->getOption('config')->getDefault());
+        self::assertEquals(\CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService::DEFAULT_CONFIG_PATH, $definition->getOption('config')->getDefault());
 
         // Check that analyzers option has no default (empty array)
         self::assertEquals([], $definition->getOption('analyzers')->getDefault());

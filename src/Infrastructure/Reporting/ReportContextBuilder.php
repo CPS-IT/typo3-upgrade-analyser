@@ -34,6 +34,7 @@ class ReportContextBuilder
      * @param array<string>                         $extensionAvailableInTargetVersion
      * @param array<string, array<string, mixed>>   $extensionConfiguration
      * @param array<string, mixed>                  $estimatedHours
+     * @param array<string, mixed>                  $clientReport
      */
     public function buildReportContext(
         Installation $installation,
@@ -44,6 +45,7 @@ class ReportContextBuilder
         array $extensionConfiguration = [],
         array $estimatedHours = [],
         int|float $hourlyRate = 960,
+        array $clientReport = [],
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
@@ -107,6 +109,7 @@ class ReportContextBuilder
             'generated_at' => new \DateTimeImmutable(),
             'estimated_hours' => $estimatedHours,
             'hourly_rate' => $hourlyRate,
+            'client_report' => $clientReport,
         ];
     }
 

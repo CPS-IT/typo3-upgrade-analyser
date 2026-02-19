@@ -98,6 +98,68 @@ class TemplateRenderer
     }
 
     /**
+     * Render Angebot as PDF using client-report config.
+     * Filename: Angebot_AN-{offernr}.pdf.
+     *
+     * @param array<string, mixed> $context Report context data
+     *
+     * @return array{content: string, filename: string} Rendered PDF content and filename
+     */
+    public function renderAngebotDePdf(array $context): array
+    {
+        $projectRoot = \dirname(__DIR__, 3);
+
+        $logoPath = $projectRoot . '/resources/images/cps-logo.png';
+        if (file_exists($logoPath)) {
+            $context['logo_base64'] = 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+        }
+
+        $html = $this->twig->render('html/angebot-de.html.twig', $context);
+
+        // Use a project-local font cache dir to avoid polluting vendor/ and to
+        // ensure paths are always valid regardless of where the project is deployed.
+        $fontCacheDir = $projectRoot . '/var/fonts';
+        if (!is_dir($fontCacheDir)) {
+            mkdir($fontCacheDir, 0o755, true);
+        }
+
+        $dompdf = new \Dompdf\Dompdf([
+            'enable_remote' => false,
+            'chroot' => $projectRoot,
+            'font_dir' => $fontCacheDir,
+        ]);
+
+        // Register custom fonts programmatically so they are available by family
+        // name in CSS without needing @font-face declarations in the template.
+        $fontsPath = $projectRoot . '/resources/fonts';
+        $fontMetrics = $dompdf->getFontMetrics();
+        foreach ([
+            ['family' => 'FSDillon', 'weight' => 'normal', 'style' => 'normal', 'file' => 'FSDillon-Regular.ttf'],
+            ['family' => 'FSDillon', 'weight' => '500',    'style' => 'normal', 'file' => 'FSDillon-Medium.ttf'],
+            ['family' => 'FSDillon', 'weight' => 'bold',   'style' => 'normal', 'file' => 'FSDillon-Bold.ttf'],
+            ['family' => 'Majorant',  'weight' => 'normal', 'style' => 'normal', 'file' => 'Majorant-Lt.ttf'],
+            ['family' => 'Majorant',  'weight' => 'bold',   'style' => 'normal', 'file' => 'Majorant-Bd.ttf'],
+        ] as $def) {
+            $fontMetrics->registerFont(
+                ['family' => $def['family'], 'weight' => $def['weight'], 'style' => $def['style']],
+                'file://' . $fontsPath . '/' . $def['file'],
+            );
+        }
+
+        $dompdf->loadHtml($html);
+        $dompdf->setBasePath($projectRoot . '/resources/');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $offernr = $context['client_report']['offernr'] ?? 'XXX';
+
+        return [
+            'content' => $dompdf->output(),
+            'filename' => 'Angebot_AN-' . $offernr . '.pdf',
+        ];
+    }
+
+    /**
      * Render German client report as XWiki page.
      *
      * @param array<string, mixed> $context Report context data

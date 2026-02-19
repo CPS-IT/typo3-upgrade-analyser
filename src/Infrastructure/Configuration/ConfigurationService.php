@@ -17,7 +17,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class ConfigurationService implements ConfigurationServiceInterface
 {
-    public const string DEFAULT_CONFIG_PATH = 'typo3-analyzer.yaml';
+    public const string DEFAULT_CONFIG_PATH = 'config/typo3-analyzer.yaml';
 
     // Default configuration values based on documentation/configuration.example.yaml
     public const string DEFAULT_TARGET_VERSION = '13.4';
@@ -71,6 +71,13 @@ class ConfigurationService implements ConfigurationServiceInterface
     public function getTargetVersion(): string
     {
         return $this->get(self::CONFIG_ANALYSIS_TARGET_VERSION, self::DEFAULT_TARGET_VERSION);
+    }
+
+    public function getExtensionsToSkip(): array
+    {
+        $extensionsToSkip = $this->get(self::CONFIG_ANALYSIS_EXTENSIONS_TO_SKIP, []);
+
+        return \is_array($extensionsToSkip) ? $extensionsToSkip : [];
     }
 
     public function get(string $key, mixed $default = null): mixed

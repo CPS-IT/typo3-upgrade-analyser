@@ -172,7 +172,8 @@ class AnalyzeCommand extends Command
 
         // Discover extensions
         $io->text('Discovering extensions...');
-        $extensionResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+        $extensionsToSkip = $configService->getExtensionsToSkip();
+        $extensionResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths, $extensionsToSkip);
 
         if (!$extensionResult->isSuccessful()) {
             throw new \RuntimeException(\sprintf('Extension discovery failed: %s', $extensionResult->getErrorMessage()));
@@ -409,6 +410,7 @@ class AnalyzeCommand extends Command
                 $extensionConfiguration,
                 $estimatedHours,
                 $hourlyRate,
+                $clientReport,
             );
 
             // Log report generation results

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Angebot AN-{{ client_report.offernr ?? 'XXX' }}</title>
+    <style>
+        @page {
+            size: A4;
+            /* (2) alles 25px (~0.88cm) nach oben */
+            margin-top: 1.12cm;
+            /* (4) kein Bottom-Margin → footer sitzt am physischen Seitenrand */
+            margin-bottom: 0;
+            margin-left: 2.5cm;
+            margin-right: 2cm;
+        }
+        body {
+            font-family: 'FSDillon', Arial, sans-serif;
+            font-size: 9pt;
+            color: #000;
+            line-height: 1.1;
+            /* (4) Platz für Footer im Flow freihalten */
+            padding-bottom: 3.6cm;
+        }
+        p {
+            margin: 0 0 5px 0;
+            line-height: 1.1;
+        }
+
+        /* (4) Footer direkt am Seitenrand, -1.06cm ≈ 40px tiefer */
+        .footer {
+            position: fixed;
+            bottom: -1.06cm;
+            left: 0;
+            right: -0.6cm;
+            height: 4cm;
+            font-size: 7.5pt;
+            line-height: 1.05;
+            padding-top: 5px;
+            background-color: white;
+            font-family: 'FSDillon', Arial, sans-serif;
+            font-weight: normal;
+        }
+        .footer table { width: 100%; border-collapse: collapse; }
+        .footer td { padding: 0 2px 0 0; vertical-align: top; font-size: 7.5pt; line-height: 1.05; text-align: left; font-family: 'FSDillon', Arial, sans-serif; font-weight: normal; }
+        /* Nested label-tables in column 2 */
+        .footer .contact-grid { width: 100%; border-collapse: collapse; }
+        .footer .contact-grid td { padding: 0; font-size: 7.5pt; line-height: 1.05; font-family: 'FSDillon', Arial, sans-serif; font-weight: normal; }
+        .footer .contact-grid .lbl { width: 10px; }
+
+        h1 {
+            font-family: 'FSDillon', Arial, sans-serif;
+            font-size: 13pt;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+        }
+
+        table.positions {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        /* (5) Nur Linie unten, kein grauer Hintergrund */
+        table.positions th {
+            background-color: transparent;
+            border-top: none;
+            border-bottom: 1px solid #999;
+            padding: 3px 6px;
+            font-family: 'FSDillon', Arial, sans-serif;
+            font-weight: bold;
+            font-size: 8.5pt;
+            line-height: 1.1;
+            text-align: left;
+        }
+        table.positions td {
+            padding: 5px 6px;
+            vertical-align: top;
+            font-family: 'Majorant', Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.1;
+        }
+        table.positions td.pos-desc {
+            font-size: 9pt;
+        }
+        table.positions td.pos-desc strong {
+            font-size: 9pt;
+        }
+        table.positions td.pos-desc span {
+            font-size: 8pt;
+            line-height: 1.0;
+        }
+        /* (3) Summen-Spalte fett */
+        table.positions td.pos-total { font-weight: bold; }
+
+        .pos-nr      { width: 5%;  text-align: center; }
+        .pos-desc    { width: 50%; }
+        .pos-menge   { width: 10%; text-align: right; }
+        .pos-einheit { width: 7%;  }
+        .pos-price   { width: 12%; text-align: right; }
+        .pos-total   { width: 16%; text-align: right; }
+    </style>
+</head>
+<body>
+{% set angebot = client_report.angebot ?? {} %}
+{% set offernr = client_report.offernr ?? 'XXX' %}
+{% set angebot_date = angebot.date ?? generated_at.format('d.m.Y') %}
+{% set client = angebot.client ?? {} %}
+{% set contact = angebot.contact ?? {} %}
+{% set project = angebot.project ?? {} %}
+{% set salutation = angebot.salutation ?? 'Sehr geehrte Damen und Herren,' %}
+{% set closing_name = angebot.closing ?? '' %}
+{% set vat_rate = angebot.vat_rate ?? 19 %}
+
+{% set positions = [
+    { key: 'server-setup',          category: 'Serveradministration',  description: 'Aufsetzen neuer Server und Anpassung der Deployment-Struktur' },
+    { key: 'typo3-bundle-upgrade',  category: 'Entwicklung',           description: 'Upgrade des TYPO3-Systems (bundle update)' },
+    { key: 'extension-update',      category: 'Entwicklung',           description: 'Extensions-Update (inkl. Migration)' },
+    { key: 'data-migration',        category: 'Entwicklung',           description: 'Datenmigration' },
+    { key: 'upgrade-documentation', category: 'Entwicklung',           description: 'Upgrade-Dokumentation (Änderungen protokollieren)' },
+    { key: 'component-testing',     category: 'Qualitätssicherung',    description: 'Testing der Komponenten' },
+    { key: 'final-migration',       category: 'Qualitätssicherung',    description: 'Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung' },
+    { key: 'project-support',       category: 'Projektleitung',        description: 'Internes und externes Projektmanagement, Agile Projektabwicklung' },
+] %}
+
+{% set total_net = 0 %}
+{% for pos in positions %}
+    {% set hours = estimated_hours[pos.key] ?? 0 %}
+    {% if hours > 0 %}
+        {% set total_net = total_net + (hours * hourly_rate) %}
+    {% endif %}
+{% endfor %}
+{% set vat_amount = total_net * vat_rate / 100 %}
+{% set total_gross = total_net + vat_amount %}
+
+{# ── Fußzeile (fixed, wiederholt auf allen Seiten) ───────────────────────── #}
+<div class="footer">
+    <table>
+        <tr>
+            <td style="width: 25%;">coding. powerful. systems. CPS GmbH<br><br>Gustav-Meyer-Allee 25<br>Gebäude 13/5<br>13355 Berlin</td>
+            <td style="width: 16%;">
+                <table class="contact-grid">
+                    <tr><td class="lbl">T</td><td>+49 30 818 777-0</td></tr>
+                    <tr><td class="lbl">F</td><td>+49 30 398 203 461</td></tr>
+                    <tr><td class="lbl" style="padding-top: 9px;">E</td><td style="padding-top: 9px;">info@cps-it.de</td></tr>
+                    <tr><td class="lbl">W</td><td>cps-it.de</td></tr>
+                </table>
+            </td>
+            <td style="width: 15%;">Geschäftsführer:<br>Sascha Böttcher<br><br>Prokura:<br>Sebastian Kreideweiß<br>Thomas Schöne</td>
+            <td style="width: 22%;">Sitz der Gesellschaft: Berlin<br>Amtsgericht Charlottenburg<br>HRB 81964 B<br>USt.-ID DE217620456</td>
+            <td style="width: 22%; white-space: nowrap;">Volksbank Berlin<br>IBAN DE31 1009 0000 7224 3160 08<br>BIC BEVODEBB</td>
+        </tr>
+    </table>
+</div>
+
+{# ── Seite 1 ─────────────────────────────────────────────────────────────── #}
+
+{# (1) Logo: 60px weiter rechts (= 20px nach links gegenüber vorher) #}
+<table style="width: 100%; margin-bottom: 18px;">
+    <tr>
+        <td style="width: 40%;"></td>
+        <td style="width: 60%; text-align: right; vertical-align: middle;">
+            {% if logo_base64 ?? false %}
+            <img src="{{ logo_base64 }}" style="height: 80px; margin-right: -75px;" alt="coding. powerful. systems">
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+{# Adresse links + Datum / Ansprechpartner rechts #}
+<table style="width: 100%; margin-top: 53px; margin-bottom: 0;">
+    <tr>
+        <td style="width: 55%; vertical-align: top;">
+            <div style="font-family: 'FSDillon', Arial, sans-serif; font-size: 7pt; font-weight: bold; margin-bottom: 5px; line-height: 1.1;">coding. powerful. systems &nbsp;&nbsp; Gustav-Meyer-Allee 25 &nbsp; 13355 Berlin</div>
+            <div style="font-family: 'Majorant', Arial, sans-serif; font-size: 8.5pt; line-height: 1.1;">{{ client.name ?? '' }}<br>{% if client.contact ?? '' %}{{ client.contact }}<br>{% endif %}{{ client.street ?? '' }}<br>{{ client.city ?? '' }}</div>
+        </td>
+        <td style="width: 45%; vertical-align: top; text-align: right; padding-left: 15px;">
+            <div style="margin-top: 18px; margin-bottom: 14px; font-size: 8pt; font-weight: bold;">{{ angebot_date }}</div>
+            <div style="font-size: 7.5pt; font-weight: bold; line-height: 1.1;">Ihr:e Ansprechpartner:in<br>{{ contact.name ?? '' }}<br><br>{{ contact.phone ?? '' }}<br>{{ contact.email ?? '' }}</div>
+        </td>
+    </tr>
+</table>
+
+<div style="margin-top: 63px;"></div>
+
+<h1>Angebot AN-{{ offernr }}</h1>
+
+<table style="margin-bottom: 14px; font-family: 'Majorant', Arial, sans-serif; font-size: 9pt; border-collapse: collapse;">
+    {% if project.name ?? '' %}
+    <tr>
+        <td style="padding: 2px 12px 2px 0; font-weight: bold;">Projektbezeichnung:</td>
+        <td style="padding: 2px 0;">{{ project.name }}</td>
+    </tr>
+    {% endif %}
+    {% if project.number ?? '' %}
+    <tr>
+        <td style="padding: 2px 12px 2px 0; font-weight: bold;">Projektnummer:</td>
+        <td style="padding: 2px 0;">{{ project.number }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+<p style="font-family: 'Majorant', Arial, sans-serif; margin-bottom: 5px; font-size: 9pt;">{{ salutation }}</p>
+<p style="font-family: 'Majorant', Arial, sans-serif; margin-bottom: 14px; font-size: 9pt;">vielen Dank für Ihre Anfrage. Gern bieten wir wie folgt an:</p>
+
+<table class="positions">
+    <thead>
+        <tr>
+            <th class="pos-nr">Pos.</th>
+            <th class="pos-desc">Bezeichnung</th>
+            <th class="pos-menge">Menge</th>
+            <th class="pos-einheit">Einheit</th>
+            <th class="pos-price">Einzelpreis</th>
+            <th class="pos-total">Summe</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set pos_nr = 0 %}
+        {% for pos in positions %}
+            {% set hours = estimated_hours[pos.key] ?? 0 %}
+            {% if hours > 0 %}
+                {% set pos_nr = pos_nr + 1 %}
+                {% set line_total = hours * hourly_rate %}
+                <tr>
+                    <td class="pos-nr">{{ pos_nr }}</td>
+                    <td class="pos-desc"><strong>{{ pos.category }}</strong><br><span>{{ pos.description }}</span></td>
+                    <td class="pos-menge">{{ hours|number_format(2, ',', '.') }}</td>
+                    <td class="pos-einheit">Std.</td>
+                    <td class="pos-price">{{ hourly_rate|number_format(2, ',', '.') }} €</td>
+                    <td class="pos-total">{{ line_total|number_format(2, ',', '.') }} €</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{# ── Seitenumbruch ───────────────────────────────────────────────────────── #}
+<div style="page-break-before: always;"></div>
+
+{# ── Seite 2 ─────────────────────────────────────────────────────────────── #}
+{# (3) Logo neben Seite-2-Kopfzeile, (4) Text kleiner #}
+<table style="width: 100%; margin-bottom: 78px; border-collapse: collapse;">
+    <tr>
+        <td style="vertical-align: middle; font-size: 7pt; color: #555;">
+            Seite 2 zum Angebot AN-{{ offernr }}{% if project.name ?? '' %} zum Projekt {{ project.name }}{% endif %}
+        </td>
+        <td style="text-align: right; vertical-align: middle;">
+            {% if logo_base64 ?? false %}
+            <img src="{{ logo_base64 }}" style="height: 80px; margin-right: -75px;" alt="coding. powerful. systems">
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+{# (5) Haarlinie über gesamte Breite vor Summe netto #}
+{# (6) Spaltenbreiten: 55% Leer / 24% Label / 21% Wert – Wert-Spalte breiter für "xx.xxx,xx €" #}
+{# (7) padding-right auf Label-Zellen erhöht für mehr Abstand zur Zahl #}
+<table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+    <tr>
+        <td colspan="3" style="border-top: 1px solid #000; padding: 0;"></td>
+    </tr>
+    <tr>
+        <td style="width: 55%;"></td>
+        <td style="width: 24%; text-align: right; padding: 3px 80px 3px 10px; font-size: 9pt; white-space: nowrap;">Summe netto</td>
+        <td style="width: 21%; text-align: right; padding: 3px 10px; font-size: 9pt; white-space: nowrap;">{{ total_net|number_format(2, ',', '.') }} €</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="text-align: right; padding: 3px 80px 3px 10px; font-size: 9pt; white-space: nowrap;">zzgl. {{ vat_rate|number_format(2, ',', '.') }}% USt</td>
+        <td style="text-align: right; padding: 3px 10px; font-size: 9pt; white-space: nowrap;">{{ vat_amount|number_format(2, ',', '.') }} €</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td colspan="2" style="border-top: 1px solid #333; padding: 0;"></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="text-align: right; padding: 5px 80px 5px 10px; font-size: 10pt; font-weight: bold; white-space: nowrap;">Gesamtbetrag</td>
+        <td style="text-align: right; padding: 5px 10px; font-size: 10pt; font-weight: bold; white-space: nowrap;">{{ total_gross|number_format(2, ',', '.') }} €</td>
+    </tr>
+</table>
+
+<p style="margin-top: 30px; margin-bottom: 25px; font-size: 9pt; font-family: 'Majorant', Arial, sans-serif;">Wir würden uns freuen, diesen Auftrag für Sie durchführen zu können.</p>
+
+{% if closing_name %}
+<p style="font-size: 9pt; font-family: 'Majorant', Arial, sans-serif;">{{ closing_name }}</p>
+{% endif %}
+
+</body>
+</html>

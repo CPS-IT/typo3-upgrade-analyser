@@ -2,13 +2,13 @@
     <h2>Vorbemerkungen</h2>
 
     <p><strong>Ziel dieses Dokuments ist die Definition von Anforderungen im Rahmen eines TYPO3-Upgrades der Webseite</strong>
-    <a href="https://www.abda.de/">https://www.abda.de/</a>
+    <a href="https://www.bundesumweltministerium.de">https://www.bundesumweltministerium.de</a>
     <strong>von Version TYPO3 v11 auf TYPO3 v13</strong></p>
 
     <h3>Grundlage</h3>
 
     <p>Als Grundlage wird aktuelle Produktivumgebung (TYPO3 v11)
-    <a href="https://www.abda.de/typo3">https://www.abda.de/typo3</a> benutzt. Basierend darauf prüft coding. powerful. systems. CPS GmbH die verwendeten Komponenten inkl. der Datenbankstruktur sowie -beziehungen und trifft Aussagen für die technische Modernisierung. Dabei werden Möglichkeiten einer weiteren Verwendung von vorhandenen Modulen, Extensions und Features geprüft.</p>
+    <a href="https://www.bundesumweltministerium.de/typo3">https://www.bundesumweltministerium.de/typo3</a> benutzt. Basierend darauf prüft coding. powerful. systems. CPS GmbH die verwendeten Komponenten inkl. der Datenbankstruktur sowie -beziehungen und trifft Aussagen für die technische Modernisierung. Dabei werden Möglichkeiten einer weiteren Verwendung von vorhandenen Modulen, Extensions und Features geprüft.</p>
 
     <p><br>Der Umfang benötigter Anpassungen für ein Upgrade hin zur TYPO3 LTS v13 wird in dieser Aufwandschätzung zusammengetragen.</p>
 
@@ -33,63 +33,70 @@
     <div class="page-break-after"></div>
     <h2>Aufwandsschätzung</h2>
 
-<!-- DEBUG: estimated_hours = {{ estimated_hours|json_encode|raw }} -->
-<!-- DEBUG: hourly_rate = {{ hourly_rate }} -->
-
 {% set hourly_rate = hourly_rate ?? 960 %}
-{% set server_setup_hours = estimated_hours['server-setup'] ?? 0 %}
-{% set typo3_upgrade_hours = estimated_hours['typo3-bundle-upgrade'] ?? 0 %}
-{% set extension_update_hours = estimated_hours['extension-update'] ?? 0 %}
-{% set upgrade_doc_hours = estimated_hours['upgrade-documentation'] ?? 0 %}
-{% set testing_hours = estimated_hours['component-testing'] ?? 0 %}
-{% set final_migration_hours = estimated_hours['final-migration'] ?? 0 %}
+{% set vat_rate = vat_rate ?? 19 %}
 
-{% set total_hours = server_setup_hours + typo3_upgrade_hours + extension_update_hours + upgrade_doc_hours + testing_hours + final_migration_hours %}
-{% set total_cost = total_hours * hourly_rate %}
+{% set positions = [
+    { key: 'server-setup',          category: 'Serveradministration', description: 'Aufsetzen neuer Server und Anpassung der Deployment-Struktur' },
+    { key: 'typo3-bundle-upgrade',  category: 'Entwicklung',          description: 'Upgrade des TYPO3-Systems (bundle update)' },
+    { key: 'extension-update',      category: 'Entwicklung',          description: 'Extensions-Update (inkl. Migration)' },
+    { key: 'data-migration',        category: 'Entwicklung',          description: 'Datenmigration' },
+    { key: 'upgrade-documentation', category: 'Entwicklung',          description: 'Upgrade-Dokumentation (Änderungen protokollieren)' },
+    { key: 'component-testing',     category: 'Qualitätssicherung',   description: 'Testing der Komponenten' },
+    { key: 'final-migration',       category: 'Qualitätssicherung',   description: 'Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung' },
+    { key: 'project-support',       category: 'Projektleitung',       description: 'Internes und externes Projektmanagement, Agile Projektabwicklung' },
+] %}
 
-    <table style="width: 100%; margin-bottom: 20px;" class="page-break-inside-avoid">
+{% set total_net = 0 %}
+{% for pos in positions %}
+    {% set hours = estimated_hours[pos.key] ?? 0 %}
+    {% if hours > 0 %}{% set total_net = total_net + (hours * hourly_rate) %}{% endif %}
+{% endfor %}
+{% set vat_amount = total_net * vat_rate / 100 %}
+{% set total_gross = total_net + vat_amount %}
+
+    <table style="width: 100%; margin-bottom: 20px;">
         <thead>
             <tr>
-                <th style="text-align: left;">Tätigkeit</th>
-                <th style="text-align: right;">TYPO3 v13 (PT)</th>
-                <th style="text-align: right;">TYPO3 v13 (€)</th>
+                <th style="text-align: center; width: 5%;">Pos.</th>
+                <th style="text-align: left; width: 41%;">Bezeichnung</th>
+                <th style="text-align: right; width: 10%;">Menge</th>
+                <th style="text-align: left; width: 6%;">Einheit</th>
+                <th style="text-align: right; width: 16%;">Einzelpreis</th>
+                <th style="text-align: right; width: 22%;">Summe</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>Aufsetzen neuer Server und Anpassung der Deployment-Struktur (ServerAdmin)</td>
-                <td style="text-align: right;">{{ (server_setup_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (server_setup_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
+            {% set pos_nr = 0 %}
+            {% for pos in positions %}
+                {% set hours = estimated_hours[pos.key] ?? 0 %}
+                {% if hours > 0 %}
+                    {% set pos_nr = pos_nr + 1 %}
+                    {% set line_total = hours * hourly_rate %}
+                    <tr>
+                        <td style="text-align: center;">{{ pos_nr }}</td>
+                        <td><strong>{{ pos.category }}</strong><br>{{ pos.description }}</td>
+                        <td style="text-align: right;">{{ hours|number_format(2, ',', '.') }}</td>
+                        <td>Std.</td>
+                        <td style="text-align: right;">{{ hourly_rate|number_format(2, ',', '.') }} €</td>
+                        <td style="text-align: right; font-weight: bold;">{{ line_total|number_format(2, ',', '.') }} €</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            <tr style="border-top: 1px solid #999;">
+                <td colspan="4"></td>
+                <td style="text-align: right;">Summe netto</td>
+                <td style="text-align: right;">{{ total_net|number_format(2, ',', '.') }} €</td>
             </tr>
             <tr>
-                <td>Upgrade des TYPO3-Systems (bundle update) (Entwicklung)</td>
-                <td style="text-align: right;">{{ (typo3_upgrade_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (typo3_upgrade_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
+                <td colspan="4"></td>
+                <td style="text-align: right;">zzgl. {{ vat_rate|number_format(0, ',', '.') }}% USt.</td>
+                <td style="text-align: right;">{{ vat_amount|number_format(2, ',', '.') }} €</td>
             </tr>
-            <tr>
-                <td>Extensions-Update (inkl. Migration) (Entwicklung)</td>
-                <td style="text-align: right;">{{ (extension_update_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (extension_update_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td>Upgrade-Dokumentation (Änderungen protokollieren) (Entwicklung)</td>
-                <td style="text-align: right;">{{ (upgrade_doc_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (upgrade_doc_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td>Testing der Komponenten (QS)</td>
-                <td style="text-align: right;">{{ (testing_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (testing_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td>Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung (QS)</td>
-                <td style="text-align: right;">{{ (final_migration_hours / 8)|number_format(2, ',', '.') }}</td>
-                <td style="text-align: right;">{{ (final_migration_hours * hourly_rate)|number_format(2, ',', '.') }}</td>
-            </tr>
-            <tr style="border-top: 2px solid #333; font-weight: bold;">
-                <td><strong>Gesamt:</strong></td>
-                <td style="text-align: right;"><strong>{{ (total_hours / 8)|number_format(2, ',', '.') }}</strong></td>
-                <td style="text-align: right;"><strong>{{ total_cost|number_format(2, ',', '.') }}</strong></td>
+            <tr style="border-top: 1px solid #333; font-weight: bold;">
+                <td colspan="4"></td>
+                <td style="text-align: right;"><strong>Gesamtbetrag</strong></td>
+                <td style="text-align: right;"><strong>{{ total_gross|number_format(2, ',', '.') }} €</strong></td>
             </tr>
         </tbody>
     </table>

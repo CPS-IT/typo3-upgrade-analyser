@@ -35,7 +35,7 @@
 
 {% if data.version_analysis and data.version_analysis.recommendations -%}
 {% for recommendation in data.version_analysis.recommendations -%}
-{% if 'not available' in recommendation %}* Extension ist in keinem bekannten Repository verfügbar.
+{% if 'not available' in recommendation %}* Extension ist in keinem öffentlichen Repository verfügbar.
 {% elseif 'only available via Git' in recommendation %}* Extension nur über Git-Repository verfügbar. {% if 'well-maintained' in recommendation %}Repository scheint gut gepflegt.{% else %}Prüfen Sie den Wartungsstatus vor dem Upgrade.{% endif %}
 {% elseif 'Git repository:' in recommendation %}* Git-Repository: {{ recommendation|replace({'Git repository: ': ''}) }}
 {% elseif 'available in multiple sources' in recommendation %}* Extension in mehreren Quellen verfügbar. Nutzen Sie die stabilste Quelle für Produktion.

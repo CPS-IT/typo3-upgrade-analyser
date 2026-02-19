@@ -377,7 +377,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->cacheService->expects($this->exactly(2))
             ->method('generateKey')
-            ->with('extension_discovery', $this->tempDir, ['custom_paths' => []])
+            ->with('extension_discovery', $this->tempDir, ['custom_paths' => [], 'extensions_to_skip' => []])
             ->willReturn('cache_key_123');
 
         $this->cacheService->expects($this->once())

@@ -107,7 +107,8 @@ class ListExtensionsCommand extends Command
 
             // Discover extensions using installation metadata
             $io->text('Discovering extensions...');
-            $discoveryResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+            $extensionsToSkip = $configService->getExtensionsToSkip();
+            $discoveryResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths, $extensionsToSkip);
 
             if (!$discoveryResult->isSuccessful()) {
                 $io->error(\sprintf('Extension discovery failed: %s', $discoveryResult->getErrorMessage()));

@@ -31,22 +31,39 @@ Es gelten die für die Version 13.x LTS beschriebene Standardfunktionalitäten.
 = Aufwandsschätzung =
 
 {% set hourly_rate = hourly_rate ?? 960 %}
-{% set server_setup_hours = estimated_hours['server-setup'] ?? 0 %}
-{% set typo3_upgrade_hours = estimated_hours['typo3-bundle-upgrade'] ?? 0 %}
-{% set extension_update_hours = estimated_hours['extension-update'] ?? 0 %}
-{% set upgrade_doc_hours = estimated_hours['upgrade-documentation'] ?? 0 %}
-{% set testing_hours = estimated_hours['component-testing'] ?? 0 %}
-{% set final_migration_hours = estimated_hours['final-migration'] ?? 0 %}
-{% set total_hours = server_setup_hours + typo3_upgrade_hours + extension_update_hours + upgrade_doc_hours + testing_hours + final_migration_hours %}
-{% set total_cost = total_hours * hourly_rate %}
+{% set vat_rate = vat_rate ?? 19 %}
 
-|= Tätigkeit |= TYPO3 v13 (PT) |= TYPO3 v13 (€)
-| Aufsetzen neuer Server und Anpassung der Deployment-Struktur (ServerAdmin) | {{ (server_setup_hours / 8)|number_format(2, ',', '.') }} | {{ (server_setup_hours * hourly_rate)|number_format(2, ',', '.') }}
-| Upgrade des TYPO3-Systems (bundle update) (Entwicklung) | {{ (typo3_upgrade_hours / 8)|number_format(2, ',', '.') }} | {{ (typo3_upgrade_hours * hourly_rate)|number_format(2, ',', '.') }}
-| Extensions-Update (inkl. Migration) (Entwicklung) | {{ (extension_update_hours / 8)|number_format(2, ',', '.') }} | {{ (extension_update_hours * hourly_rate)|number_format(2, ',', '.') }}
-| Upgrade-Dokumentation (Änderungen protokollieren) (Entwicklung) | {{ (upgrade_doc_hours / 8)|number_format(2, ',', '.') }} | {{ (upgrade_doc_hours * hourly_rate)|number_format(2, ',', '.') }}
-| Testing der Komponenten (QS) | {{ (testing_hours / 8)|number_format(2, ',', '.') }} | {{ (testing_hours * hourly_rate)|number_format(2, ',', '.') }}
-| Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung (QS) | {{ (final_migration_hours / 8)|number_format(2, ',', '.') }} | {{ (final_migration_hours * hourly_rate)|number_format(2, ',', '.') }}
-| **Gesamt:** | **{{ (total_hours / 8)|number_format(2, ',', '.') }}** | **{{ total_cost|number_format(2, ',', '.') }}**
+{% set positions = [
+    { key: 'server-setup',          category: 'Serveradministration', description: 'Aufsetzen neuer Server und Anpassung der Deployment-Struktur' },
+    { key: 'typo3-bundle-upgrade',  category: 'Entwicklung',          description: 'Upgrade des TYPO3-Systems (bundle update)' },
+    { key: 'extension-update',      category: 'Entwicklung',          description: 'Extensions-Update (inkl. Migration)' },
+    { key: 'data-migration',        category: 'Entwicklung',          description: 'Datenmigration' },
+    { key: 'upgrade-documentation', category: 'Entwicklung',          description: 'Upgrade-Dokumentation (Änderungen protokollieren)' },
+    { key: 'component-testing',     category: 'Qualitätssicherung',   description: 'Testing der Komponenten' },
+    { key: 'final-migration',       category: 'Qualitätssicherung',   description: 'Durchführung der Umstellung gemäß Upgrade-Dokumentation zur finalen Umstellung' },
+    { key: 'project-support',       category: 'Projektleitung',       description: 'Internes und externes Projektmanagement, Agile Projektabwicklung' },
+] %}
+
+{% set total_net = 0 %}
+{% for pos in positions %}
+    {% set hours = estimated_hours[pos.key] ?? 0 %}
+    {% if hours > 0 %}{% set total_net = total_net + (hours * hourly_rate) %}{% endif %}
+{% endfor %}
+{% set vat_amount = total_net * vat_rate / 100 %}
+{% set total_gross = total_net + vat_amount %}
+
+|= Pos. |= Bezeichnung |= Menge |= Einheit |= Einzelpreis |= Summe
+{% set pos_nr = 0 %}
+{% for pos in positions %}
+    {% set hours = estimated_hours[pos.key] ?? 0 %}
+    {% if hours > 0 %}
+        {% set pos_nr = pos_nr + 1 %}
+        {% set line_total = hours * hourly_rate %}
+| {{ pos_nr }} | **{{ pos.category }}**\\ {{ pos.description }} | {{ hours|number_format(2, ',', '.') }} | Std. | {{ hourly_rate|number_format(2, ',', '.') }} € | **{{ line_total|number_format(2, ',', '.') }} €**
+    {% endif %}
+{% endfor %}
+| | | | | Summe netto | {{ total_net|number_format(2, ',', '.') }} €
+| | | | | zzgl. {{ vat_rate|number_format(0, ',', '.') }}% USt. | {{ vat_amount|number_format(2, ',', '.') }} €
+| | | | | **Gesamtbetrag** | **{{ total_gross|number_format(2, ',', '.') }} €**
 
 ----

@@ -20,10 +20,11 @@ interface ExtensionDiscoveryServiceInterface
     /**
      * Discovers extensions in a TYPO3 installation.
      *
-     * @param string     $installationPath Path to the TYPO3 installation
-     * @param array|null $customPaths      Custom paths configuration for the installation
+     * @param string        $installationPath Path to the TYPO3 installation
+     * @param array|null    $customPaths      Custom paths configuration for the installation
+     * @param array<string> $extensionsToSkip Array of extension keys to skip from discovery
      *
      * @return ExtensionDiscoveryResult Discovery result with extensions or failure information
      */
-    public function discoverExtensions(string $installationPath, ?array $customPaths = null): ExtensionDiscoveryResult;
+    public function discoverExtensions(string $installationPath, ?array $customPaths = null, array $extensionsToSkip = []): ExtensionDiscoveryResult;
 }

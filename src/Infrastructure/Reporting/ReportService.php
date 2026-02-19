@@ -43,6 +43,7 @@ class ReportService
      * @param array<string>                       $extensionAvailableInTargetVersion
      * @param array<string, array<string, mixed>> $extensionConfiguration
      * @param array<string, mixed>                $estimatedHours
+     * @param array<string, mixed>                $clientReport
      *
      * @return array<ReportingResult>
      */
@@ -57,6 +58,7 @@ class ReportService
         array $extensionConfiguration = [],
         array $estimatedHours = [],
         int|float $hourlyRate = 960,
+        array $clientReport = [],
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => \count($extensions),
@@ -83,6 +85,7 @@ class ReportService
                     $extensionConfiguration,
                     $estimatedHours,
                     $hourlyRate,
+                    $clientReport,
                 );
                 $this->logger->debug('Report context built successfully');
 
@@ -220,6 +223,20 @@ class ReportService
                 'type' => 'client_report_de_xwiki',
             ];
             $this->logger->info('German client report (XWiki) written', ['path' => $clientReportXWikiPath]);
+        }
+
+        // Generate Angebot PDF if offernr is configured
+        if ('html' === $format && !empty($context['client_report']['offernr'])) {
+            $this->logger->debug('Rendering Angebot PDF');
+            $angebotPdf = $this->templateRenderer->renderAngebotDePdf($context);
+            $angebotPdfPath = $formatOutputPath . '/' . $angebotPdf['filename'];
+            file_put_contents($angebotPdfPath, $angebotPdf['content']);
+            $allFiles[] = [
+                'path' => $angebotPdfPath,
+                'size' => \strlen($angebotPdf['content']),
+                'type' => 'angebot_de_pdf',
+            ];
+            $this->logger->info('Angebot PDF written', ['path' => $angebotPdfPath]);
         }
 
         // 4. Create result object

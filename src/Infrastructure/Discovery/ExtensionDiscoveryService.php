@@ -33,15 +33,19 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
     ) {
     }
 
-    public function discoverExtensions(string $installationPath, ?array $customPaths = null): ExtensionDiscoveryResult
+    public function discoverExtensions(string $installationPath, ?array $customPaths = null, array $extensionsToSkip = []): ExtensionDiscoveryResult
     {
-        $this->logger->info('Starting extension discovery', ['path' => $installationPath]);
+        $this->logger->info('Starting extension discovery', [
+            'path' => $installationPath,
+            'extensions_to_skip' => $extensionsToSkip,
+        ]);
 
         try {
             // Check cache if enabled
             if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
+                    'extensions_to_skip' => $extensionsToSkip,
                 ]);
                 $cachedResult = $this->cacheService->get($cacheKey);
 
@@ -119,6 +123,28 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
                 }
             }
 
+            // Filter out extensions that should be skipped (use parameter or fall back to config)
+            if (empty($extensionsToSkip)) {
+                $extensionsToSkip = $this->configService->getExtensionsToSkip();
+            }
+
+            if (!empty($extensionsToSkip)) {
+                $originalCount = \count($extensions);
+                $extensions = array_filter($extensions, function (Extension $extension) use ($extensionsToSkip): bool {
+                    return !\in_array($extension->getKey(), $extensionsToSkip, true);
+                });
+                $extensions = array_values($extensions); // Re-index array
+
+                $skippedCount = $originalCount - \count($extensions);
+                if ($skippedCount > 0) {
+                    $this->logger->info('Filtered out extensions marked to skip', [
+                        'extensions_to_skip' => $extensionsToSkip,
+                        'skipped_count' => $skippedCount,
+                        'remaining_count' => \count($extensions),
+                    ]);
+                }
+            }
+
             $this->logger->info('Extension discovery completed', ['total_extensions' => \count($extensions)]);
 
             $result = ExtensionDiscoveryResult::success($extensions, $successfulMethods, $discoveryMetadata);
@@ -127,6 +153,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
             if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
+                    'extensions_to_skip' => $extensionsToSkip,
                 ]);
                 $this->cacheService->set($cacheKey, $this->serializeResult($result));
             }

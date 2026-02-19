@@ -43,6 +43,7 @@ interface ConfigurationServiceInterface
     public const string CONFIG_EXTERNAL_TOOLS_FRACTOR_CONFIG = 'externalTools.fractor.config';
     public const string CONFIG_EXTERNAL_TOOLS_TYPOSCRIPT_LINT_BINARY = 'externalTools.typoscript_lint.binary';
     public const string CONFIG_EXTERNAL_TOOLS_TYPOSCRIPT_LINT_CONFIG = 'externalTools.typoscript_lint.config';
+    public const string CONFIG_ANALYSIS_EXTENSIONS_TO_SKIP = 'analysis.extensionToSkip';
 
     /**
      * Creates a new configuration service instance with a different config path.
@@ -90,4 +91,11 @@ interface ConfigurationServiceInterface
      * @return mixed Configuration value or default
      */
     public function get(string $key, mixed $default = null): mixed;
+
+    /**
+     * Gets the list of extension keys to skip from analysis and reporting.
+     *
+     * @return array<string> Array of extension keys to skip
+     */
+    public function getExtensionsToSkip(): array;
 }

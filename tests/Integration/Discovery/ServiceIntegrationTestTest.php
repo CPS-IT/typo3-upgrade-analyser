@@ -176,6 +176,7 @@ class ServiceIntegrationTestTest extends AbstractIntegrationTestCase
         $installationCacheKey = $this->cacheService->generateKey('installation_discovery', $installationPath, ['validate' => true]);
         $extensionCacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
             'custom_paths' => [],
+            'extensions_to_skip' => [],
         ]);
 
         $this->assertTrue(
