@@ -1,0 +1,93 @@
+analysis:
+  installationPath:   /var/www/html/
+  targetVersion: '13.4.25'
+  extensionAvailableInTargetVersion:
+    - mailqueue
+    - tika
+    - solr
+  extensionToSkip:
+    - uiu_config
+    - uiu_content
+  resultCache:
+    enabled: true
+  phpVersions:
+    - '8.3'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, github]
+      timeout: 30
+    static_analysis:
+      enabled: true
+      tools: { phpstan: { level: 6, config: null } }
+    deprecation_scanner:
+      enabled: true
+    tca_migration:
+      enabled: true
+    code_quality:
+      enabled: true
+      complexity_threshold: 10
+      loc_threshold: 1000
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
+reporting:
+  formats:
+    - html
+    - markdown
+  output_directory: var/reports/
+  includeCharts: false
+externalTools:
+  rector:
+    binary: vendor/bin/rector
+    config: null
+  fractor:
+    binary: vendor/bin/fractor
+    config: null
+  typoscript_lint:
+    binary: vendor/bin/typoscript-lint
+    config: typoscript-lint.yml
+client-report:
+  hourly-rate: 960
+  offernr: 'XXXX-XX'
+  angebot:
+    date: 'DD.MM.YYYY'
+    salutation: 'Sehr geehrte Damen und Herren,'
+    closing: 'Vorname Nachname'
+    client:
+      name: 'Kundenname'
+      contact: 'Ansprechpartner'
+      street: 'Straße Hausnummer'
+      city: 'PLZ Stadt'
+    contact:
+      name: 'Vorname Nachname'
+      phone: 'T +49 ...'
+      email: 'E vorname.nachname@example.com'
+    project:
+      name: 'Projektbezeichnung'
+      number: 'Projektnummer'
+  extension:
+    bmub_sitepackage:
+      estimated-hours: 80
+    bmub_shortnr:
+      estimated-hours: 12
+    bmub_globals:
+      estimated-hours: 36
+    bmub_faq:
+      estimated-hours: 28
+    bmub_articles:
+      estimated-hours: 27
+    bmub_publications:
+      estimated-hours: 44
+    kids_config:
+      estimated-hours: 25
+  estimated-hours:
+    server-setup: 32
+    typo3-bundle-upgrade: 24
+    extension-update: 816
+    data-migration: 24
+    upgrade-documentation: 16
+    component-testing: 40
+    final-migration: 16
+    project-support: 184
