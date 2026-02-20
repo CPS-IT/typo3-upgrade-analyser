@@ -35,7 +35,7 @@
     "mikey179/vfsstream": "^1.6",
     "phpstan/phpstan": "^2.0",
     "phpstan/phpstan-phpunit": "^2.0",
-    "phpunit/phpunit": "^12.3",
+    "phpunit/phpunit": "^13.0",
     "roave/security-advisories": "dev-latest"
   },
   "autoload": {
