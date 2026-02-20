@@ -227,13 +227,17 @@ class RectorAnalysisSummary
 
         if ($readinessScore >= 8.0) {
             return 'low';
-        } elseif ($readinessScore >= 6.0) {
-            return 'medium';
-        } elseif ($readinessScore >= 3.0) {
-            return 'high';
-        } else {
-            return 'critical';
         }
+
+        if ($readinessScore >= 6.0) {
+            return 'medium';
+        }
+
+        if ($readinessScore >= 3.0) {
+            return 'high';
+        }
+
+        return 'critical';
     }
 
     /**

@@ -62,11 +62,10 @@ final class MultiLayerPathResolutionCache implements PathResolutionCacheInterfac
                 ]);
 
                 return $cacheEntry['response'];
-            } else {
-                // Remove expired entry
-                unset($this->memoryCache[$cacheKey]);
-                $this->logger->debug('Expired cache entry removed', ['cache_key' => $cacheKey]);
             }
+            // Remove expired entry
+            unset($this->memoryCache[$cacheKey]);
+            $this->logger->debug('Expired cache entry removed', ['cache_key' => $cacheKey]);
         }
 
         ++$this->cacheStats['misses'];

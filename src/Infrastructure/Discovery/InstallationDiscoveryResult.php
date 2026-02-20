@@ -330,15 +330,15 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
                 [], // Skip validation issues for cached results
                 $data['attempted_strategies'] ?? [],
             );
-        } else {
-            return new self(
-                null,
-                false,
-                $data['error_message'] ?? 'Unknown cached error',
-                null,
-                [],
-                $data['attempted_strategies'] ?? [],
-            );
         }
+
+        return new self(
+            null,
+            false,
+            $data['error_message'] ?? 'Unknown cached error',
+            null,
+            [],
+            $data['attempted_strategies'] ?? [],
+        );
     }
 }
