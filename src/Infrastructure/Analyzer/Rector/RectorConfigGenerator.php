@@ -261,11 +261,13 @@ class RectorConfigGenerator
 
         if ($targetVersion->getMajor() >= 13) {
             return '8.2'; // TYPO3 13+ requires PHP 8.2+
-        } elseif ($targetVersion->getMajor() >= 12) {
-            return '8.1'; // TYPO3 12 requires PHP 8.1+
-        } else {
-            return '8.0'; // TYPO3 11 requires PHP 8.0+
         }
+
+        if ($targetVersion->getMajor() >= 12) {
+            return '8.1'; // TYPO3 12 requires PHP 8.1+
+        }
+
+        return '8.0'; // TYPO3 11 requires PHP 8.0+
     }
 
     /**
