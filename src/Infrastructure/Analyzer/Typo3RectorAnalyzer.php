@@ -523,14 +523,20 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         // Simple heuristic-based descriptions for common patterns
         if (str_contains($rule, 'Remove')) {
             return 'Deprecated method or class removal';
-        } elseif (str_contains($rule, 'Substitute') || str_contains($rule, 'Replace')) {
-            return 'Method or class replacement required';
-        } elseif (str_contains($rule, 'Migrate')) {
-            return 'Configuration migration needed';
-        } elseif (str_contains($rule, 'Annotation')) {
-            return 'Annotation changes required';
-        } else {
-            return 'Code modernization required';
         }
+
+        if (str_contains($rule, 'Substitute') || str_contains($rule, 'Replace')) {
+            return 'Method or class replacement required';
+        }
+
+        if (str_contains($rule, 'Migrate')) {
+            return 'Configuration migration needed';
+        }
+
+        if (str_contains($rule, 'Annotation')) {
+            return 'Annotation changes required';
+        }
+
+        return 'Code modernization required';
     }
 }

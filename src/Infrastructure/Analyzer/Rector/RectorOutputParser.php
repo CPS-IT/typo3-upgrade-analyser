@@ -220,11 +220,13 @@ class RectorOutputParser
     {
         if (str_contains($ruleClass, 'Remove') || str_contains($ruleClass, 'Breaking')) {
             return RectorRuleSeverity::CRITICAL;
-        } elseif (str_contains($ruleClass, 'Substitute') || str_contains($ruleClass, 'Migrate')) {
-            return RectorRuleSeverity::WARNING;
-        } else {
-            return RectorRuleSeverity::INFO;
         }
+
+        if (str_contains($ruleClass, 'Substitute') || str_contains($ruleClass, 'Migrate')) {
+            return RectorRuleSeverity::WARNING;
+        }
+
+        return RectorRuleSeverity::INFO;
     }
 
     /**
@@ -235,18 +237,24 @@ class RectorOutputParser
         if (str_contains($ruleClass, 'Remove')) {
             if (str_contains($ruleClass, 'Method')) {
                 return RectorChangeType::METHOD_SIGNATURE;
-            } elseif (str_contains($ruleClass, 'Class')) {
-                return RectorChangeType::CLASS_REMOVAL;
-            } else {
-                return RectorChangeType::BREAKING_CHANGE;
             }
-        } elseif (str_contains($ruleClass, 'Substitute') || str_contains($ruleClass, 'Replace')) {
-            return RectorChangeType::DEPRECATION;
-        } elseif (str_contains($ruleClass, 'Migrate')) {
-            return RectorChangeType::CONFIGURATION_CHANGE;
-        } else {
-            return RectorChangeType::BEST_PRACTICE;
+
+            if (str_contains($ruleClass, 'Class')) {
+                return RectorChangeType::CLASS_REMOVAL;
+            }
+
+            return RectorChangeType::BREAKING_CHANGE;
         }
+
+        if (str_contains($ruleClass, 'Substitute') || str_contains($ruleClass, 'Replace')) {
+            return RectorChangeType::DEPRECATION;
+        }
+
+        if (str_contains($ruleClass, 'Migrate')) {
+            return RectorChangeType::CONFIGURATION_CHANGE;
+        }
+
+        return RectorChangeType::BEST_PRACTICE;
     }
 
     /**

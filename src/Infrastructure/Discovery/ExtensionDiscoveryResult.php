@@ -335,14 +335,14 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
                 $data['successful_methods'] ?? [],
                 $data['discovery_metadata'] ?? [],
             );
-        } else {
-            return new self(
-                [],
-                false,
-                $data['error_message'] ?? 'Unknown cached error',
-                [],
-                $data['discovery_metadata'] ?? [],
-            );
         }
+
+        return new self(
+            [],
+            false,
+            $data['error_message'] ?? 'Unknown cached error',
+            [],
+            $data['discovery_metadata'] ?? [],
+        );
     }
 }
