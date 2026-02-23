@@ -1882,16 +1882,16 @@
         },
         {
             "name": "rector/rector",
-            "version": "2.3.7",
+            "version": "2.3.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rectorphp/rector.git",
-                "reference": "9c46ad17f57963932c9788fd1b0f1d07ff450370"
+                "reference": "bbd37aedd8df749916cffa2a947cfc4714d1ba2c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rectorphp/rector/zipball/9c46ad17f57963932c9788fd1b0f1d07ff450370",
-                "reference": "9c46ad17f57963932c9788fd1b0f1d07ff450370",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/bbd37aedd8df749916cffa2a947cfc4714d1ba2c",
+                "reference": "bbd37aedd8df749916cffa2a947cfc4714d1ba2c",
                 "shasum": ""
             },
             "require": {
@@ -1930,7 +1930,7 @@
             ],
             "support": {
                 "issues": "https://github.com/rectorphp/rector/issues",
-                "source": "https://github.com/rectorphp/rector/tree/2.3.7"
+                "source": "https://github.com/rectorphp/rector/tree/2.3.8"
             },
             "funding": [
                 {
@@ -1938,7 +1938,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-19T14:44:16+00:00"
+            "time": "2026-02-22T09:45:50+00:00"
         },
         {
             "name": "sebastian/diff",
@@ -2069,16 +2069,16 @@
         },
         {
             "name": "ssch/typo3-rector",
-            "version": "v3.12.0",
+            "version": "v3.12.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabbelasichon/typo3-rector.git",
-                "reference": "467915ba1069e1391910b31e82cfbcf95746a547"
+                "reference": "e722bb922dee64e5b24f6d70d7ad1274a9ee8e33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabbelasichon/typo3-rector/zipball/467915ba1069e1391910b31e82cfbcf95746a547",
-                "reference": "467915ba1069e1391910b31e82cfbcf95746a547",
+                "url": "https://api.github.com/repos/sabbelasichon/typo3-rector/zipball/e722bb922dee64e5b24f6d70d7ad1274a9ee8e33",
+                "reference": "e722bb922dee64e5b24f6d70d7ad1274a9ee8e33",
                 "shasum": ""
             },
             "require": {
@@ -2181,7 +2181,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-19T16:48:21+00:00"
+            "time": "2026-02-22T12:40:13+00:00"
         },
         {
             "name": "symfony/config",
@@ -7155,12 +7155,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "98f40fd38b5787f86cbaab1c9da7f418130647e7"
+                "reference": "92c5ec5685cfbcd7ef721a502e6622516728011c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/98f40fd38b5787f86cbaab1c9da7f418130647e7",
-                "reference": "98f40fd38b5787f86cbaab1c9da7f418130647e7",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/92c5ec5685cfbcd7ef721a502e6622516728011c",
+                "reference": "92c5ec5685cfbcd7ef721a502e6622516728011c",
                 "shasum": ""
             },
             "conflict": {
@@ -8075,7 +8075,7 @@
                 "wpanel/wpanel4-cms": "<=4.3.1",
                 "wpcloud/wp-stateless": "<3.2",
                 "wpglobus/wpglobus": "<=1.9.6",
-                "wwbn/avideo": "<14.3",
+                "wwbn/avideo": "<21",
                 "xataface/xataface": "<3",
                 "xpressengine/xpressengine": "<3.0.15",
                 "yab/quarx": "<2.4.5",
@@ -8173,7 +8173,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-02-19T22:09:42+00:00"
+            "time": "2026-02-20T22:06:39+00:00"
         },
         {
             "name": "sebastian/cli-parser",
