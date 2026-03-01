@@ -22,7 +22,8 @@ A standalone tool for analyzing TYPO3 installations for upgrade readiness to the
 
 ## Overview
 
-The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installations externally without requiring installation into the target system. It provides objective risk measures and effort estimates through automated analysis.
+The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installations externally without requiring installation into the target system.
+It provides objective risk measures and effort estimates through automated analysis.
 
 ## Features
 
@@ -33,7 +34,7 @@ The TYPO3 Upgrade Analyzer is a comprehensive tool that evaluates TYPO3 installa
 - **Clean Architecture**: Follows clean architecture principles with strict separation of concerns
 - **Modular Analyzer System**: Dynamic analyzer discovery with pluggable implementations
 - **Advanced Static Analysis**: Integrates TYPO3 Rector and Fractor for code modernization analysis
-- **External API Integration**: Checks TYPO3 Extension Repository, Packagist, and Git repositories (requires API token )
+- **External API Integration**: Checks TYPO3 Extension Repository, Packagist, and Git repositories (requires API token)
 - **Caching Support**: Built-in caching for improved performance on repeated analyses
 
 ## Requirements
@@ -69,12 +70,12 @@ composer install
 
 1. **Create Configuration File**:
    ```bash
-   ./bin/typo3-analyzer init-config
+   bin/typo3-analyzer init-config
    ```
 
 2. **Analyze TYPO3 Installation**:
    ```bash
-   ./bin/typo3-analyzer analyze
+   bin/typo3-analyzer analyze
    ```
 
 3. **View Results**: Check the `var/reports/` directory for HTML and Markdown reports.
@@ -215,5 +216,5 @@ The tool follows a clean architecture with clear separation of concerns:
 This project is licensed under the GPL-2.0-or-later license. See the LICENSE file for details.
 
 ## Support
--
+
 - [Issue Tracker](https://github.com/cpsit/typo3-upgrade-analyser/issues)
