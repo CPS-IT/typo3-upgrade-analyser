@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Path;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Cache\PathResolutionCacheInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
@@ -21,6 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Exception\PathResolutionException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\ValidationResult;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -275,7 +277,7 @@ final class PathResolutionService implements PathResolutionServiceInterface
      */
     private function createValidationErrorResponse(
         PathResolutionRequest $request,
-        Validation\ValidationResult $validationResult,
+        ValidationResult $validationResult,
         float $startTime,
     ): PathResolutionResponse {
         $resolutionTime = microtime(true) - $startTime;
@@ -295,9 +297,9 @@ final class PathResolutionService implements PathResolutionServiceInterface
     /**
      * Create error metadata for failed resolutions.
      */
-    private function createErrorMetadata(PathResolutionRequest $request, string $errorContext): DTO\PathResolutionMetadata
+    private function createErrorMetadata(PathResolutionRequest $request, string $errorContext): PathResolutionMetadata
     {
-        return new DTO\PathResolutionMetadata(
+        return new PathResolutionMetadata(
             $request->pathType,
             $request->installationType,
             $errorContext,

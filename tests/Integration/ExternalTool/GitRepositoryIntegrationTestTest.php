@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
@@ -361,7 +362,7 @@ class GitRepositoryIntegrationTestTest extends AbstractIntegrationTestCase
      */
     public function testHandleNonExistentRepository(): void
     {
-        $this->expectException(\CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException::class);
+        $this->expectException(GitProviderException::class);
 
         $nonExistentUrl = 'https://github.com/non-existent-user/non-existent-repo';
         $this->gitHubClient->getRepositoryInfo($nonExistentUrl);

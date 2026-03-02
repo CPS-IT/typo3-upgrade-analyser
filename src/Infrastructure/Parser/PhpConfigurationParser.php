@@ -15,6 +15,16 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Parser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\PhpParseException;
 use PhpParser\Error;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Scalar\DNumber;
+use PhpParser\Node\Scalar\LNumber;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\Parser;
@@ -339,7 +349,7 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     public function enterNode(Node $node): ?int
     {
         // Extract from return statements (common in TYPO3 config files)
-        if ($node instanceof Node\Stmt\Return_ && $node->expr instanceof Node\Expr\Array_) {
+        if ($node instanceof Return_ && $node->expr instanceof Array_) {
             $this->extractFromArrayNode($node->expr, $this->configuration);
             $this->extractionMethod = 'return_statement';
 
@@ -347,12 +357,12 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         }
 
         // Extract from global variable assignments
-        if ($node instanceof Node\Stmt\Expression && $node->expr instanceof Node\Expr\Assign) {
+        if ($node instanceof Expression && $node->expr instanceof Assign) {
             $this->extractFromAssignment($node->expr);
         }
 
         // Extract from array assignments to $GLOBALS
-        if ($node instanceof Node\Expr\ArrayDimFetch) {
+        if ($node instanceof ArrayDimFetch) {
             $this->extractFromGlobalsAccess($node);
         }
 
@@ -377,10 +387,10 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     /**
      * Extract configuration from array node.
      *
-     * @param Node\Expr\Array_     $arrayNode Array node
+     * @param Array_               $arrayNode Array node
      * @param array<string, mixed> $target    Target array to populate
      */
-    private function extractFromArrayNode(Node\Expr\Array_ $arrayNode, array &$target): void
+    private function extractFromArrayNode(Array_ $arrayNode, array &$target): void
     {
         foreach ($arrayNode->items as $item) {
             // Array items can be null in PHP AST (e.g., [1, , 3])
@@ -404,12 +414,12 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     /**
      * Extract configuration from assignment expression.
      *
-     * @param Node\Expr\Assign $assignNode Assignment node
+     * @param Assign $assignNode Assignment node
      */
-    private function extractFromAssignment(Node\Expr\Assign $assignNode): void
+    private function extractFromAssignment(Assign $assignNode): void
     {
         // Handle $TYPO3_CONF_VARS assignments
-        if ($assignNode->var instanceof Node\Expr\Variable
+        if ($assignNode->var instanceof Variable
             && 'TYPO3_CONF_VARS' === $assignNode->var->name) {
             $value = $this->extractValue($assignNode->expr);
             if (\is_array($value)) {
@@ -422,14 +432,14 @@ class ConfigurationExtractor extends NodeVisitorAbstract
     /**
      * Extract configuration from GLOBALS access.
      *
-     * @param Node\Expr\ArrayDimFetch $node Array access node
+     * @param ArrayDimFetch $node Array access node
      */
-    private function extractFromGlobalsAccess(Node\Expr\ArrayDimFetch $node): void
+    private function extractFromGlobalsAccess(ArrayDimFetch $node): void
     {
         // Handle $GLOBALS['TYPO3_CONF_VARS'] patterns
-        if ($node->var instanceof Node\Expr\Variable
+        if ($node->var instanceof Variable
             && 'GLOBALS' === $node->var->name
-            && $node->dim instanceof Node\Scalar\String_
+            && $node->dim instanceof String_
             && 'TYPO3_CONF_VARS' === $node->dim->value) {
             $this->extractionMethod = 'globals_access';
         }
@@ -449,22 +459,22 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         }
 
         // String literals
-        if ($node instanceof Node\Scalar\String_) {
+        if ($node instanceof String_) {
             return $node->value;
         }
 
         // Integer literals
-        if ($node instanceof Node\Scalar\LNumber) {
+        if ($node instanceof LNumber) {
             return $node->value;
         }
 
         // Float literals
-        if ($node instanceof Node\Scalar\DNumber) {
+        if ($node instanceof DNumber) {
             return $node->value;
         }
 
         // Boolean literals
-        if ($node instanceof Node\Expr\ConstFetch) {
+        if ($node instanceof ConstFetch) {
             $name = strtolower($node->name->toString());
             if ('true' === $name) {
                 return true;
@@ -478,7 +488,7 @@ class ConfigurationExtractor extends NodeVisitorAbstract
         }
 
         // Array literals
-        if ($node instanceof Node\Expr\Array_) {
+        if ($node instanceof Array_) {
             $result = [];
             $this->extractFromArrayNode($node, $result);
 

@@ -12,6 +12,13 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
+use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
@@ -245,9 +252,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
     /**
      * Create cache service for testing.
      */
-    protected function createCacheService(): \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService
+    protected function createCacheService(): CacheService
     {
-        return new \CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService(
+        return new CacheService(
             $this->createLogger(),
             $this->cacheDir,
         );
@@ -292,9 +299,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
         if (file_exists($cacheFile)) {
             $content = file_get_contents($cacheFile);
             self::assertNotFalse($content, "Failed to read cache file: {$cacheFile}");
-            $cachedData = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-            return $cachedData;
+            return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         }
 
         $data = $apiCall();
@@ -340,7 +346,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         ?string $composerName = null,
         bool $isSystemExtension = false,
         bool $isLocalExtension = false,
-    ): \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension {
+    ): Extension {
         $type = 'local';
         if ($isSystemExtension) {
             $type = 'system';
@@ -350,10 +356,10 @@ abstract class AbstractIntegrationTestCase extends TestCase
             $type = 'ter';
         }
 
-        $extension = new \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension(
+        $extension = new Extension(
             key: $key,
             title: ucfirst(str_replace('_', ' ', $key)),
-            version: new \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version('1.0.0'),
+            version: new Version('1.0.0'),
             type: $type,
             composerName: $composerName,
         );
@@ -375,19 +381,18 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function createTestAnalysisContext(
         string $targetVersion = '12.4.0',
         string $currentVersion = '11.5.0',
-    ): \CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext {
-        return new \CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext(
-            currentVersion: new \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version($currentVersion),
-            targetVersion: new \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version($targetVersion),
+    ): AnalysisContext {
+        return new AnalysisContext(
+            currentVersion: new Version($currentVersion),
+            targetVersion: new Version($targetVersion),
         );
     }
 
     /**
      * Assert that git repository health metrics are reasonable.
      */
-    protected function assertGitRepositoryHealthValid(
-        \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth $health,
-    ): void {
+    protected function assertGitRepositoryHealthValid(GitRepositoryHealth $health): void
+    {
         $this->assertGreaterThanOrEqual(0, $health->getStarCount());
         $this->assertGreaterThanOrEqual(0, $health->getForkCount());
         $this->assertGreaterThanOrEqual(0, $health->getOpenIssuesCount());
@@ -398,9 +403,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
     /**
      * Assert that git repository metadata is valid.
      */
-    protected function assertGitRepositoryMetadataValid(
-        \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata $metadata,
-    ): void {
+    protected function assertGitRepositoryMetadataValid(GitRepositoryMetadata $metadata): void
+    {
         $this->assertNotEmpty($metadata->getName());
         // Description is string, archived and fork status are boolean by design
         $this->assertGreaterThanOrEqual(0, $metadata->getStarCount());
@@ -413,8 +417,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
      */
     protected function assertGitTagsValid(array $tags): void
     {
-        // Tags parameter is typed as array
-
         foreach ($tags as $tag) {
             $this->assertInstanceOf(GitTag::class, $tag);
             $this->assertNotEmpty($tag->getName());
@@ -424,9 +426,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
     /**
      * Validate that the analysis result has the required structure.
      */
-    protected function assertAnalysisResultValid(
-        \CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult $result,
-    ): void {
+    protected function assertAnalysisResultValid(AnalysisResult $result): void
+    {
         $this->assertNotEmpty($result->getAnalyzerName());
         // Risk score bounds validation
         $this->assertGreaterThanOrEqual(0.0, $result->getRiskScore());

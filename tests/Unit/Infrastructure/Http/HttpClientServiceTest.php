@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -25,8 +26,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class HttpClientServiceTest extends TestCase
 {
     private HttpClientService $subject;
-    private \PHPUnit\Framework\MockObject\MockObject $httpClient;
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private MockObject $httpClient;
+    private MockObject $logger;
 
     protected function setUp(): void
     {
@@ -217,7 +218,7 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
-            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
+            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): MockObject {
                 static $callCount = 0;
 
                 return match (++$callCount) {
@@ -267,7 +268,7 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(2))
             ->method('request')
-            ->willReturnCallback(function () use (&$exception, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
+            ->willReturnCallback(function () use (&$exception, $successResponse): MockObject {
                 if ($exception) {
                     $temp = $exception;
                     $exception = null;
@@ -349,7 +350,7 @@ class HttpClientServiceTest extends TestCase
         $this->httpClient
             ->expects(self::exactly(3))
             ->method('request')
-            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): \PHPUnit\Framework\MockObject\MockObject {
+            ->willReturnCallback(function () use ($rateLimitResponse, $successResponse): MockObject {
                 static $callCount = 0;
 
                 return match (++$callCount) {

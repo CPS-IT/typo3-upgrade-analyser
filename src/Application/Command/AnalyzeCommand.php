@@ -12,7 +12,10 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
@@ -150,7 +153,7 @@ class AnalyzeCommand extends Command
     /**
      * Phase 1: Discover installation and extensions.
      *
-     * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>, 2: mixed}
+     * @return array{0: Installation|null, 1: array<Extension>, 2: mixed}
      */
     private function executeDiscoveryPhase(string $installationPath, SymfonyStyle $io): array
     {
@@ -193,12 +196,12 @@ class AnalyzeCommand extends Command
     /**
      * Phase 2: Run analyzers on discovered extensions.
      *
-     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension> $extensions
-     * @param array<string>|null                                    $requestedAnalyzers
+     * @param array<Extension>   $extensions
+     * @param array<string>|null $requestedAnalyzers
      *
-     * @return array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>>
+     * @return array<string, array<AnalysisResult>>
      */
-    private function executeAnalysisPhase(?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
+    private function executeAnalysisPhase(?Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
     {
         if (empty($extensions)) {
             $io->warning('No extensions found to analyze');
@@ -275,11 +278,11 @@ class AnalyzeCommand extends Command
     /**
      * Phase 3: Generate reports from analysis results.
      *
-     * @param array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>> $analysisResults
+     * @param array<string, array<AnalysisResult>> $analysisResults
      */
     private function executeReportingPhase(
         ConfigurationServiceInterface $configService,
-        ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
+        ?Installation $installation,
         array $extensions,
         mixed $extensionResult,
         array $analysisResults,
@@ -415,12 +418,12 @@ class AnalyzeCommand extends Command
     /**
      * Generate a simple summary report.
      *
-     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>                     $extensions
-     * @param array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>> $analysisResults
+     * @param array<Extension>                     $extensions
+     * @param array<string, array<AnalysisResult>> $analysisResults
      */
     private function generateSummaryReport(
         string $outputDir,
-        ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
+        ?Installation $installation,
         array $extensions,
         mixed $extensionResult,
         array $analysisResults,

@@ -19,6 +19,10 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
+use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * Performance and reliability tests for integration scenarios.
@@ -209,11 +213,11 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
     public function testNetworkTimeoutHandling(): void
     {
         // Create client with very short timeout to test timeout handling
-        $shortTimeoutClient = \Symfony\Component\HttpClient\HttpClient::create([
+        $shortTimeoutClient = HttpClient::create([
             'timeout' => 0.1, // Very short timeout
         ]);
 
-        $httpClientService = new \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService($shortTimeoutClient, $this->createLogger());
+        $httpClientService = new HttpClientService($shortTimeoutClient, $this->createLogger());
         $terClient = new TerApiClient($httpClientService, $this->createLogger());
 
         $extension = $this->createTestExtension('news');
@@ -274,7 +278,7 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
         }
 
         foreach ($extensionResults as $extension => $iterationResults) {
-            $riskScores = array_map(fn (array $r): float => $r['result']->getRiskScore(), $iterationResults);
+            $riskScores = array_map(static fn (array $r): float => $r['result']->getRiskScore(), $iterationResults);
             $avgRisk = array_sum($riskScores) / \count($riskScores);
 
             // Risk scores should be consistent across iterations
@@ -397,8 +401,8 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
     {
         // Test analysis under various simulated network conditions
         $clients = [
-            'fast' => \Symfony\Component\HttpClient\HttpClient::create(['timeout' => 30]),
-            'slow' => \Symfony\Component\HttpClient\HttpClient::create(['timeout' => 5]),
+            'fast' => HttpClient::create(['timeout' => 30]),
+            'slow' => HttpClient::create(['timeout' => 5]),
         ];
 
         $extension = $this->createTestExtension('news', 'georgringer/news');
@@ -406,20 +410,20 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
 
         $results = [];
         foreach ($clients as $condition => $client) {
-            $httpClientService = new \CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService($client, $this->createLogger());
+            $httpClientService = new HttpClientService($client, $this->createLogger());
             $terClient = new TerApiClient($httpClientService, $this->createLogger());
 
             $gitHubClient = new GitHubClient(
                 $httpClientService,
                 $this->createLogger(),
-                new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+                new RepositoryUrlHandler(),
                 $this->getGitHubToken(),
             );
 
             $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
             $gitAnalyzer = new GitRepositoryAnalyzer(
                 $providerFactory,
-                new GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
+                new GitVersionParser(new ComposerConstraintChecker()),
                 $this->createLogger(),
             );
 
@@ -430,8 +434,8 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
                 new PackagistClient(
                     $httpClientService,
                     $this->createLogger(),
-                    new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker(),
-                    new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+                    new ComposerConstraintChecker(),
+                    new RepositoryUrlHandler(),
                 ),
                 $gitAnalyzer,
             );
@@ -459,7 +463,7 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
         }
 
         // At least one condition should succeed
-        $successCount = \count(array_filter($results, fn (array $r): bool => $r['success']));
+        $successCount = \count(array_filter($results, static fn (array $r): bool => $r['success']));
         $this->assertGreaterThan(0, $successCount, 'Should succeed under at least one network condition');
     }
 
@@ -469,21 +473,21 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
         $packagistClient = new PackagistClient(
             $this->createHttpClientService(),
             $this->createLogger(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+            new ComposerConstraintChecker(),
+            new RepositoryUrlHandler(),
         );
 
         $gitHubClient = new GitHubClient(
             $this->createHttpClientService(),
             $this->createLogger(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+            new RepositoryUrlHandler(),
             $this->getGitHubToken(),
         );
 
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
-            new GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
+            new GitVersionParser(new ComposerConstraintChecker()),
             $this->createLogger(),
         );
 

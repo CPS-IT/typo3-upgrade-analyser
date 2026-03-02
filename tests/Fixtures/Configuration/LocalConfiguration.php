@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Psr\Log\LogLevel;
+use TYPO3\CMS\Core\Log\Writer\FileWriter;
+
 /**
  * Example TYPO3 LocalConfiguration.php file for testing.
  */
@@ -80,8 +83,8 @@ return [
             'CMS' => [
                 'deprecations' => [
                     'writerConfiguration' => [
-                        Psr\Log\LogLevel::NOTICE => [
-                            TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                        LogLevel::NOTICE => [
+                            FileWriter::class => [
                                 'logFile' => 'typo3_deprecations.log',
                             ],
                         ],
