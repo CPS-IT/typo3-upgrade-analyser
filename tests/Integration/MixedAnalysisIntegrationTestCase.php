@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
@@ -19,6 +20,8 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 
 /**
  * Integration tests for mixed analysis scenarios with real-world complexity.
@@ -260,7 +263,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         // Test analyzing multiple extensions efficiently
         $extensionKeys = ['news', 'extension_builder'];
         $extensions = array_map(
-            fn ($key): \CPSIT\UpgradeAnalyzer\Domain\Entity\Extension => $this->createTestExtension(
+            fn ($key): Extension => $this->createTestExtension(
                 $key,
                 $this->testExtensions['extensions'][$this->getFullKey($key)]['composer_name'] ?? null,
             ),
@@ -375,21 +378,21 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         $packagistClient = new PackagistClient(
             $this->createHttpClientService(),
             $this->createLogger(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+            new ComposerConstraintChecker(),
+            new RepositoryUrlHandler(),
         );
 
         $gitHubClient = new GitHubClient(
             $this->createHttpClientService(),
             $this->createLogger(),
-            new \CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler(),
+            new RepositoryUrlHandler(),
             $this->getGitHubToken(),
         );
 
         $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
         $gitAnalyzer = new GitRepositoryAnalyzer(
             $providerFactory,
-            new GitVersionParser(new \CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker()),
+            new GitVersionParser(new ComposerConstraintChecker()),
             $this->createLogger(),
         );
 

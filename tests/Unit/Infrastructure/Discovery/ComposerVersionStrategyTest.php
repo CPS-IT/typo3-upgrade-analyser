@@ -16,13 +16,14 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(ComposerVersionStrategy::class)]
 final class ComposerVersionStrategyTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private MockObject $logger;
     private ComposerVersionStrategy $strategy;
     private string $testDir;
 

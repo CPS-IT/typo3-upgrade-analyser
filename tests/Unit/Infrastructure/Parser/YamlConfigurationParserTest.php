@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(YamlConfigurationParser::class)]
 class YamlConfigurationParserTest extends TestCase
@@ -559,7 +560,7 @@ class YamlConfigurationParserTest extends TestCase
     public function testParserOptionsManagement(): void
     {
         $options = [
-            'yaml_flags' => \Symfony\Component\Yaml\Yaml::PARSE_OBJECT_FOR_MAP,
+            'yaml_flags' => Yaml::PARSE_OBJECT_FOR_MAP,
             'max_nesting_depth' => 15,
         ];
 

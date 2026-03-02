@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
+use PHPUnit\Framework\AssertionFailedError;
+
 /**
  * Validation test to ensure integration test configuration is correct
  * This test can run without real API calls to validate the setup.
@@ -148,7 +150,7 @@ class ConfigurationValidationTestCase extends AbstractIntegrationTestCase
         try {
             $this->assertResponseTimeAcceptable(10.0, 5.0); // Should fail
             $this->fail('Should have failed assertion');
-        } catch (\PHPUnit\Framework\AssertionFailedError $e) {
+        } catch (AssertionFailedError $e) {
             $this->assertStringContainsString('response time', $e->getMessage());
         }
 
@@ -160,7 +162,7 @@ class ConfigurationValidationTestCase extends AbstractIntegrationTestCase
             $headers = ['x-ratelimit-remaining' => ['0']];
             $this->assertRateLimitRespected($headers); // Should fail
             $this->fail('Should have failed assertion');
-        } catch (\PHPUnit\Framework\AssertionFailedError $e) {
+        } catch (AssertionFailedError $e) {
             $this->assertStringContainsString('rate limit exceeded', $e->getMessage());
         }
     }

@@ -16,13 +16,14 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment as TwigEnvironment;
 
 class TemplateRendererTest extends TestCase
 {
     private TemplateRenderer $subject;
-    private \PHPUnit\Framework\MockObject\MockObject $twig;
+    private MockObject $twig;
 
     protected function setUp(): void
     {

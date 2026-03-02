@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -27,7 +28,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class RectorConfigGeneratorTest extends TestCase
 {
     private RectorConfigGenerator $generator;
-    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
+    private MockObject $ruleRegistry;
     private string $tempDirectory;
     private Filesystem $filesystem;
 

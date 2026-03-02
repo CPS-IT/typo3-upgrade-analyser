@@ -13,8 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -136,12 +139,12 @@ class AnalyzeCommandTest extends TestCase
                 ]);
 
             // Mock discovery services to return successful results
-            $installationResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult::failed('Installation not found');
+            $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects(self::once())
                 ->method('discoverInstallation')
                 ->willReturn($installationResult);
 
-            $extensionResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success([], ['PackageStates.php']);
+            $extensionResult = ExtensionDiscoveryResult::success([], ['PackageStates.php']);
             $this->extensionDiscovery->expects(self::once())
                 ->method('discoverExtensions')
                 ->willReturn($extensionResult);
@@ -177,15 +180,15 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringRespectsConfiguration(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer2->method('getName')->willReturn('fractor');
         $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer3->method('getName')->willReturn('version_availability');
         $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
 
@@ -228,15 +231,15 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringCombinesConfigurationAndCommandLine(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer2->method('getName')->willReturn('fractor');
         $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer3->method('getName')->willReturn('version_availability');
         $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
 
@@ -276,7 +279,7 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringCommandLineRequestsDisabledAnalyzer(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('fractor');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 

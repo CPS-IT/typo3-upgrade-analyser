@@ -17,8 +17,10 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -33,7 +35,7 @@ class AbstractCachedAnalyzerTest extends TestCase
     private AnalysisContext $context;
 
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws Exception
      */
     protected function setUp(): void
     {
@@ -564,7 +566,7 @@ class TestCachedAnalyzer extends AbstractCachedAnalyzer
     // Public wrappers for testing protected methods
 
     /**
-     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException
+     * @throws AnalyzerException
      */
     public function generateCacheKeyPublic(Extension $extension, AnalysisContext $context): string
     {

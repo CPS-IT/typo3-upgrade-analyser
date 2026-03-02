@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -348,7 +349,7 @@ final class VersionExtractorTest extends TestCase
     }
 
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws Exception
      */
     private function createMockStrategy(string $name, int $priority): VersionStrategyInterface&MockObject
     {

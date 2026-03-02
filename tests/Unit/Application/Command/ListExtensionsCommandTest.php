@@ -19,10 +19,12 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -30,10 +32,10 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class ListExtensionsCommandTest extends TestCase
 {
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $extensionDiscovery;
-    private \PHPUnit\Framework\MockObject\MockObject $installationDiscovery;
-    private \PHPUnit\Framework\MockObject\MockObject $configService;
+    private MockObject $logger;
+    private MockObject $extensionDiscovery;
+    private MockObject $installationDiscovery;
+    private MockObject $configService;
     private ListExtensionsCommand $command;
     private CommandTester $commandTester;
     private string $tempConfigFile;
@@ -297,7 +299,7 @@ final class ListExtensionsCommandTest extends TestCase
             );
             $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
             $installation->setMetadata($metadata);
-            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $mockStrategy = $this->createMock(DetectionStrategyInterface::class);
             $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())
@@ -661,7 +663,7 @@ final class ListExtensionsCommandTest extends TestCase
 
             // Mock installation discovery with installation but no metadata
             $installation = new Installation($tempDir, Version::fromString('12.4.0'), 'composer');
-            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $mockStrategy = $this->createMock(DetectionStrategyInterface::class);
             $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())
@@ -708,7 +710,7 @@ final class ListExtensionsCommandTest extends TestCase
 
             // Mock installation discovery with unknown version - create minimal installation
             $installation = new Installation($tempDir, Version::fromString('0.0.0'), 'unknown');
-            $mockStrategy = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface::class);
+            $mockStrategy = $this->createMock(DetectionStrategyInterface::class);
             $installationResult = InstallationDiscoveryResult::success($installation, $mockStrategy);
 
             $this->installationDiscovery->expects($this->once())

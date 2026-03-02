@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Shared\Utility;
 
+use Composer\InstalledVersions;
+
 /**
  * Utility class for resolving the project root directory across different deployment scenarios.
  */
@@ -25,7 +27,7 @@ class ProjectRootResolver
         // Try to use Composer's installed packages info to find the root
         if (class_exists('\\Composer\\InstalledVersions')) {
             try {
-                $rootPackage = \Composer\InstalledVersions::getRootPackage();
+                $rootPackage = InstalledVersions::getRootPackage();
 
                 return $rootPackage['install_path'];
             } catch (\Throwable) {

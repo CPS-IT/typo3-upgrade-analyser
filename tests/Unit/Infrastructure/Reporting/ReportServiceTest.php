@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -31,10 +32,10 @@ use Psr\Log\LoggerInterface;
 class ReportServiceTest extends TestCase
 {
     private ReportService $subject;
-    private \PHPUnit\Framework\MockObject\MockObject $contextBuilder;
-    private \PHPUnit\Framework\MockObject\MockObject $templateRenderer;
-    private \PHPUnit\Framework\MockObject\MockObject $fileManager;
-    private \PHPUnit\Framework\MockObject\MockObject $logger;
+    private MockObject $contextBuilder;
+    private MockObject $templateRenderer;
+    private MockObject $fileManager;
+    private MockObject $logger;
 
     protected function setUp(): void
     {

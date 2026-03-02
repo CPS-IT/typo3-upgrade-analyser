@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser\Exception;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

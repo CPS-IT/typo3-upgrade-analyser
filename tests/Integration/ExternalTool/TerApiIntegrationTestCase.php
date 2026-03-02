@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Integration\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ExternalToolException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
@@ -264,7 +265,7 @@ class TerApiIntegrationTestCase extends AbstractIntegrationTestCase
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient::hasVersionFor
      *
      * @throws \JsonException
-     * @throws \CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException
+     * @throws TerApiException
      */
     public function testVersionCompatibilityLogic(): void
     {

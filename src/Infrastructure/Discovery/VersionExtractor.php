@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
 
 /**
