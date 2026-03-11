@@ -49,7 +49,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);
-        usort($strategiesArray, fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, static fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
         $this->detectionStrategies = $strategiesArray;
     }
 
@@ -196,7 +196,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn (array $attempt): bool => $attempt['supported']);
+        $supportedStrategies = array_filter($attemptedStrategies, static fn (array $attempt): bool => $attempt['supported']);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
             : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
@@ -336,7 +336,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         $this->logger->info('Installation validation completed', [
             'installation' => $installation->getPath(),
             'total_issues' => \count($allIssues),
-            'blocking_issues' => \count(array_filter($allIssues, fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis())),
+            'blocking_issues' => \count(array_filter($allIssues, static fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis())),
         ]);
 
         return $allIssues;

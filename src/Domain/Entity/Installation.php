@@ -133,17 +133,17 @@ final class Installation implements SerializableInterface, \JsonSerializable
 
     public function getSystemExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext): bool => 'system' === $ext->getType());
+        return array_filter($this->extensions, static fn (Extension $ext): bool => 'system' === $ext->getType());
     }
 
     public function getLocalExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext): bool => 'local' === $ext->getType());
+        return array_filter($this->extensions, static fn (Extension $ext): bool => 'local' === $ext->getType());
     }
 
     public function getComposerExtensions(): array
     {
-        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->hasComposerName());
+        return array_filter($this->extensions, static fn (Extension $ext): bool => $ext->hasComposerName());
     }
 
     public function isMixedMode(): bool
@@ -208,7 +208,7 @@ final class Installation implements SerializableInterface, \JsonSerializable
         // Extensions are only included when explicitly requested
         // In discovery context, extensions are managed separately by ExtensionDiscoveryService
         if ($includeExtensions) {
-            $data['extensions'] = array_map(fn ($ext) => $ext->toArray(), $this->extensions);
+            $data['extensions'] = array_map(static fn ($ext) => $ext->toArray(), $this->extensions);
         }
 
         return $data;
@@ -439,15 +439,15 @@ final class Installation implements SerializableInterface, \JsonSerializable
             'configurations' => array_keys($this->configurationData),
             'has_errors' => $this->hasConfigurationErrors(),
             'error_count' => array_sum(array_map(
-                fn (ConfigurationData $config): int => \count($config->getValidationErrors()),
+                static fn (ConfigurationData $config): int => \count($config->getValidationErrors()),
                 $this->configurationData,
             )),
             'file_sizes' => array_map(
-                fn (ConfigurationMetadata $meta): int => $meta->getFileSize(),
+                static fn (ConfigurationMetadata $meta): int => $meta->getFileSize(),
                 $this->configurationMetadata,
             ),
             'last_modified' => array_map(
-                fn (ConfigurationMetadata $meta): string => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
+                static fn (ConfigurationMetadata $meta): string => $meta->getLastModified()->format(\DateTimeInterface::ATOM),
                 $this->configurationMetadata,
             ),
         ];

@@ -292,7 +292,7 @@ final class ErrorRecoveryManager
     ): PathResolutionResponse {
         // Sort fallback strategies by priority
         $sortedStrategies = $request->fallbackStrategies;
-        usort($sortedStrategies, fn ($a, $b): int => $b->priority <=> $a->priority);
+        usort($sortedStrategies, static fn ($a, $b): int => $b->priority <=> $a->priority);
 
         $warnings = ['Fallback strategies attempted but not implemented'];
         $resolutionTime = microtime(true) - $startTime;
@@ -374,7 +374,7 @@ final class ErrorRecoveryManager
 
         // Remove duplicates and sort by path length (shorter paths first)
         $alternatives = array_unique($alternatives);
-        usort($alternatives, fn ($a, $b): int => \strlen($a) <=> \strlen($b));
+        usort($alternatives, static fn ($a, $b): int => \strlen($a) <=> \strlen($b));
 
         return $alternatives;
     }
