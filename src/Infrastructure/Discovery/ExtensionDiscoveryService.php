@@ -447,6 +447,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
             if (file_exists($emconfPath)) {
                 try {
                     $EM_CONF = [];
+                    $_EXTKEY = $packageKey;
                     include $emconfPath;
 
                     // @phpstan-ignore isset.offset
