@@ -20,12 +20,12 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Service for generating Rector configuration files.
  */
-class RectorConfigGenerator
+readonly class RectorConfigGenerator
 {
     public function __construct(
-        private readonly RectorRuleRegistry $ruleRegistry,
-        private readonly string $tempDirectory,
-        private readonly Filesystem $filesystem = new Filesystem(),
+        private RectorRuleRegistry $ruleRegistry,
+        private string $tempDirectory,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
         $this->ensureTempDirectoryExists();
     }

@@ -25,10 +25,10 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving vendor directory paths by reading composer.json configuration.
  * Handles both default 'vendor' and custom vendor-dir configurations.
  */
-final class VendorDirPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class VendorDirPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

@@ -19,10 +19,10 @@ use Psr\Log\LoggerInterface;
  * Early validation for path resolution requests.
  * Provides comprehensive validation with detailed error reporting.
  */
-final class PathResolutionValidator
+final readonly class PathResolutionValidator
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

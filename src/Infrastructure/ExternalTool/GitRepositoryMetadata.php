@@ -15,17 +15,17 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 /**
  * Metadata about a Git repository.
  */
-class GitRepositoryMetadata
+readonly class GitRepositoryMetadata
 {
     public function __construct(
-        private readonly string $name,
-        private readonly string $description,
-        private readonly bool $isArchived,
-        private readonly bool $isFork,
-        private readonly int $starCount,
-        private readonly int $forkCount,
-        private readonly \DateTimeImmutable $lastUpdated,
-        private readonly string $defaultBranch = 'main',
+        private string $name,
+        private string $description,
+        private bool $isArchived,
+        private bool $isFork,
+        private int $starCount,
+        private int $forkCount,
+        private \DateTimeImmutable $lastUpdated,
+        private string $defaultBranch = 'main',
     ) {
     }
 

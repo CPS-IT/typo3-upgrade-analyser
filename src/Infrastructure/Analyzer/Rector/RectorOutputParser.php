@@ -17,10 +17,10 @@ use Psr\Log\LoggerInterface;
 /**
  * Parser for Rector JSON output.
  */
-class RectorOutputParser
+readonly class RectorOutputParser
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

@@ -20,10 +20,10 @@ use Twig\Environment as TwigEnvironment;
  * This service handles format-specific content generation using Twig templates
  * and JSON encoding. It focuses solely on content rendering without file I/O.
  */
-class TemplateRenderer
+readonly class TemplateRenderer
 {
     public function __construct(
-        private readonly TwigEnvironment $twig,
+        private TwigEnvironment $twig,
     ) {
     }
 

@@ -32,11 +32,11 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      * @param array<array<string, mixed>> $discoveryMetadata Information about discovery process
      */
     private function __construct(
-        private readonly array $extensions,
-        private readonly bool $isSuccessful,
-        private readonly string $errorMessage,
-        private readonly array $successfulMethods,
-        private readonly array $discoveryMetadata,
+        private array $extensions,
+        private bool $isSuccessful,
+        private string $errorMessage,
+        private array $successfulMethods,
+        private array $discoveryMetadata,
     ) {
     }
 

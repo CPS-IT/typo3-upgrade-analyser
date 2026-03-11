@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 /**
  * Represents a validation issue found during installation validation.
  */
-final class ValidationIssue
+final readonly class ValidationIssue
 {
     /**
      * @param string               $ruleName        Name of the validation rule that detected this issue
@@ -27,13 +27,13 @@ final class ValidationIssue
      * @param array<string>        $recommendations Suggested actions to resolve the issue
      */
     public function __construct(
-        private readonly string $ruleName,
-        private readonly ValidationSeverity $severity,
-        private readonly string $message,
-        private readonly string $category,
-        private readonly array $context = [],
-        private readonly array $affectedPaths = [],
-        private readonly array $recommendations = [],
+        private string $ruleName,
+        private ValidationSeverity $severity,
+        private string $message,
+        private string $category,
+        private array $context = [],
+        private array $affectedPaths = [],
+        private array $recommendations = [],
     ) {
     }
 

@@ -15,21 +15,21 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 /**
  * Summary of Rector analysis results with aggregated metrics.
  */
-class RectorAnalysisSummary
+readonly class RectorAnalysisSummary
 {
     public function __construct(
-        private readonly int $totalFindings,
-        private readonly int $criticalIssues,
-        private readonly int $warnings,
-        private readonly int $infoIssues,
-        private readonly int $suggestions,
-        private readonly int $affectedFiles,
-        private readonly int $totalFiles,
-        private readonly array $ruleBreakdown,
-        private readonly array $fileBreakdown,
-        private readonly array $typeBreakdown,
-        private readonly float $complexityScore,
-        private readonly int $estimatedFixTime,
+        private int $totalFindings,
+        private int $criticalIssues,
+        private int $warnings,
+        private int $infoIssues,
+        private int $suggestions,
+        private int $affectedFiles,
+        private int $totalFiles,
+        private array $ruleBreakdown,
+        private array $fileBreakdown,
+        private array $typeBreakdown,
+        private float $complexityScore,
+        private int $estimatedFixTime,
     ) {
     }
 

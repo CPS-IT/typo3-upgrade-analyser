@@ -19,9 +19,9 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 /**
  * Unified service for checking Composer version constraints against TYPO3 versions.
  */
-class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
+readonly class ComposerConstraintChecker implements ComposerConstraintCheckerInterface
 {
-    private readonly VersionParser $versionParser;
+    private VersionParser $versionParser;
 
     public function __construct()
     {

@@ -25,7 +25,7 @@ use Psr\Log\LoggerInterface;
  * The strategy prioritizes composer.lock as it contains the exact installed
  * versions, while composer.json only contains version constraints.
  */
-final class ComposerVersionStrategy implements VersionStrategyInterface
+final readonly class ComposerVersionStrategy implements VersionStrategyInterface
 {
     private const TYPO3_CORE_PACKAGES = [
         'typo3/cms-core',
@@ -34,7 +34,7 @@ final class ComposerVersionStrategy implements VersionStrategyInterface
     ];
 
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

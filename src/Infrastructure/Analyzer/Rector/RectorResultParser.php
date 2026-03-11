@@ -17,11 +17,11 @@ use Psr\Log\LoggerInterface;
 /**
  * Service for parsing and aggregating Rector analysis results.
  */
-class RectorResultParser
+readonly class RectorResultParser
 {
     public function __construct(
-        private readonly RectorRuleRegistry $ruleRegistry,
-        private readonly LoggerInterface $logger,
+        private RectorRuleRegistry $ruleRegistry,
+        private LoggerInterface $logger,
     ) {
     }
 

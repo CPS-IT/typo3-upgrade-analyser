@@ -14,14 +14,14 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Cache;
 
 use Psr\Log\LoggerInterface;
 
-class CacheService
+readonly class CacheService
 {
     private const CACHE_DIRECTORY = 'var/results';
     private const FILE_EXTENSION = '.json';
 
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly string $projectRoot,
+        private LoggerInterface $logger,
+        private string $projectRoot,
     ) {
     }
 
