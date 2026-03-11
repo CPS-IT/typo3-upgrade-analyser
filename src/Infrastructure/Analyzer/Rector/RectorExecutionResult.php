@@ -100,7 +100,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding): bool => $finding->getSeverity() === $severity,
+            static fn (RectorFinding $finding): bool => $finding->getSeverity() === $severity,
         ));
     }
 
@@ -113,7 +113,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding): bool => $finding->getChangeType() === $changeType,
+            static fn (RectorFinding $finding): bool => $finding->getChangeType() === $changeType,
         ));
     }
 

@@ -57,8 +57,8 @@ final class PathResolutionStrategyRegistry
 
         $this->logger->debug('Registered path resolution strategy', [
             'identifier' => $identifier,
-            'supported_path_types' => array_map(fn ($pt) => $pt->value, $strategy->getSupportedPathTypes()),
-            'supported_installation_types' => array_map(fn ($it) => $it->value, $strategy->getSupportedInstallationTypes()),
+            'supported_path_types' => array_map(static fn ($pt) => $pt->value, $strategy->getSupportedPathTypes()),
+            'supported_installation_types' => array_map(static fn ($it) => $it->value, $strategy->getSupportedInstallationTypes()),
         ]);
     }
 
@@ -133,7 +133,7 @@ final class PathResolutionStrategyRegistry
     public function getSupportedPathTypes(): array
     {
         return array_map(
-            fn ($value) => PathTypeEnum::from($value),
+            static fn ($value) => PathTypeEnum::from($value),
             array_keys($this->strategiesByPathType),
         );
     }
@@ -142,14 +142,14 @@ final class PathResolutionStrategyRegistry
     {
         $capabilities = [
             'strategy_count' => \count($this->strategiesById),
-            'supported_path_types' => array_map(fn ($pt) => $pt->value, $this->getSupportedPathTypes()),
+            'supported_path_types' => array_map(static fn ($pt) => $pt->value, $this->getSupportedPathTypes()),
             'supported_installation_types' => [],
             'strategy_details' => [],
         ];
 
         foreach ($this->strategiesById as $identifier => $strategy) {
-            $pathTypes = array_map(fn ($pt) => $pt->value, $strategy->getSupportedPathTypes());
-            $installationTypes = array_map(fn ($it) => $it->value, $strategy->getSupportedInstallationTypes());
+            $pathTypes = array_map(static fn ($pt) => $pt->value, $strategy->getSupportedPathTypes());
+            $installationTypes = array_map(static fn ($it) => $it->value, $strategy->getSupportedInstallationTypes());
 
             $capabilities['supported_path_types'] = array_unique(
                 array_merge($capabilities['supported_path_types'], $pathTypes),
@@ -202,7 +202,7 @@ final class PathResolutionStrategyRegistry
         PathTypeEnum $pathType,
         InstallationTypeEnum $installationType,
     ): PathResolutionStrategyInterface {
-        usort($strategies, function ($a, $b) use ($pathType, $installationType): int {
+        usort($strategies, static function ($a, $b) use ($pathType, $installationType): int {
             $priorityA = $a->getPriority($pathType, $installationType)->value;
             $priorityB = $b->getPriority($pathType, $installationType)->value;
 

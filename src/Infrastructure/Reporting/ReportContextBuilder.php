@@ -42,18 +42,18 @@ class ReportContextBuilder
         $discoveryResults = $groupedResults['discovery'];
         $installationDiscovery = array_filter(
             $discoveryResults,
-            fn (ResultInterface $r): bool => 'installation' === $r->getId(),
+            static fn (ResultInterface $r): bool => 'installation' === $r->getId(),
         );
         $extensionDiscovery = array_filter(
             $discoveryResults,
-            fn (ResultInterface $r): bool => 'extensions' === $r->getId(),
+            static fn (ResultInterface $r): bool => 'extensions' === $r->getId(),
         );
 
         // Analysis results
         $analysisResults = $groupedResults['analysis'];
         $versionAnalysis = array_filter(
             $analysisResults,
-            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
+            static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
 
         // Build detailed extension data with analysis results
@@ -61,7 +61,7 @@ class ReportContextBuilder
         foreach ($extensions as $extension) {
             $extensionResults = array_filter(
                 $analysisResults,
-                fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
+                static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
             );
 
             $extensionData[] = [
@@ -188,7 +188,7 @@ class ReportContextBuilder
     {
         $versionResult = array_filter(
             $results,
-            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
+            static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
 
         if (empty($versionResult)) {
@@ -220,7 +220,7 @@ class ReportContextBuilder
     {
         $locResult = array_filter(
             $results,
-            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
+            static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'lines_of_code' === $r->getAnalyzerName(),
         );
 
         if (empty($locResult)) {
@@ -256,7 +256,7 @@ class ReportContextBuilder
     {
         $rectorResult = array_filter(
             $results,
-            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'typo3_rector' === $r->getAnalyzerName(),
+            static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'typo3_rector' === $r->getAnalyzerName(),
         );
 
         if (empty($rectorResult)) {
@@ -320,7 +320,7 @@ class ReportContextBuilder
     {
         $fractorResult = array_filter(
             $results,
-            fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'fractor' === $r->getAnalyzerName(),
+            static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'fractor' === $r->getAnalyzerName(),
         );
 
         if (empty($fractorResult)) {
