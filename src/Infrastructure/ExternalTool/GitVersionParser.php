@@ -18,10 +18,10 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterf
 /**
  * Parses Git repository versions and determines TYPO3 compatibility.
  */
-class GitVersionParser
+readonly class GitVersionParser
 {
     public function __construct(
-        private readonly ComposerConstraintCheckerInterface $constraintChecker,
+        private ComposerConstraintCheckerInterface $constraintChecker,
     ) {
     }
 

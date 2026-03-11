@@ -18,14 +18,14 @@ use Psr\Log\LoggerInterface;
 /**
  * Factory for creating appropriate Git provider instances.
  */
-class GitProviderFactory
+readonly class GitProviderFactory
 {
     /**
      * @param array<GitProviderInterface> $providers
      */
     public function __construct(
-        private readonly array $providers,
-        private readonly LoggerInterface $logger,
+        private array $providers,
+        private LoggerInterface $logger,
     ) {
     }
 

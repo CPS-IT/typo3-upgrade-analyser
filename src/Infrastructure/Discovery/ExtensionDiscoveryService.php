@@ -23,13 +23,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
-class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
+readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly ConfigurationService $configService,
-        private readonly CacheService $cacheService,
-        private readonly PathResolutionServiceInterface $pathResolutionService,
+        private LoggerInterface $logger,
+        private ConfigurationService $configService,
+        private CacheService $cacheService,
+        private PathResolutionServiceInterface $pathResolutionService,
     ) {
     }
 

@@ -19,11 +19,11 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * Unified HTTP client service with consistent error handling and logging.
  */
-class HttpClientService implements HttpClientServiceInterface
+readonly class HttpClientService implements HttpClientServiceInterface
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger,
+        private HttpClientInterface $httpClient,
+        private LoggerInterface $logger,
     ) {
     }
 

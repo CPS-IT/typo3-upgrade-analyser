@@ -24,13 +24,13 @@ use Psr\Log\LoggerInterface;
  * This service orchestrates the report generation process by coordinating three
  * specialized services: ReportContextBuilder, TemplateRenderer, and ReportFileManager.
  */
-class ReportService
+readonly class ReportService
 {
     public function __construct(
-        private readonly ReportContextBuilder $contextBuilder,
-        private readonly TemplateRenderer $templateRenderer,
-        private readonly ReportFileManager $fileManager,
-        private readonly LoggerInterface $logger,
+        private ReportContextBuilder $contextBuilder,
+        private TemplateRenderer $templateRenderer,
+        private ReportFileManager $fileManager,
+        private LoggerInterface $logger,
     ) {
     }
 

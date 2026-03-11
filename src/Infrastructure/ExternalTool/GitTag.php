@@ -15,12 +15,12 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 /**
  * Represents a Git tag with associated metadata.
  */
-class GitTag
+readonly class GitTag
 {
     public function __construct(
-        private readonly string $name,
-        private readonly ?\DateTimeImmutable $date = null,
-        private readonly ?string $commit = null,
+        private string $name,
+        private ?\DateTimeImmutable $date = null,
+        private ?string $commit = null,
     ) {
     }
 

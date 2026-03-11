@@ -20,7 +20,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
  * Contains the extracted version (if successful), metadata about the extraction
  * process, and information about which strategies were attempted.
  */
-final class VersionExtractionResult
+final readonly class VersionExtractionResult
 {
     /**
      * @param Version|null                  $version             Extracted version (null if extraction failed)
@@ -30,11 +30,11 @@ final class VersionExtractionResult
      * @param array<array<string, mixed>>   $attemptedStrategies Information about attempted strategies
      */
     private function __construct(
-        private readonly ?Version $version,
-        private readonly bool $isSuccessful,
-        private readonly string $errorMessage,
-        private readonly ?VersionStrategyInterface $successfulStrategy,
-        private readonly array $attemptedStrategies,
+        private ?Version $version,
+        private bool $isSuccessful,
+        private string $errorMessage,
+        private ?VersionStrategyInterface $successfulStrategy,
+        private array $attemptedStrategies,
     ) {
     }
 

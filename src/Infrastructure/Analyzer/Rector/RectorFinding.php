@@ -15,19 +15,19 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 /**
  * Represents a single finding from Rector analysis.
  */
-class RectorFinding
+readonly class RectorFinding
 {
     public function __construct(
-        private readonly string $file,
-        private readonly int $line,
-        private readonly string $ruleClass,
-        private readonly string $message,
-        private readonly RectorRuleSeverity $severity,
-        private readonly RectorChangeType $changeType,
-        private readonly ?string $suggestedFix = null,
-        private readonly ?string $oldCode = null,
-        private readonly ?string $newCode = null,
-        private readonly array $context = [],
+        private string $file,
+        private int $line,
+        private string $ruleClass,
+        private string $message,
+        private RectorRuleSeverity $severity,
+        private RectorChangeType $changeType,
+        private ?string $suggestedFix = null,
+        private ?string $oldCode = null,
+        private ?string $newCode = null,
+        private array $context = [],
     ) {
     }
 

@@ -22,12 +22,12 @@ use Psr\Log\LoggerInterface;
  * the TYPO3 version of an installation. It tries strategies in priority order
  * and returns the first successful result.
  */
-final class VersionExtractor
+final readonly class VersionExtractor
 {
     /**
      * @var array<VersionStrategyInterface> Version extraction strategies
      */
-    private readonly array $strategies;
+    private array $strategies;
 
     /**
      * @param iterable<VersionStrategyInterface> $strategies Version extraction strategies
@@ -35,7 +35,7 @@ final class VersionExtractor
      */
     public function __construct(
         iterable $strategies,
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
         // Convert iterable to array and sort strategies by priority (highest first)
         $strategiesArray = iterator_to_array($strategies);

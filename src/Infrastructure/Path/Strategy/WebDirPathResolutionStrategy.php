@@ -25,10 +25,10 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving web directory paths by reading composer.json configuration.
  * Handles both default 'public' and custom web-dir configurations from extra.typo3/cms section.
  */
-final class WebDirPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class WebDirPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

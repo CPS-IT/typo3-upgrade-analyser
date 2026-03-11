@@ -19,14 +19,14 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * HTTP client wrapper for TER API requests.
  */
-class TerApiHttpClient
+readonly class TerApiHttpClient
 {
     private const API_BASE_URL = 'https://extensions.typo3.org/api/v1';
 
     public function __construct(
-        private readonly HttpClientServiceInterface $httpClient,
-        private readonly LoggerInterface $logger,
-        private readonly ?string $terToken = null,
+        private HttpClientServiceInterface $httpClient,
+        private LoggerInterface $logger,
+        private ?string $terToken = null,
     ) {
     }
 

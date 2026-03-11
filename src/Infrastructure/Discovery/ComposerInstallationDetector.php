@@ -30,7 +30,7 @@ use Psr\Log\LoggerInterface;
  * It identifies the installation by looking for key Composer indicators and
  * TYPO3-specific directory structures.
  */
-final class ComposerInstallationDetector implements DetectionStrategyInterface
+final readonly class ComposerInstallationDetector implements DetectionStrategyInterface
 {
     private const REQUIRED_COMPOSER_FILES = ['composer.json'];
     private const TYPO3_CORE_PACKAGES = [
@@ -40,9 +40,9 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
     ];
 
     public function __construct(
-        private readonly VersionExtractor $versionExtractor,
-        private readonly PathResolutionServiceInterface $pathResolutionService,
-        private readonly LoggerInterface $logger,
+        private VersionExtractor $versionExtractor,
+        private PathResolutionServiceInterface $pathResolutionService,
+        private LoggerInterface $logger,
     ) {
     }
 

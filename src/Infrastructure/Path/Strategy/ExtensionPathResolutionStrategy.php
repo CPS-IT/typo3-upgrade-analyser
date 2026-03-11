@@ -27,11 +27,11 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving extension paths in different TYPO3 installation types.
  * Handles Composer, legacy, and custom installations with proper fallback logic.
  */
-final class ExtensionPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class ExtensionPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly ComposerVersionStrategy $composerVersionStrategy,
+        private LoggerInterface $logger,
+        private ComposerVersionStrategy $composerVersionStrategy,
     ) {
     }
 
