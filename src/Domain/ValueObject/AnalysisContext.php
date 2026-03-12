@@ -15,13 +15,13 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 /**
  * Context information for analysis operations.
  */
-class AnalysisContext
+readonly class AnalysisContext
 {
     public function __construct(
-        private readonly Version $currentVersion,
-        private readonly Version $targetVersion,
-        private readonly array $phpVersions = [],
-        private readonly array $configuration = [],
+        private Version $currentVersion,
+        private Version $targetVersion,
+        private array $phpVersions = [],
+        private array $configuration = [],
     ) {
     }
 

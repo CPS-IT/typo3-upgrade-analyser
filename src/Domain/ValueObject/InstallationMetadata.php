@@ -18,7 +18,7 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
  * This value object stores additional information gathered during the discovery process
  * that might be useful for analysis and validation.
  */
-final class InstallationMetadata
+final readonly class InstallationMetadata
 {
     /**
      * @param array<string, string> $phpVersions     Detected PHP versions and requirements
@@ -29,12 +29,12 @@ final class InstallationMetadata
      * @param array<string, mixed>  $discoveryData   Additional data collected during discovery
      */
     public function __construct(
-        private readonly array $phpVersions,
-        private readonly array $databaseConfig,
-        private readonly array $enabledFeatures,
-        private readonly \DateTimeImmutable $lastModified,
-        private readonly array $customPaths,
-        private readonly array $discoveryData = [],
+        private array $phpVersions,
+        private array $databaseConfig,
+        private array $enabledFeatures,
+        private \DateTimeImmutable $lastModified,
+        private array $customPaths,
+        private array $discoveryData = [],
     ) {
     }
 
