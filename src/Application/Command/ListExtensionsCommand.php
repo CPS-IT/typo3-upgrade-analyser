@@ -32,9 +32,9 @@ class ListExtensionsCommand extends Command
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ExtensionDiscoveryServiceInterface $extensionDiscovery,
-        private readonly InstallationDiscoveryServiceInterface $installationDiscovery,
-        private readonly ConfigurationServiceInterface $configService,
+        private readonly ExtensionDiscoveryServiceInterface $extensionDiscoveryService,
+        private readonly InstallationDiscoveryServiceInterface $installationDiscoveryService,
+        private readonly ConfigurationServiceInterface $configurationService,
     ) {
         parent::__construct();
     }
@@ -67,8 +67,8 @@ class ListExtensionsCommand extends Command
         try {
             // Use ConfigurationService with custom config path if provided
             $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
-                ? $this->configService->withConfigPath($configPath)
-                : $this->configService;
+                ? $this->configurationService->withConfigPath($configPath)
+                : $this->configurationService;
 
             // Use ConfigurationService to get settings
             $installationPath = $configService->getInstallationPath();
@@ -91,7 +91,7 @@ class ListExtensionsCommand extends Command
 
             // First, discover the installation to get custom paths
             $io->text('Discovering TYPO3 installation...');
-            $installationResult = $this->installationDiscovery->discoverInstallation($installationPath);
+            $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
             if (!$installationResult->isSuccessful()) {
                 $io->warning(\sprintf('Installation discovery failed: %s', $installationResult->getErrorMessage()));
@@ -107,7 +107,7 @@ class ListExtensionsCommand extends Command
 
             // Discover extensions using installation metadata
             $io->text('Discovering extensions...');
-            $discoveryResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+            $discoveryResult = $this->extensionDiscoveryService->discoverExtensions($installationPath, $customPaths);
 
             if (!$discoveryResult->isSuccessful()) {
                 $io->error(\sprintf('Extension discovery failed: %s', $discoveryResult->getErrorMessage()));

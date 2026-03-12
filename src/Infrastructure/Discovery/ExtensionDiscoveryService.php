@@ -27,7 +27,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 {
     public function __construct(
         private LoggerInterface $logger,
-        private ConfigurationService $configService,
+        private ConfigurationService $configurationService,
         private CacheService $cacheService,
         private PathResolutionServiceInterface $pathResolutionService,
     ) {
@@ -39,7 +39,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
         try {
             // Check cache if enabled
-            if ($this->configService->isResultCacheEnabled()) {
+            if ($this->configurationService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
@@ -124,7 +124,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
             $result = ExtensionDiscoveryResult::success($extensions, $successfulMethods, $discoveryMetadata);
 
             // Cache the result if enabled
-            if ($this->configService->isResultCacheEnabled()) {
+            if ($this->configurationService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
