@@ -43,9 +43,9 @@ class AnalyzeCommand extends Command
      */
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ExtensionDiscoveryServiceInterface $extensionDiscovery,
-        private readonly InstallationDiscoveryServiceInterface $installationDiscovery,
-        private readonly ConfigurationServiceInterface $configService,
+        private readonly ExtensionDiscoveryServiceInterface $extensionDiscoveryService,
+        private readonly InstallationDiscoveryServiceInterface $installationDiscoveryService,
+        private readonly ConfigurationServiceInterface $configurationService,
         private readonly ReportService $reportService,
         private readonly iterable $analyzers = [],
     ) {
@@ -88,8 +88,8 @@ class AnalyzeCommand extends Command
         try {
             // Use ConfigurationService with custom config path if provided
             $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
-                ? $this->configService->withConfigPath($configPath)
-                : $this->configService;
+                ? $this->configurationService->withConfigPath($configPath)
+                : $this->configurationService;
 
             // Get settings from configuration
             $installationPath = $configService->getInstallationPath();
@@ -159,7 +159,7 @@ class AnalyzeCommand extends Command
     {
         // Discover installation
         $io->text('Discovering TYPO3 installation...');
-        $installationResult = $this->installationDiscovery->discoverInstallation($installationPath);
+        $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
         $installation = null;
         $customPaths = null;
@@ -175,7 +175,7 @@ class AnalyzeCommand extends Command
 
         // Discover extensions
         $io->text('Discovering extensions...');
-        $extensionResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+        $extensionResult = $this->extensionDiscoveryService->discoverExtensions($installationPath, $customPaths);
 
         if (!$extensionResult->isSuccessful()) {
             throw new \RuntimeException(\sprintf('Extension discovery failed: %s', $extensionResult->getErrorMessage()));
@@ -391,7 +391,7 @@ class AnalyzeCommand extends Command
         foreach ($allAnalyzers as $analyzer) {
             $analyzerName = $analyzer->getName();
             $configKey = "analysis.analyzers.{$analyzerName}.enabled";
-            $isEnabled = $this->configService->get($configKey, true); // Default to true for backwards compatibility
+            $isEnabled = $this->configurationService->get($configKey, true); // Default to true for backwards compatibility
 
             if ($isEnabled) {
                 $enabledAnalyzers[] = $analyzer;
