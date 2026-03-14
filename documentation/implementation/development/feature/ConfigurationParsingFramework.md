@@ -912,6 +912,7 @@ class FlexFormParser extends XmlConfigurationParser
 ### Application Layer
 
 #### Configuration Service
+
 ```php
 // src/Application/Service/ConfigurationService.php
 class ConfigurationService
@@ -1016,13 +1017,13 @@ class ConfigurationService
 class ConfigurationAnalysisService
 {
     public function __construct(
-        private readonly ConfigurationService $configService,
+        private readonly ConfigurationService $configurationService,
         private readonly ConfigurationCompatibilityChecker $compatibilityChecker
     ) {}
 
     public function analyzeForUpgrade(Installation $installation, Version $targetVersion): ConfigurationAnalysisResult
     {
-        $config = $this->configService->parseInstallationConfiguration($installation);
+        $config = $this->configurationService->parseInstallationConfiguration($installation);
         $issues = [];
 
         // Check main configuration compatibility

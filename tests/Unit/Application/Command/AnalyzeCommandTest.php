@@ -38,7 +38,7 @@ class AnalyzeCommandTest extends TestCase
     /** @var InstallationDiscoveryServiceInterface&MockObject */
     private MockObject $installationDiscovery;
     /** @var ConfigurationServiceInterface&MockObject */
-    private MockObject $configService;
+    private MockObject $configurationService;
     /** @var ReportService&MockObject */
     private MockObject $reportService;
     private AnalyzeCommand $command;
@@ -49,14 +49,14 @@ class AnalyzeCommandTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryServiceInterface::class);
         $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
-        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configurationService = $this->createMock(ConfigurationServiceInterface::class);
         $this->reportService = $this->createMock(ReportService::class);
 
         $this->command = new AnalyzeCommand(
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
         );
 
@@ -119,19 +119,19 @@ class AnalyzeCommandTest extends TestCase
 
         try {
             // Mock the configuration service methods
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('withConfigPath')
-                ->willReturn($this->configService);
+                ->willReturn($this->configurationService);
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('getTargetVersion')
                 ->willReturn('12.4');
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('get')
                 ->willReturnMap([
                     ['reporting.output_directory', 'var/reports/', 'var/reports/'],
@@ -197,13 +197,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
         );
 
         // Configure mock service to disable fractor analyzer
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.typo3_rector.enabled' => true,
                 'analysis.analyzers.fractor.enabled' => false,  // Disabled
@@ -248,13 +248,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
         );
 
         // Configure mock service - all analyzers enabled in config
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.typo3_rector.enabled' => true,
                 'analysis.analyzers.fractor.enabled' => true,
@@ -288,13 +288,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1],
         );
 
         // Configure mock service to disable the analyzer
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.fractor.enabled' => false,  // Disabled in config
                 default => $default,

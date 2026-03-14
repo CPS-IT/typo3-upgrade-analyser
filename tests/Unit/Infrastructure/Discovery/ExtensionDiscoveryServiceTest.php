@@ -28,7 +28,7 @@ use Psr\Log\LoggerInterface;
 final class ExtensionDiscoveryServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
-    private ConfigurationService&MockObject $configService;
+    private ConfigurationService&MockObject $configurationService;
     private CacheService&MockObject $cacheService;
     private PathResolutionServiceInterface&MockObject $pathResolutionService;
     private ExtensionDiscoveryService $service;
@@ -37,13 +37,13 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->configService = $this->createMock(ConfigurationService::class);
+        $this->configurationService = $this->createMock(ConfigurationService::class);
         $this->cacheService = $this->createMock(CacheService::class);
         $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
 
         $this->service = new ExtensionDiscoveryService(
             $this->logger,
-            $this->configService,
+            $this->configurationService,
             $this->cacheService,
             $this->pathResolutionService,
         );
@@ -338,7 +338,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $customService = new ExtensionDiscoveryService(
             $this->logger,
-            $this->configService,
+            $this->configurationService,
             $this->cacheService,
             $pathResolutionService,
         );
@@ -370,7 +370,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testDiscoverExtensionsWithCacheEnabled(): void
     {
-        $this->configService->expects($this->exactly(2))
+        $this->configurationService->expects($this->exactly(2))
             ->method('isResultCacheEnabled')
             ->willReturn(true);
 
@@ -421,7 +421,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             'cached_at' => time(),
         ];
 
-        $this->configService->expects($this->once())
+        $this->configurationService->expects($this->once())
             ->method('isResultCacheEnabled')
             ->willReturn(true);
 
@@ -447,7 +447,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testDiscoverExtensionsWithCacheDisabled(): void
     {
-        $this->configService->expects($this->exactly(2))
+        $this->configurationService->expects($this->exactly(2))
             ->method('isResultCacheEnabled')
             ->willReturn(false);
 
@@ -746,7 +746,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
                 );
             });
 
-        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService, $pathResolutionService);
+        $service = new ExtensionDiscoveryService($this->logger, $this->configurationService, $this->cacheService, $pathResolutionService);
 
         $result = $service->discoverExtensions($this->tempDir);
 
@@ -962,7 +962,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     public function testDiscoverExtensionsWithMainDiscoveryException(): void
     {
         // Mock the configService to throw an exception during discovery
-        $this->configService->expects($this->once())
+        $this->configurationService->expects($this->once())
             ->method('isResultCacheEnabled')
             ->willThrowException(new \RuntimeException('Configuration error'));
 
