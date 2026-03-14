@@ -63,13 +63,13 @@ readonly class ReportService
         $this->logger->debug('Grouping analysis results by type', ['result_count' => \count($results)]);
         $groupedResults = $this->groupResultsByType($results);
 
+        // Generate context for templates using ReportContextBuilder
+        $this->logger->debug('Building report context for templates');
+        $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
+        $this->logger->debug('Report context built successfully');
+
         foreach ($formats as $format) {
             try {
-                // Generate context for templates using ReportContextBuilder
-                $this->logger->debug('Building report context for templates');
-                $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
-                $this->logger->debug('Report context built successfully');
-
                 $this->logger->debug('Generating report for format', ['format' => $format]);
                 $reportResult = $this->generateFormatReport($format, $context, $outputDirectory);
                 $reportResults[] = $reportResult;

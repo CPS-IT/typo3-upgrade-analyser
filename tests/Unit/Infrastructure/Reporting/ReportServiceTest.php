@@ -112,7 +112,7 @@ class ReportServiceTest extends TestCase
         $extensions = [];
         $results = [];
 
-        $this->contextBuilder->method('buildReportContext')
+        $this->fileManager->method('ensureOutputDirectory')
             ->willThrowException(new \RuntimeException('Context building failed'));
 
         // Act
