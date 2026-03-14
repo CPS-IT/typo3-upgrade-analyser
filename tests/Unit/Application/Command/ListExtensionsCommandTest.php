@@ -35,7 +35,7 @@ final class ListExtensionsCommandTest extends TestCase
     private MockObject $logger;
     private MockObject $extensionDiscovery;
     private MockObject $installationDiscovery;
-    private MockObject $configService;
+    private MockObject $configurationService;
     private ListExtensionsCommand $command;
     private CommandTester $commandTester;
     private string $tempConfigFile;
@@ -45,13 +45,13 @@ final class ListExtensionsCommandTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryServiceInterface::class);
         $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
-        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configurationService = $this->createMock(ConfigurationServiceInterface::class);
 
         $this->command = new ListExtensionsCommand(
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
         );
 
         $this->commandTester = new CommandTester($this->command);
@@ -126,10 +126,10 @@ final class ListExtensionsCommandTest extends TestCase
 
         try {
             // Since we're using the default config path, withConfigPath should never be called
-            $this->configService->expects($this->never())
+            $this->configurationService->expects($this->never())
                 ->method('withConfigPath');
 
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
@@ -186,7 +186,7 @@ final class ListExtensionsCommandTest extends TestCase
         try {
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
 
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($customConfigFile)
                 ->willReturn($customConfigService);
@@ -229,7 +229,7 @@ final class ListExtensionsCommandTest extends TestCase
         file_put_contents($this->tempConfigFile, '');
 
         $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-        $this->configService->expects($this->once())
+        $this->configurationService->expects($this->once())
             ->method('withConfigPath')
             ->with($this->tempConfigFile)
             ->willReturn($customConfigService);
@@ -252,7 +252,7 @@ final class ListExtensionsCommandTest extends TestCase
         file_put_contents($this->tempConfigFile, '');
 
         $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-        $this->configService->expects($this->once())
+        $this->configurationService->expects($this->once())
             ->method('withConfigPath')
             ->with($this->tempConfigFile)
             ->willReturn($customConfigService);
@@ -279,7 +279,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -336,7 +336,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -382,7 +382,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -424,7 +424,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -466,7 +466,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -525,7 +525,7 @@ final class ListExtensionsCommandTest extends TestCase
         file_put_contents($this->tempConfigFile, '');
 
         $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-        $this->configService->expects($this->once())
+        $this->configurationService->expects($this->once())
             ->method('withConfigPath')
             ->with($this->tempConfigFile)
             ->willReturn($customConfigService);
@@ -558,7 +558,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -604,7 +604,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -652,7 +652,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -699,7 +699,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);
@@ -746,7 +746,7 @@ final class ListExtensionsCommandTest extends TestCase
             file_put_contents($this->tempConfigFile, '');
 
             $customConfigService = $this->createMock(ConfigurationServiceInterface::class);
-            $this->configService->expects($this->once())
+            $this->configurationService->expects($this->once())
                 ->method('withConfigPath')
                 ->with($this->tempConfigFile)
                 ->willReturn($customConfigService);

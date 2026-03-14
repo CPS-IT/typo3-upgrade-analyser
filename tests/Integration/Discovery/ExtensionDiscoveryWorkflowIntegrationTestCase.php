@@ -59,9 +59,9 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
         \assert($installationService instanceof InstallationDiscoveryService);
         $this->installationDiscoveryService = $installationService;
 
-        $configService = $container->get(ConfigurationService::class);
-        \assert($configService instanceof ConfigurationService);
-        $this->configurationService = $configService;
+        $configurationService = $container->get(ConfigurationService::class);
+        \assert($configurationService instanceof ConfigurationService);
+        $this->configurationService = $configurationService;
 
         $cacheService = $container->get(CacheService::class);
         \assert($cacheService instanceof CacheService);
@@ -234,7 +234,6 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::discoverFromComposerInstalled
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::resolvePaths
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::createExtensionFromPackageData
-     * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::isCacheEnabled
      * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService::serializeResult
      * @covers \CPSIT\UpgradeAnalyzer\Tests\Integration\Discovery\ExtensionDiscoveryWorkflowIntegrationTestCase::brokenInstallationProvider
      */
@@ -307,8 +306,8 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
         // Results should be identical
         $this->assertCount(\count($extensions1), $extensions2);
 
-        $keys1 = array_map(fn ($ext): string => $ext->getKey(), $extensions1);
-        $keys2 = array_map(fn ($ext): string => $ext->getKey(), $extensions2);
+        $keys1 = array_map(static fn ($ext): string => $ext->getKey(), $extensions1);
+        $keys2 = array_map(static fn ($ext): string => $ext->getKey(), $extensions2);
         sort($keys1);
         sort($keys2);
         $this->assertEquals($keys1, $keys2);
@@ -408,7 +407,7 @@ class ExtensionDiscoveryWorkflowIntegrationTestCase extends AbstractIntegrationT
             $this->assertNotEmpty($metadata);
 
             // Should indicate which methods failed
-            $failedMethods = array_filter($metadata, fn (array $m): bool => !$m['successful']);
+            $failedMethods = array_filter($metadata, static fn (array $m): bool => !$m['successful']);
             $this->assertNotEmpty($failedMethods, 'Should report failed discovery methods');
         } else {
             // If failed, should provide clear error message

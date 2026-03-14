@@ -59,9 +59,9 @@ class ServiceIntegrationTestTest extends AbstractIntegrationTestCase
         \assert($installationService instanceof InstallationDiscoveryService);
         $this->installationDiscoveryService = $installationService;
 
-        $configService = $container->get(ConfigurationService::class);
-        \assert($configService instanceof ConfigurationService);
-        $this->configurationService = $configService;
+        $configurationService = $container->get(ConfigurationService::class);
+        \assert($configurationService instanceof ConfigurationService);
+        $this->configurationService = $configurationService;
 
         $cacheService = $container->get(CacheService::class);
         \assert($cacheService instanceof CacheService);
@@ -306,8 +306,8 @@ class ServiceIntegrationTestTest extends AbstractIntegrationTestCase
         }
 
         if ($extensionResult2->isSuccessful()) {
-            $extensions1 = array_map(fn ($ext): string => $ext->getKey(), $extensionResult1->getExtensions());
-            $extensions2 = array_map(fn ($ext): string => $ext->getKey(), $extensionResult2->getExtensions());
+            $extensions1 = array_map(static fn ($ext): string => $ext->getKey(), $extensionResult1->getExtensions());
+            $extensions2 = array_map(static fn ($ext): string => $ext->getKey(), $extensionResult2->getExtensions());
 
             // Should have different extension sets
             $this->assertNotEquals(
@@ -422,9 +422,9 @@ class ServiceIntegrationTestTest extends AbstractIntegrationTestCase
                 'Installation version should be consistent across concurrent operations',
             );
 
-            $this->assertEquals(
+            $this->assertCount(
                 $firstExtensionCount,
-                \count($result['extension']->getExtensions()),
+                $result['extension']->getExtensions(),
                 'Extension count should be consistent across concurrent operations',
             );
         }

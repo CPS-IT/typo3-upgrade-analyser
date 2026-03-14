@@ -58,9 +58,9 @@ class CacheIntegrationTestCase extends AbstractIntegrationTestCase
         \assert($installationService instanceof InstallationDiscoveryService);
         $this->installationDiscoveryService = $installationService;
 
-        $configService = $container->get(ConfigurationService::class);
-        \assert($configService instanceof ConfigurationService);
-        $this->configurationService = $configService;
+        $configurationService = $container->get(ConfigurationService::class);
+        \assert($configurationService instanceof ConfigurationService);
+        $this->configurationService = $configurationService;
 
         $cacheService = $container->get(CacheService::class);
         \assert($cacheService instanceof CacheService);

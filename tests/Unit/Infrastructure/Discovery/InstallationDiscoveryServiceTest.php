@@ -532,12 +532,12 @@ final class InstallationDiscoveryServiceTest extends TestCase
     private function createService(
         array $strategies = [],
         array $validationRules = [],
-        ?ConfigurationDiscoveryService $configService = null,
+        ?ConfigurationDiscoveryService $configurationDiscoveryService = null,
     ): InstallationDiscoveryService {
         return new InstallationDiscoveryService(
             $strategies,
             $validationRules,
-            $configService ?? $this->configurationDiscoveryService,
+            $configurationDiscoveryService ?? $this->configurationDiscoveryService,
             $this->logger,
             $this->configService,
             $this->cacheService,

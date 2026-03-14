@@ -66,12 +66,12 @@ class ListExtensionsCommand extends Command
 
         try {
             // Use ConfigurationService with custom config path if provided
-            $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
+            $configurationService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
                 ? $this->configurationService->withConfigPath($configPath)
                 : $this->configurationService;
 
             // Use ConfigurationService to get settings
-            $installationPath = $configService->getInstallationPath();
+            $installationPath = $configurationService->getInstallationPath();
 
             if (!$installationPath) {
                 $io->error('No installation path specified in configuration file');
