@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "821a6a0fdc63e3f1f32482c242376b67",
+    "content-hash": "cb94c144d4ba19a3b95a8eea9856d6e5",
     "packages": [
         {
             "name": "a9f/fractor",
