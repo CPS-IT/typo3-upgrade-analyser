@@ -184,7 +184,7 @@ class GitHubClientTest extends TestCase
             'require' => [
                 'typo3/cms-core' => '^12.4',
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
         self::assertNotFalse($jsonContent, 'Failed to encode JSON');
 
         $response->method('toArray')->willReturn([

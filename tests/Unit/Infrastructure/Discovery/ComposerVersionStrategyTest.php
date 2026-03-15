@@ -109,7 +109,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -129,7 +129,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -149,7 +149,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -169,7 +169,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -189,7 +189,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -216,7 +216,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -241,7 +241,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -265,7 +265,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -281,7 +281,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -298,7 +298,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -315,7 +315,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -332,7 +332,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -349,7 +349,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -365,7 +365,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -412,8 +412,8 @@ final class ComposerVersionStrategyTest extends TestCase
 
         $lockPath = $this->testDir . '/composer.lock';
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($lockPath, json_encode($lockData));
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -441,8 +441,8 @@ final class ComposerVersionStrategyTest extends TestCase
 
         $lockPath = $this->testDir . '/composer.lock';
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($lockPath, json_encode($lockData));
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -460,7 +460,7 @@ final class ComposerVersionStrategyTest extends TestCase
     public function testExtractVersionWithUnreadableFile(): void
     {
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode(['packages' => []]));
+        file_put_contents($lockPath, json_encode(['packages' => []], JSON_THROW_ON_ERROR));
 
         // Make file unreadable (this might not work on all systems)
         if (chmod($lockPath, 0o000)) {
@@ -487,7 +487,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $lockPath = $this->testDir . '/composer.lock';
-        file_put_contents($lockPath, json_encode($lockData));
+        file_put_contents($lockPath, json_encode($lockData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 
@@ -524,7 +524,7 @@ final class ComposerVersionStrategyTest extends TestCase
         ];
 
         $jsonPath = $this->testDir . '/composer.json';
-        file_put_contents($jsonPath, json_encode($jsonData));
+        file_put_contents($jsonPath, json_encode($jsonData, JSON_THROW_ON_ERROR));
 
         $version = $this->strategy->extractVersion($this->testDir);
 

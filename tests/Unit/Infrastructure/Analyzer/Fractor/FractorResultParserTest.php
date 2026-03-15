@@ -114,7 +114,7 @@ class FractorResultParserTest extends TestCase
             'files_changed' => 5,
             'rules_applied' => 3,
             'findings' => ['finding1', 'finding2'],
-        ]);
+        ], JSON_THROW_ON_ERROR);
         self::assertIsString($jsonOutput, 'Failed to encode JSON');
         $result = new FractorExecutionResult(0, $jsonOutput, '', true);
 
