@@ -339,7 +339,7 @@ final class ErrorRecoveryManager
 
         $errors = [$exception->getMessage()];
         if ($exception->getContext()) {
-            $errors[] = 'Context: ' . json_encode($exception->getContext());
+            $errors[] = 'Context: ' . json_encode($exception->getContext(), JSON_THROW_ON_ERROR);
         }
 
         return PathResolutionResponse::error(

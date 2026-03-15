@@ -110,7 +110,7 @@ readonly class TemplateRenderer
                 'extension' => $extensionKey,
             ],
             'json' => [
-                'content' => json_encode($extensionContext, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}',
+                'content' => json_encode($extensionContext, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}',
                 'filename' => $extensionKey . '.json',
                 'extension' => $extensionKey,
             ],
@@ -200,6 +200,6 @@ readonly class TemplateRenderer
         // Remove extension details from main JSON to avoid duplication
         unset($contextCopy['extension_data']);
 
-        return json_encode($contextCopy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
+        return json_encode($contextCopy, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
     }
 }

@@ -195,7 +195,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
             'marked_at' => time(),
         ];
 
-        file_put_contents($this->cacheDir . '/rate_limit_status.json', json_encode($data));
+        file_put_contents($this->cacheDir . '/rate_limit_status.json', json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -291,6 +291,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     /**
      * Cache API response for repeated use in tests (supports arrays, scalars, and null).
+     *
+     * @throws \JsonException
      */
     protected function cacheApiResponse(string $cacheKey, callable $apiCall): mixed
     {
@@ -306,7 +308,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $data = $apiCall();
 
         // Cache the result (including null values)
-        file_put_contents($cacheFile, json_encode($data, JSON_PRETTY_PRINT));
+        file_put_contents($cacheFile, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 
         return $data;
     }

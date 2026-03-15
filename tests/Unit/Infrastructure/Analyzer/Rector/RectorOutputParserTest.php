@@ -102,7 +102,7 @@ class RectorOutputParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -163,7 +163,7 @@ class RectorOutputParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -204,7 +204,7 @@ class RectorOutputParserTest extends TestCase
                 'src/Model/User.php',
                 'src/Repository/UserRepository.php',
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -243,7 +243,7 @@ class RectorOutputParserTest extends TestCase
                 'PHP Parse error in file.php',
                 'Rule execution failed on line 10',
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $this->logger->expects($this->once())
             ->method('warning')
@@ -293,7 +293,7 @@ class RectorOutputParserTest extends TestCase
                 12345, // Non-string/array error
                 new \stdClass(), // Object error
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $this->logger->expects($this->once())
             ->method('warning')
@@ -326,7 +326,7 @@ class RectorOutputParserTest extends TestCase
                     'applied_rectors' => ['TestRector'],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -356,7 +356,7 @@ class RectorOutputParserTest extends TestCase
                         'applied_rectors' => [$ruleClass],
                     ],
                 ],
-            ]);
+            ], JSON_THROW_ON_ERROR);
 
             $result = $this->parser->parse($json ?: '{}');
             $finding = $result->findings[0];
@@ -386,7 +386,7 @@ class RectorOutputParserTest extends TestCase
                         'applied_rectors' => [$ruleClass],
                     ],
                 ],
-            ]);
+            ], JSON_THROW_ON_ERROR);
 
             $result = $this->parser->parse($json ?: '{}');
             $finding = $result->findings[0];
@@ -405,7 +405,7 @@ class RectorOutputParserTest extends TestCase
                     'diff' => "--- a/src/Test.php\n+++ b/src/Test.php\n@@ -10,7 +10,7 @@\n     class Test {\n-        public function oldMethod() {\n-            return 'old';\n+        public function newMethod() {\n+            return 'new';\n         }\n     }",
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
         $finding = $result->findings[0];
@@ -427,7 +427,7 @@ class RectorOutputParserTest extends TestCase
                     'diff' => "--- a/src/Test.php\n+++ b/src/Test.php\n@@ -10,7 +10,7 @@\n     class Test {\n         // No actual changes\n     }",
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
         $finding = $result->findings[0];
@@ -474,7 +474,7 @@ class RectorOutputParserTest extends TestCase
                     'message' => 'Structured error',
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $this->logger->expects($this->once())
             ->method('warning')
@@ -517,7 +517,7 @@ class RectorOutputParserTest extends TestCase
                     ],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -559,7 +559,7 @@ class RectorOutputParserTest extends TestCase
             'file_diffs' => null,
             'changed_files' => null,
             'errors' => null,
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $result = $this->parser->parse($json ?: '{}');
 
@@ -579,7 +579,7 @@ class RectorOutputParserTest extends TestCase
                     'applied_rectors' => ['TestRector'],
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $this->logger->expects($this->never())
             ->method('warning');

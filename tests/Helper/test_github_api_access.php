@@ -199,7 +199,7 @@ function testGraphQLApi(string $token = ''): void
                 'owner' => 'georgringer',
                 'name' => 'news',
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         if ($payload === false) {
             throw new Exception('Failed to encode JSON payload');
@@ -256,7 +256,7 @@ function testGraphQLApi(string $token = ''): void
                 'name' => 'news',
                 'first' => 5,
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         if ($payload === false) {
             throw new Exception('Failed to encode JSON payload');
@@ -314,7 +314,7 @@ function testGraphQLApi(string $token = ''): void
                 'owner' => 'georgringer',
                 'name' => 'news',
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         if ($payload === false) {
             throw new Exception('Failed to encode JSON payload');

@@ -92,7 +92,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $installedJsonPath = $this->tempDir . '/vendor/composer/installed.json';
         mkdir(\dirname($installedJsonPath), 0o755, true);
 
-        $content = json_encode(['packages' => $packages], JSON_PRETTY_PRINT);
+        $content = json_encode(['packages' => $packages], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
         file_put_contents($installedJsonPath, $content);
 
         return $installedJsonPath;

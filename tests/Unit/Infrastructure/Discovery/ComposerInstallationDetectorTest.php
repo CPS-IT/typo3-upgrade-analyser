@@ -136,7 +136,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'some/other-package' => '^1.0',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
 
         self::assertFalse($this->detector->supports($this->testDir));
     }
@@ -176,7 +176,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 $packageName => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
 
         self::assertTrue($this->detector->supports($this->testDir));
     }
@@ -198,7 +198,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
 
         self::assertTrue($this->detector->supports($this->testDir));
     }
@@ -317,7 +317,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
     }
 
     private function createFullTypo3Directory(): void
@@ -340,7 +340,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 ],
             ],
         ];
-        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
+        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData, JSON_THROW_ON_ERROR));
     }
 
     private function createComposerLockWithExtensions(): void
@@ -365,7 +365,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 ],
             ],
         ];
-        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
+        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData, JSON_THROW_ON_ERROR));
     }
 
     private function removeDirectory(string $dir): void

@@ -382,7 +382,7 @@ class RectorFindingsCollectionTest extends TestCase
         $this->assertEquals($expected, $serialized);
 
         // Verify it can be JSON encoded without issues
-        $json = json_encode($serialized);
+        $json = json_encode($serialized, JSON_THROW_ON_ERROR);
         $this->assertIsString($json);
         $this->assertJson($json);
     }
@@ -410,7 +410,7 @@ class RectorFindingsCollectionTest extends TestCase
         $this->assertEquals($expected, $serialized);
 
         // Verify empty collection can also be JSON encoded
-        $json = json_encode($serialized);
+        $json = json_encode($serialized, JSON_THROW_ON_ERROR);
         $this->assertIsString($json);
         $this->assertJson($json);
     }

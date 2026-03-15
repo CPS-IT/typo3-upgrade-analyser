@@ -128,7 +128,10 @@ final class PathResolutionServiceFixturesTest extends TestCase
             if ($shouldExist) {
                 $this->assertTrue(
                     $response->isSuccess(),
-                    "Extension '{$extensionKey}' should be found in '{$fixtureName}'. Reason: {$reason}. Status: {$response->status->value}, Errors: " . json_encode($response->errors) . ', Attempted paths: ' . json_encode($response->metadata->attemptedPaths),
+                    "Extension '{$extensionKey}' should be found in '{$fixtureName}'. Reason: {$reason}. Status: {$response->status->value}, Errors: " . json_encode(
+                        $response->errors,
+                        JSON_THROW_ON_ERROR,
+                    ) . ', Attempted paths: ' . json_encode($response->metadata->attemptedPaths, JSON_THROW_ON_ERROR),
                 );
                 $this->assertNotNull(
                     $response->resolvedPath,
@@ -141,7 +144,10 @@ final class PathResolutionServiceFixturesTest extends TestCase
             } else {
                 $this->assertFalse(
                     $response->isSuccess(),
-                    "Extension '{$extensionKey}' should not be found in '{$fixtureName}'. Reason: {$reason}. Status: {$response->status->value}, Errors: " . json_encode($response->errors) . ', Alternatives: ' . json_encode($response->alternativePaths),
+                    "Extension '{$extensionKey}' should not be found in '{$fixtureName}'. Reason: {$reason}. Status: {$response->status->value}, Errors: " . json_encode(
+                        $response->errors,
+                        JSON_THROW_ON_ERROR,
+                    ) . ', Alternatives: ' . json_encode($response->alternativePaths, JSON_THROW_ON_ERROR),
                 );
             }
         }

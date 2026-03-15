@@ -207,7 +207,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     {
         // Create actual test files
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/Services.yaml' => "services:\n  test: {}\n",
         ]);
@@ -282,7 +282,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     {
         // Create a composer.json file so determineInstallationType returns COMPOSER_STANDARD
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/Services.yaml' => "services:\n  test: {}\n",
         ]);
 
@@ -379,7 +379,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testConfigurationFileIdentificationLogic(): void
     {
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/AdditionalConfiguration.php' => "<?php\nreturn [];\n",
             'config/PackageStates.php' => "<?php\nreturn [];\n",
@@ -443,7 +443,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testGetConfigurationSummary(): void
     {
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/Services.yaml' => "services:\n  test: {}\n",
         ]);
@@ -493,7 +493,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithSiteConfigurations(): void
     {
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/sites/main/config.yaml' => "rootPageId: 1\nbase: 'https://example.com'\n",
             'config/sites/sub/config.yaml' => "rootPageId: 2\nbase: 'https://sub.example.com'\n",
         ]);
@@ -521,7 +521,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithExtensionServices(): void
     {
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'extensions/ext1/Configuration/Services.yaml' => "services:\n  Ext\\Service: {}\n",
             'ext/ext2/Configuration/Services.yaml' => "services:\n  Ext\\Service2: {}\n",
         ]);
@@ -546,7 +546,7 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
     public function testDiscoverConfigurationWithComplexStructure(): void
     {
         $this->createConfigurationFiles([
-            'composer.json' => json_encode(['name' => 'test/project']),
+            'composer.json' => json_encode(['name' => 'test/project'], JSON_THROW_ON_ERROR),
             'config/LocalConfiguration.php' => "<?php\nreturn [];\n",
             'config/AdditionalConfiguration.php' => "<?php\nreturn [];\n",
             'config/PackageStates.php' => "<?php\nreturn [];\n",

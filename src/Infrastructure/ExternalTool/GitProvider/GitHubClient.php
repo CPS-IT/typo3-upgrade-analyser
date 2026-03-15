@@ -371,7 +371,7 @@ class GitHubClient extends AbstractGitProvider
         $data = $response->toArray();
 
         if (isset($data['errors'])) {
-            throw new GitProviderException('GitHub GraphQL errors: ' . json_encode($data['errors']), 'github');
+            throw new GitProviderException('GitHub GraphQL errors: ' . json_encode($data['errors'], JSON_THROW_ON_ERROR), 'github');
         }
 
         if (!isset($data['data'])) {
