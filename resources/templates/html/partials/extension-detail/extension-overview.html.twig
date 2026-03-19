@@ -3,10 +3,10 @@
     <div class="overview-grid">
         <div class="info-card">
             <h3>Basic Information</h3>
-            <p><strong>Extension Key:</strong> {{ extension.key }}</p>
-            <p><strong>Current Version:</strong> {{ extension.version ? extension.version.toString() : 'N/A' }}</p>
-            <p><strong>Composer Name:</strong> {{ extension.composerName ?: 'N/A' }}</p>
-            <p><strong>Type:</strong> {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}</p>
+            <p><strong>Extension Key:</strong> {{ extension_key }}</p>
+            <p><strong>Current Version:</strong> {{ extension_data.version ?: 'N/A' }}</p>
+            <p><strong>Composer Name:</strong> {{ extension_data.composer_name ?: 'N/A' }}</p>
+            <p><strong>Type:</strong> {{ extension_data.is_system ? 'System Extension' : (extension_data.is_local ? 'Local Extension' : 'Third-party Extension') }}</p>
             <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
         </div>
 

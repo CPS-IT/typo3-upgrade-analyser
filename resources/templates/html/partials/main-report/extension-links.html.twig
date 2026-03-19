@@ -4,8 +4,8 @@
 
     <div class="extension-links">
         {% for data in extension_data %}
-            <a href="extensions/{{ data.extension.key }}.html" class="extension-link">
-                <strong>{{ data.extension.key }}</strong><br>
+            <a href="extensions/{{ data.extension_key }}.html" class="extension-link">
+                <strong>{{ data.extension_key }}</strong><br>
                 <span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span>
             </a>
         {% endfor %}

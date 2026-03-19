@@ -303,7 +303,7 @@ class AnalyzeCommand extends Command
         // Convert analysis results to a flat array for the report service
         $allResults = [];
         foreach ($analysisResults as $analyzerResults) {
-            $allResults = array_merge($allResults, $analyzerResults);
+            array_push($allResults, ...$analyzerResults);
         }
 
         // Create discovery results for the report service
@@ -330,7 +330,7 @@ class AnalyzeCommand extends Command
         ];
 
         // Combine all results for the report service
-        $combinedResults = array_merge($discoveryResults, $allResults);
+        $combinedResults = [...$discoveryResults, ...$allResults];
 
         try {
             // Generate detailed reports using the ReportService

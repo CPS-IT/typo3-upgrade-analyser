@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
 
+use CPSIT\UpgradeAnalyzer\Infrastructure\Shared\ContentTruncator;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -56,9 +57,18 @@ readonly class FractorResultParser
             }
         }
 
-        // Handle error output
+        // Handle error output with truncation to prevent memory issues
         if ($result->hasErrorOutput()) {
-            $errorMessage = trim($result->errorOutput);
+            $originalErrorMessage = trim($result->errorOutput);
+            $errorMessage = ContentTruncator::truncateErrorMessage($originalErrorMessage);
+
+            if (strlen($errorMessage) !== strlen($originalErrorMessage)) {
+                $this->logger->debug('Truncated large error message', [
+                    'original_length' => strlen($originalErrorMessage),
+                    'truncated_length' => strlen($errorMessage),
+                ]);
+            }
+
             $this->logger->warning('Fractor reported errors', [
                 'errors' => $errorMessage,
             ]);
@@ -98,6 +108,10 @@ readonly class FractorResultParser
                 'files_changed' => $data['files_changed'] ?? 0,
                 'rules_applied' => $data['rules_applied'] ?? 0,
                 'findings' => $data['findings'] ?? [],
+                'change_blocks' => $data['change_blocks'] ?? 0,
+                'changed_lines' => $data['changed_lines'] ?? 0,
+                'file_paths' => $data['file_paths'] ?? [],
+                'applied_rules' => $data['applied_rules'] ?? [],
             ];
         } catch (\JsonException $e) {
             $this->logger->warning('Failed to parse Fractor JSON output', [
@@ -290,9 +304,9 @@ readonly class FractorResultParser
             $message,
             $severity,
             $changeType,
-            trim($codeBefore),
-            trim($codeAfter),
-            $diff,
+            ContentTruncator::truncateCode(trim($codeBefore)),
+            ContentTruncator::truncateCode(trim($codeAfter)),
+            ContentTruncator::truncateCode($diff),
             $documentationUrl,
             [
                 'applied_rules' => $appliedRules,
@@ -427,4 +441,6 @@ readonly class FractorResultParser
         // Default to the process result for other cases
         return $result->successful;
     }
+
+
 }

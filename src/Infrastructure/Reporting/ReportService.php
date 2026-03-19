@@ -64,13 +64,23 @@ readonly class ReportService
         $groupedResults = $this->groupResultsByType($results);
 
         // Generate context for templates using ReportContextBuilder
-        $this->logger->debug('Building report context for templates');
+        $this->logger->debug('PHASE 3A: Building report context for templates', [
+                    'format' => $format,
+                    'memory_usage' => memory_get_usage(true),
+                ]);
         $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
-        $this->logger->debug('Report context built successfully');
+        $this->logger->debug('PHASE 3B: Report context built successfully', [
+                    'format' => $format,
+                    'context_keys' => array_keys($context),
+                    'memory_usage' => memory_get_usage(true),
+                ]);
 
         foreach ($formats as $format) {
             try {
-                $this->logger->debug('Generating report for format', ['format' => $format]);
+                $this->logger->debug('PHASE 3C: About to call generateFormatReport', [
+                    'format' => $format,
+                    'memory_usage' => memory_get_usage(true),
+                ]);
                 $reportResult = $this->generateFormatReport($format, $context, $outputDirectory);
                 $reportResults[] = $reportResult;
                 $this->logger->debug(
@@ -134,19 +144,59 @@ readonly class ReportService
      */
     private function generateFormatReport(string $format, array $context, string $outputDirectory): ReportingResult
     {
+        $this->logger->debug('Starting generateFormatReport', [
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
+
         // 1. Ensure output directory structure exists
         $formatOutputPath = $this->fileManager->ensureOutputDirectory($outputDirectory, $format);
 
+        $this->logger->debug('Output directory ensured', [
+            'format' => $format,
+            'path' => $formatOutputPath,
+        ]);
+
         // 2. Render content using TemplateRenderer
-        $this->logger->debug('Rendering main report', ['format' => $format]);
+        $this->logger->debug('About to render main report', [
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+        ]);
         $mainReport = $this->templateRenderer->renderMainReport($context, $format);
 
-        $this->logger->debug('Rendering extension reports', ['format' => $format]);
+        $this->logger->debug('Main report rendered successfully', [
+            'format' => $format,
+            'content_length' => strlen($mainReport['content']),
+            'memory_usage' => memory_get_usage(true),
+        ]);
+
+        $this->logger->debug('About to render extension reports', [
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+        ]);
         $extensionReports = $this->templateRenderer->renderExtensionReports($context, $format);
 
+        $this->logger->debug('Extension reports rendered successfully', [
+            'format' => $format,
+            'count' => count($extensionReports),
+            'memory_usage' => memory_get_usage(true),
+        ]);
+
         // Render analyzer findings detail pages for HTML/Markdown formats (all analyzers)
-        $this->logger->debug('Rendering analyzer findings detail pages', ['format' => $format]);
+        $this->logger->debug('About to render analyzer findings detail pages - CRITICAL POINT', [
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
         $analyzerDetailPages = $this->templateRenderer->renderAllAnalyzerFindingsDetailPages($context, $format);
+
+        $this->logger->debug('Analyzer detail pages rendered successfully', [
+            'format' => $format,
+            'count' => count($analyzerDetailPages),
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
 
         // 3. Write files using ReportFileManager
         $this->logger->debug('Writing report files', [

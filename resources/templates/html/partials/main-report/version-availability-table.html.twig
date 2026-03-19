@@ -24,8 +24,8 @@
                     <span title="From Source">⛲️</span>
                 {% endif %}
             </td>
-            <td><strong><a href="extensions/{{ data.extension.key }}.html#version-availability-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
-            <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
+            <td><strong><a href="extensions/{{ data.extension_key }}.html#version-availability-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension_key }}</a></strong></td>
+            <td>{{ data.extension_version ? data.extension_data.version.toString() : 'N/A' }}</td>
             {% if data.version_analysis %}
                 <td><span class="{{ data.version_analysis.ter_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.ter_available ? '✅' : '❌' }}</span></td>
                 <td><span class="{{ data.version_analysis.packagist_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.packagist_available ? '✅' : '❌' }}</span></td>

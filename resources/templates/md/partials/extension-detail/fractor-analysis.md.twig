@@ -12,9 +12,7 @@
 
 ### Analysis Status
 - **Analysis Result:** {{ fractor_analysis.analysis_successful ? '✅ Successful' : '❌ Failed' }}
-{% if fractor_analysis.error_message %}
-- **Error:** {{ fractor_analysis.error_message }}
-{% endif %}
+{# Error message removed to prevent memory issues #}
 
 ### Affected Files
 {% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}

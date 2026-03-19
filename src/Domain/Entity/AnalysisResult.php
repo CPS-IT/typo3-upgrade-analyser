@@ -204,4 +204,5 @@ class AnalysisResult implements ResultInterface
             'summary' => $this->getSummary(),
         ];
     }
+
 }
