@@ -80,14 +80,17 @@ class TemplateRenderer
         }
 
         foreach ($context['extension_data'] as $extensionData) {
-            $extensionKey = $extensionData['extension']->getKey();
+            // CRITICAL FIX: Extract extension key from data without accessing Entity
+            $extensionKey = $extensionData['extension_key'] ?? 'unknown';
 
             // Create context for individual extension
+            // CRITICAL FIX: Remove Extension entity references to prevent segfaults during file writing
             $extensionContext = [
-                'installation' => $context['installation'],
+                'installation_data' => $context['installation_data'],
                 'target_version' => $context['target_version'],
-                'extension' => $extensionData['extension'],
-                'extension_data' => $extensionData,
+                // 'extension' => $extensionData['extension'], // REMOVED: causes segfaults
+                'extension_key' => $extensionKey,
+                'extension_data' => $this->sanitizeExtensionData($extensionData),
                 'generated_at' => $context['generated_at'],
             ];
 
@@ -165,11 +168,12 @@ class TemplateRenderer
 
             // Only create detail pages for extensions with detailed findings
             if ($rectorAnalysis && $rectorDetailedFindings && !empty($rectorDetailedFindings['findings'])) {
-                $extensionKey = $extensionData['extension']->getKey();
+                // CRITICAL FIX: Don't access Extension entity - use array key instead
+                $extensionKey = $extensionData['extension_key'] ?? 'unknown';
 
                 $findingsContext = [
                     'extension_key' => $extensionKey,
-                    'extension' => $extensionData['extension'],
+                    // 'extension' => $extensionData['extension'], // REMOVED: causes segfaults
                     'detailed_findings' => $rectorDetailedFindings['findings'],
                     'rector_analysis' => $rectorAnalysis,
                     'generated_at' => $context['generated_at'],
@@ -263,7 +267,8 @@ class TemplateRenderer
             ],
         );
         foreach ($context['extension_data'] as $extensionData) {
-            $extensionKey = $extensionData['extension']->getKey();
+            // CRITICAL FIX: Extract extension key from data without accessing Entity
+            $extensionKey = $extensionData['extension_key'] ?? 'unknown';
             
             $this->logger->debug('Processing extension for analyzer findings', [
                 'extension_key' => $extensionKey,
@@ -299,9 +304,11 @@ class TemplateRenderer
                 continue;
             }
 
+            // CRITICAL FIX: Do not pass Extension entity to avoid segfaults during file writing
+            // The Extension entity contains circular references that cause PHP segfaults during serialization
             $findingsContext = [
                 'extension_key' => $extensionKey,
-                'extension' => $extensionData['extension'],
+                // 'extension' => $extensionData['extension'], // REMOVED: causes segfaults
                 'detailed_findings' => $detailedFindings,
                 'analyzer_type' => $analyzerType,
                 'generated_at' => $context['generated_at'],
@@ -362,12 +369,43 @@ class TemplateRenderer
      */
     public function renderAllAnalyzerFindingsDetailPages(array $context, string $format): array
     {
-        $allDetailPages = [];
+        $this->logger->debug('Starting renderAllAnalyzerFindingsDetailPages', [
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
 
-        foreach ($this->findingsDetailPageRenderer->getSupportedAnalyzers() as $analyzerType) {
+        $allDetailPages = [];
+        $supportedAnalyzers = $this->findingsDetailPageRenderer->getSupportedAnalyzers();
+        
+        $this->logger->debug('Got supported analyzers list', [
+            'analyzers' => $supportedAnalyzers,
+            'count' => count($supportedAnalyzers),
+        ]);
+
+        foreach ($supportedAnalyzers as $analyzerType) {
+            $this->logger->debug('About to render analyzer detail pages', [
+                'analyzer_type' => $analyzerType,
+                'format' => $format,
+                'memory_usage' => memory_get_usage(true),
+            ]);
+            
             $analyzerPages = $this->renderAnalyzerFindingsDetailPages($context, $analyzerType, $format);
+            
+            $this->logger->debug('Analyzer detail pages rendered', [
+                'analyzer_type' => $analyzerType,
+                'pages_count' => count($analyzerPages),
+                'memory_usage' => memory_get_usage(true),
+            ]);
+            
             array_push($allDetailPages, ...$analyzerPages);
         }
+
+        $this->logger->debug('Completed renderAllAnalyzerFindingsDetailPages', [
+            'total_pages' => count($allDetailPages),
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
 
         return $allDetailPages;
     }
@@ -386,5 +424,74 @@ class TemplateRenderer
         unset($contextCopy['extension_data']);
 
         return json_encode($contextCopy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
+    }
+
+    /**
+     * Sanitize extension data to remove Extension entity and other objects that cause segfaults.
+     *
+     * @param array<string, mixed> $extensionData
+     * @return array<string, mixed>
+     */
+    private function sanitizeExtensionData(array $extensionData): array
+    {
+        $sanitized = [];
+        
+        foreach ($extensionData as $key => $value) {
+            if ($key === 'extension') {
+                // Skip Extension entity completely - it causes segfaults
+                continue;
+            }
+            
+            if (is_object($value)) {
+                // Convert objects to arrays if they have toArray method
+                if (method_exists($value, 'toArray')) {
+                    $sanitized[$key] = $value->toArray();
+                } else {
+                    // Skip other objects
+                    continue;
+                }
+            } elseif (is_array($value)) {
+                // Recursively sanitize arrays
+                $sanitized[$key] = $this->sanitizeArray($value);
+            } else {
+                // Keep scalar values
+                $sanitized[$key] = $value;
+            }
+        }
+        
+        return $sanitized;
+    }
+    
+    /**
+     * Recursively sanitize arrays to remove problematic objects.
+     *
+     * @param array<mixed> $array
+     * @return array<mixed>
+     */
+    private function sanitizeArray(array $array): array
+    {
+        $sanitized = [];
+        
+        foreach ($array as $key => $value) {
+            if (is_object($value)) {
+                if (is_a($value, 'CPSIT\UpgradeAnalyzer\Domain\Entity\Extension', false)) {
+                    // Skip Extension entities
+                    continue;
+                }
+                
+                if (method_exists($value, 'toArray')) {
+                    $sanitized[$key] = $this->sanitizeArray($value->toArray());
+                } else {
+                    // Skip other objects
+                    continue;
+                }
+            } elseif (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeArray($value);
+            } else {
+                $sanitized[$key] = $value;
+            }
+        }
+        
+        return $sanitized;
     }
 }

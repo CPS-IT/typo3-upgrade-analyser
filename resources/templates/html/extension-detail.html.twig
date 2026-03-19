@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ extension.key }} - Detailed Analysis</title>
+    <title>{{ extension_key }} - Detailed Analysis</title>
     {% include 'html/partials/shared/styles.html.twig' %}
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ extension.key }}</h1>
+            <h1>{{ extension_key }}</h1>
             <p>Detailed Analysis Report</p>
-            <p>Generated: {{ generated_at.format('Y-m-d H:i:s T') }}</p>
+            <p>Generated: {{ generated_at }}</p>
         </div>
 
         <div class="content">

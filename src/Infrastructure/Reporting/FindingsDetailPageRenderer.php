@@ -81,17 +81,57 @@ class FindingsDetailPageRenderer
      */
     private function renderMainDetailPage(string $analyzerType, array $context, string $format): string
     {
+        $this->logger->debug('Starting renderMainDetailPage', [
+            'analyzer_type' => $analyzerType,
+            'format' => $format,
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
+
         // Ensure required template variables are available
         $templateContext = $this->prepareTemplateContext($analyzerType, $context);
+        
+        $this->logger->debug('Template context prepared', [
+            'analyzer_type' => $analyzerType,
+            'context_keys' => array_keys($templateContext),
+            'findings_count' => count($templateContext['detailed_findings']['findings'] ?? []),
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
 
         // Validate that analyzer-specific partials exist
         $this->validateAnalyzerTemplates($analyzerType, $format);
+        
+        $this->logger->debug('Template validation completed', [
+            'analyzer_type' => $analyzerType,
+            'format' => $format,
+        ]);
 
         $templateFile = $format === 'markdown'
             ? 'md/analyzer-findings-detail.md.twig'
             : 'html/analyzer-findings-detail.html.twig';
 
-        return $this->twig->render($templateFile, $templateContext);
+        $this->logger->debug('About to call twig->render', [
+            'analyzer_type' => $analyzerType,
+            'template_file' => $templateFile,
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
+
+        // Clean context from Extension entity references that cause segfaults
+        $safeTemplateContext = $this->createSafeTemplateContext($templateContext);
+        
+        $result = $this->twig->render($templateFile, $safeTemplateContext);
+        
+        $this->logger->debug('Twig render completed successfully', [
+            'analyzer_type' => $analyzerType,
+            'template_file' => $templateFile,
+            'result_length' => strlen($result),
+            'memory_usage' => memory_get_usage(true),
+            'memory_peak' => memory_get_peak_usage(true),
+        ]);
+
+        return $result;
     }
 
     /**
@@ -126,6 +166,14 @@ class FindingsDetailPageRenderer
         $templateContext['detailed_findings']['summary'] = $this->normalizeSummary(
             $templateContext['detailed_findings']['summary'] ?? [],
         );
+
+        // CRITICAL: Strip large content fields from findings to prevent segfaults
+        // Convert FractorFinding objects to safe arrays without massive content
+        if (isset($templateContext['detailed_findings']['findings']) && is_array($templateContext['detailed_findings']['findings'])) {
+            $templateContext['detailed_findings']['findings'] = $this->stripLargeContentFromFindings(
+                $templateContext['detailed_findings']['findings']
+            );
+        }
 
         return $templateContext;
     }
@@ -332,5 +380,165 @@ class FindingsDetailPageRenderer
         }
 
         return min(10.0, ($totalPriority / $maxPossiblePriority) * 10.0);
+    }
+
+    /**
+     * Strip large content fields from findings to prevent memory exhaustion during template rendering.
+     * 
+     * @param array<mixed> $findings
+     * @return array<mixed>
+     */
+    private function stripLargeContentFromFindings(array $findings): array
+    {
+        $strippedFindings = [];
+        
+        foreach ($findings as $finding) {
+            // If it's a FractorFinding object, convert to safe array
+            if (is_object($finding) && method_exists($finding, 'toArray')) {
+                $findingArray = $finding->toArray();
+                
+                // Remove or truncate large content fields that cause segfaults
+                unset($findingArray['code_before']);
+                unset($findingArray['code_after']); 
+                unset($findingArray['diff']);
+                
+                // Keep essential fields for templates
+                $safeArray = [
+                    'file' => $findingArray['file'] ?? '',
+                    'line' => $findingArray['line'] ?? 0,
+                    'rule_name' => $findingArray['rule_name'] ?? '',
+                    'message' => $findingArray['message'] ?? '',
+                    'severity' => $findingArray['severity'] ?? '',
+                    'severity_value' => $findingArray['severity_value'] ?? '',
+                    'change_type' => $findingArray['change_type'] ?? '',
+                    'documentation_url' => $findingArray['documentation_url'] ?? null,
+                    'requires_manual_intervention' => $findingArray['requires_manual_intervention'] ?? false,
+                    'file_basename' => basename($findingArray['file'] ?? ''),
+                    'has_code_change' => false, // Set to false since we removed the code fields
+                    'has_documentation' => !empty($findingArray['documentation_url']),
+                ];
+                
+                $strippedFindings[] = $safeArray;
+            } elseif (is_array($finding)) {
+                // If it's already an array, remove large fields
+                $safeFinding = $finding;
+                unset($safeFinding['code_before']);
+                unset($safeFinding['code_after']);
+                unset($safeFinding['diff']);
+                
+                $strippedFindings[] = $safeFinding;
+            } else {
+                // Keep as-is for other types
+                $strippedFindings[] = $finding;
+            }
+        }
+        
+        $this->logger->debug('Stripped large content from findings for template rendering', [
+            'original_count' => count($findings),
+            'stripped_count' => count($strippedFindings),
+        ]);
+        
+        return $strippedFindings;
+    }
+
+    /**
+     * Create a safe template context by removing Extension entity references and other objects
+     * that cause PHP serialization segfaults.
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function createSafeTemplateContext(array $context): array
+    {
+        $safeContext = [];
+        
+        foreach ($context as $key => $value) {
+            if (is_object($value)) {
+                // Convert DateTime objects to strings
+                if ($value instanceof \DateTime || $value instanceof \DateTimeImmutable) {
+                    $safeContext[$key] = $value->format('Y-m-d H:i:s');
+                    continue;
+                }
+                
+                // Skip Extension entities and other complex objects that cause segfaults
+                if (is_a($value, 'CPSIT\UpgradeAnalyzer\Domain\Entity\Extension', false) ||
+                    is_a($value, 'CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingInterface', false)) {
+                    $this->logger->warning('Skipping object in template context that causes segfaults', [
+                        'key' => $key,
+                        'class' => get_class($value),
+                    ]);
+                    continue;
+                }
+                
+                // Try to convert other objects to arrays if they have toArray method
+                if (method_exists($value, 'toArray')) {
+                    $safeContext[$key] = $value->toArray();
+                    continue;
+                }
+                
+                // Skip other objects
+                $this->logger->debug('Skipping unknown object in template context', [
+                    'key' => $key,
+                    'class' => get_class($value),
+                ]);
+                continue;
+            }
+            
+            if (is_array($value)) {
+                // Recursively clean arrays
+                $safeContext[$key] = $this->createSafeArrayContext($value);
+            } else {
+                // Scalar values are safe
+                $safeContext[$key] = $value;
+            }
+        }
+        
+        return $safeContext;
+    }
+    
+    /**
+     * Recursively clean array contexts from problematic objects.
+     *
+     * @param array<mixed> $array
+     * @return array<mixed>
+     */
+    private function createSafeArrayContext(array $array): array
+    {
+        $safeArray = [];
+        
+        foreach ($array as $key => $value) {
+            if (is_object($value)) {
+                // Convert DateTime objects to strings
+                if ($value instanceof \DateTime || $value instanceof \DateTimeImmutable) {
+                    $safeArray[$key] = $value->format('Y-m-d H:i:s');
+                    continue;
+                }
+                
+                // Skip problematic objects
+                if (is_a($value, 'CPSIT\UpgradeAnalyzer\Domain\Entity\Extension', false) ||
+                    is_a($value, 'CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Shared\AnalyzerFindingInterface', false)) {
+                    continue;
+                }
+                
+                // Try to convert objects with toArray method
+                if (method_exists($value, 'toArray')) {
+                    $safeArray[$key] = $this->createSafeArrayContext($value->toArray());
+                    continue;
+                }
+                
+                // Skip other objects
+                continue;
+            }
+            
+            if (is_array($value)) {
+                // Recursively clean nested arrays
+                $safeArray[$key] = $this->createSafeArrayContext($value);
+            } else {
+                // Scalar values are safe
+                $safeArray[$key] = $value;
+            }
+        }
+        
+        return $safeArray;
     }
 }

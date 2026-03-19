@@ -16,7 +16,7 @@
                     <tbody>
                         {% for data in extension_data %}
                         <tr>
-                            <td><strong><a href="extensions/{{ data.extension.key }}.html#fractor-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+                            <td><strong><a href="extensions/{{ data.extension_key }}.html#fractor-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension_key }}</a></strong></td>
                             {% if data.fractor_analysis %}
                             <td>{{ data.fractor_analysis.files_changed }}</td>
                             <td>{{ data.fractor_analysis.rules_applied }}</td>

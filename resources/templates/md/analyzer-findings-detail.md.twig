@@ -51,19 +51,7 @@
 {% if finding.has_code_change %}
 #### Code Changes
 
-{% if finding.old_code or finding.code_before %}
-**Before**:
-```{% if analyzer_type == 'fractor' %}yaml{% else %}php{% endif %}
-{{ finding.old_code|default(finding.code_before) }}
-```
-{% endif %}
-
-{% if finding.new_code or finding.code_after %}
-**After**:
-```{% if analyzer_type == 'fractor' %}yaml{% else %}php{% endif %}
-{{ finding.new_code|default(finding.code_after) }}
-```
-{% endif %}
+{# Code samples removed to prevent memory issues #}
 {% endif %}
 
 {% if finding.suggested_fix is defined %}

@@ -56,23 +56,47 @@ class ReportContextBuilder
             static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && 'version_availability' === $r->getAnalyzerName(),
         );
 
-        // Build detailed extension data with analysis results
-        $extensionData = [];
-        foreach ($extensions as $extension) {
-            $extensionResults = array_filter(
-                $analysisResults,
-                fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
-            );
+        // CRITICAL FIX: Build extension key lookup map first to avoid circular references
+        // Extract all extension keys upfront, then immediately drop Extension entity references
+        $extensionKeyMap = [];
+        foreach ($analysisResults as $result) {
+            if ($result instanceof AnalysisResult) {
+                $extensionKey = $result->getExtension()->getKey();
+                $extensionKeyMap[spl_object_id($result)] = $extensionKey;
+            }
+        }
+        
+        // Now group results using the extracted keys without Extension entity access
+        $resultsByExtensionKey = [];
+        foreach ($analysisResults as $result) {
+            if ($result instanceof AnalysisResult) {
+                $extensionKey = $extensionKeyMap[spl_object_id($result)];
+                $resultsByExtensionKey[$extensionKey][] = $result;
+            }
+        }
 
-            $extensionData[] = [
-                'extension' => $extension,
-                'results' => $extensionResults,
+        // CRITICAL FIX: Build extension key-only lookup to avoid accessing Extension entities
+        // Extract all extension keys upfront to eliminate any Extension entity access during processing
+        $extensionKeys = [];
+        foreach ($extensions as $extension) {
+            $extensionKeys[] = $extension->getKey();
+        }
+        
+        // Build detailed extension data using only extracted keys - NO Extension entity access
+        $extensionData = [];
+        foreach ($extensionKeys as $extensionKey) {
+            $extensionResults = $resultsByExtensionKey[$extensionKey] ?? [];
+
+            $extensionData[$extensionKey] = [
+                // REMOVED 'extension' => $extension, // CAUSES SEGFAULTS - Extension entities cannot be serialized
+                'extension_key' => $extensionKey,
+                // REMOVED 'results' => $extensionResults, // CONTAINS AnalysisResult objects with Extension entities that cause segfaults
                 'version_analysis' => $this->extractVersionAnalysis($extensionResults),
                 'loc_analysis' => $this->extractLinesOfCodeAnalysis($extensionResults),
-                'rector_analysis' => $this->extractRectorAnalysis($extensionResults),
+                'rector_analysis' => $this->extractRectorAnalysis($extensionResults, $extensionKey),
                 'fractor_analysis' => $this->extractFractorAnalysis($extensionResults),
-                'rector_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'typo3_rector'),
-                'fractor_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'fractor'),
+                'rector_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'typo3_rector', $extensionKey),
+                'fractor_detailed_findings' => $this->extractAnalyzerDetailedFindings($extensionResults, 'fractor', $extensionKey),
                 'risk_summary' => $this->calculateExtensionRiskSummary($extensionResults),
             ];
         }
@@ -80,21 +104,25 @@ class ReportContextBuilder
         // Overall statistics
         $stats = $this->calculateOverallStatistics($extensionData);
 
-        return [
-            'installation' => $installation,
-            'extensions' => $extensions,
-            'extension_data' => $extensionData,
+        // CRITICAL: Deep sanitize all context data to ensure NO Extension entity or AnalysisResult objects
+        // can be serialized during template rendering, which causes segmentation faults
+        $sanitizedContext = [
+            // REMOVED 'installation' => $installation, // CONTAINS Extension entities that cause segfaults
+            'installation_data' => [
+                'path' => $installation->getPath(),
+                'version' => $installation->getVersion()->toString(),
+                'type' => $installation->getType(),
+            ],
+            // REMOVED 'extensions' => $extensions, // CONTAINS Extension entities that cause segfaults
+            'extension_data' => $this->deepSanitizeExtensionData($extensionData),
             'target_version' => $targetVersion ?? '13.4', // Default fallback
-            'discovery' => [
-                'installation' => reset($installationDiscovery) ?: null,
-                'extensions' => reset($extensionDiscovery) ?: null,
-            ],
-            'analysis' => [
-                'version_availability' => $versionAnalysis,
-            ],
+            // REMOVED 'discovery' => [...] // CONTAINS ResultInterface objects that may have Extension entity references causing segfaults
+            // REMOVED 'analysis' => [...] // CONTAINS AnalysisResult objects with Extension entities that cause segfaults
             'statistics' => $stats,
-            'generated_at' => new \DateTimeImmutable(),
+            'generated_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
         ];
+        
+        return $sanitizedContext;
     }
 
     /**
@@ -254,7 +282,7 @@ class ReportContextBuilder
      *
      * @param array<ResultInterface> $results
      */
-    private function extractRectorAnalysis(array $results): ?array
+    private function extractRectorAnalysis(array $results, string $extensionKey): ?array
     {
         $rectorResult = array_filter(
             $results,
@@ -298,7 +326,7 @@ class ReportContextBuilder
         if (!empty($rawFindings) && !empty($rawSummary)) {
             $analysisData['detailed_findings'] = [
                 'metadata' => [
-                    'extension_key' => $result->getExtension()->getKey(),
+                    'extension_key' => $extensionKey,
                     'analysis_timestamp' => (new \DateTime())->format('c'),
                     'rector_version' => $result->getMetric('rector_version'),
                     'execution_time' => $result->getMetric('execution_time'),
@@ -343,7 +371,8 @@ class ReportContextBuilder
             'changed_lines' => $result->getMetric('changed_lines'),
             'file_paths' => $result->getMetric('file_paths'),
             'applied_rules' => $result->getMetric('applied_rules'),
-            'findings' => $result->getMetric('findings'),
+            // CRITICAL FIX: Sanitize FractorFinding objects to prevent segfaults during serialization
+            'findings' => $this->sanitizeFractorFindings($result->getMetric('findings')),
             'risk_score' => $result->getRiskScore(),
             'recommendations' => $result->getRecommendations(),
             'error_message' => $result->getMetric('error_message'),
@@ -359,7 +388,7 @@ class ReportContextBuilder
      *
      * @return array<string, mixed>|null
      */
-    private function extractAnalyzerDetailedFindings(array $results, string $analyzerName): ?array
+    private function extractAnalyzerDetailedFindings(array $results, string $analyzerName, string $extensionKey): ?array
     {
         $analyzerResult = array_filter(
             $results,
@@ -379,9 +408,22 @@ class ReportContextBuilder
 
         // Try to get summary data - check for different possible metric names
         if ('fractor' === $analyzerName) {
+            // CRITICAL FIX: Convert FractorFinding objects to arrays before processing
+            // This prevents segfaults during distribution calculations
+            $findingsArray = [];
+            if (!empty($findings)) {
+                foreach ($findings as $finding) {
+                    if (is_object($finding) && method_exists($finding, 'toArray')) {
+                        $findingsArray[] = $finding->toArray();
+                    } elseif (is_array($finding)) {
+                        $findingsArray[] = $finding;
+                    }
+                }
+            }
+
             // For Fractor, the summary might be in the analysis result itself
             $summary = [
-                'total_findings' => \count($findings ?? []),
+                'total_findings' => \count($findingsArray),
                 'files_scanned' => $result->getMetric('files_scanned'),
                 'rules_applied' => $result->getMetric('rules_applied'),
                 'successful' => $result->getMetric('analysis_successful'),
@@ -389,11 +431,15 @@ class ReportContextBuilder
                 'error_message' => $result->getMetric('error_message'),
                 'change_blocks' => $result->getMetric('change_blocks'),
                 'changed_lines' => $result->getMetric('changed_lines'),
-                'severity_distribution' => $this->calculateSeverityDistribution($findings ?? []),
-                'change_type_distribution' => $this->calculateChangeTypeDistribution($findings ?? []),
-                'top_issues_by_file' => $this->calculateTopIssuesByFile($findings ?? []),
-                'top_issues_by_rule' => $this->calculateTopIssuesByRule($findings ?? []),
+                'severity_distribution' => $this->calculateSeverityDistribution($findingsArray),
+                'change_type_distribution' => $this->calculateChangeTypeDistribution($findingsArray),
+                'top_issues_by_file' => $this->calculateTopIssuesByFile($findingsArray),
+                'top_issues_by_rule' => $this->calculateTopIssuesByRule($findingsArray),
+                'manual_intervention_count' => $this->calculateManualInterventionCount($findingsArray),
             ];
+            
+            // Use the converted arrays as findings - CRITICAL: already sanitized above
+            $findings = $findingsArray;
         } elseif ('typo3_rector' === $analyzerName) {
             // For Rector, check for raw_summary
             $rawSummary = $result->getMetric('raw_summary');
@@ -423,7 +469,7 @@ class ReportContextBuilder
             'findings' => $findings ?? [],
             'summary' => $summary ?? $this->createEmptyAnalyzerSummary(),
             'metadata' => [
-                'extension_key' => $result->getExtension()->getKey(),
+                'extension_key' => $extensionKey,
                 'analyzer_type' => 'typo3_rector' === $analyzerName ? 'rector' : $analyzerName,
                 'analysis_timestamp' => (new \DateTime())->format('c'),
                 'execution_time' => $result->getMetric('execution_time') ?? 0.0,
@@ -528,6 +574,28 @@ class ReportContextBuilder
     }
 
     /**
+     * Calculate manual intervention count from findings array.
+     *
+     * @param array<mixed> $findings
+     *
+     * @return int
+     */
+    private function calculateManualInterventionCount(array $findings): int
+    {
+        $manualCount = 0;
+
+        foreach ($findings as $finding) {
+            if (\is_array($finding) && 
+                isset($finding['requires_manual_intervention']) && 
+                true === $finding['requires_manual_intervention']) {
+                $manualCount++;
+            }
+        }
+
+        return $manualCount;
+    }
+
+    /**
      * Create empty analyzer summary structure.
      *
      * @return array<string, mixed>
@@ -546,6 +614,101 @@ class ReportContextBuilder
             'top_issues_by_file' => [],
             'top_issues_by_rule' => [],
         ];
+    }
+
+    /**
+     * Deep sanitize extension data to ensure NO objects that could reference Extension entities
+     * can cause segfaults during template rendering and file serialization.
+     *
+     * @param array<string, mixed> $extensionData
+     *
+     * @return array<string, mixed>
+     */
+    private function deepSanitizeExtensionData(array $extensionData): array
+    {
+        $sanitized = [];
+        
+        foreach ($extensionData as $extensionKey => $data) {
+            $sanitized[$extensionKey] = $this->recursiveSanitizeValue($data);
+        }
+        
+        return $sanitized;
+    }
+
+    /**
+     * Recursively convert any value to a safe serializable format.
+     * This removes objects, circular references, and any potential Extension entity references.
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    private function recursiveSanitizeValue($value)
+    {
+        if (is_object($value)) {
+            // Convert objects to arrays if they have toArray method, otherwise to string representation
+            if (method_exists($value, 'toArray')) {
+                return $this->recursiveSanitizeValue($value->toArray());
+            } elseif (method_exists($value, 'jsonSerialize')) {
+                return $this->recursiveSanitizeValue($value->jsonSerialize());
+            } elseif ($value instanceof \DateTimeInterface) {
+                return $value->format(\DateTimeInterface::ATOM);
+            } else {
+                // Convert other objects to their string representation to prevent serialization issues
+                return (string) $value;
+            }
+        } elseif (is_array($value)) {
+            $sanitized = [];
+            foreach ($value as $key => $item) {
+                $sanitized[$key] = $this->recursiveSanitizeValue($item);
+            }
+            return $sanitized;
+        }
+        
+        // Primitive values (string, int, float, bool, null) are safe
+        return $value;
+    }
+
+    /**
+     * CRITICAL FIX: Sanitize FractorFinding objects to prevent segfaults during serialization.
+     * FractorFinding objects contain complex nested objects that cause circular references
+     * and segmentation faults when passed to file_put_contents during template rendering.
+     *
+     * @param mixed $findings FractorFinding objects or arrays
+     *
+     * @return array<mixed> Safe array representation suitable for serialization
+     */
+    private function sanitizeFractorFindings($findings): array
+    {
+        if (empty($findings) || !is_array($findings)) {
+            return [];
+        }
+        
+        $sanitizedFindings = [];
+        
+        foreach ($findings as $finding) {
+            if (is_object($finding)) {
+                // Convert FractorFinding objects to arrays using toArray or jsonSerialize
+                if (method_exists($finding, 'toArray')) {
+                    $sanitizedFindings[] = $finding->toArray();
+                } elseif (method_exists($finding, 'jsonSerialize')) {
+                    $sanitizedFindings[] = $finding->jsonSerialize();
+                } else {
+                    // Fallback: extract essential data manually
+                    $sanitizedFindings[] = [
+                        'file' => method_exists($finding, 'getFile') ? $finding->getFile() : 'unknown',
+                        'line_number' => method_exists($finding, 'getLineNumber') ? $finding->getLineNumber() : 0,
+                        'message' => method_exists($finding, 'getMessage') ? $finding->getMessage() : 'unknown',
+                        'rule_class' => method_exists($finding, 'getRuleClass') ? $finding->getRuleClass() : 'unknown',
+                    ];
+                }
+            } elseif (is_array($finding)) {
+                // Already an array - just pass it through (may already be sanitized)
+                $sanitizedFindings[] = $finding;
+            }
+        }
+        
+        return $sanitizedFindings;
     }
 
     /**

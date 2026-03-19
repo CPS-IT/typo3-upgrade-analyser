@@ -1,10 +1,10 @@
 # Fractor Findings Tracking and Detail Pages Feature
 
-## Implementation Status: PHASE 2 COMPLETE
+## Implementation Status: PHASE 3 IN PROGRESS
 
-**Status**: Generic Infrastructure Implemented
-**Priority**: High - Core foundation work complete
-**Last Updated**: October 18, 2025
+**Status**: Template rendering pipeline reworked to fix segfaults; integration ongoing
+**Priority**: High - Segfault fix and template integration
+**Last Updated**: March 19, 2026
 
 ## Overview
 
@@ -23,6 +23,20 @@ Enhancement to save Fractor analyzer findings in machine-readable JSON format an
 - Missing Generic Infrastructure - No shared interfaces for analyzer findings
 - Template Explosion - Separate template hierarchies for each analyzer type
 - Inconsistent Data Pipeline - Different serialization patterns between analyzers
+
+### Segfault During Template Rendering (Discovered Phase 3)
+- Passing Extension entities and AnalysisResult objects to Twig templates causes PHP segmentation faults during `file_put_contents` serialization
+- Root cause: Extension entities contain circular references or deep object graphs that crash PHP's serializer
+- Large code content fields (code_before, code_after, diff) in FractorFinding objects cause memory exhaustion
+- Error messages from Fractor can be extremely large, compounding memory pressure
+
+#### Solution: Pre-serialization of Template Context
+- All entity data is extracted to scalar/array form **before** passing to templates
+- `ReportContextBuilder` builds a fully sanitized context with no object references
+- Templates use `extension_key` (string), `installation_data` (array), `extension_data` (array) instead of entity objects
+- `ContentTruncator` utility (`src/Infrastructure/Shared/ContentTruncator.php`) limits code content and error messages
+- Multiple sanitization layers in `FindingsDetailPageRenderer` and `TemplateRenderer` as defense-in-depth
+- `generated_at` passed as pre-formatted string instead of DateTime object
 
 ## Current State Analysis
 
@@ -200,54 +214,36 @@ class RectorFinding extends AbstractAnalyzerFinding
 }
 ```
 
-### Phase 3: Generic Template System
+### Phase 3: Template System Integration and Segfault Fix
 
-#### 3.1 Create Generic Template Components
-**File**: `resources/templates/html/analyzer-findings-detail.html.twig`
-```twig
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ extension_key }} - {{ analyzer_type|title }} Findings</title>
-    {% include 'html/partials/shared/styles.html.twig' %}
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ extension_key }} - {{ analyzer_type|title }} Findings</h1>
-            <p>{{ detailed_findings.findings|length }} findings • Generated: {{ generated_at.format('Y-m-d H:i:s T') }}</p>
-        </div>
+#### 3.1 Template Context Pre-serialization (DONE)
+All templates updated to use scalar/array data instead of entity objects:
+- `generated_at` rendered as pre-formatted string (no `.format()` calls)
+- `extension.key` replaced with `extension_key` string
+- `installation.path/version/type` replaced with `installation_data` array
+- `data.extension.*` replaced with `data.extension_key`, `data.extension_data.*`
+- Code samples and error messages removed from templates to prevent memory issues
 
-        {% include "html/partials/#{analyzer_type}-findings/summary-overview.html.twig" %}
-        {% include "html/partials/#{analyzer_type}-findings/findings-table.html.twig" %}
+#### 3.2 ReportContextBuilder Rework (DONE)
+- Extension keys extracted upfront into lookup map, then Extension entities dropped
+- `deepSanitizeExtensionData()` recursively converts all objects to scalar/array
+- `sanitizeFractorFindings()` converts FractorFinding objects to safe arrays
+- `calculateManualInterventionCount()` added for Fractor findings
+- Context returned as fully sanitized array with no object references
 
-        <a href="../extensions/{{ extension_key }}.html" class="back-link">← Back to Extension Report</a>
-    </div>
-</body>
-</html>
-```
+#### 3.3 FindingsDetailPageRenderer Safety Layers (DONE)
+- `createSafeTemplateContext()` strips Extension entities and converts DateTimes
+- `stripLargeContentFromFindings()` removes code_before/code_after/diff fields
+- Extensive debug logging with memory usage tracking
 
-#### 3.2 Create Generic Detail Page Renderer
-**File**: `src/Infrastructure/Reporting/FindingsDetailPageRenderer.php`
-```php
-class FindingsDetailPageRenderer
-{
-    public function __construct(
-        private Environment $twig,
-        private LoggerInterface $logger
-    ) {}
+#### 3.4 TemplateRenderer Sanitization (DONE)
+- All `$extensionData['extension']->getKey()` replaced with `$extensionData['extension_key']`
+- `sanitizeExtensionData()` and `sanitizeArray()` recursively clean data
+- Extension entity references removed from all findings contexts
 
-    public function renderDetailPages(
-        string $analyzerType,
-        array $context,
-        string $format
-    ): array {
-        // Generic rendering logic that works for any analyzer
-        // Uses analyzer-specific template partials for customization
-    }
-}
-```
+#### 3.5 FractorResultParser Enhancements (DONE)
+- ContentTruncator applied to error messages and code content
+- Missing metrics parsing added: change_blocks, changed_lines, file_paths, applied_rules
 
 ### Phase 4: Integration and Testing
 
@@ -302,21 +298,24 @@ public function renderAnalyzerDetailPages(
 
 ## File Changes Summary
 
-### New Files
+### New Files (Phase 1-2, prior commits)
 - `src/Infrastructure/Analyzer/Fractor/FractorFinding.php`
 - `src/Infrastructure/Analyzer/Shared/AnalyzerFindingInterface.php`
 - `src/Infrastructure/Analyzer/Shared/DetailedAnalysisInterface.php`
 - `src/Infrastructure/Analyzer/Shared/AbstractAnalyzerFinding.php`
 - `src/Infrastructure/Reporting/FindingsDetailPageRenderer.php`
+- `src/Infrastructure/Shared/ContentTruncator.php` — Utility for truncating large content fields
 - `resources/templates/html/analyzer-findings-detail.html.twig`
 - `resources/templates/html/partials/fractor-findings/*.html.twig`
 
-### Modified Files
-- `src/Infrastructure/Analyzer/Fractor/FractorAnalysisSummary.php` (add toArray())
-- `src/Infrastructure/Analyzer/Fractor/FractorResultParser.php` (populate findings)
-- `src/Infrastructure/Analyzer/Rector/RectorFinding.php` (extend abstract class)
-- `src/Infrastructure/Reporting/ReportContextBuilder.php` (generic extraction)
-- `src/Infrastructure/Reporting/TemplateRenderer.php` (generic rendering)
+### Modified Files (Phase 3, segfault fix)
+- `src/Infrastructure/Reporting/ReportContextBuilder.php` — Pre-serialization, deep sanitization, no entity refs
+- `src/Infrastructure/Reporting/TemplateRenderer.php` — Entity-free context building, array sanitization
+- `src/Infrastructure/Reporting/FindingsDetailPageRenderer.php` — Safe context creation, content stripping
+- `src/Infrastructure/Reporting/ReportService.php` — Debug logging with memory tracking
+- `src/Infrastructure/Analyzer/Fractor/FractorResultParser.php` — ContentTruncator, missing metrics
+- `src/Application/Command/AnalyzeCommand.php` — array_merge refactoring
+- All HTML/Markdown templates — Entity method calls replaced with scalar access
 
 ## Risk Assessment
 

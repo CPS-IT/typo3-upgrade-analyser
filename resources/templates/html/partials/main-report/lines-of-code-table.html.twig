@@ -17,7 +17,7 @@
                     <tbody>
                         {% for data in extension_data %}
                         <tr>
-                            <td><strong><a href="extensions/{{ data.extension.key }}.html#lines-of-code-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+                            <td><strong><a href="extensions/{{ data.extension_key }}.html#lines-of-code-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension_key }}</a></strong></td>
                             {% if data.loc_analysis %}
                             <td>{{ data.loc_analysis.total_lines|number_format }}</td>
                             <td>{{ data.loc_analysis.php_files }}</td>

@@ -14,7 +14,7 @@
                     <p><strong>Critical Risk Extensions</strong> ({{ critical_extensions|length }} extensions require immediate attention):</p>
                     <ul>
                     {% for data in critical_extensions %}
-                        <li><strong>{{ data.extension.key }}</strong>:
+                        <li><strong>{{ data.extension_key }}</strong>:
                         <ul>
                         {% if data.version_analysis and data.version_analysis.recommendations %}
                             {% for recommendation in data.version_analysis.recommendations %}

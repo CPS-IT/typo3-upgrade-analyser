@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
@@ -300,7 +301,7 @@ class AnalyzeCommand extends Command
         // Convert analysis results to a flat array for the report service
         $allResults = [];
         foreach ($analysisResults as $analyzerResults) {
-            $allResults = array_merge($allResults, $analyzerResults);
+            array_push($allResults, ...$analyzerResults);
         }
 
         // Create discovery results for the report service
@@ -327,7 +328,7 @@ class AnalyzeCommand extends Command
         ];
 
         // Combine all results for the report service
-        $combinedResults = array_merge($discoveryResults, $allResults);
+        $combinedResults = [...$discoveryResults, ...$allResults];
 
         try {
             // Generate detailed reports using the ReportService
