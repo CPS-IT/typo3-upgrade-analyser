@@ -63,3 +63,6 @@ composer.phar
 /junit.xml
 .claude/prompts/
 .claude/settings.local.json
+
+# bmad skills
+.claude/skills/bmad-*
