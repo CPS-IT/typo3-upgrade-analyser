@@ -89,7 +89,7 @@
       "@sca:php"
     ],
     "lint:composer": "@composer normalize --dry-run",
-    "lint:editorconfig": "ec",
+    "lint:editorconfig": "ec -n",
     "lint:php": "php-cs-fixer fix --dry-run",
     "lint:rector": "rector process --dry-run",
     "sbom": "@composer CycloneDX:make-sbom --output-file=sbom.json --output-format=JSON --validate",
