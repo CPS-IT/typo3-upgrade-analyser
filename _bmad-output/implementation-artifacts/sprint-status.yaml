@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-21
+# last_updated: 2026-03-22
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-21
+last_updated: 2026-03-22
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -44,8 +44,8 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 development_status:
   # Epic 1: Trustworthy Analysis Across TYPO3 Versions
   epic-1: in-progress
-  1-1-version-profile-registry: review
-  1-2-typo3-v11-core-extension-accurate-exclusion: backlog
+  1-1-version-profile-registry: done
+  1-2-typo3-v11-core-extension-accurate-exclusion: ready-for-dev
   1-3-typo3-v13-composer-installation-support: backlog
   1-4-typo3-v14-composer-installation-support: backlog
   epic-1-retrospective: optional
