@@ -236,6 +236,10 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
       - '@logger'
 
+  # Version Profile Registry (factory-created)
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry:
+    factory: ['CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistryFactory', 'create']
+
   # Discovery Services
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
     resource: '../src/Infrastructure/Discovery/*'
