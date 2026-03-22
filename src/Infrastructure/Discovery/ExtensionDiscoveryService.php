@@ -30,6 +30,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         private readonly ConfigurationService $configService,
         private readonly CacheService $cacheService,
         private readonly PathResolutionServiceInterface $pathResolutionService,
+        private readonly VersionProfileRegistry $versionProfileRegistry,
     ) {
     }
 
@@ -345,8 +346,8 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
             $extensions = [];
 
             foreach ($packageStatesContent['packages'] as $packageKey => $packageData) {
-                // Skip TYPO3 core packages
-                if (str_starts_with($packageKey, 'typo3/cms-')) {
+                // Skip TYPO3 core packages — check both Composer-style prefix and legacy path
+                if ($this->isCorePackage($packageKey, $packageData)) {
                     continue;
                 }
 
@@ -399,7 +400,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
                 }
 
                 // Skip TYPO3 core extensions
-                if (isset($packageData['name']) && str_starts_with($packageData['name'], 'typo3/cms-')) {
+                if (isset($packageData['name']) && str_starts_with($packageData['name'], $this->getCorePackagePrefix())) {
                     continue;
                 }
 
@@ -539,8 +540,8 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 
     private function determineExtensionType(string $extensionPath): string
     {
-        // Check if it's in typo3/sysext (system extension)
-        if (str_contains($extensionPath, '/typo3/sysext/')) {
+        // Check if it's in the legacy core extension directory (system extension)
+        if (str_contains($extensionPath, '/' . $this->getLegacyCoreExtensionDir() . '/')) {
             return 'system';
         }
 
@@ -555,6 +556,45 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         }
 
         return 'local';
+    }
+
+    /**
+     * Check whether a PackageStates entry is a TYPO3 core package.
+     *
+     * Two-pronged detection:
+     * 1. Composer mode: key starts with corePackagePrefix (e.g. 'typo3/cms-backend')
+     * 2. Legacy mode: packagePath starts with legacyCoreExtensionDir (e.g. 'typo3/sysext/core/')
+     */
+    private function isCorePackage(string $packageKey, array $packageData): bool
+    {
+        if (str_starts_with($packageKey, $this->getCorePackagePrefix())) {
+            return true;
+        }
+
+        $packagePath = $packageData['packagePath'] ?? '';
+
+        return '' !== $packagePath && str_starts_with($packagePath, $this->getLegacyCoreExtensionDir() . '/');
+    }
+
+    private function getCorePackagePrefix(): string
+    {
+        return $this->getDefaultVersionProfile()->corePackagePrefix;
+    }
+
+    private function getLegacyCoreExtensionDir(): string
+    {
+        return $this->getDefaultVersionProfile()->legacyCoreExtensionDir;
+    }
+
+    private function getDefaultVersionProfile(): DTO\VersionProfile
+    {
+        $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
+
+        if ([] === $supportedVersions) {
+            throw new \LogicException('VersionProfileRegistry has no supported versions configured.');
+        }
+
+        return $this->versionProfileRegistry->getProfile($supportedVersions[0]);
     }
 
     private function serializeResult(ExtensionDiscoveryResult $result): array

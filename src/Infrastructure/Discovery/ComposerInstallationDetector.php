@@ -43,6 +43,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         private readonly VersionExtractor $versionExtractor,
         private readonly PathResolutionServiceInterface $pathResolutionService,
         private readonly LoggerInterface $logger,
+        private readonly VersionProfileRegistry $versionProfileRegistry,
     ) {
     }
 
@@ -349,10 +350,11 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
             'typo3conf-dir' => PathTypeEnum::TYPO3CONF_DIR,
         ];
 
+        $defaultProfile = $this->getDefaultProfile($version);
         $resolvedPaths = [
-            'vendor-dir' => 'vendor',
-            'web-dir' => 'public',
-            'typo3conf-dir' => 'public/typo3conf',
+            'vendor-dir' => $defaultProfile->defaultVendorDir,
+            'web-dir' => $defaultProfile->defaultWebDir,
+            'typo3conf-dir' => $defaultProfile->defaultWebDir . '/typo3conf',
             'var' => 'var',
             'config' => 'config',
         ];
@@ -485,6 +487,27 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         } catch (\JsonException) {
             return InstallationTypeEnum::COMPOSER_STANDARD;
         }
+    }
+
+    private function getDefaultProfile(Version $version): DTO\VersionProfile
+    {
+        $majorVersion = $version->getMajor();
+        $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
+
+        if ([] === $supportedVersions) {
+            throw new \LogicException('VersionProfileRegistry has no supported versions configured.');
+        }
+
+        if (\in_array($majorVersion, $supportedVersions, true)) {
+            return $this->versionProfileRegistry->getProfile($majorVersion);
+        }
+
+        $this->logger->warning('Detected TYPO3 major version not in supported profile list, falling back to default profile', [
+            'detected_version' => $majorVersion,
+            'supported_versions' => $supportedVersions,
+        ]);
+
+        return $this->versionProfileRegistry->getProfile($supportedVersions[0]);
     }
 
     /**
