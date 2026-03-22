@@ -236,10 +236,17 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
       - '@logger'
 
+  # Version Profile Registry (factory-created)
+  CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry:
+    factory: ['CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistryFactory', 'create']
+
   # Discovery Services
   CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\:
     resource: '../src/Infrastructure/Discovery/*'
-    exclude: '../src/Infrastructure/Discovery/ConfigurationDiscoveryService.php'
+    exclude:
+      - '../src/Infrastructure/Discovery/ConfigurationDiscoveryService.php'
+      - '../src/Infrastructure/Discovery/VersionProfileRegistry.php'
+      - '../src/Infrastructure/Discovery/VersionProfileRegistryFactory.php'
     tags: ['discovery_service']
 
   # Extension Discovery Service
@@ -250,6 +257,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry'
     tags: ['discovery_service']
 
   # Installation Discovery Service with Configuration Discovery
@@ -279,6 +287,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
       - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry'
     tags: ['detection_strategy']
 
   # Configuration Service

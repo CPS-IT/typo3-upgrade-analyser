@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DTO\VersionProfile;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
@@ -40,9 +41,10 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
     ];
 
     public function __construct(
-        private VersionExtractor $versionExtractor,
-        private PathResolutionServiceInterface $pathResolutionService,
-        private LoggerInterface $logger,
+        private readonly VersionExtractor $versionExtractor,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
+        private readonly LoggerInterface $logger,
+        private readonly VersionProfileRegistry $versionProfileRegistry,
     ) {
     }
 
@@ -349,10 +351,11 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
             'typo3conf-dir' => PathTypeEnum::TYPO3CONF_DIR,
         ];
 
+        $defaultProfile = $this->getDefaultProfile($version);
         $resolvedPaths = [
-            'vendor-dir' => 'vendor',
-            'web-dir' => 'public',
-            'typo3conf-dir' => 'public/typo3conf',
+            'vendor-dir' => $defaultProfile->defaultVendorDir,
+            'web-dir' => $defaultProfile->defaultWebDir,
+            'typo3conf-dir' => $defaultProfile->defaultWebDir . '/typo3conf',
             'var' => 'var',
             'config' => 'config',
         ];
@@ -485,6 +488,27 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
         } catch (\JsonException) {
             return InstallationTypeEnum::COMPOSER_STANDARD;
         }
+    }
+
+    private function getDefaultProfile(Version $version): VersionProfile
+    {
+        $majorVersion = $version->getMajor();
+        $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
+
+        if ([] === $supportedVersions) {
+            throw new \LogicException('VersionProfileRegistry has no supported versions configured.');
+        }
+
+        if (\in_array($majorVersion, $supportedVersions, true)) {
+            return $this->versionProfileRegistry->getProfile($majorVersion);
+        }
+
+        $this->logger->warning('Detected TYPO3 major version not in supported profile list, falling back to default profile', [
+            'detected_version' => $majorVersion,
+            'supported_versions' => $supportedVersions,
+        ]);
+
+        return $this->versionProfileRegistry->getProfile($supportedVersions[0]);
     }
 
     /**

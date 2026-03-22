@@ -26,7 +26,8 @@ $terClient = new TerApiClient($httpClient, $logger);
 
 // Test cases: extension => [TYPO3 versions to test]
 $testCases = [
-    'news' => ['11.5.0', '12.4.0', '13.0.0'],
+    'news' => ['11.5.0', '12.4.0', '13.0.0', '14.0.0'],
+    'solr' => ['11.5.0', '12.4.0', '13.0.0', '14.0.0'],
     'bootstrap_package' => ['12.4.0'],
     'realurl' => ['8.7.0'], // Should work for legacy
 ];

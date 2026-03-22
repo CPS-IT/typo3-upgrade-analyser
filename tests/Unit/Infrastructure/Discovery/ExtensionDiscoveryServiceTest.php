@@ -15,6 +15,8 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistryFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
@@ -28,24 +30,27 @@ use Psr\Log\LoggerInterface;
 final class ExtensionDiscoveryServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
-    private ConfigurationService&MockObject $configurationService;
+    private ConfigurationService&MockObject $configService;
     private CacheService&MockObject $cacheService;
     private PathResolutionServiceInterface&MockObject $pathResolutionService;
+    private VersionProfileRegistry $versionProfileRegistry;
     private ExtensionDiscoveryService $service;
     private string $tempDir;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->configurationService = $this->createMock(ConfigurationService::class);
+        $this->configService = $this->createMock(ConfigurationService::class);
         $this->cacheService = $this->createMock(CacheService::class);
         $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+        $this->versionProfileRegistry = VersionProfileRegistryFactory::create();
 
         $this->service = new ExtensionDiscoveryService(
             $this->logger,
-            $this->configurationService,
+            $this->configService,
             $this->cacheService,
             $this->pathResolutionService,
+            $this->versionProfileRegistry,
         );
 
         $this->tempDir = sys_get_temp_dir() . '/ext_discovery_test_' . uniqid();
@@ -92,7 +97,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $installedJsonPath = $this->tempDir . '/vendor/composer/installed.json';
         mkdir(\dirname($installedJsonPath), 0o755, true);
 
-        $content = json_encode(['packages' => $packages], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+        $content = json_encode(['packages' => $packages], JSON_PRETTY_PRINT);
         file_put_contents($installedJsonPath, $content);
 
         return $installedJsonPath;
@@ -338,9 +343,10 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $customService = new ExtensionDiscoveryService(
             $this->logger,
-            $this->configurationService,
+            $this->configService,
             $this->cacheService,
             $pathResolutionService,
+            $this->versionProfileRegistry,
         );
 
         $packages = [
@@ -370,7 +376,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testDiscoverExtensionsWithCacheEnabled(): void
     {
-        $this->configurationService->expects($this->exactly(2))
+        $this->configService->expects($this->exactly(2))
             ->method('isResultCacheEnabled')
             ->willReturn(true);
 
@@ -421,7 +427,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             'cached_at' => time(),
         ];
 
-        $this->configurationService->expects($this->once())
+        $this->configService->expects($this->once())
             ->method('isResultCacheEnabled')
             ->willReturn(true);
 
@@ -447,7 +453,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testDiscoverExtensionsWithCacheDisabled(): void
     {
-        $this->configurationService->expects($this->exactly(2))
+        $this->configService->expects($this->exactly(2))
             ->method('isResultCacheEnabled')
             ->willReturn(false);
 
@@ -577,11 +583,9 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testExtensionTypeDetection(): void
     {
+        // Note: extensions in typo3/sysext/ are core extensions and correctly excluded.
+        // This test verifies type detection for non-core extensions only.
         $packages = [
-            'system_ext' => [
-                'packagePath' => 'typo3/sysext/system_ext/',
-                'state' => 'active',
-            ],
             'local_ext' => [
                 'packagePath' => 'typo3conf/ext/local_ext/',
                 'state' => 'active',
@@ -594,8 +598,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->createPackageStatesFile($packages);
 
-        // Create ext_emconf.php files
-        foreach (['system_ext', 'local_ext', 'composer_ext'] as $key) {
+        foreach (['local_ext', 'composer_ext'] as $key) {
             $path = $packages[$key]['packagePath'];
             $this->createExtEmconfFile($key, $this->tempDir . '/' . $path, [
                 'title' => ucfirst($key),
@@ -606,14 +609,13 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverExtensions($this->tempDir);
 
         $this->assertTrue($result->isSuccessful());
-        $this->assertCount(3, $result->getExtensions());
+        $this->assertCount(2, $result->getExtensions());
 
         $extensionsByKey = [];
         foreach ($result->getExtensions() as $extension) {
             $extensionsByKey[$extension->getKey()] = $extension;
         }
 
-        $this->assertSame('system', $extensionsByKey['system_ext']->getType());
         $this->assertSame('local', $extensionsByKey['local_ext']->getType());
         $this->assertSame('composer', $extensionsByKey['composer_ext']->getType());
     }
@@ -746,7 +748,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
                 );
             });
 
-        $service = new ExtensionDiscoveryService($this->logger, $this->configurationService, $this->cacheService, $pathResolutionService);
+        $service = new ExtensionDiscoveryService($this->logger, $this->configService, $this->cacheService, $pathResolutionService, $this->versionProfileRegistry);
 
         $result = $service->discoverExtensions($this->tempDir);
 
@@ -831,11 +833,8 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
     public function testCreateExtensionFromPackageDataWithDifferentPathTypes(): void
     {
+        // Note: extensions in typo3/sysext/ are core extensions and correctly excluded.
         $packages = [
-            'system_ext' => [
-                'packagePath' => 'typo3/sysext/system_ext/',
-                'state' => 'active',
-            ],
             'vendor_ext' => [
                 'packagePath' => 'vendor/vendor/extension/',
                 'state' => 'active',
@@ -848,11 +847,6 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $this->createPackageStatesFile($packages);
 
-        // Create ext_emconf.php files for all extensions
-        $this->createExtEmconfFile('system_ext', $this->tempDir . '/typo3/sysext/system_ext', [
-            'title' => 'System Extension',
-            'version' => '12.0.0',
-        ]);
         $this->createExtEmconfFile('vendor_ext', $this->tempDir . '/vendor/vendor/extension', [
             'title' => 'Vendor Extension',
             'version' => '1.0.0',
@@ -865,14 +859,13 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverExtensions($this->tempDir);
 
         $this->assertTrue($result->isSuccessful());
-        $this->assertCount(3, $result->getExtensions());
+        $this->assertCount(2, $result->getExtensions());
 
         $extensionsByKey = [];
         foreach ($result->getExtensions() as $extension) {
             $extensionsByKey[$extension->getKey()] = $extension;
         }
 
-        $this->assertSame('system', $extensionsByKey['system_ext']->getType());
         $this->assertSame('composer', $extensionsByKey['vendor_ext']->getType());
         $this->assertSame('local', $extensionsByKey['unknown_path']->getType());
     }
@@ -962,7 +955,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     public function testDiscoverExtensionsWithMainDiscoveryException(): void
     {
         // Mock the configService to throw an exception during discovery
-        $this->configurationService->expects($this->once())
+        $this->configService->expects($this->once())
             ->method('isResultCacheEnabled')
             ->willThrowException(new \RuntimeException('Configuration error'));
 
@@ -1028,6 +1021,103 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
         $this->assertCount(1, $result->getExtensions()); // Only 'news' should be included
         $this->assertSame('news', $result->getExtensions()[0]->getKey());
+    }
+
+    public function testV11LegacyPackageStatesWithShortKeysExcludesCoreExtensions(): void
+    {
+        $packages = [
+            'core' => [
+                'packagePath' => 'typo3/sysext/core/',
+                'state' => 'active',
+            ],
+            'backend' => [
+                'packagePath' => 'typo3/sysext/backend/',
+                'state' => 'active',
+            ],
+            'extbase' => [
+                'packagePath' => 'typo3/sysext/extbase/',
+                'state' => 'active',
+            ],
+            'news' => [
+                'packagePath' => 'typo3conf/ext/news/',
+                'state' => 'active',
+            ],
+        ];
+
+        $this->createPackageStatesFile($packages);
+        $this->createExtEmconfFile('news', $this->tempDir . '/public/typo3conf/ext/news', [
+            'title' => 'News System',
+            'version' => '10.0.0',
+        ]);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $result->getExtensions());
+        $this->assertContains('news', $extensionKeys);
+        $this->assertNotContains('core', $extensionKeys);
+        $this->assertNotContains('backend', $extensionKeys);
+        $this->assertNotContains('extbase', $extensionKeys);
+        $this->assertCount(1, $result->getExtensions());
+    }
+
+    public function testV11ComposerInstallationCorrectlyExcludesCoreExtensionsViaPrefix(): void
+    {
+        $composerPackages = [
+            [
+                'name' => 'typo3/cms-core',
+                'type' => 'typo3-cms-extension',
+                'version' => '11.5.0',
+            ],
+            [
+                'name' => 'typo3/cms-backend',
+                'type' => 'typo3-cms-extension',
+                'version' => '11.5.0',
+            ],
+            [
+                'name' => 'georgringer/news',
+                'type' => 'typo3-cms-extension',
+                'version' => '10.0.0',
+                'extra' => [
+                    'typo3/cms' => [
+                        'extension-key' => 'news',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->createComposerInstalledFile($composerPackages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $extensionKeys = array_map(fn ($ext): string => $ext->getKey(), $result->getExtensions());
+        $this->assertContains('news', $extensionKeys);
+        $this->assertNotContains('cms_core', $extensionKeys);
+        $this->assertNotContains('cms_backend', $extensionKeys);
+        $this->assertCount(1, $result->getExtensions());
+    }
+
+    public function testThirdPartyExtensionWithSysextLikePathNotExcluded(): void
+    {
+        $packages = [
+            'my_ext' => [
+                'packagePath' => 'typo3conf/ext/my_ext/',
+                'state' => 'active',
+            ],
+        ];
+
+        $this->createPackageStatesFile($packages);
+        $this->createExtEmconfFile('my_ext', $this->tempDir . '/public/typo3conf/ext/my_ext', [
+            'title' => 'My Extension',
+            'version' => '1.0.0',
+        ]);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $this->assertCount(1, $result->getExtensions());
+        $this->assertSame('my_ext', $result->getExtensions()[0]->getKey());
     }
 
     /**

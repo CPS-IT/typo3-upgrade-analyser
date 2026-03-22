@@ -17,6 +17,8 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerInstallationDetector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractor;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistry;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionProfileRegistryFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
@@ -34,6 +36,7 @@ final class ComposerInstallationDetectorTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
     private PathResolutionServiceInterface&MockObject $pathResolutionService;
+    private VersionProfileRegistry $versionProfileRegistry;
     private ComposerInstallationDetector $detector;
     private string $testDir;
 
@@ -41,6 +44,8 @@ final class ComposerInstallationDetectorTest extends TestCase
     {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->pathResolutionService = $this->createMock(PathResolutionServiceInterface::class);
+
+        $this->versionProfileRegistry = VersionProfileRegistryFactory::create();
 
         // Setup default PathResolutionService behavior
         $this->setupDefaultPathResolutionMocks();
@@ -57,6 +62,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             $versionExtractor,
             $this->pathResolutionService,
             $this->logger,
+            $this->versionProfileRegistry,
         );
         $this->testDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         mkdir($this->testDir, 0o755, true);
@@ -136,7 +142,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'some/other-package' => '^1.0',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
 
         self::assertFalse($this->detector->supports($this->testDir));
     }
@@ -176,7 +182,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 $packageName => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
 
         self::assertTrue($this->detector->supports($this->testDir));
     }
@@ -198,7 +204,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
 
         self::assertTrue($this->detector->supports($this->testDir));
     }
@@ -233,6 +239,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             $workingVersionExtractor,
             $this->pathResolutionService,
             $this->logger,
+            $this->versionProfileRegistry,
         );
 
         $result = $workingDetector->detect($this->testDir);
@@ -256,6 +263,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             $workingVersionExtractor,
             $this->pathResolutionService,
             $this->logger,
+            $this->versionProfileRegistry,
         );
 
         $result = $workingDetector->detect($this->testDir);
@@ -280,6 +288,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             $failingVersionExtractor,
             $this->pathResolutionService,
             $this->logger,
+            $this->versionProfileRegistry,
         );
 
         $this->logger->expects(self::atLeastOnce())
@@ -302,6 +311,7 @@ final class ComposerInstallationDetectorTest extends TestCase
             $workingVersionExtractor,
             $this->pathResolutionService,
             $this->logger,
+            $this->versionProfileRegistry,
         );
 
         $result = $workingDetector->detect($this->testDir);
@@ -317,7 +327,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 'typo3/cms-core' => '^12.4',
             ],
         ];
-        file_put_contents($this->testDir . '/composer.json', json_encode($composerData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
     }
 
     private function createFullTypo3Directory(): void
@@ -340,7 +350,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 ],
             ],
         ];
-        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
     }
 
     private function createComposerLockWithExtensions(): void
@@ -365,7 +375,7 @@ final class ComposerInstallationDetectorTest extends TestCase
                 ],
             ],
         ];
-        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData, JSON_THROW_ON_ERROR));
+        file_put_contents($this->testDir . '/composer.lock', json_encode($lockData));
     }
 
     private function removeDirectory(string $dir): void

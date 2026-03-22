@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DTO\VersionProfile;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
@@ -26,10 +27,11 @@ use Psr\Log\LoggerInterface;
 readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private ConfigurationService $configurationService,
-        private CacheService $cacheService,
-        private PathResolutionServiceInterface $pathResolutionService,
+        private readonly LoggerInterface $logger,
+        private readonly ConfigurationService $configService,
+        private readonly CacheService $cacheService,
+        private readonly PathResolutionServiceInterface $pathResolutionService,
+        private readonly VersionProfileRegistry $versionProfileRegistry,
     ) {
     }
 
@@ -39,7 +41,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
         try {
             // Check cache if enabled
-            if ($this->configurationService->isResultCacheEnabled()) {
+            if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
@@ -124,7 +126,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
             $result = ExtensionDiscoveryResult::success($extensions, $successfulMethods, $discoveryMetadata);
 
             // Cache the result if enabled
-            if ($this->configurationService->isResultCacheEnabled()) {
+            if ($this->configService->isResultCacheEnabled()) {
                 $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
                     'custom_paths' => $customPaths ?? [],
                 ]);
@@ -345,8 +347,8 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
             $extensions = [];
 
             foreach ($packageStatesContent['packages'] as $packageKey => $packageData) {
-                // Skip TYPO3 core packages
-                if (str_starts_with($packageKey, 'typo3/cms-')) {
+                // Skip TYPO3 core packages — check both Composer-style prefix and legacy path
+                if ($this->isCorePackage($packageKey, $packageData)) {
                     continue;
                 }
 
@@ -399,7 +401,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 }
 
                 // Skip TYPO3 core extensions
-                if (isset($packageData['name']) && str_starts_with($packageData['name'], 'typo3/cms-')) {
+                if (isset($packageData['name']) && str_starts_with($packageData['name'], $this->getCorePackagePrefix())) {
                     continue;
                 }
 
@@ -540,8 +542,8 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
     private function determineExtensionType(string $extensionPath): string
     {
-        // Check if it's in typo3/sysext (system extension)
-        if (str_contains($extensionPath, '/typo3/sysext/')) {
+        // Check if it's in the legacy core extension directory (system extension)
+        if (str_contains($extensionPath, '/' . $this->getLegacyCoreExtensionDir() . '/')) {
             return 'system';
         }
 
@@ -556,6 +558,45 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
         }
 
         return 'local';
+    }
+
+    /**
+     * Check whether a PackageStates entry is a TYPO3 core package.
+     *
+     * Two-pronged detection:
+     * 1. Composer mode: key starts with corePackagePrefix (e.g. 'typo3/cms-backend')
+     * 2. Legacy mode: packagePath starts with legacyCoreExtensionDir (e.g. 'typo3/sysext/core/')
+     */
+    private function isCorePackage(string $packageKey, array $packageData): bool
+    {
+        if (str_starts_with($packageKey, $this->getCorePackagePrefix())) {
+            return true;
+        }
+
+        $packagePath = $packageData['packagePath'] ?? '';
+
+        return '' !== $packagePath && str_starts_with($packagePath, $this->getLegacyCoreExtensionDir() . '/');
+    }
+
+    private function getCorePackagePrefix(): string
+    {
+        return $this->getDefaultVersionProfile()->corePackagePrefix;
+    }
+
+    private function getLegacyCoreExtensionDir(): string
+    {
+        return $this->getDefaultVersionProfile()->legacyCoreExtensionDir;
+    }
+
+    private function getDefaultVersionProfile(): VersionProfile
+    {
+        $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
+
+        if ([] === $supportedVersions) {
+            throw new \LogicException('VersionProfileRegistry has no supported versions configured.');
+        }
+
+        return $this->versionProfileRegistry->getProfile($supportedVersions[0]);
     }
 
     private function serializeResult(ExtensionDiscoveryResult $result): array
