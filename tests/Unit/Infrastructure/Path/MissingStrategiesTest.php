@@ -270,7 +270,7 @@ final class MissingStrategiesTest extends TestCase
 
         file_put_contents(
             $this->testPath . '/composer.json',
-            json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            json_encode($config, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
     }
 }

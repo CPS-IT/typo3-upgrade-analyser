@@ -20,15 +20,15 @@ use Psr\Log\LoggerInterface;
 /**
  * Client for interacting with the TYPO3 Extension Repository (TER) API.
  */
-class TerApiClient
+readonly class TerApiClient
 {
-    private readonly TerApiHttpClient $httpClient;
-    private readonly TerApiResponseParser $responseParser;
-    private readonly VersionCompatibilityChecker $compatibilityChecker;
+    private TerApiHttpClient $httpClient;
+    private TerApiResponseParser $responseParser;
+    private VersionCompatibilityChecker $compatibilityChecker;
 
     public function __construct(
         HttpClientServiceInterface $httpClient,
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
         // Load TER token from environment
         $terToken = EnvironmentLoader::get('TER_ACCESS_TOKEN');

@@ -20,10 +20,10 @@ use Twig\Environment as TwigEnvironment;
  * This service handles format-specific content generation using Twig templates
  * and JSON encoding. It focuses solely on content rendering without file I/O.
  */
-class TemplateRenderer
+readonly class TemplateRenderer
 {
     public function __construct(
-        private readonly TwigEnvironment $twig,
+        private TwigEnvironment $twig,
     ) {
     }
 
@@ -110,7 +110,7 @@ class TemplateRenderer
                 'extension' => $extensionKey,
             ],
             'json' => [
-                'content' => json_encode($extensionContext, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}',
+                'content' => json_encode($extensionContext, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}',
                 'filename' => $extensionKey . '.json',
                 'extension' => $extensionKey,
             ],
@@ -200,6 +200,6 @@ class TemplateRenderer
         // Remove extension details from main JSON to avoid duplication
         unset($contextCopy['extension_data']);
 
-        return json_encode($contextCopy, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
+        return json_encode($contextCopy, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '{}';
     }
 }

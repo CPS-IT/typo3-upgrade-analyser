@@ -21,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Factory for creating and configuring the dependency injection container.
@@ -72,7 +73,7 @@ class ContainerFactory
             ->setPublic(true);
 
         // HTTP Client - register as a service definition
-        $container->register('http_client', \Symfony\Contracts\HttpClient\HttpClientInterface::class)
+        $container->register('http_client', HttpClientInterface::class)
             ->setFactory([HttpClient::class, 'create'])
             ->setArguments([[
                 'timeout' => 30,

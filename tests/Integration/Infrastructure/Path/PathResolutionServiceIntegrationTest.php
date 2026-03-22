@@ -245,12 +245,15 @@ final class PathResolutionServiceIntegrationTest extends TestCase
         mkdir($path . '/public/fileadmin', 0o755, true);
 
         // Create composer.json to indicate Composer installation
-        file_put_contents($path . '/composer.json', json_encode([
-            'name' => 'test/typo3-installation',
-            'require' => [
-                'typo3/cms-core' => '^12.0',
-            ],
-        ], JSON_PRETTY_PRINT));
+        file_put_contents(
+            $path . '/composer.json',
+            json_encode([
+                'name' => 'test/typo3-installation',
+                'require' => [
+                    'typo3/cms-core' => '^12.0',
+                ],
+            ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+        );
 
         // Create extension files
         file_put_contents($path . '/public/typo3conf/ext/test_extension/ext_emconf.php', '<?php

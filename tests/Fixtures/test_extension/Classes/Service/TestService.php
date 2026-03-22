@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MyVendor\TestExtension\Service;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
@@ -39,8 +40,8 @@ class TestService
     public function processData(string $input): string
     {
         // DEPRECATED: Various GeneralUtility patterns that should be injected
-        $configuration = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class);
-        $context = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class);
+        $configuration = GeneralUtility::makeInstance(ExtensionConfiguration::class);
+        $context = GeneralUtility::makeInstance(Context::class);
 
         // DEPRECATED: Direct TSFE access
         $typoScript = $GLOBALS['TSFE']->tmpl->setup;

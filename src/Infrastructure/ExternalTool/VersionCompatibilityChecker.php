@@ -63,7 +63,7 @@ class VersionCompatibilityChecker
         }
 
         // Sort versions and return the latest
-        usort($compatibleVersions, fn ($a, $b): int => version_compare($a, $b));
+        usort($compatibleVersions, static fn ($a, $b): int => version_compare($a, $b));
 
         return end($compatibleVersions);
     }

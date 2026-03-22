@@ -148,7 +148,7 @@ class PackagistClient
         }
 
         // Filter out pre-release versions (dev, alpha, beta, rc, etc.) and sort
-        $stableVersions = array_filter($compatibleVersions, function ($version): bool {
+        $stableVersions = array_filter($compatibleVersions, static function ($version): bool {
             $preReleaseMarkers = ['dev', 'alpha', 'beta', 'rc', 'snapshot'];
             foreach ($preReleaseMarkers as $marker) {
                 if (str_contains(strtolower($version), $marker)) {
@@ -160,13 +160,13 @@ class PackagistClient
         });
 
         if (!empty($stableVersions)) {
-            usort($stableVersions, fn (string $a, string $b): int => version_compare($a, $b));
+            usort($stableVersions, static fn (string $a, string $b): int => version_compare($a, $b));
 
             return end($stableVersions);
         }
 
         // Fall back to dev versions if no stable versions available
-        usort($compatibleVersions, fn (string $a, string $b): int => version_compare($a, $b));
+        usort($compatibleVersions, static fn (string $a, string $b): int => version_compare($a, $b));
 
         return end($compatibleVersions);
     }

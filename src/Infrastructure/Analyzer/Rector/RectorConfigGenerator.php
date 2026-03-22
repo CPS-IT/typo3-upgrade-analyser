@@ -14,18 +14,19 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Service for generating Rector configuration files.
  */
-class RectorConfigGenerator
+readonly class RectorConfigGenerator
 {
     public function __construct(
-        private readonly RectorRuleRegistry $ruleRegistry,
-        private readonly string $tempDirectory,
-        private readonly Filesystem $filesystem = new Filesystem(),
+        private RectorRuleRegistry $ruleRegistry,
+        private string $tempDirectory,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
         $this->ensureTempDirectoryExists();
     }
@@ -118,7 +119,7 @@ class RectorConfigGenerator
      *
      * @return array<string>
      */
-    private function selectSetsForVersion(\CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version $currentVersion, \CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version $targetVersion): array
+    private function selectSetsForVersion(Version $currentVersion, Version $targetVersion): array
     {
         return $this->ruleRegistry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
     }

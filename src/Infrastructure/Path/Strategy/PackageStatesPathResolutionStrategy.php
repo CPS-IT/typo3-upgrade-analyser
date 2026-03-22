@@ -25,10 +25,10 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving PackageStates.php file path based on typo3conf directory configuration.
  * Resolves {typo3conf-dir}/PackageStates.php path by first determining the typo3conf directory.
  */
-final class PackageStatesPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class PackageStatesPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

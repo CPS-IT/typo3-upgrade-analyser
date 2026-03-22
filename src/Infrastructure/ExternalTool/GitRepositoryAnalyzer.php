@@ -20,13 +20,13 @@ use Psr\Log\LoggerInterface;
 /**
  * Analyzes Git repositories for TYPO3 extension compatibility.
  */
-class GitRepositoryAnalyzer
+readonly class GitRepositoryAnalyzer
 {
     public function __construct(
-        private readonly GitProviderFactory $providerFactory,
-        private readonly GitVersionParser $versionParser,
-        private readonly LoggerInterface $logger,
-        private readonly ?PackagistClient $packagistClient = null,
+        private GitProviderFactory $providerFactory,
+        private GitVersionParser $versionParser,
+        private LoggerInterface $logger,
+        private ?PackagistClient $packagistClient = null,
     ) {
     }
 

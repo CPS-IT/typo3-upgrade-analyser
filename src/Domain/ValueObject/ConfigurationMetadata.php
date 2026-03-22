@@ -18,7 +18,7 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
  * Contains information about configuration files, their structure,
  * parsing details, and analysis-relevant metadata for TYPO3 installations.
  */
-final class ConfigurationMetadata
+final readonly class ConfigurationMetadata
 {
     /**
      * @param string               $filePath          Absolute path to configuration file
@@ -35,18 +35,18 @@ final class ConfigurationMetadata
      * @param array<string, mixed> $customData        Custom metadata specific to configuration type
      */
     public function __construct(
-        private readonly string $filePath,
-        private readonly string $fileName,
-        private readonly string $format,
-        private readonly int $fileSize,
-        private readonly \DateTimeImmutable $lastModified,
-        private readonly \DateTimeImmutable $parsedAt,
-        private readonly string $parser,
-        private readonly array $parseStatistics = [],
-        private readonly array $configurationKeys = [],
-        private readonly ?string $typo3Version = null,
-        private readonly ?string $phpVersion = null,
-        private readonly array $customData = [],
+        private string $filePath,
+        private string $fileName,
+        private string $format,
+        private int $fileSize,
+        private \DateTimeImmutable $lastModified,
+        private \DateTimeImmutable $parsedAt,
+        private string $parser,
+        private array $parseStatistics = [],
+        private array $configurationKeys = [],
+        private ?string $typo3Version = null,
+        private ?string $phpVersion = null,
+        private array $customData = [],
     ) {
     }
 

@@ -70,12 +70,12 @@ composer install
 
 1. **Create Configuration File**:
    ```bash
-   bin/typo3-analyzer init-config
+   vendor/bin/typo3-analyzer init-config
    ```
 
 2. **Analyze TYPO3 Installation**:
    ```bash
-   bin/typo3-analyzer analyze
+   vendor/bin/typo3-analyzer analyze
    ```
 
 3. **View Results**: Check the `var/reports/` directory for HTML and Markdown reports.

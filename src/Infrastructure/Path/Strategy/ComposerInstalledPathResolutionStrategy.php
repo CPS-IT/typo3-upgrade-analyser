@@ -25,10 +25,10 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving composer installed.json file path based on vendor directory configuration.
  * Resolves {vendor-dir}/composer/installed.json path by first determining the vendor directory.
  */
-final class ComposerInstalledPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class ComposerInstalledPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

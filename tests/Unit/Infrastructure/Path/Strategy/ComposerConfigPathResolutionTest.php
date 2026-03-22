@@ -167,7 +167,7 @@ final class ComposerConfigPathResolutionTest extends TestCase
         mkdir($this->testPath . '/vendor/composer', 0o755, true);
         file_put_contents(
             $this->testPath . '/vendor/composer/installed.json',
-            json_encode(['packages' => []], JSON_PRETTY_PRINT),
+            json_encode(['packages' => []], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
         );
 
         $logger = new NullLogger();
@@ -300,7 +300,7 @@ final class ComposerConfigPathResolutionTest extends TestCase
 
         file_put_contents(
             $this->testPath . '/composer.json',
-            json_encode($composerConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            json_encode($composerConfig, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
 
         // Create directory structure
@@ -326,7 +326,7 @@ final class ComposerConfigPathResolutionTest extends TestCase
 
         file_put_contents(
             $this->testPath . '/app/vendor/composer/installed.json',
-            json_encode($installedJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            json_encode($installedJson, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
 
         // Create PackageStates.php
@@ -358,7 +358,7 @@ final class ComposerConfigPathResolutionTest extends TestCase
 
         file_put_contents(
             $this->testPath . '/composer.json',
-            json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            json_encode($config, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
     }
 }

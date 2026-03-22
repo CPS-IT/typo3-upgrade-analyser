@@ -32,9 +32,9 @@ class ListExtensionsCommand extends Command
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ExtensionDiscoveryServiceInterface $extensionDiscovery,
-        private readonly InstallationDiscoveryServiceInterface $installationDiscovery,
-        private readonly ConfigurationServiceInterface $configService,
+        private readonly ExtensionDiscoveryServiceInterface $extensionDiscoveryService,
+        private readonly InstallationDiscoveryServiceInterface $installationDiscoveryService,
+        private readonly ConfigurationServiceInterface $configurationService,
     ) {
         parent::__construct();
     }
@@ -66,12 +66,12 @@ class ListExtensionsCommand extends Command
 
         try {
             // Use ConfigurationService with custom config path if provided
-            $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
-                ? $this->configService->withConfigPath($configPath)
-                : $this->configService;
+            $configurationService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
+                ? $this->configurationService->withConfigPath($configPath)
+                : $this->configurationService;
 
             // Use ConfigurationService to get settings
-            $installationPath = $configService->getInstallationPath();
+            $installationPath = $configurationService->getInstallationPath();
 
             if (!$installationPath) {
                 $io->error('No installation path specified in configuration file');
@@ -91,7 +91,7 @@ class ListExtensionsCommand extends Command
 
             // First, discover the installation to get custom paths
             $io->text('Discovering TYPO3 installation...');
-            $installationResult = $this->installationDiscovery->discoverInstallation($installationPath);
+            $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
             if (!$installationResult->isSuccessful()) {
                 $io->warning(\sprintf('Installation discovery failed: %s', $installationResult->getErrorMessage()));
@@ -107,7 +107,7 @@ class ListExtensionsCommand extends Command
 
             // Discover extensions using installation metadata
             $io->text('Discovering extensions...');
-            $discoveryResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+            $discoveryResult = $this->extensionDiscoveryService->discoverExtensions($installationPath, $customPaths);
 
             if (!$discoveryResult->isSuccessful()) {
                 $io->error(\sprintf('Extension discovery failed: %s', $discoveryResult->getErrorMessage()));
@@ -129,7 +129,7 @@ class ListExtensionsCommand extends Command
             // Display table
             $io->table(
                 ['Extension', 'Version', 'Type', 'Active'],
-                array_map(fn ($ext): array => [
+                array_map(static fn ($ext): array => [
                     $ext->getKey(),
                     $ext->getVersion()->toString(),
                     $ext->getType(),
@@ -138,7 +138,7 @@ class ListExtensionsCommand extends Command
             );
 
             // Summary
-            $activeCount = array_reduce($extensions, fn ($count, $ext): float|int => $count + ($ext->isActive() ? 1 : 0), 0);
+            $activeCount = array_reduce($extensions, static fn ($count, $ext): float|int => $count + ($ext->isActive() ? 1 : 0), 0);
             $inactiveCount = \count($extensions) - $activeCount;
 
             $io->writeln('');

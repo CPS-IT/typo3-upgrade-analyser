@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DTO\VersionProfile;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
@@ -23,7 +24,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use Psr\Log\LoggerInterface;
 
-class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
+readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 {
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -448,6 +449,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
             if (file_exists($emconfPath)) {
                 try {
                     $EM_CONF = [];
+                    $_EXTKEY = $packageKey;
                     include $emconfPath;
 
                     // @phpstan-ignore isset.offset
@@ -586,7 +588,7 @@ class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
         return $this->getDefaultVersionProfile()->legacyCoreExtensionDir;
     }
 
-    private function getDefaultVersionProfile(): DTO\VersionProfile
+    private function getDefaultVersionProfile(): VersionProfile
     {
         $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
 

@@ -15,18 +15,18 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 /**
  * Health metrics for a Git repository.
  */
-class GitRepositoryHealth
+readonly class GitRepositoryHealth
 {
     public function __construct(
-        private readonly ?\DateTimeImmutable $lastCommitDate = null,
-        private readonly int $starCount = 0,
-        private readonly int $forkCount = 0,
-        private readonly int $openIssuesCount = 0,
-        private readonly int $closedIssuesCount = 0,
-        private readonly bool $isArchived = false,
-        private readonly bool $hasReadme = false,
-        private readonly bool $hasLicense = false,
-        private readonly int $contributorCount = 0,
+        private ?\DateTimeImmutable $lastCommitDate = null,
+        private int $starCount = 0,
+        private int $forkCount = 0,
+        private int $openIssuesCount = 0,
+        private int $closedIssuesCount = 0,
+        private bool $isArchived = false,
+        private bool $hasReadme = false,
+        private bool $hasLicense = false,
+        private int $contributorCount = 0,
     ) {
     }
 

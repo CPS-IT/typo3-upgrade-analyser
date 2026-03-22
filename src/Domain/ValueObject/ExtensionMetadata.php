@@ -20,7 +20,7 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
  * - composer.json files (Composer package metadata)
  * - Filesystem analysis (file structure, permissions, etc.)
  */
-final class ExtensionMetadata
+final readonly class ExtensionMetadata
 {
     /**
      * @param string               $description            Extension description
@@ -34,15 +34,15 @@ final class ExtensionMetadata
      * @param array<string, mixed> $additionalData         Additional metadata from various sources
      */
     public function __construct(
-        private readonly string $description,
-        private readonly string $author,
-        private readonly string $authorEmail,
-        private readonly array $keywords,
-        private readonly string $license,
-        private readonly array $supportedPhpVersions,
-        private readonly array $supportedTypo3Versions,
-        private readonly \DateTimeImmutable $lastModified,
-        private readonly array $additionalData = [],
+        private string $description,
+        private string $author,
+        private string $authorEmail,
+        private array $keywords,
+        private string $license,
+        private array $supportedPhpVersions,
+        private array $supportedTypo3Versions,
+        private \DateTimeImmutable $lastModified,
+        private array $additionalData = [],
     ) {
     }
 

@@ -19,10 +19,10 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 /**
  * Generates Fractor configuration files for analysis.
  */
-class FractorConfigGenerator
+readonly class FractorConfigGenerator
 {
     public function __construct(
-        private readonly string $tempDirectory,
+        private string $tempDirectory,
     ) {
     }
 

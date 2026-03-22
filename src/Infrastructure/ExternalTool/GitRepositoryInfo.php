@@ -15,20 +15,20 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 /**
  * Contains information about a Git repository analysis.
  */
-class GitRepositoryInfo
+readonly class GitRepositoryInfo
 {
     /**
      * @param array<GitTag> $allTags
      * @param array<GitTag> $compatibleVersions
      */
     public function __construct(
-        private readonly string $repositoryUrl,
-        private readonly GitRepositoryMetadata $metadata,
-        private readonly array $allTags,
-        private readonly array $compatibleVersions,
-        private readonly float $healthScore,
-        private readonly ?array $composerJson = null,
-        private readonly ?GitRepositoryHealth $health = null,
+        private string $repositoryUrl,
+        private GitRepositoryMetadata $metadata,
+        private array $allTags,
+        private array $compatibleVersions,
+        private float $healthScore,
+        private ?array $composerJson = null,
+        private ?GitRepositoryHealth $health = null,
     ) {
     }
 

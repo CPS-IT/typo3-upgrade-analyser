@@ -30,7 +30,7 @@ use Symfony\Component\Finder\Finder;
  * Integrates configuration parsing capabilities with the installation discovery system
  * to automatically detect, parse, and validate TYPO3 configuration files.
  */
-class ConfigurationDiscoveryService
+readonly class ConfigurationDiscoveryService
 {
     /**
      * @param iterable<ConfigurationParserInterface> $parsers               Available configuration parsers
@@ -38,9 +38,9 @@ class ConfigurationDiscoveryService
      * @param LoggerInterface                        $logger                Logger instance
      */
     public function __construct(
-        private readonly iterable $parsers,
-        private readonly PathResolutionServiceInterface $pathResolutionService,
-        private readonly LoggerInterface $logger,
+        private iterable $parsers,
+        private PathResolutionServiceInterface $pathResolutionService,
+        private LoggerInterface $logger,
     ) {
     }
 

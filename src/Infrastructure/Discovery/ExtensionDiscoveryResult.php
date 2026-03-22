@@ -32,11 +32,11 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      * @param array<array<string, mixed>> $discoveryMetadata Information about discovery process
      */
     private function __construct(
-        private readonly array $extensions,
-        private readonly bool $isSuccessful,
-        private readonly string $errorMessage,
-        private readonly array $successfulMethods,
-        private readonly array $discoveryMetadata,
+        private array $extensions,
+        private bool $isSuccessful,
+        private string $errorMessage,
+        private array $successfulMethods,
+        private array $discoveryMetadata,
     ) {
     }
 
@@ -149,7 +149,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      */
     public function getExtensionsByType(string $type): array
     {
-        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->getType() === $type);
+        return array_filter($this->extensions, static fn (Extension $ext): bool => $ext->getType() === $type);
     }
 
     /**
@@ -161,7 +161,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
      */
     public function getExtensionsByActiveStatus(bool $active = true): array
     {
-        return array_filter($this->extensions, fn (Extension $ext): bool => $ext->isActive() === $active);
+        return array_filter($this->extensions, static fn (Extension $ext): bool => $ext->isActive() === $active);
     }
 
     /**
@@ -295,7 +295,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
         return [
             'successful' => $this->isSuccessful,
             'error_message' => $this->errorMessage,
-            'extensions' => array_map(fn (Extension $ext): array => $ext->toArray(), $this->extensions),
+            'extensions' => array_map(static fn (Extension $ext): array => $ext->toArray(), $this->extensions),
             'successful_methods' => $this->successfulMethods,
             'discovery_metadata' => $this->discoveryMetadata,
             'statistics' => $this->getStatistics(),

@@ -15,20 +15,20 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 /**
  * Result of Rector binary execution.
  */
-class RectorExecutionResult
+readonly class RectorExecutionResult
 {
     /**
      * @param array<RectorFinding> $findings
      * @param array<string>        $errors
      */
     public function __construct(
-        private readonly bool $successful,
-        private readonly array $findings,
-        private readonly array $errors,
-        private readonly float $executionTime,
-        private readonly int $exitCode,
-        private readonly string $rawOutput,
-        private readonly int $processedFileCount = 0,
+        private bool $successful,
+        private array $findings,
+        private array $errors,
+        private float $executionTime,
+        private int $exitCode,
+        private string $rawOutput,
+        private int $processedFileCount = 0,
     ) {
     }
 
@@ -100,7 +100,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding): bool => $finding->getSeverity() === $severity,
+            static fn (RectorFinding $finding): bool => $finding->getSeverity() === $severity,
         ));
     }
 
@@ -113,7 +113,7 @@ class RectorExecutionResult
     {
         return array_values(array_filter(
             $this->findings,
-            fn (RectorFinding $finding): bool => $finding->getChangeType() === $changeType,
+            static fn (RectorFinding $finding): bool => $finding->getChangeType() === $changeType,
         ));
     }
 

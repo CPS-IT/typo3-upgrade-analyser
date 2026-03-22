@@ -13,8 +13,11 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -35,7 +38,7 @@ class AnalyzeCommandTest extends TestCase
     /** @var InstallationDiscoveryServiceInterface&MockObject */
     private MockObject $installationDiscovery;
     /** @var ConfigurationServiceInterface&MockObject */
-    private MockObject $configService;
+    private MockObject $configurationService;
     /** @var ReportService&MockObject */
     private MockObject $reportService;
     private AnalyzeCommand $command;
@@ -46,14 +49,14 @@ class AnalyzeCommandTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->extensionDiscovery = $this->createMock(ExtensionDiscoveryServiceInterface::class);
         $this->installationDiscovery = $this->createMock(InstallationDiscoveryServiceInterface::class);
-        $this->configService = $this->createMock(ConfigurationServiceInterface::class);
+        $this->configurationService = $this->createMock(ConfigurationServiceInterface::class);
         $this->reportService = $this->createMock(ReportService::class);
 
         $this->command = new AnalyzeCommand(
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
         );
 
@@ -116,19 +119,19 @@ class AnalyzeCommandTest extends TestCase
 
         try {
             // Mock the configuration service methods
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('withConfigPath')
-                ->willReturn($this->configService);
+                ->willReturn($this->configurationService);
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('getTargetVersion')
                 ->willReturn('12.4');
 
-            $this->configService->expects(self::any())
+            $this->configurationService->expects(self::any())
                 ->method('get')
                 ->willReturnMap([
                     ['reporting.output_directory', 'var/reports/', 'var/reports/'],
@@ -136,12 +139,12 @@ class AnalyzeCommandTest extends TestCase
                 ]);
 
             // Mock discovery services to return successful results
-            $installationResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult::failed('Installation not found');
+            $installationResult = InstallationDiscoveryResult::failed('Installation not found');
             $this->installationDiscovery->expects(self::once())
                 ->method('discoverInstallation')
                 ->willReturn($installationResult);
 
-            $extensionResult = \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryResult::success([], ['PackageStates.php']);
+            $extensionResult = ExtensionDiscoveryResult::success([], ['PackageStates.php']);
             $this->extensionDiscovery->expects(self::once())
                 ->method('discoverExtensions')
                 ->willReturn($extensionResult);
@@ -177,15 +180,15 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringRespectsConfiguration(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer2->method('getName')->willReturn('fractor');
         $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer3->method('getName')->willReturn('version_availability');
         $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
 
@@ -194,13 +197,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
         );
 
         // Configure mock service to disable fractor analyzer
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.typo3_rector.enabled' => true,
                 'analysis.analyzers.fractor.enabled' => false,  // Disabled
@@ -228,15 +231,15 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringCombinesConfigurationAndCommandLine(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('typo3_rector');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer2 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer2 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer2->method('getName')->willReturn('fractor');
         $mockAnalyzer2->method('hasRequiredTools')->willReturn(true);
 
-        $mockAnalyzer3 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer3 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer3->method('getName')->willReturn('version_availability');
         $mockAnalyzer3->method('hasRequiredTools')->willReturn(true);
 
@@ -245,13 +248,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3],
         );
 
         // Configure mock service - all analyzers enabled in config
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.typo3_rector.enabled' => true,
                 'analysis.analyzers.fractor.enabled' => true,
@@ -276,7 +279,7 @@ class AnalyzeCommandTest extends TestCase
     public function testAnalyzerFilteringCommandLineRequestsDisabledAnalyzer(): void
     {
         // Mock analyzers
-        $mockAnalyzer1 = $this->createMock(\CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface::class);
+        $mockAnalyzer1 = $this->createMock(AnalyzerInterface::class);
         $mockAnalyzer1->method('getName')->willReturn('fractor');
         $mockAnalyzer1->method('hasRequiredTools')->willReturn(true);
 
@@ -285,13 +288,13 @@ class AnalyzeCommandTest extends TestCase
             $this->logger,
             $this->extensionDiscovery,
             $this->installationDiscovery,
-            $this->configService,
+            $this->configurationService,
             $this->reportService,
             [$mockAnalyzer1],
         );
 
         // Configure mock service to disable the analyzer
-        $this->configService->method('get')->willReturnCallback(function ($key, $default = null) {
+        $this->configurationService->method('get')->willReturnCallback(function ($key, $default = null) {
             return match ($key) {
                 'analysis.analyzers.fractor.enabled' => false,  // Disabled in config
                 default => $default,

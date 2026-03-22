@@ -32,8 +32,8 @@ class InitConfigCommandTest extends TestCase
     protected function setUp(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $configService = new ConfigurationService($logger, 'non-existent-config.yaml');
-        $this->command = new InitConfigCommand($configService);
+        $configurationService = new ConfigurationService($logger, 'non-existent-config.yaml');
+        $this->command = new InitConfigCommand($configurationService);
 
         $application = new Application();
         $application->add($this->command);
@@ -204,8 +204,8 @@ class InitConfigCommandTest extends TestCase
         // Verify that the command can be instantiated and configured without errors
         // (This implicitly tests that the choice() bug fix works - no TypeError during execution)
         $logger = $this->createMock(LoggerInterface::class);
-        $configService = new ConfigurationService($logger, 'non-existent-config.yaml');
-        $command = new InitConfigCommand($configService);
+        $configurationService = new ConfigurationService($logger, 'non-existent-config.yaml');
+        $command = new InitConfigCommand($configurationService);
         self::assertEquals('init-config', $command->getName());
         self::assertEquals('Generate a configuration file for analysis', $command->getDescription());
     }

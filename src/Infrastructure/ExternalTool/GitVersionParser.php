@@ -18,10 +18,10 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterf
 /**
  * Parses Git repository versions and determines TYPO3 compatibility.
  */
-class GitVersionParser
+readonly class GitVersionParser
 {
     public function __construct(
-        private readonly ComposerConstraintCheckerInterface $constraintChecker,
+        private ComposerConstraintCheckerInterface $constraintChecker,
     ) {
     }
 
@@ -41,7 +41,7 @@ class GitVersionParser
         if ($composerJson && $this->isComposerCompatible($composerJson, $targetVersion)) {
             // If main branch is compatible, return all stable tags
             // This is a simplified approach - ideally we'd check composer.json for each tag
-            return array_filter($tags, fn ($tag): bool => !$tag->isPreRelease());
+            return array_filter($tags, static fn ($tag): bool => !$tag->isPreRelease());
         }
 
         // Fallback: without composer.json analysis, we can't reliably determine compatibility

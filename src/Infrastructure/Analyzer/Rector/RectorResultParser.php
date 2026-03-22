@@ -17,11 +17,11 @@ use Psr\Log\LoggerInterface;
 /**
  * Service for parsing and aggregating Rector analysis results.
  */
-class RectorResultParser
+readonly class RectorResultParser
 {
     public function __construct(
-        private readonly RectorRuleRegistry $ruleRegistry,
-        private readonly LoggerInterface $logger,
+        private RectorRuleRegistry $ruleRegistry,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -158,12 +158,12 @@ class RectorResultParser
         ];
 
         // Rule diversity factor
-        $uniqueRules = \count(array_unique(array_map(fn ($f) => $f->getRuleClass(), $findings)));
+        $uniqueRules = \count(array_unique(array_map(static fn ($f) => $f->getRuleClass(), $findings)));
         $ruleDiversity = min($uniqueRules / 10, 1.0); // Normalize to 0-1
         $totalComplexity += $ruleDiversity * $weights['rule_diversity'];
 
         // File spread factor
-        $uniqueFiles = \count(array_unique(array_map(fn ($f) => $f->getFile(), $findings)));
+        $uniqueFiles = \count(array_unique(array_map(static fn ($f) => $f->getFile(), $findings)));
         $fileSpread = min($uniqueFiles / 20, 1.0); // Normalize to 0-1
         $totalComplexity += $fileSpread * $weights['file_spread'];
 
@@ -174,7 +174,7 @@ class RectorResultParser
         $totalComplexity += $severityEntropy * $weights['severity_mix'];
 
         // Manual intervention factor
-        $manualCount = \count(array_filter($findings, fn ($f) => $f->requiresManualIntervention()));
+        $manualCount = \count(array_filter($findings, static fn ($f) => $f->requiresManualIntervention()));
         $manualRatio = $manualCount / \count($findings);
         $totalComplexity += $manualRatio * $weights['manual_intervention'];
 
@@ -259,7 +259,7 @@ class RectorResultParser
      */
     private function countUniqueFiles(array $findings): int
     {
-        $files = array_unique(array_map(fn ($f): string => $f->getFile(), $findings));
+        $files = array_unique(array_map(static fn ($f): string => $f->getFile(), $findings));
 
         return \count($files);
     }

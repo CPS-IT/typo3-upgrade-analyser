@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -22,12 +21,12 @@ use Psr\Log\LoggerInterface;
  * the TYPO3 version of an installation. It tries strategies in priority order
  * and returns the first successful result.
  */
-final class VersionExtractor
+final readonly class VersionExtractor
 {
     /**
      * @var array<VersionStrategyInterface> Version extraction strategies
      */
-    private readonly array $strategies;
+    private array $strategies;
 
     /**
      * @param iterable<VersionStrategyInterface> $strategies Version extraction strategies
@@ -35,11 +34,11 @@ final class VersionExtractor
      */
     public function __construct(
         iterable $strategies,
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
         // Convert iterable to array and sort strategies by priority (highest first)
         $strategiesArray = iterator_to_array($strategies);
-        usort($strategiesArray, fn (VersionStrategyInterface $a, VersionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, static fn (VersionStrategyInterface $a, VersionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
         $this->strategies = $strategiesArray;
     }
 
@@ -158,7 +157,7 @@ final class VersionExtractor
     {
         return array_filter(
             $this->strategies,
-            fn (VersionStrategyInterface $strategy): bool => $strategy->supports($installationPath),
+            static fn (VersionStrategyInterface $strategy): bool => $strategy->supports($installationPath),
         );
     }
 

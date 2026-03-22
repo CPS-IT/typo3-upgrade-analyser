@@ -25,10 +25,10 @@ use Psr\Log\LoggerInterface;
  * Strategy for resolving typo3conf directory paths based on web directory configuration.
  * Resolves {web-dir}/typo3conf path by first determining the web directory.
  */
-final class Typo3ConfDirPathResolutionStrategy implements PathResolutionStrategyInterface
+final readonly class Typo3ConfDirPathResolutionStrategy implements PathResolutionStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

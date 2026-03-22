@@ -36,7 +36,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
      * @param iterable<ValidationRuleInterface>    $validationRules               Installation validation rules
      * @param ConfigurationDiscoveryService|null   $configurationDiscoveryService Configuration discovery service
      * @param LoggerInterface                      $logger                        Logger instance
-     * @param ConfigurationService                 $configService                 Configuration service for cache settings
+     * @param ConfigurationService                 $configurationService          Configuration service for cache settings
      * @param CacheService                         $cacheService                  Cache service for result caching
      */
     public function __construct(
@@ -44,28 +44,28 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         private iterable $validationRules,
         private ?ConfigurationDiscoveryService $configurationDiscoveryService,
         private LoggerInterface $logger,
-        private ConfigurationService $configService,
+        private ConfigurationService $configurationService,
         private CacheService $cacheService,
     ) {
         // Convert iterables to arrays and sort detection strategies by priority (highest first)
         $strategiesArray = iterator_to_array($detectionStrategies);
-        usort($strategiesArray, fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
+        usort($strategiesArray, static fn (DetectionStrategyInterface $a, DetectionStrategyInterface $b): int => $b->getPriority() <=> $a->getPriority());
         $this->detectionStrategies = $strategiesArray;
     }
 
     /**
      * Discover TYPO3 installation at the given path.
      *
-     * @param string $path                 Filesystem path to analyze
+     * @param string $installationPath     Filesystem path to analyze
      * @param bool   $validateInstallation Whether to run validation rules
      *
      * @return InstallationDiscoveryResult Discovery result
      */
-    public function discoverInstallation(string $path, bool $validateInstallation = true): InstallationDiscoveryResult
+    public function discoverInstallation(string $installationPath, bool $validateInstallation = true): InstallationDiscoveryResult
     {
-        $this->logger->info('Starting installation discovery', ['path' => $path]);
+        $this->logger->info('Starting installation discovery', ['path' => $installationPath]);
 
-        if (!is_dir($path)) {
+        if (!is_dir($installationPath)) {
             return InstallationDiscoveryResult::failed(
                 'Path does not exist or is not a directory',
                 [],
@@ -73,8 +73,8 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         }
 
         // Check cache if enabled
-        if ($this->configService->isResultCacheEnabled()) {
-            $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
+        if ($this->configurationService->isResultCacheEnabled()) {
+            $cacheKey = $this->cacheService->generateKey('installation_discovery', $installationPath, ['validate' => $validateInstallation]);
             $cachedResult = $this->cacheService->get($cacheKey);
 
             if (null !== $cachedResult) {
@@ -92,7 +92,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
             $this->logger->debug('Evaluating detection strategy', ['strategy' => $strategyName]);
 
             // Quick pre-check using required indicators
-            if (!$this->hasRequiredIndicators($path, $strategy)) {
+            if (!$this->hasRequiredIndicators($installationPath, $strategy)) {
                 $this->logger->debug('Required indicators not found', [
                     'strategy' => $strategyName,
                     'indicators' => $strategy->getRequiredIndicators(),
@@ -106,7 +106,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
             }
 
             // Check if strategy supports this path
-            if (!$strategy->supports($path)) {
+            if (!$strategy->supports($installationPath)) {
                 $this->logger->debug('Strategy does not support path', ['strategy' => $strategyName]);
                 $attemptedStrategies[] = [
                     'strategy' => $strategyName,
@@ -119,7 +119,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
             try {
                 // Attempt installation detection
                 $this->logger->debug('Attempting installation detection', ['strategy' => $strategyName]);
-                $installation = $strategy->detect($path);
+                $installation = $strategy->detect($installationPath);
 
                 if (null !== $installation) {
                     $this->logger->info('Installation detected successfully', [
@@ -162,8 +162,8 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
                     );
 
                     // Cache the result if enabled
-                    if ($this->configService->isResultCacheEnabled()) {
-                        $cacheKey = $this->cacheService->generateKey('installation_discovery', $path, ['validate' => $validateInstallation]);
+                    if ($this->configurationService->isResultCacheEnabled()) {
+                        $cacheKey = $this->cacheService->generateKey('installation_discovery', $installationPath, ['validate' => $validateInstallation]);
                         $this->cacheService->set($cacheKey, $this->serializeResult($result));
                     }
 
@@ -196,13 +196,13 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         }
 
         // No strategy succeeded
-        $supportedStrategies = array_filter($attemptedStrategies, fn (array $attempt): bool => $attempt['supported']);
+        $supportedStrategies = array_filter($attemptedStrategies, static fn (array $attempt): bool => $attempt['supported']);
         $errorMessage = empty($supportedStrategies)
             ? 'No detection strategies found applicable indicators for this path'
             : \sprintf('All %d supported strategies failed to detect a TYPO3 installation', \count($supportedStrategies));
 
         $this->logger->warning('Installation discovery failed', [
-            'path' => $path,
+            'path' => $installationPath,
             'attempted_strategies' => \count($attemptedStrategies),
             'supported_strategies' => \count($supportedStrategies),
         ]);
@@ -336,7 +336,7 @@ final readonly class InstallationDiscoveryService implements InstallationDiscove
         $this->logger->info('Installation validation completed', [
             'installation' => $installation->getPath(),
             'total_issues' => \count($allIssues),
-            'blocking_issues' => \count(array_filter($allIssues, fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis())),
+            'blocking_issues' => \count(array_filter($allIssues, static fn (ValidationIssue $issue): bool => $issue->isBlockingAnalysis())),
         ]);
 
         return $allIssues;

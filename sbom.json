@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:77e834fd-cbdc-4f88-92d5-bd3ad14eaeb9",
+    "serialNumber": "urn:uuid:eb9c51c1-a182-498f-8280-03ac42a79710",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-03-21T07:50:58Z",
+        "timestamp": "2026-03-22T18:34:42Z",
         "tools": [
             {
                 "name": "composer",
@@ -14,17 +14,17 @@
             {
                 "vendor": "cyclonedx",
                 "name": "cyclonedx-php-composer",
-                "version": "v5.3.0",
+                "version": "v6.2.0",
                 "externalReferences": [
                     {
                         "type": "distribution",
-                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
-                        "comment": "dist reference: 50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/934440a5ef7c3c3cdb58c3c3d389d412630ccbf6",
+                        "comment": "dist reference: 934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                     },
                     {
                         "type": "vcs",
                         "url": "https://github.com/CycloneDX/cyclonedx-php-composer.git",
-                        "comment": "source reference: 50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                        "comment": "source reference: 934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                     },
                     {
                         "type": "website",
@@ -46,17 +46,17 @@
             {
                 "vendor": "cyclonedx",
                 "name": "cyclonedx-library",
-                "version": "v3.10.0",
+                "version": "v4.0.0",
                 "externalReferences": [
                     {
                         "type": "distribution",
-                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/e6bb0fca8d89f1e34755900c361061a6f5253e49",
-                        "comment": "dist reference: e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/c95a371894c4e32bea42bfa024f2ab5092cbb292",
+                        "comment": "dist reference: c95a371894c4e32bea42bfa024f2ab5092cbb292"
                     },
                     {
                         "type": "vcs",
                         "url": "https://github.com/CycloneDX/cyclonedx-php-library.git",
-                        "comment": "source reference: e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                        "comment": "source reference: c95a371894c4e32bea42bfa024f2ab5092cbb292"
                     },
                     {
                         "type": "website",
@@ -82,10 +82,10 @@
             }
         ],
         "component": {
-            "bom-ref": "cpsit/typo3-upgrade-analyser-dev-develop",
+            "bom-ref": "cpsit/typo3-upgrade-analyser-1.0.9999999.9999999-dev",
             "type": "application",
             "name": "typo3-upgrade-analyser",
-            "version": "dev-develop",
+            "version": "1.0.x-dev",
             "group": "cpsit",
             "description": "Standalone TYPO3 Upgrade Analysis Tool - Analyzes TYPO3 installations for upgrade readiness",
             "author": "Dirk Wenzel",
@@ -96,15 +96,15 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@dev-develop",
+            "purl": "pkg:composer/cpsit/typo3-upgrade-analyser@1.0.x-dev",
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "8d909743f43b72370f1b4a0c64eabea1d83899b4"
+                    "value": "b0e9d91d97b009fe86cbc62687e64daf469ec1bc"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "8d909743f43b72370f1b4a0c64eabea1d83899b4"
+                    "value": "b0e9d91d97b009fe86cbc62687e64daf469ec1bc"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -872,10 +872,10 @@
             ]
         },
         {
-            "bom-ref": "cyclonedx/cyclonedx-library-3.10.0.0",
+            "bom-ref": "cyclonedx/cyclonedx-library-4.0.0.0",
             "type": "library",
             "name": "cyclonedx-library",
-            "version": "v3.10.0",
+            "version": "v4.0.0",
             "group": "cyclonedx",
             "description": "Work with CycloneDX documents.",
             "author": "Jan Kowalleck",
@@ -886,17 +886,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cyclonedx/cyclonedx-library@v3.10.0",
+            "purl": "pkg:composer/cyclonedx/cyclonedx-library@v4.0.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/e6bb0fca8d89f1e34755900c361061a6f5253e49",
-                    "comment": "dist reference: e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/c95a371894c4e32bea42bfa024f2ab5092cbb292",
+                    "comment": "dist reference: c95a371894c4e32bea42bfa024f2ab5092cbb292"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/CycloneDX/cyclonedx-php-library.git",
-                    "comment": "source reference: e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                    "comment": "source reference: c95a371894c4e32bea42bfa024f2ab5092cbb292"
                 },
                 {
                     "type": "website",
@@ -922,11 +922,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                    "value": "c95a371894c4e32bea42bfa024f2ab5092cbb292"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "e6bb0fca8d89f1e34755900c361061a6f5253e49"
+                    "value": "c95a371894c4e32bea42bfa024f2ab5092cbb292"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -939,10 +939,10 @@
             ]
         },
         {
-            "bom-ref": "cyclonedx/cyclonedx-php-composer-5.3.0.0",
+            "bom-ref": "cyclonedx/cyclonedx-php-composer-6.2.0.0",
             "type": "library",
             "name": "cyclonedx-php-composer",
-            "version": "v5.3.0",
+            "version": "v6.2.0",
             "group": "cyclonedx",
             "description": "Creates CycloneDX Software Bill-of-Materials (SBOM) from PHP Composer projects",
             "author": "Jan Kowalleck",
@@ -953,17 +953,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cyclonedx/cyclonedx-php-composer@v5.3.0",
+            "purl": "pkg:composer/cyclonedx/cyclonedx-php-composer@v6.2.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/50b6a15ba3a07dda1d2f9b6314c7894005bdd133",
-                    "comment": "dist reference: 50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-composer/zipball/934440a5ef7c3c3cdb58c3c3d389d412630ccbf6",
+                    "comment": "dist reference: 934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/CycloneDX/cyclonedx-php-composer.git",
-                    "comment": "source reference: 50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                    "comment": "source reference: 934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                 },
                 {
                     "type": "website",
@@ -984,11 +984,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                    "value": "934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "50b6a15ba3a07dda1d2f9b6314c7894005bdd133"
+                    "value": "934440a5ef7c3c3cdb58c3c3d389d412630ccbf6"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4307,7 +4307,7 @@
             "bom-ref": "roave/security-advisories-dev-latest",
             "type": "library",
             "name": "security-advisories",
-            "version": "dev-latest e19b0f2",
+            "version": "dev-latest",
             "group": "roave",
             "description": "Prevents installation of composer packages with known security vulnerabilities: no API, simply require it",
             "author": "Marco Pivetta, Ilya Tribusean",
@@ -4318,7 +4318,7 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/roave/security-advisories@dev-latest%20e19b0f2",
+            "purl": "pkg:composer/roave/security-advisories@dev-latest",
             "externalReferences": [
                 {
                     "type": "distribution",
@@ -7307,17 +7307,16 @@
             ]
         },
         {
-            "ref": "cyclonedx/cyclonedx-library-3.10.0.0",
+            "ref": "cyclonedx/cyclonedx-library-4.0.0.0",
             "dependsOn": [
-                "composer/spdx-licenses-1.5.9.0",
-                "opis/json-schema-2.6.0.0",
-                "package-url/packageurl-php-1.1.2.0"
+                "opis/json-schema-2.6.0.0"
             ]
         },
         {
-            "ref": "cyclonedx/cyclonedx-php-composer-5.3.0.0",
+            "ref": "cyclonedx/cyclonedx-php-composer-6.2.0.0",
             "dependsOn": [
-                "cyclonedx/cyclonedx-library-3.10.0.0",
+                "composer/spdx-licenses-1.5.9.0",
+                "cyclonedx/cyclonedx-library-4.0.0.0",
                 "package-url/packageurl-php-1.1.2.0"
             ]
         },
@@ -7902,7 +7901,7 @@
             "ref": "webmozart/assert-1.12.1.0"
         },
         {
-            "ref": "cpsit/typo3-upgrade-analyser-dev-develop",
+            "ref": "cpsit/typo3-upgrade-analyser-1.0.9999999.9999999-dev",
             "dependsOn": [
                 "a9f/typo3-fractor-0.5.10.0",
                 "composer/semver-3.4.4.0",
@@ -7921,7 +7920,7 @@
                 "symfony/yaml-7.4.6.0",
                 "twig/twig-3.24.0.0",
                 "armin/editorconfig-cli-2.2.1.0",
-                "cyclonedx/cyclonedx-php-composer-5.3.0.0",
+                "cyclonedx/cyclonedx-php-composer-6.2.0.0",
                 "ergebnis/composer-normalize-2.50.0.0",
                 "friendsofphp/php-cs-fixer-3.94.2.0",
                 "mikey179/vfsstream-1.6.12.0",

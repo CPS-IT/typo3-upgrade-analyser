@@ -256,20 +256,23 @@ final class LinesOfCodeAnalyzerIntegrationTest extends TestCase
 
         // Create TYPO3 v11 Composer installation with custom paths
         // v11 Composer mode allows extensions in typo3conf/ext
-        file_put_contents($path . '/composer.json', json_encode([
-            'name' => 'test/typo3-custom-installation',
-            'require' => [
-                'typo3/cms-core' => '^11.5',  // v11 allows extensions in typo3conf/ext
-            ],
-            'extra' => [
-                'typo3/cms' => [
-                    'web-dir' => 'app/web',
+        file_put_contents(
+            $path . '/composer.json',
+            json_encode([
+                'name' => 'test/typo3-custom-installation',
+                'require' => [
+                    'typo3/cms-core' => '^11.5',  // v11 allows extensions in typo3conf/ext
                 ],
-            ],
-            'config' => [
-                'vendor-dir' => 'app/vendor',
-            ],
-        ], JSON_PRETTY_PRINT));
+                'extra' => [
+                    'typo3/cms' => [
+                        'web-dir' => 'app/web',
+                    ],
+                ],
+                'config' => [
+                    'vendor-dir' => 'app/vendor',
+                ],
+            ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+        );
     }
 
     /**

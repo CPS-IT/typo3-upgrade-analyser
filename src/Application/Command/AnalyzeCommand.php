@@ -12,7 +12,10 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Application\Command;
 
+use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\DiscoveryResult;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
@@ -40,9 +43,9 @@ class AnalyzeCommand extends Command
      */
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly ExtensionDiscoveryServiceInterface $extensionDiscovery,
-        private readonly InstallationDiscoveryServiceInterface $installationDiscovery,
-        private readonly ConfigurationServiceInterface $configService,
+        private readonly ExtensionDiscoveryServiceInterface $extensionDiscoveryService,
+        private readonly InstallationDiscoveryServiceInterface $installationDiscoveryService,
+        private readonly ConfigurationServiceInterface $configurationService,
         private readonly ReportService $reportService,
         private readonly iterable $analyzers = [],
     ) {
@@ -84,13 +87,13 @@ class AnalyzeCommand extends Command
 
         try {
             // Use ConfigurationService with custom config path if provided
-            $configService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
-                ? $this->configService->withConfigPath($configPath)
-                : $this->configService;
+            $configurationService = ConfigurationService::DEFAULT_CONFIG_PATH !== $configPath
+                ? $this->configurationService->withConfigPath($configPath)
+                : $this->configurationService;
 
             // Get settings from configuration
-            $installationPath = $configService->getInstallationPath();
-            $targetVersion = $configService->getTargetVersion();
+            $installationPath = $configurationService->getInstallationPath();
+            $targetVersion = $configurationService->getTargetVersion();
 
             if (!$installationPath) {
                 $io->error('No installation path specified in configuration file');
@@ -128,14 +131,14 @@ class AnalyzeCommand extends Command
 
             // Phase 3: Reporting
             $io->text('Phase 3: Generating reports...');
-            $this->executeReportingPhase($configService, $installation, $extensions, $extensionResult, $analysisResults, $io);
+            $this->executeReportingPhase($configurationService, $installation, $extensions, $extensionResult, $analysisResults, $io);
             $io->progressAdvance();
 
             $io->progressFinish();
 
             $io->success('Analysis completed successfully!');
 
-            $outputDir = $configService->get('reporting.output_directory', 'var/reports/');
+            $outputDir = $configurationService->get('reporting.output_directory', 'var/reports/');
             $io->note(\sprintf('Reports generated in: %s', $outputDir));
 
             return Command::SUCCESS;
@@ -150,13 +153,13 @@ class AnalyzeCommand extends Command
     /**
      * Phase 1: Discover installation and extensions.
      *
-     * @return array{0: \CPSIT\UpgradeAnalyzer\Domain\Entity\Installation|null, 1: array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>, 2: mixed}
+     * @return array{0: Installation|null, 1: array<Extension>, 2: mixed}
      */
     private function executeDiscoveryPhase(string $installationPath, SymfonyStyle $io): array
     {
         // Discover installation
         $io->text('Discovering TYPO3 installation...');
-        $installationResult = $this->installationDiscovery->discoverInstallation($installationPath);
+        $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
         $installation = null;
         $customPaths = null;
@@ -172,7 +175,7 @@ class AnalyzeCommand extends Command
 
         // Discover extensions
         $io->text('Discovering extensions...');
-        $extensionResult = $this->extensionDiscovery->discoverExtensions($installationPath, $customPaths);
+        $extensionResult = $this->extensionDiscoveryService->discoverExtensions($installationPath, $customPaths);
 
         if (!$extensionResult->isSuccessful()) {
             throw new \RuntimeException(\sprintf('Extension discovery failed: %s', $extensionResult->getErrorMessage()));
@@ -193,12 +196,12 @@ class AnalyzeCommand extends Command
     /**
      * Phase 2: Run analyzers on discovered extensions.
      *
-     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension> $extensions
-     * @param array<string>|null                                    $requestedAnalyzers
+     * @param array<Extension>   $extensions
+     * @param array<string>|null $requestedAnalyzers
      *
-     * @return array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>>
+     * @return array<string, array<AnalysisResult>>
      */
-    private function executeAnalysisPhase(?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
+    private function executeAnalysisPhase(?Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
     {
         if (empty($extensions)) {
             $io->warning('No extensions found to analyze');
@@ -275,18 +278,18 @@ class AnalyzeCommand extends Command
     /**
      * Phase 3: Generate reports from analysis results.
      *
-     * @param array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>> $analysisResults
+     * @param array<string, array<AnalysisResult>> $analysisResults
      */
     private function executeReportingPhase(
-        ConfigurationServiceInterface $configService,
-        ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
+        ConfigurationServiceInterface $configurationService,
+        ?Installation $installation,
         array $extensions,
         mixed $extensionResult,
         array $analysisResults,
         SymfonyStyle $io,
     ): void {
-        $outputDir = $configService->get('reporting.output_directory', 'var/reports/');
-        $formats = $configService->get('reporting.formats', ['markdown']);
+        $outputDir = $configurationService->get('reporting.output_directory', 'var/reports/');
+        $formats = $configurationService->get('reporting.formats', ['markdown']);
 
         if (!$installation) {
             $io->warning('No installation data available - generating basic report');
@@ -337,7 +340,7 @@ class AnalyzeCommand extends Command
                 $combinedResults,
                 $formats,
                 $outputDir,
-                $configService->getTargetVersion(),
+                $configurationService->getTargetVersion(),
             );
 
             // Log report generation results
@@ -388,7 +391,7 @@ class AnalyzeCommand extends Command
         foreach ($allAnalyzers as $analyzer) {
             $analyzerName = $analyzer->getName();
             $configKey = "analysis.analyzers.{$analyzerName}.enabled";
-            $isEnabled = $this->configService->get($configKey, true); // Default to true for backwards compatibility
+            $isEnabled = $this->configurationService->get($configKey, true); // Default to true for backwards compatibility
 
             if ($isEnabled) {
                 $enabledAnalyzers[] = $analyzer;
@@ -415,12 +418,12 @@ class AnalyzeCommand extends Command
     /**
      * Generate a simple summary report.
      *
-     * @param array<\CPSIT\UpgradeAnalyzer\Domain\Entity\Extension>                     $extensions
-     * @param array<string, array<\CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult>> $analysisResults
+     * @param array<Extension>                     $extensions
+     * @param array<string, array<AnalysisResult>> $analysisResults
      */
     private function generateSummaryReport(
         string $outputDir,
-        ?\CPSIT\UpgradeAnalyzer\Domain\Entity\Installation $installation,
+        ?Installation $installation,
         array $extensions,
         mixed $extensionResult,
         array $analysisResults,

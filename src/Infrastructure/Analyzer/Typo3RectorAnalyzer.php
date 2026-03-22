@@ -115,7 +115,7 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
 
             // Store raw objects for detailed findings export
             if (!empty($executionResult->getFindings())) {
-                $result->addMetric('raw_findings', array_map(fn ($finding): array => $finding->toArray(), $executionResult->getFindings()));
+                $result->addMetric('raw_findings', array_map(static fn ($finding): array => $finding->toArray(), $executionResult->getFindings()));
                 $result->addMetric('raw_summary', $summary->toArray());
             }
 

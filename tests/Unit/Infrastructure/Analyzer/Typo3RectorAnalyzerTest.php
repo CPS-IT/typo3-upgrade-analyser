@@ -33,6 +33,8 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\Exception;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -43,16 +45,16 @@ use Psr\Log\NullLogger;
 class Typo3RectorAnalyzerTest extends TestCase
 {
     private Typo3RectorAnalyzer $analyzer;
-    private \PHPUnit\Framework\MockObject\MockObject $cacheService;
+    private MockObject $cacheService;
     private NullLogger $logger;
-    private \PHPUnit\Framework\MockObject\MockObject $rectorExecutor;
-    private \PHPUnit\Framework\MockObject\MockObject $configGenerator;
-    private \PHPUnit\Framework\MockObject\MockObject $resultParser;
-    private \PHPUnit\Framework\MockObject\MockObject $ruleRegistry;
-    private \PHPUnit\Framework\MockObject\MockObject $pathResolutionService;
+    private MockObject $rectorExecutor;
+    private MockObject $configGenerator;
+    private MockObject $resultParser;
+    private MockObject $ruleRegistry;
+    private MockObject $pathResolutionService;
 
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws Exception
      */
     protected function setUp(): void
     {

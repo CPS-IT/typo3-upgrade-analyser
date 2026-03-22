@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DTO\VersionProfile;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
@@ -30,7 +31,7 @@ use Psr\Log\LoggerInterface;
  * It identifies the installation by looking for key Composer indicators and
  * TYPO3-specific directory structures.
  */
-final class ComposerInstallationDetector implements DetectionStrategyInterface
+final readonly class ComposerInstallationDetector implements DetectionStrategyInterface
 {
     private const REQUIRED_COMPOSER_FILES = ['composer.json'];
     private const TYPO3_CORE_PACKAGES = [
@@ -489,7 +490,7 @@ final class ComposerInstallationDetector implements DetectionStrategyInterface
         }
     }
 
-    private function getDefaultProfile(Version $version): DTO\VersionProfile
+    private function getDefaultProfile(Version $version): VersionProfile
     {
         $majorVersion = $version->getMajor();
         $supportedVersions = $this->versionProfileRegistry->getSupportedVersions();
