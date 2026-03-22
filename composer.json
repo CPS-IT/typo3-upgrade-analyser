@@ -100,13 +100,13 @@
     "test": "phpunit --testsuite=Unit --no-coverage",
     "test:all-integration": "phpunit --testsuite=Integration --group=integration,real-world,github-api,ter-api --no-coverage",
     "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html var/coverage --coverage-clover var/coverage/clover.xml --coverage-text --testsuite Unit,Integration,Functional",
-    "test:functional": "phpunit --testsuite=Functional",
+    "test:functional": "phpunit --testsuite=Functional --no-coverage",
     "test:github-api": "phpunit --group=github-api --no-coverage --stop-on-failure",
     "test:integration": "phpunit --testsuite=Integration --no-coverage",
     "test:performance": "phpunit --group=performance --no-coverage",
     "test:real-world": "phpunit --group=real-world --no-coverage --stop-on-failure",
     "test:ter-api": "phpunit --group=ter-api --no-coverage --stop-on-failure",
-    "test:unit": "phpunit --testsuite=Unit"
+    "test:unit": "phpunit --testsuite=Unit --no-coverage"
   },
   "scripts-descriptions": {
     "fix:composer": "Fix Composer configuration format and sorting",
