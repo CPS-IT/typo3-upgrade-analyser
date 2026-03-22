@@ -1,0 +1,89 @@
+# generated: 2026-03-21
+# last_updated: 2026-03-21
+# project: typo3-upgrade-analyser
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-21
+last_updated: 2026-03-21
+project: typo3-upgrade-analyser
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Trustworthy Analysis Across TYPO3 Versions
+  epic-1: in-progress
+  1-1-version-profile-registry: review
+  1-2-typo3-v11-core-extension-accurate-exclusion: backlog
+  1-3-typo3-v13-composer-installation-support: backlog
+  1-4-typo3-v14-composer-installation-support: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
+  epic-2: backlog
+  2-1-composer-source-parser: backlog
+  2-2-gitlab-provider-public-and-private-instances: backlog
+  2-3-bitbucket-provider: backlog
+  2-4-unmatched-repository-source-warning: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Memory-Safe Analysis for Large Installations
+  epic-3: backlog
+  3-1-streaming-infrastructure: backlog
+  3-2-pre-flight-output-directory-check: backlog
+  3-3-streaming-integration-in-template-rendering: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Customer Offer Report Generation
+  epic-4: backlog
+  4-1-report-generate-command: backlog
+  4-2-customer-report-template-set: backlog
+  4-3-branding-and-project-metadata-in-customer-reports: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Hardened CI/CD Pipeline Integration
+  epic-5: backlog
+  5-1-tty-independent-exit-codes: backlog
+  5-2-non-interactive-mode-and-environment-variable-overrides: backlog
+  5-3-stable-json-output-schema: backlog
+  5-4-cache-clear-command: backlog
+  5-5-documentation-consolidation: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: PHPStan Static Code Quality Analysis (Phase 2 Growth)
+  epic-6: backlog
+  6-1-caching-analyzer-decorator: backlog
+  6-2-phpstan-analyzer: backlog
+  6-3-phpstan-findings-in-reports: backlog
+  epic-6-retrospective: optional

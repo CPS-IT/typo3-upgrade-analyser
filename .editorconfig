@@ -12,6 +12,12 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# ignore all files manage by the BMAD framework
+[/_bmad/**]
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
 # TS/JS-Files
 [*.{ts,js}]
 indent_size = 2
