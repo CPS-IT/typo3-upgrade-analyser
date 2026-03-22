@@ -1,6 +1,6 @@
 # Story 1.2: TYPO3 v11 Core Extension Accurate Exclusion
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,32 +20,32 @@ So that risk scores for v11 projects are accurate and the tool can be trusted as
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Inject `VersionProfileRegistry` into `ExtensionDiscoveryService` (AC: 2)
-  - [ ] Add `VersionProfileRegistry` as constructor parameter
-  - [ ] Update `config/services.yaml` if needed (auto-wiring should handle it)
-  - [ ] Replace hardcoded `str_starts_with($packageKey, 'typo3/cms-')` at line ~349 (PackageStates discovery) with profile-based check using `$profile->corePackagePrefix`
-  - [ ] Replace hardcoded `str_starts_with($packageData['name'], 'typo3/cms-')` at line ~402 (installed.json discovery) with profile-based check
-  - [ ] Replace hardcoded `'/typo3/sysext/'` check at line ~543 with `$profile->legacyCoreExtensionDir`
-- [ ] Task 2: Fix legacy v11 PackageStates core extension detection (AC: 1, 4)
-  - [ ] In PackageStates parsing path (~line 349): add secondary check — if key does NOT match `corePackagePrefix`, check whether `packagePath` starts with `legacyCoreExtensionDir` (e.g., `typo3/sysext/`)
-  - [ ] This handles the v11 legacy format where keys are short names (`core`, `backend`) but paths are `typo3/sysext/core/`
-- [ ] Task 3: Inject `VersionProfileRegistry` into `ComposerInstallationDetector` (AC: 3)
-  - [ ] Add `VersionProfileRegistry` as constructor parameter
-  - [ ] Replace hardcoded `'vendor'` default at line ~353 with `$profile->defaultVendorDir`
-  - [ ] Replace hardcoded `'public'` default at line ~354 with `$profile->defaultWebDir`
-  - [ ] Replace hardcoded `is_dir($path . '/typo3/sysext')` at line ~267 with profile value
-- [ ] Task 4: Update unit tests for `ExtensionDiscoveryService` (AC: 4, 5, 6)
-  - [ ] Update existing test mocks to provide `VersionProfileRegistry`
-  - [ ] Add test case: v11 legacy PackageStates with short keys correctly excludes core extensions
-  - [ ] Add test case: v11 Composer installation correctly excludes core extensions via prefix
-  - [ ] Verify existing test `testTypo3CoreExtensionsAreFilteredOut` still passes
-- [ ] Task 5: Update unit tests for `ComposerInstallationDetector` (AC: 6)
-  - [ ] Update existing test mocks to provide `VersionProfileRegistry`
-  - [ ] Verify all existing detector tests pass
-- [ ] Task 6: Run full quality pipeline (AC: 6, 7)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer static-analysis` — zero PHPStan errors
-  - [ ] `composer cs:check` — zero style violations
+- [x] Task 1: Inject `VersionProfileRegistry` into `ExtensionDiscoveryService` (AC: 2)
+  - [x] Add `VersionProfileRegistry` as constructor parameter
+  - [x] Update `config/services.yaml` if needed (auto-wiring should handle it)
+  - [x] Replace hardcoded `str_starts_with($packageKey, 'typo3/cms-')` at line ~349 (PackageStates discovery) with profile-based check using `$profile->corePackagePrefix`
+  - [x] Replace hardcoded `str_starts_with($packageData['name'], 'typo3/cms-')` at line ~402 (installed.json discovery) with profile-based check
+  - [x] Replace hardcoded `'/typo3/sysext/'` check at line ~543 with `$profile->legacyCoreExtensionDir`
+- [x] Task 2: Fix legacy v11 PackageStates core extension detection (AC: 1, 4)
+  - [x] In PackageStates parsing path (~line 349): add secondary check — if key does NOT match `corePackagePrefix`, check whether `packagePath` starts with `legacyCoreExtensionDir` (e.g., `typo3/sysext/`)
+  - [x] This handles the v11 legacy format where keys are short names (`core`, `backend`) but paths are `typo3/sysext/core/`
+- [x] Task 3: Inject `VersionProfileRegistry` into `ComposerInstallationDetector` (AC: 3)
+  - [x] Add `VersionProfileRegistry` as constructor parameter
+  - [x] Replace hardcoded `'vendor'` default at line ~353 with `$profile->defaultVendorDir`
+  - [x] Replace hardcoded `'public'` default at line ~354 with `$profile->defaultWebDir`
+  - [x] Replace hardcoded `is_dir($path . '/typo3/sysext')` at line ~267 with profile value — N/A: this check does not exist in ComposerInstallationDetector, only in ExtensionDiscoveryService where it was already addressed in Task 1
+- [x] Task 4: Update unit tests for `ExtensionDiscoveryService` (AC: 4, 5, 6)
+  - [x] Update existing test mocks to provide `VersionProfileRegistry`
+  - [x] Add test case: v11 legacy PackageStates with short keys correctly excludes core extensions
+  - [x] Add test case: v11 Composer installation correctly excludes core extensions via prefix
+  - [x] Verify existing test `testTypo3CoreExtensionsAreFilteredOut` still passes
+- [x] Task 5: Update unit tests for `ComposerInstallationDetector` (AC: 6)
+  - [x] Update existing test mocks to provide `VersionProfileRegistry`
+  - [x] Verify all existing detector tests pass
+- [x] Task 6: Run full quality pipeline (AC: 6, 7)
+  - [x] `composer test` — all 1563 tests green (3 new)
+  - [x] `composer sca` — zero PHPStan errors at Level 8
+  - [x] `composer fix:php --dry-run` — zero style violations
 
 ## Dev Notes
 
@@ -146,10 +146,33 @@ Both checks use values from `VersionProfileRegistry` (created in Story 1.1). No 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Injected `VersionProfileRegistry` into `ExtensionDiscoveryService` and `ComposerInstallationDetector` as constructor dependencies
+- Replaced 3 hardcoded string checks in `ExtensionDiscoveryService` with profile-based values from `VersionProfileRegistry`
+- Added two-pronged core extension detection: Composer prefix check AND legacy path check via `isCorePackage()` helper method
+- Replaced hardcoded `'vendor'` and `'public'` defaults in `ComposerInstallationDetector::detectCustomPaths()` with profile values
+- Updated `config/services.yaml` to wire `VersionProfileRegistry` into both services and exclude it from auto-discovery (prevents autowiring conflict with factory-created instance)
+- Updated both test classes to provide real `VersionProfileRegistry` instances via `VersionProfileRegistryFactory::create()`
+- Added 3 new test cases: v11 legacy exclusion, v11 Composer exclusion, third-party non-exclusion
+- Updated 2 existing tests (`testExtensionTypeDetection`, `testCreateExtensionFromPackageDataWithDifferentPathTypes`) that previously tested sysext extensions as non-core — these are now correctly excluded
+- Note: Task 3 subtask "Replace hardcoded `is_dir($path . '/typo3/sysext')` at line ~267" was N/A — that check does not exist in `ComposerInstallationDetector`
+- Version threading: used `getSupportedVersions()[0]` to get a default profile since `corePackagePrefix` and `legacyCoreExtensionDir` are identical across all versions. When version-specific discovery is implemented, this can be refined.
+
+### Change Log
+
+- 2026-03-22: Implemented Story 1.2 — v11 core extension accurate exclusion using VersionProfileRegistry
+
 ### File List
+
+- `src/Infrastructure/Discovery/ExtensionDiscoveryService.php` (modified)
+- `src/Infrastructure/Discovery/ComposerInstallationDetector.php` (modified)
+- `config/services.yaml` (modified)
+- `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php` (modified)
+- `tests/Unit/Infrastructure/Discovery/ComposerInstallationDetectorTest.php` (modified)
