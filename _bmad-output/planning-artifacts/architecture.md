@@ -212,7 +212,8 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
 **Version-specific notes:**
 - v11: legacy and Composer both supported; PackageStates v5 format; known core extension bug to be fixed against this profile
 - v12: both modes supported (Composer strongly recommended, legacy still possible)
-- v13+: Composer-only; legacy discovery path not implemented
+- v13: both modes supported; TYPO3 official docs state classic mode is fully supported with no deprecation plan — Composer strongly recommended but legacy remains valid; classic mode fixtures not yet implemented (out of scope for current sprint)
+- v14: both modes supported; same policy as v13 per official TYPO3 documentation
 
 **Test gate:** A test fixture for every supported major version is required before that version is claimed as supported. Fixture coverage must include at least: standard Composer install, custom `web-dir`, custom `vendor-dir`.
 
