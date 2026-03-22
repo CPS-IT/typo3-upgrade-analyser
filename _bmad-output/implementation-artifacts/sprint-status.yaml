@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-1-version-profile-registry: done
   1-2-typo3-v11-core-extension-accurate-exclusion: done
-  1-3-typo3-v13-composer-installation-support: ready-for-dev
+  1-3-typo3-v13-composer-installation-support: review
   1-4-typo3-v14-composer-installation-support: backlog
   epic-1-retrospective: optional
 
