@@ -1,6 +1,6 @@
 # Story 1.3: TYPO3 v13 Composer Installation Support
 
-Status: review
+Status: done
 
 ## Story
 
