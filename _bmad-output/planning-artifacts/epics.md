@@ -283,7 +283,7 @@ So that I can analyze projects targeting the current LTS release and the tool fo
 **And** core extensions defined in the v13 profile are excluded from results
 **And** a second fixture `v13ComposerCustomWebDir/` with a non-standard `web-dir` also passes, with the custom path read from `composer.json` and overriding the profile default
 **And** both fixtures are physical file trees (no dynamically generated content)
-**And** the v13 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: false`
+**And** the v13 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: true` (v13 supports both Composer and classic installation modes per official documentation)
 **And** PHPStan Level 8 reports zero errors
 
 ---
@@ -320,7 +320,7 @@ So that I can analyze projects targeting the next major release and the tool for
 **And** core extensions defined in the v14 profile are excluded from results
 **And** a second fixture `v14ComposerCustomWebDir/` with a non-standard `web-dir` also passes, with the custom path read from `composer.json` and overriding the profile default
 **And** both fixtures are physical file trees (no dynamically generated content)
-**And** the v14 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: false`
+**And** the v14 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: true` (v14 supports both Composer and classic installation modes per official documentation)
 **And** `VersionProfileRegistry::getProfile(14)` returns the v14 profile without error
 **And** PHPStan Level 8 reports zero errors
 

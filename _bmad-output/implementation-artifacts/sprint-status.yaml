@@ -48,7 +48,7 @@ development_status:
   1-2-typo3-v11-core-extension-accurate-exclusion: done
   1-3-typo3-v13-composer-installation-support: done
   1-4-fix-discovery-result-cache-null-installation: done
-  1-5-typo3-v14-composer-installation-support: backlog
+  1-5-typo3-v14-composer-installation-support: ready-for-dev
   1-6-fix-extension-discovery-cache-key-double-computation: ready-for-dev
   1-7-add-negative-case-tests-installation-discovery: ready-for-dev
   epic-1-retrospective: optional
