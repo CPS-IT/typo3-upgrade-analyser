@@ -1,0 +1,29 @@
+{
+  "description": "TYPO3 v14 Composer Standard Installation - Extensions ONLY in vendor directory",
+  "typo3_version": "14.0",
+  "installation_type": "composer_standard",
+  "path_configuration": "default",
+  "extensions": {
+    "news": {
+      "should_exist": true,
+      "reason": "Should find georgringer/news in vendor directory"
+    },
+    "powermail": {
+      "should_exist": true,
+      "reason": "Should find example/powermail in vendor directory"
+    },
+    "non_existent": {
+      "should_exist": false,
+      "reason": "Extension does not exist anywhere"
+    }
+  },
+  "auto_detect_expected": [
+    "news",
+    "powermail"
+  ],
+  "notes": [
+    "TYPO3 v14 Composer installation with standard public web directory",
+    "In Composer mode, extensions MUST be in vendor directory only",
+    "Core packages (typo3/cms-*) are excluded from extension discovery"
+  ]
+}

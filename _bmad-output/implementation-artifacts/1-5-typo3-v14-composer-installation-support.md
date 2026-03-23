@@ -1,6 +1,6 @@
 # Story 1.5: TYPO3 v14 Composer Installation Support
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -21,34 +21,34 @@ so that I can analyze projects targeting the next major release and the tool for
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `v14Composer` fixture (AC: 1, 3, 4)
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.json` — require `typo3/cms-*: ^14.0`, `extra.typo3/cms.web-dir: "public"`
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.lock` — minimal valid lock file (mirror v13Composer, bump versions to v14.0.0)
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/composer/installed.json` — include `typo3/cms-core` (v14.0.0, type `typo3-cms-framework`), `georgringer/news` (third-party, type `typo3-cms-extension`), `example/powermail` (third-party)
-  - [ ] Create stub PHP files: `vendor/georgringer/news/Classes/Controller/NewsController.php`, `composer.json`, `ext_emconf.php`; same for `example/powermail`
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/public/typo3/index.php` (web dir marker)
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/config/system/settings.php`
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/var/log/typo3.log`
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/test-expectations.json` — `installation_type: "composer_standard"`, `typo3_version: "14.0"`, third-party extensions as `should_exist: true`, core packages as `should_exist: false`
+- [x] Task 1: Create `v14Composer` fixture (AC: 1, 3, 4)
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.json` — require `typo3/cms-*: ^14.0`, `extra.typo3/cms.web-dir: "public"`
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.lock` — minimal valid lock file (mirror v13Composer, bump versions to v14.0.0)
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/composer/installed.json` — include `typo3/cms-core` (v14.0.0, type `typo3-cms-framework`), `georgringer/news` (third-party, type `typo3-cms-extension`), `example/powermail` (third-party)
+  - [x] Create stub PHP files: `vendor/georgringer/news/Classes/Controller/NewsController.php`, `composer.json`, `ext_emconf.php`; same for `example/powermail`
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/public/index.php` (web dir marker)
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/config/system/settings.php`
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/var/log/typo3.log`
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14Composer/test-expectations.json` — `installation_type: "composer_standard"`, `typo3_version: "14.0"`, third-party extensions as `should_exist: true`, core packages as `should_exist: false`
 
-- [ ] Task 2: Create `v14ComposerCustomWebDir` fixture (AC: 2, 3, 4)
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/composer.json` — require `typo3/cms-*: ^14.0`, `extra.typo3/cms.web-dir: "web"` (non-standard)
-  - [ ] Create `composer.lock`, `vendor/composer/installed.json` (same packages as v14Composer, v14.0.0 versions)
-  - [ ] Create stub PHP files using `web/` as web directory instead of `public/`
-  - [ ] Create `tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/test-expectations.json` — `installation_type: "composer_custom"`, `typo3_version: "14.0"`, `path_configuration: "web-dir-web"`
+- [x] Task 2: Create `v14ComposerCustomWebDir` fixture (AC: 2, 3, 4)
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/composer.json` — require `typo3/cms-*: ^14.0`, `extra.typo3/cms.web-dir: "web"` (non-standard)
+  - [x] Create `composer.lock`, `vendor/composer/installed.json` (same packages as v14Composer, v14.0.0 versions)
+  - [x] Create stub PHP files using `web/` as web directory instead of `public/`
+  - [x] Create `tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/test-expectations.json` — `installation_type: "composer_custom"`, `typo3_version: "14.0"`, `path_configuration: "web-dir-web"`
 
-- [ ] Task 3: Add integration tests for v14 fixtures (AC: 3, 4, 6, 7)
-  - [ ] Add test class `tests/Integration/Discovery/Typo3V14ComposerDiscoveryTest.php`
-  - [ ] Test: `v14Composer` fixture — `InstallationDiscoveryService` detects v14 Composer mode; `ExtensionDiscoveryService` finds `georgringer/news` and `example/powermail`, excludes `typo3/cms-*`
-  - [ ] Test: `v14ComposerCustomWebDir` fixture — custom `web-dir: "web"` read from `composer.json` overrides the profile default `"public"`
-  - [ ] Test: `v14ComposerCustomWebDir` — extension discovery finds third-party extensions
-  - [ ] Test: `VersionProfileRegistry::getProfile(14)` — `supportsComposerMode: true`, `supportsLegacyMode: true`
-  - [ ] Verify `PathResolutionServiceFixturesTest` auto-discovers v14 fixtures — no code change needed
+- [x] Task 3: Add integration tests for v14 fixtures (AC: 3, 4, 6, 7)
+  - [x] Add test class `tests/Integration/Discovery/Typo3V14ComposerDiscoveryTest.php`
+  - [x] Test: `v14Composer` fixture — `InstallationDiscoveryService` detects v14 Composer mode; `ExtensionDiscoveryService` finds `georgringer/news` and `example/powermail`, excludes `typo3/cms-*`
+  - [x] Test: `v14ComposerCustomWebDir` fixture — custom `web-dir: "web"` read from `composer.json` overrides the profile default `"public"`
+  - [x] Test: `v14ComposerCustomWebDir` — extension discovery finds third-party extensions
+  - [x] Test: `VersionProfileRegistry::getProfile(14)` — `supportsComposerMode: true`, `supportsLegacyMode: true`
+  - [x] Verify `PathResolutionServiceFixturesTest` auto-discovers v14 fixtures — no code change needed
 
-- [ ] Task 4: Quality gate (AC: 7, 8)
-  - [ ] `composer test` — all tests green (including new integration tests)
-  - [ ] `composer static-analysis` — zero PHPStan Level 8 errors
-  - [ ] `composer cs:check` — zero style violations
+- [x] Task 4: Quality gate (AC: 7, 8)
+  - [x] `composer test` — all tests green (including new integration tests)
+  - [x] `composer sca` — zero PHPStan Level 8 errors
+  - [x] `composer lint` — zero style violations
 
 ## Dev Notes
 
@@ -196,7 +196,7 @@ $extensionResult = $extensionDiscovery->discoverExtensions(
 
 Test class: `tests/Integration/Discovery/Typo3V14ComposerDiscoveryTest.php`
 Namespace: `CPSIT\UpgradeAnalyzer\Tests\Integration\Discovery`
-Base class: `ExtensionDiscoveryWorkflowIntegrationTestCase` (from `tests/Integration/Discovery/`)
+Base class: `AbstractIntegrationTestCase` (consistent with v13 pattern; `ExtensionDiscoveryWorkflowIntegrationTestCase` exists but serves a different purpose)
 
 Suggested test methods:
 - `testV14ComposerInstallationIsDetected()`
@@ -246,6 +246,47 @@ Claude Sonnet 4.6
 
 ### Debug Log References
 
+- `composer static-analysis` is not available; the correct script name is `composer sca`
+- `composer cs:check` is not available; the correct script name is `composer lint`
+
 ### Completion Notes List
 
+- Created v14Composer fixture tree (13 files) mirroring v13Composer, bumped all versions to v14.0.0 and php requirement to ^8.3
+- Created v14ComposerCustomWebDir fixture tree (13 files) mirroring v13ComposerCustomWebDir, using `web/` as web-dir
+- Added `Typo3V14ComposerDiscoveryTest.php` with 5 integration tests, mirroring the v13 pattern exactly
+- All 1564 tests pass; PHPStan Level 8 reports zero errors; lint reports zero violations
+- No `src/` changes required — v14 profile in `VersionProfileRegistryFactory.php` was already correct
+
 ### File List
+
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/composer.lock
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/test-expectations.json
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/config/system/settings.php
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/var/log/typo3.log
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/public/index.php
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/composer/installed.json
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/georgringer/news/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/georgringer/news/ext_emconf.php
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/georgringer/news/Classes/Controller/NewsController.php
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/example/powermail/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/example/powermail/ext_emconf.php
+tests/Integration/Fixtures/TYPO3Installations/v14Composer/vendor/example/powermail/Classes/Domain/Model/Form.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/composer.lock
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/test-expectations.json
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/config/system/settings.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/var/log/typo3.log
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/web/index.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/composer/installed.json
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/georgringer/news/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/georgringer/news/ext_emconf.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/georgringer/news/Classes/Controller/NewsController.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/example/powermail/composer.json
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/example/powermail/ext_emconf.php
+tests/Integration/Fixtures/TYPO3Installations/v14ComposerCustomWebDir/vendor/example/powermail/Classes/Domain/Model/Form.php
+tests/Integration/Discovery/Typo3V14ComposerDiscoveryTest.php
+
+## Change Log
+
+- 2026-03-23: Added v14Composer and v14ComposerCustomWebDir fixture trees (26 files total) and Typo3V14ComposerDiscoveryTest.php (5 integration tests). All tests pass, PHPStan zero errors, lint clean.

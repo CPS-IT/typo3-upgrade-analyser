@@ -22,10 +22,10 @@ use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
- * Integration tests for TYPO3 v13 Composer installation discovery.
+ * Integration tests for TYPO3 v14 Composer installation discovery.
  *
  * Verifies that both the standard (public/) and custom-web-dir (web/) Composer
- * fixtures for TYPO3 v13 are detected correctly and that third-party extensions
+ * fixtures for TYPO3 v14 are detected correctly and that third-party extensions
  * are discovered while core packages (typo3/cms-*) are excluded.
  *
  * @group integration
@@ -34,7 +34,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @covers \CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryService
  */
 #[Group('integration')]
-final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
+final class Typo3V14ComposerDiscoveryTest extends AbstractIntegrationTestCase
 {
     private ExtensionDiscoveryServiceInterface $extensionDiscoveryService;
     private InstallationDiscoveryServiceInterface $installationDiscoveryService;
@@ -71,32 +71,32 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
     }
 
     /**
-     * Test that v13Composer fixture is detected as a TYPO3 v13 Composer installation.
+     * Test that v14Composer fixture is detected as a TYPO3 v14 Composer installation.
      */
-    public function testV13ComposerInstallationIsDetected(): void
+    public function testV14ComposerInstallationIsDetected(): void
     {
-        $installationPath = $this->fixturesPath . '/v13Composer';
+        $installationPath = $this->fixturesPath . '/v14Composer';
 
         $result = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
         $this->assertTrue(
             $result->isSuccessful(),
-            'Installation discovery should succeed for v13Composer fixture: ' . $result->getErrorMessage(),
+            'Installation discovery should succeed for v14Composer fixture: ' . $result->getErrorMessage(),
         );
 
         $installation = $result->getInstallation();
         $this->assertNotNull($installation);
-        $this->assertSame(13, $installation->getVersion()->getMajor());
+        $this->assertSame(14, $installation->getVersion()->getMajor());
         $this->assertSame('composer', $installation->getType());
     }
 
     /**
      * Test that ExtensionDiscoveryService finds third-party extensions and excludes core
-     * packages in the v13Composer fixture.
+     * packages in the v14Composer fixture.
      */
-    public function testV13ComposerExtensionDiscoveryFindsThirdPartyExtensionsAndExcludesCore(): void
+    public function testV14ComposerExtensionDiscoveryFindsThirdPartyExtensionsAndExcludesCore(): void
     {
-        $installationPath = $this->fixturesPath . '/v13Composer';
+        $installationPath = $this->fixturesPath . '/v14Composer';
 
         $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
         $this->assertTrue(
@@ -110,7 +110,7 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
 
         $this->assertTrue(
             $extensionResult->isSuccessful(),
-            'Extension discovery should succeed for v13Composer fixture: ' . $extensionResult->getErrorMessage(),
+            'Extension discovery should succeed for v14Composer fixture: ' . $extensionResult->getErrorMessage(),
         );
         $this->assertTrue($extensionResult->hasExtensions(), 'Should find at least one extension');
 
@@ -135,32 +135,32 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
     }
 
     /**
-     * Test that v13ComposerCustomWebDir fixture is detected as a TYPO3 v13 Composer installation.
+     * Test that v14ComposerCustomWebDir fixture is detected as a TYPO3 v14 Composer installation.
      */
-    public function testV13ComposerCustomWebDirInstallationIsDetected(): void
+    public function testV14ComposerCustomWebDirInstallationIsDetected(): void
     {
-        $installationPath = $this->fixturesPath . '/v13ComposerCustomWebDir';
+        $installationPath = $this->fixturesPath . '/v14ComposerCustomWebDir';
 
         $result = $this->installationDiscoveryService->discoverInstallation($installationPath);
 
         $this->assertTrue(
             $result->isSuccessful(),
-            'Installation discovery should succeed for v13ComposerCustomWebDir fixture: ' . $result->getErrorMessage(),
+            'Installation discovery should succeed for v14ComposerCustomWebDir fixture: ' . $result->getErrorMessage(),
         );
 
         $installation = $result->getInstallation();
         $this->assertNotNull($installation);
-        $this->assertSame(13, $installation->getVersion()->getMajor());
+        $this->assertSame(14, $installation->getVersion()->getMajor());
         $this->assertSame('composer', $installation->getType());
     }
 
     /**
      * Test that the custom web-dir ("web") from composer.json overrides the profile default ("public")
-     * in the v13ComposerCustomWebDir fixture.
+     * in the v14ComposerCustomWebDir fixture.
      */
-    public function testV13ComposerCustomWebDirReadsWebDirFromComposerJson(): void
+    public function testV14ComposerCustomWebDirReadsWebDirFromComposerJson(): void
     {
-        $installationPath = $this->fixturesPath . '/v13ComposerCustomWebDir';
+        $installationPath = $this->fixturesPath . '/v14ComposerCustomWebDir';
 
         $result = $this->installationDiscoveryService->discoverInstallation($installationPath);
         $this->assertTrue(
@@ -181,11 +181,11 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
     }
 
     /**
-     * Test that extension discovery works for the v13ComposerCustomWebDir fixture.
+     * Test that extension discovery works for the v14ComposerCustomWebDir fixture.
      */
-    public function testV13ComposerCustomWebDirExtensionDiscoveryFindsThirdPartyExtensions(): void
+    public function testV14ComposerCustomWebDirExtensionDiscoveryFindsThirdPartyExtensions(): void
     {
-        $installationPath = $this->fixturesPath . '/v13ComposerCustomWebDir';
+        $installationPath = $this->fixturesPath . '/v14ComposerCustomWebDir';
 
         $installationResult = $this->installationDiscoveryService->discoverInstallation($installationPath);
         $this->assertTrue(
@@ -199,7 +199,7 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
 
         $this->assertTrue(
             $extensionResult->isSuccessful(),
-            'Extension discovery should succeed for v13ComposerCustomWebDir fixture: ' . $extensionResult->getErrorMessage(),
+            'Extension discovery should succeed for v14ComposerCustomWebDir fixture: ' . $extensionResult->getErrorMessage(),
         );
         $this->assertTrue($extensionResult->hasExtensions(), 'Should find at least one extension');
 
