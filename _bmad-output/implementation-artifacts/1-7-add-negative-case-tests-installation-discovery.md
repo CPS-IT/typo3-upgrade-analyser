@@ -1,6 +1,6 @@
 # Story 1.7: Add Negative-Case Tests for `InstallationDiscoveryService`
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -17,23 +17,23 @@ so that error paths are verified and future regressions are detected immediately
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add negative-case test (AC: 1, 2, 3)
-  - [ ] Open `tests/Unit/Infrastructure/Discovery/InstallationDiscoveryServiceTest.php`
-  - [ ] Add test method `testDiscoverInstallationFailsWhenNoTypo3IndicatorsPresent()`
-  - [ ] Arrange:
+- [x] Task 1: Add negative-case test (AC: 1, 2, 3)
+  - [x] Open `tests/Unit/Infrastructure/Discovery/InstallationDiscoveryServiceTest.php`
+  - [x] Add test method `testDiscoverInstallationFailsWhenNoTypo3IndicatorsPresent()`
+  - [x] Arrange:
     - Create a real temp directory (use `sys_get_temp_dir()` or `vfsStream`, matching existing test style)
     - Do **not** create `composer.json`, `PackageStates.php`, `typo3/`, or any TYPO3-like structure in it
     - Configure all mock detection strategies so that **none** report support for the path
-  - [ ] Assert:
+  - [x] Assert:
     - `$result->isSuccessful()` is `false`
     - `$result->getErrorMessage()` is a non-empty string
     - No exception is thrown (PHPUnit will fail automatically if one escapes)
-  - [ ] Check whether the existing test class already sets up strategies as mocks (it does — see `testDiscoverInstallationSkipsStrategyThatDoesNotSupport`); follow the same pattern to configure mock strategies that return `false` from `supports()` and `canDetect()`
+  - [x] Check whether the existing test class already sets up strategies as mocks (it does — see `testDiscoverInstallationSkipsStrategyThatDoesNotSupport`); follow the same pattern to configure mock strategies that return `false` from `supports()` and `canDetect()`
 
-- [ ] Task 2: Quality gate (AC: 4)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer static-analysis` — zero PHPStan Level 8 errors
-  - [ ] `composer cs:check` — zero violations (run `composer cs:fix` if needed)
+- [x] Task 2: Quality gate (AC: 4)
+  - [x] `composer test` — all tests green
+  - [x] `composer static-analysis` — zero PHPStan Level 8 errors
+  - [x] `composer cs:check` — zero violations (run `composer cs:fix` if needed)
 
 ## Dev Notes
 
@@ -91,4 +91,8 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+Added `testDiscoverInstallationFailsWhenNoTypo3IndicatorsPresent` to `InstallationDiscoveryServiceTest`. The test uses the existing `$this->testDir` (no TYPO3 files), creates two mock strategies with required indicators that do not exist (`composer.json`, `typo3conf/PackageStates.php`), and asserts both `isSuccessful() === false` and a non-empty `getErrorMessage()`. All 1566 tests pass, PHPStan Level 8 reports zero errors, PHP CS Fixer reports zero violations.
+
 ### File List
+
+- tests/Unit/Infrastructure/Discovery/InstallationDiscoveryServiceTest.php

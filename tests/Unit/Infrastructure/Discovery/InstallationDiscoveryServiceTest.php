@@ -262,6 +262,20 @@ final class InstallationDiscoveryServiceTest extends TestCase
         self::assertSame('no_installation_found', $attemptedStrategies[0]['result']);
     }
 
+    public function testDiscoverInstallationFailsWhenNoTypo3IndicatorsPresent(): void
+    {
+        // testDir exists but contains no TYPO3 indicators (no composer.json, PackageStates.php, etc.)
+        $strategy1 = $this->createMockStrategy('Composer Strategy', 100, ['composer.json']);
+        $strategy2 = $this->createMockStrategy('Classic Strategy', 50, ['typo3conf/PackageStates.php']);
+
+        $this->service = $this->createService([$strategy1, $strategy2]);
+
+        $result = $this->service->discoverInstallation($this->testDir);
+
+        self::assertFalse($result->isSuccessful(), 'Discovery should fail when no TYPO3 indicators are present');
+        self::assertNotEmpty($result->getErrorMessage(), 'Error message should be non-empty when discovery fails');
+    }
+
     public function testGetDetectionStrategies(): void
     {
         $strategy1 = $this->createMockStrategy('Strategy 1', 100);
