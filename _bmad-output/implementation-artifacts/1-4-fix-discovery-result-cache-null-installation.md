@@ -1,6 +1,6 @@
 # Story 1.4: Fix `InstallationDiscoveryResult::fromArray` Null-Installation TypeError on Cache Replay
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -19,9 +19,9 @@ so that replaying a cached failure result (or any corrupted cache entry) never t
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Fix `InstallationDiscoveryResult::fromArray` (AC: 1, 2, 3, 4)
-  - [ ] Open `src/Infrastructure/Discovery/InstallationDiscoveryResult.php`
-  - [ ] In the `if ($data['successful'])` branch (currently line 321–333), add a guard before calling `Installation::fromArray`:
+- [x] Task 1: Fix `InstallationDiscoveryResult::fromArray` (AC: 1, 2, 3, 4)
+  - [x] Open `src/Infrastructure/Discovery/InstallationDiscoveryResult.php`
+  - [x] In the `if ($data['successful'])` branch (currently line 321–333), add a guard before calling `Installation::fromArray`:
     ```php
     if (!isset($data['installation']) || !\is_array($data['installation'])) {
         return new self(
@@ -34,19 +34,19 @@ so that replaying a cached failure result (or any corrupted cache entry) never t
         );
     }
     ```
-  - [ ] The guard must appear **before** `Installation::fromArray($data['installation'])` on the current line 323
+  - [x] The guard must appear **before** `Installation::fromArray($data['installation'])` on the current line 323
 
-- [ ] Task 2: Add unit test for corrupted-cache scenario (AC: 5)
-  - [ ] Open `tests/Unit/Infrastructure/Discovery/InstallationDiscoveryResultTest.php`
-  - [ ] Add test method `testFromArrayReturnsFailed_whenSuccessfulFlagIsTrueButInstallationIsNull()`
-  - [ ] Arrange: `$data = ['successful' => true, 'installation' => null, 'attempted_strategies' => []]`
-  - [ ] Assert: `fromArray($data)` returns an `InstallationDiscoveryResult`, `isSuccessful()` is `false`, `getErrorMessage()` contains `'Cache deserialization error'`
-  - [ ] No `TypeError` must be thrown (PHPUnit will fail the test if one is)
+- [x] Task 2: Add unit test for corrupted-cache scenario (AC: 5)
+  - [x] Open `tests/Unit/Infrastructure/Discovery/InstallationDiscoveryResultTest.php`
+  - [x] Add test method `testFromArrayReturnsFailedWhenSuccessfulFlagIsTrueButInstallationIsNull()`
+  - [x] Arrange: `$data = ['successful' => true, 'installation' => null, 'attempted_strategies' => []]`
+  - [x] Assert: `fromArray($data)` returns an `InstallationDiscoveryResult`, `isSuccessful()` is `false`, `getErrorMessage()` contains `'Cache deserialization error'`
+  - [x] No `TypeError` must be thrown (PHPUnit will fail the test if one is)
 
-- [ ] Task 3: Quality gate (AC: 6)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer static-analysis` — zero PHPStan Level 8 errors
-  - [ ] `composer cs:check` — zero style violations (run `composer cs:fix` if needed)
+- [x] Task 3: Quality gate (AC: 6)
+  - [x] `composer test` — all tests green (1564 tests, 5827 assertions)
+  - [x] `composer sca:php` — zero PHPStan Level 8 errors
+  - [x] `composer lint:php` — zero style violations
 
 ## Dev Notes
 
@@ -138,4 +138,11 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Added null/non-array guard in `InstallationDiscoveryResult::fromArray` before calling `Installation::fromArray`. Guard returns a failed result with a descriptive error message when `installation` key is missing or not an array.
+- Added `testFromArrayReturnsFailedWhenSuccessfulFlagIsTrueButInstallationIsNull` covering the corrupted-cache scenario. Removed redundant `assertInstanceOf` (flagged by PHPStan `alreadyNarrowedType`). CS fixer renamed method from snake_case to camelCase.
+- All 1564 tests pass, PHPStan Level 8 clean, CS fixer clean.
+
 ### File List
+
+- src/Infrastructure/Discovery/InstallationDiscoveryResult.php
+- tests/Unit/Infrastructure/Discovery/InstallationDiscoveryResultTest.php

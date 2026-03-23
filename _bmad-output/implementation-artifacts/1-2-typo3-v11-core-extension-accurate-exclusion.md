@@ -1,6 +1,6 @@
 # Story 1.2: TYPO3 v11 Core Extension Accurate Exclusion
 
-Status: review
+Status: done
 
 ## Story
 
