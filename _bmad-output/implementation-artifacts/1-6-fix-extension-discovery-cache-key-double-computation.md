@@ -1,6 +1,6 @@
 # Story 1.6: Fix `ExtensionDiscoveryService` Cache Key Double-Computation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -19,11 +19,11 @@ so that a cache miss on read can never be caused by a diverged key on write.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Refactor `discoverExtensions` to compute cache key once (AC: 1, 2, 3)
-  - [ ] Open `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
-  - [ ] Move `$cacheKey = $this->cacheService->generateKey(...)` to the top of `discoverExtensions`, **before** the `if ($this->configService->isResultCacheEnabled())` block (approximately line 44), so it runs unconditionally
-  - [ ] Remove the duplicate `$cacheKey = ...` assignment inside the cache-write block (currently lines 130–132)
-  - [ ] The resulting structure should be:
+- [x] Task 1: Refactor `discoverExtensions` to compute cache key once (AC: 1, 2, 3)
+  - [x] Open `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
+  - [x] Move `$cacheKey = $this->cacheService->generateKey(...)` to the top of `discoverExtensions`, **before** the `if ($this->configService->isResultCacheEnabled())` block (approximately line 44), so it runs unconditionally
+  - [x] Remove the duplicate `$cacheKey = ...` assignment inside the cache-write block (currently lines 130–132)
+  - [x] The resulting structure should be:
     ```php
     $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
         'custom_paths' => $customPaths ?? [],
@@ -41,18 +41,18 @@ so that a cache miss on read can never be caused by a diverged key on write.
     }
     ```
 
-- [ ] Task 2: Add unit test for key identity (AC: 4)
-  - [ ] Open `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php`
-  - [ ] Add test `testCacheKeyIsIdenticalForGetAndSet()` (or similar name)
-  - [ ] Arrange: enable cache, configure `CacheService` mock to return `null` from `get` (miss)
-  - [ ] Capture the key passed to `CacheService::get` and the key passed to `CacheService::set`
-  - [ ] Assert both keys are equal (use `$this->callback()` or argument capture)
-  - [ ] The existing `testDiscoverExtensionsWithCacheEnabled` and `testDiscoverExtensionsWithCacheHit` tests cover behaviour; this test specifically asserts key identity
+- [x] Task 2: Add unit test for key identity (AC: 4)
+  - [x] Open `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php`
+  - [x] Add test `testCacheKeyIsIdenticalForGetAndSet()` (or similar name)
+  - [x] Arrange: enable cache, configure `CacheService` mock to return `null` from `get` (miss)
+  - [x] Capture the key passed to `CacheService::get` and the key passed to `CacheService::set`
+  - [x] Assert both keys are equal (use `$this->callback()` or argument capture)
+  - [x] The existing `testDiscoverExtensionsWithCacheEnabled` and `testDiscoverExtensionsWithCacheHit` tests cover behaviour; this test specifically asserts key identity
 
-- [ ] Task 3: Quality gate (AC: 6)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer static-analysis` — zero PHPStan Level 8 errors
-  - [ ] `composer cs:check` — zero violations (run `composer cs:fix` if needed)
+- [x] Task 3: Quality gate (AC: 6)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan Level 8 errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -121,4 +121,18 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Moved `$cacheKey` computation before the `if (isResultCacheEnabled())` guard so it is assigned unconditionally once.
+- Removed the duplicate `$cacheKey = ...` assignment in the cache-write block.
+- Updated `testDiscoverExtensionsWithCacheEnabled` mock from `exactly(2)` to `exactly(1)` for `generateKey`.
+- Updated `testDiscoverExtensionsWithCacheDisabled` to allow one call to `generateKey` (now unconditional), while `get`/`set` remain never-called.
+- Added `testCacheKeyIsIdenticalForGetAndSet` capturing keys via `$this->callback()` and asserting equality.
+- All 1565 tests pass; PHPStan Level 8 zero errors; CS fixer zero violations.
+
 ### File List
+
+- src/Infrastructure/Discovery/ExtensionDiscoveryService.php
+- tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php
+
+### Change Log
+
+- 2026-03-23: Refactored cache key to single computation; added key-identity unit test (story 1.6)

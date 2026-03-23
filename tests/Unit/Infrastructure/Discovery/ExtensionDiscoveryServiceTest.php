@@ -380,7 +380,7 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             ->method('isResultCacheEnabled')
             ->willReturn(true);
 
-        $this->cacheService->expects($this->exactly(2))
+        $this->cacheService->expects($this->once())
             ->method('generateKey')
             ->with('extension_discovery', $this->tempDir, ['custom_paths' => []])
             ->willReturn('cache_key_123');
@@ -457,8 +457,9 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             ->method('isResultCacheEnabled')
             ->willReturn(false);
 
-        $this->cacheService->expects($this->never())
-            ->method('generateKey');
+        $this->cacheService->expects($this->once())
+            ->method('generateKey')
+            ->willReturn('cache_key_ignored');
 
         $this->cacheService->expects($this->never())
             ->method('get');
@@ -469,6 +470,47 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $result = $this->service->discoverExtensions($this->tempDir);
 
         $this->assertTrue($result->isSuccessful());
+    }
+
+    public function testCacheKeyIsIdenticalForGetAndSet(): void
+    {
+        $this->configService->expects($this->exactly(2))
+            ->method('isResultCacheEnabled')
+            ->willReturn(true);
+
+        $capturedGetKey = null;
+        $capturedSetKey = null;
+
+        $this->cacheService->expects($this->once())
+            ->method('generateKey')
+            ->willReturn('cache_key_identity_test');
+
+        $this->cacheService->expects($this->once())
+            ->method('get')
+            ->with($this->callback(function (string $key) use (&$capturedGetKey): bool {
+                $capturedGetKey = $key;
+
+                return true;
+            }))
+            ->willReturn(null);
+
+        $this->cacheService->expects($this->once())
+            ->method('set')
+            ->with(
+                $this->callback(function (string $key) use (&$capturedSetKey): bool {
+                    $capturedSetKey = $key;
+
+                    return true;
+                }),
+                $this->anything(),
+            )
+            ->willReturn(true);
+
+        $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertNotNull($capturedGetKey);
+        $this->assertNotNull($capturedSetKey);
+        $this->assertSame($capturedGetKey, $capturedSetKey, 'Cache key passed to get() must equal key passed to set()');
     }
 
     public function testDiscoverExtensionsWithServiceException(): void
