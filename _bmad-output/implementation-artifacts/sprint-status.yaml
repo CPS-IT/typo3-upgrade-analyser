@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-23 (Stories 1.1–1.5 done; 1.6, 1.7 ready-for-dev)
+# last_updated: 2026-03-24 (Stories 1.1–1.7 done; 1.8 ready-for-dev)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-23
+last_updated: 2026-03-24
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -51,6 +51,8 @@ development_status:
   1-5-typo3-v14-composer-installation-support: done
   1-6-fix-extension-discovery-cache-key-double-computation: done
   1-7-add-negative-case-tests-installation-discovery: done
+  1-8-refactor-composer-installation-detection: ready-for-dev
+  1-9-cleanup-composer-installation-detector: backlog
   epic-1-retrospective: optional
 
   # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
