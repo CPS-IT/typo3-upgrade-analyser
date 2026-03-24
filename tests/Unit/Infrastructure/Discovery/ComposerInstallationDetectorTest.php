@@ -27,6 +27,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -75,11 +76,13 @@ final class ComposerInstallationDetectorTest extends TestCase
         }
     }
 
+    #[Test]
     public function testGetName(): void
     {
         self::assertSame('Composer Installation Detector', $this->detector->getName());
     }
 
+    #[Test]
     public function testGetDescription(): void
     {
         self::assertSame(
@@ -88,11 +91,13 @@ final class ComposerInstallationDetectorTest extends TestCase
         );
     }
 
+    #[Test]
     public function testGetPriority(): void
     {
         self::assertSame(100, $this->detector->getPriority());
     }
 
+    #[Test]
     public function testGetRequiredIndicators(): void
     {
         $indicators = $this->detector->getRequiredIndicators();
@@ -102,11 +107,13 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertCount(1, $indicators);
     }
 
+    #[Test]
     public function testSupportsReturnsFalseForNonExistentDirectory(): void
     {
         self::assertFalse($this->detector->supports('/does/not/exist'));
     }
 
+    #[Test]
     public function testSupportsReturnsFalseForFileInsteadOfDirectory(): void
     {
         $filePath = $this->testDir . '/test.txt';
@@ -115,28 +122,27 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertFalse($this->detector->supports($filePath));
     }
 
+    #[Test]
     public function testSupportsReturnsFalseWithoutComposerJson(): void
     {
-        // Create TYPO3 indicators but no composer.json
-        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
-        mkdir($this->testDir . '/config/system', 0o755, true);
-
+        // Directory exists but no composer.json
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
-    public function testSupportsReturnsFalseWithInsufficientTypo3Indicators(): void
+    #[Test]
+    public function testSupportsReturnsFalseWithComposerJsonMissingTypo3Packages(): void
     {
-        // Create composer.json but only one TYPO3 indicator
-        file_put_contents($this->testDir . '/composer.json', '{}');
-        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
+        // composer.json exists but contains no TYPO3 packages
+        file_put_contents($this->testDir . '/composer.json', json_encode([
+            'require' => ['some/other-package' => '^1.0'],
+        ]));
 
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
+    #[Test]
     public function testSupportsReturnsFalseWithoutTypo3Packages(): void
     {
-        // Create all required indicators but no TYPO3 packages in composer.json
-        $this->createFullTypo3Directory();
         $composerData = [
             'require' => [
                 'some/other-package' => '^1.0',
@@ -147,6 +153,18 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
+    #[Test]
+    public function supportsReturnsTrueWithJustComposerJsonContainingTypo3Package(): void
+    {
+        // No runtime directories — only composer.json with TYPO3 packages is required
+        file_put_contents($this->testDir . '/composer.json', json_encode([
+            'require' => ['typo3/cms-core' => '^14.0'],
+        ]));
+
+        self::assertTrue($this->detector->supports($this->testDir));
+    }
+
+    #[Test]
     public function testSupportsReturnsTrueWithValidComposerTypo3Installation(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -154,15 +172,15 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertTrue($this->detector->supports($this->testDir));
     }
 
+    #[Test]
     public function testSupportsWithInvalidComposerJson(): void
     {
-        $this->createFullTypo3Directory();
         file_put_contents($this->testDir . '/composer.json', 'invalid json');
 
         $this->logger->expects(self::once())
             ->method('warning')
             ->with(
-                'Failed to parse composer.json for TYPO3 package check',
+                'Failed to parse composer.json',
                 self::callback(
                     fn ($context): bool => isset($context['path'])
                     && str_contains($context['path'], 'composer.json')
@@ -173,10 +191,35 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertFalse($this->detector->supports($this->testDir));
     }
 
+    #[Test]
+    public function testSupportsLogsWarningWhenComposerJsonIsUnreadable(): void
+    {
+        if (0 === posix_getuid()) {
+            self::markTestSkipped('Cannot test file permissions as root');
+        }
+
+        $composerJsonPath = $this->testDir . '/composer.json';
+        file_put_contents($composerJsonPath, json_encode(['require' => ['typo3/cms-core' => '^14.0']]));
+        chmod($composerJsonPath, 0o000);
+
+        $this->logger->expects(self::once())
+            ->method('warning')
+            ->with(
+                'Failed to read composer.json',
+                self::callback(
+                    fn ($context): bool => isset($context['path'])
+                    && str_contains($context['path'], 'composer.json'),
+                ),
+            );
+
+        self::assertFalse($this->detector->supports($this->testDir));
+
+        chmod($composerJsonPath, 0o644);
+    }
+
     #[DataProvider('typo3PackageProvider')]
     public function testSupportsWithDifferentTypo3Packages(string $packageName): void
     {
-        $this->createFullTypo3Directory();
         $composerData = [
             'require' => [
                 $packageName => '^12.4',
@@ -196,9 +239,9 @@ final class ComposerInstallationDetectorTest extends TestCase
         ];
     }
 
+    #[Test]
     public function testSupportsWithTypo3PackageInRequireDev(): void
     {
-        $this->createFullTypo3Directory();
         $composerData = [
             'require-dev' => [
                 'typo3/cms-core' => '^12.4',
@@ -209,6 +252,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertTrue($this->detector->supports($this->testDir));
     }
 
+    #[Test]
     public function testDetectReturnsNullWhenNotSupported(): void
     {
         // Empty directory - not supported
@@ -217,6 +261,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertNull($result);
     }
 
+    #[Test]
     public function testDetectReturnsNullWhenVersionExtractionFails(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -227,6 +272,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertNull($result);
     }
 
+    #[Test]
     public function testDetectWithValidInstallationAndWorkingVersionExtractor(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -244,13 +290,13 @@ final class ComposerInstallationDetectorTest extends TestCase
 
         $result = $workingDetector->detect($this->testDir);
 
-        if (null !== $result) {
-            self::assertSame($this->testDir, $result->getPath());
-            self::assertSame(InstallationMode::COMPOSER, $result->getMode());
-            self::assertNotNull($result->getMetadata());
-        }
+        self::assertNotNull($result, 'detect() must return an Installation for a valid Composer TYPO3 path');
+        self::assertSame($this->testDir, $result->getPath());
+        self::assertSame(InstallationMode::COMPOSER, $result->getMode());
+        self::assertNotNull($result->getMetadata());
     }
 
+    #[Test]
     public function testDetectWithExtensionsInComposerLock(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -270,6 +316,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertInstanceOf(Installation::class, $result);
     }
 
+    #[Test]
     public function testDetectHandlesExceptionGracefully(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -299,6 +346,7 @@ final class ComposerInstallationDetectorTest extends TestCase
         self::assertNull($result);
     }
 
+    #[Test]
     public function testDetectDoesNotDiscoverExtensions(): void
     {
         $this->createValidComposerTypo3Installation();
@@ -318,26 +366,58 @@ final class ComposerInstallationDetectorTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
+    public function detectReturnsDatabaseConfigEmptyWhenSettingsPhpAbsent(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $workingDetector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $workingDetector->detect($this->testDir);
+
+        self::assertNotNull($result, 'detect() must return an Installation for a valid Composer TYPO3 path');
+        self::assertNotNull($result->getMetadata());
+        // config/system/settings.php absent — database config must be empty, no exception
+        self::assertSame([], $result->getMetadata()->getDatabaseConfig());
+    }
+
+    #[Test]
+    public function detectReturnsEnabledFeaturesEmptyWhenRuntimeDirsAbsent(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $workingDetector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $workingDetector->detect($this->testDir);
+
+        self::assertNotNull($result, 'detect() must return an Installation for a valid Composer TYPO3 path');
+        self::assertNotNull($result->getMetadata());
+        // No runtime dirs present — enabled features must be empty, no exception
+        self::assertSame([], $result->getMetadata()->getEnabledFeatures());
+    }
+
     private function createValidComposerTypo3Installation(): void
     {
-        $this->createFullTypo3Directory();
-
         $composerData = [
             'require' => [
                 'typo3/cms-core' => '^12.4',
             ],
         ];
         file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
-    }
-
-    private function createFullTypo3Directory(): void
-    {
-        // Create all required TYPO3 indicators
-        mkdir($this->testDir . '/public/typo3conf', 0o755, true);
-        mkdir($this->testDir . '/public/typo3', 0o755, true);
-        mkdir($this->testDir . '/config/system', 0o755, true);
-        mkdir($this->testDir . '/var/log', 0o755, true);
-        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
     }
 
     private function createComposerLockWithVersionInfo(): void

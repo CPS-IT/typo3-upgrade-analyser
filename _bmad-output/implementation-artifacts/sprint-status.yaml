@@ -51,7 +51,7 @@ development_status:
   1-5-typo3-v14-composer-installation-support: done
   1-6-fix-extension-discovery-cache-key-double-computation: done
   1-7-add-negative-case-tests-installation-discovery: done
-  1-8-refactor-composer-installation-detection: ready-for-dev
+  1-8-refactor-composer-installation-detection: done
   1-9-cleanup-composer-installation-detector: backlog
   epic-1-retrospective: optional
 

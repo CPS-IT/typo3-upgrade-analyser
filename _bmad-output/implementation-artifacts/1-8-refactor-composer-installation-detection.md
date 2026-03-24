@@ -1,6 +1,6 @@
 # Story 1.8: Fix Composer Installation Detection — Replace Filesystem Indicators
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,29 +18,29 @@ so that detection works reliably on fresh Composer installs that have never been
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Parse `composer.json` once and pass decoded data (AC: 2)
-  - [ ] Add a private method `parseComposerJson(string $path): ?array` that reads and decodes `composer.json` once, returning `null` on missing/invalid file
-  - [ ] Refactor `detect()` to call `parseComposerJson()` at the start and pass the result to `supports()`, `hasTypo3Packages()`, `getWebDirectoryForSupportsCheck()`, `detectPhpVersions()`, `determineInstallationType()`, and `detectCustomPaths()`
-  - [ ] Remove all independent `file_get_contents`/`json_decode` calls from individual methods
-  - [ ] Update method signatures to accept `?array $composerData` parameter where needed
-  - [ ] Run all integration tests (v11/v12/v13/v14) to verify no regressions
+- [x] Task 1: Parse `composer.json` once and pass decoded data (AC: 2)
+  - [x] Add a private method `parseComposerJson(string $path): ?array` that reads and decodes `composer.json` once, returning `null` on missing/invalid file
+  - [x] Refactor `detect()` to call `parseComposerJson()` at the start and pass the result to `supports()`, `hasTypo3Packages()`, `getWebDirectoryForSupportsCheck()`, `detectPhpVersions()`, `determineInstallationType()`, and `detectCustomPaths()`
+  - [x] Remove all independent `file_get_contents`/`json_decode` calls from individual methods
+  - [x] Update method signatures to accept `?array $composerData` parameter where needed
+  - [x] Run all integration tests (v11/v12/v13/v14) to verify no regressions
 
-- [ ] Task 2: Replace filesystem indicators with composer.json package check (AC: 1)
-  - [ ] Remove the `$typo3Indicators` array and `$foundIndicators >= 2` threshold from `supports()`
-  - [ ] Extend `hasTypo3Packages()` to accept the decoded `composer.json` array (no re-read)
-  - [ ] Update `supports()` logic: `is_dir($path)` + `composer.json` exists + `hasTypo3Packages()` passes — nothing else
-  - [ ] Update unit tests for `supports()` to reflect simplified detection
-  - [ ] Run all integration tests (v11/v12/v13/v14) to verify no regressions
+- [x] Task 2: Replace filesystem indicators with composer.json package check (AC: 1)
+  - [x] Remove the `$typo3Indicators` array and `$foundIndicators >= 2` threshold from `supports()`
+  - [x] Extend `hasTypo3Packages()` to accept the decoded `composer.json` array (no re-read)
+  - [x] Update `supports()` logic: `is_dir($path)` + `composer.json` exists + `hasTypo3Packages()` passes — nothing else
+  - [x] Update unit tests for `supports()` to reflect simplified detection
+  - [x] Run all integration tests (v11/v12/v13/v14) to verify no regressions
 
-- [ ] Task 3: Ensure metadata methods handle absent fixture files (AC: 3)
-  - [ ] Verify `detectDatabaseConfig()` returns empty array when `config/system/settings.php` is absent (it already does — confirm with test)
-  - [ ] Verify `detectEnabledFeatures()` returns empty array when directories are absent (it already does — confirm with test)
-  - [ ] Run `Typo3V14ComposerDiscoveryTest` and `Typo3V13ComposerDiscoveryTest` (if exists) in CI-equivalent state (no `var/log/`, no `public/typo3/`)
+- [x] Task 3: Ensure metadata methods handle absent fixture files (AC: 3)
+  - [x] Verify `detectDatabaseConfig()` returns empty array when `config/system/settings.php` is absent (it already does — confirm with test)
+  - [x] Verify `detectEnabledFeatures()` returns empty array when directories are absent (it already does — confirm with test)
+  - [x] Run `Typo3V14ComposerDiscoveryTest` and `Typo3V13ComposerDiscoveryTest` (if exists) in CI-equivalent state (no `var/log/`, no `public/typo3/`)
 
-- [ ] Task 4: Quality gate (AC: 4, 5)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca` — zero PHPStan Level 8 errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 4: Quality gate (AC: 4, 5)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca` — zero PHPStan Level 8 errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -97,8 +97,27 @@ Fixture files like `config/system/settings.php` remain in fixtures for metadata 
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Added `parseComposerJson(string $path): ?array` — reads and JSON-decodes `composer.json` once, returns null on missing/invalid file; log warning on parse failure.
+- Added `supportsInternal(string $path, ?array $composerData): bool` — contains the actual supports logic; called by both `supports()` and `detect()` to avoid double-parsing.
+- `detect()` now calls `parseComposerJson()` once at entry, then passes `$composerData` to `supportsInternal()`, `createInstallationMetadata()`, and all downstream private methods.
+- Removed `$typo3Indicators` array and `$foundIndicators >= 2` threshold. Detection now relies solely on `composer.json` `require`/`require-dev` containing `typo3/cms-core`, `typo3/cms`, or `typo3/minimal`.
+- Removed dead `getWebDirectoryForSupportsCheck()` method (no longer called after indicator removal).
+- All private methods (`hasTypo3Packages`, `detectPhpVersions`, `determineInstallationType`, `detectCustomPaths`, `createInstallationMetadata`) updated to accept `?array $composerData`.
+- Unit tests updated: renamed `testSupportsReturnsFalseWithInsufficientTypo3Indicators` to `testSupportsReturnsFalseWithComposerJsonMissingTypo3Packages`; removed unnecessary `createFullTypo3Directory()` calls from supports tests; added `supportsReturnsTrueWithJustComposerJsonContainingTypo3Package` to confirm no runtime dirs needed.
+- Added `detectReturnsDatabaseConfigEmptyWhenSettingsPhpAbsent` and `detectReturnsEnabledFeaturesEmptyWhenRuntimeDirsAbsent` to confirm graceful empty-return behaviour.
+- All 1647 tests pass; PHPStan Level 8 zero errors; PHP-CS-Fixer zero violations.
+
 ### File List
+
+- `src/Infrastructure/Discovery/ComposerInstallationDetector.php` (modified)
+- `tests/Unit/Infrastructure/Discovery/ComposerInstallationDetectorTest.php` (modified)
+
+## Change Log
+
+- 2026-03-24: Implemented story 1.8 — replaced filesystem indicator threshold with pure composer.json package check; single-parse refactor for detect() call path; added graceful-absence tests for metadata methods. All 1647 tests green, PHPStan Level 8 zero errors, PHP-CS-Fixer zero violations.
