@@ -1,6 +1,6 @@
 # Story P2-4: Fix Extension State Detection for Composer Projects (Issue #163)
 
-Status: ready-for-dev
+Status: review
 
 ## GitHub Issue
 
@@ -30,28 +30,59 @@ The fix direction from the issue report is correct: `PackageStates.php` must onl
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Understand the current discovery flow
-  - [ ] Read `ExtensionDiscoveryService::discoverExtensions()` and `discoverFromPackageStates()` fully
-  - [ ] Identify where the Composer vs legacy branch decision is (or is not) made before calling `discoverFromPackageStates()`
-  - [ ] Identify what data source is used for activation state in Composer mode today
+- [x] Task 1: Understand the current discovery flow
+  - [x] Read `ExtensionDiscoveryService::discoverExtensions()` and `discoverFromPackageStates()` fully
+  - [x] Identify where the Composer vs legacy branch decision is (or is not) made before calling `discoverFromPackageStates()`
+  - [x] Identify what data source is used for activation state in Composer mode today
 
-- [ ] Task 2: Implement installation-type guard
-  - [ ] Add a condition so `discoverFromPackageStates()` is only invoked for legacy installations
-  - [ ] For Composer installations, determine active state from `installed.json` packages (all resolved packages are considered active; or derive from `require` in `composer.json` if a direct/transitive distinction is needed — out of scope for this story)
+- [x] Task 2: Implement installation-type guard
+  - [x] Add a condition so `discoverFromPackageStates()` is only invoked for legacy installations
+  - [x] For Composer installations, determine active state from `installed.json` packages (all resolved packages are considered active; or derive from `require` in `composer.json` if a direct/transitive distinction is needed — out of scope for this story)
 
-- [ ] Task 3: Fix `createExtensionFromPackageData()` null safety
-  - [ ] Add an `isset($packageData['state'])` guard or a typed accessor to prevent the undefined key warning regardless of call context
-  - [ ] Define a sensible default (e.g., `true` / active) when state is not present in Composer data
+- [x] Task 3: Fix `createExtensionFromPackageData()` null safety
+  - [x] Add an `isset($packageData['state'])` guard or a typed accessor to prevent the undefined key warning regardless of call context
+  - [x] Define a sensible default (e.g., `true` / active) when state is not present in Composer data
 
-- [ ] Task 4: Add regression test
-  - [ ] Use an existing Composer fixture (e.g., v13 or v14) and assert extension active states
-  - [ ] If no suitable fixture exists, add a minimal one under `tests/Fixtures/`
+- [x] Task 4: Add regression test
+  - [x] Use an existing Composer fixture (e.g., v13 or v14) and assert extension active states
+  - [x] If no suitable fixture exists, add a minimal one under `tests/Fixtures/`
 
-- [ ] Task 5: Quality gate
-  - [ ] `composer test` — all tests green
-  - [ ] `composer static-analysis` — zero errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 5: Quality gate
+  - [x] `composer test` — all tests green
+  - [x] `composer static-analysis` — zero errors
+  - [x] `composer lint:php` — zero violations
 
 ## Notes
 
 TYPO3 version affected: 10.4 (and likely 11.5, 12, 13 in Composer mode). Fix must not break the legacy path.
+
+## Dev Agent Record
+
+### Implementation Plan
+
+Root cause confirmed: `discoverExtensions()` called `discoverFromPackageStates()` unconditionally. In Composer mode, PackageStates.php v5 entries contain only `packagePath` — no `state` key. Accessing `$packageData['state']` produced an `E_WARNING` and `null !== 'active'` evaluated to `false`, marking all extensions inactive. The merge guard then prevented `installed.json` (correct source) from overriding those stale inactive entries.
+
+Two targeted changes in `ExtensionDiscoveryService`:
+1. `discoverExtensions()`: call `determineInstallationType()` before discovery, skip `discoverFromPackageStates()` when type is `COMPOSER_STANDARD` or `COMPOSER_CUSTOM`.
+2. `createExtensionFromPackageData()` line 475: guarded `$packageData['state']` access with `isset()` — defensive against any future call path where state is absent.
+
+### Completion Notes
+
+- 2 new unit tests: `testComposerInstallationSkipsPackageStatesAndUsesInstalledJson` (regression), `testPackageStatesEntryWithoutStateKeyDefaultsToInactive` (null safety).
+- Added v5-format `PackageStates.php` (no `state` keys) to `v13Composer` integration fixture.
+- Added active-state assertions to `Typo3V13ComposerDiscoveryTest::testV13ComposerExtensionDiscoveryFindsThirdPartyExtensionsAndExcludesCore`.
+- All ACs satisfied. PHPStan level 8, lint, unit (1586), and integration (80) all green.
+
+## File List
+
+- `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
+- `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php`
+- `tests/Integration/Discovery/Typo3V13ComposerDiscoveryTest.php`
+- `tests/Integration/Fixtures/TYPO3Installations/v13Composer/public/typo3conf/PackageStates.php` (new)
+- `_bmad-output/implementation-artifacts/p2-4-fix-packagestates-v5-composer-extensions.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+- 2026-03-25: Fixed issue #163 — Composer installations no longer read PackageStates.php for extension active state; added isset guard for missing state key; added regression tests and v13Composer fixture.
+- 2026-03-25: Code review patches applied — eliminated duplicate `determineInstallationType()` call (P1); added PackageStates skip entry to discoveryMetadata for Composer installations (P2). Deferred findings D1/D2 tracked in sprint-status.yaml kickoff checklist under F-D-04.
