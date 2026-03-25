@@ -59,8 +59,8 @@ development_status:
   # Sequence: P2-1 → P2-4 → P2-2 → P2-3, then P2-5/P2-6 evaluated at Epic 2 kickoff
   pre-epic-2: in-progress
   p2-1-code-quality-audit: ready-for-dev                         # A1: audit Discovery/ExternalTool/Reporting
-  p2-2-fixture-coverage-gap-analysis: ready-for-dev              # A2: gap analysis for Epic 2 fixture needs
-  p2-3-gitlab-bitbucket-source-spike: backlog                    # A3: fixture + design note (depends on P2-2)
+  p2-2-fixture-coverage-gap-analysis: done                      # A2: gap analysis for Epic 2 fixture needs
+  p2-3-gitlab-bitbucket-source-spike: review                    # A3: fixture + design note (depends on P2-2)
   p2-4-fix-packagestates-v5-composer-extensions: ready-for-dev   # Bug #163: extension state in Composer projects
   p2-5-direct-indirect-extension-distinction: backlog            # Feature #150: evaluate at Epic 2 kickoff
   p2-6-exclude-local-packages-from-version-checks: backlog       # Feature #149: candidate for Epic 5

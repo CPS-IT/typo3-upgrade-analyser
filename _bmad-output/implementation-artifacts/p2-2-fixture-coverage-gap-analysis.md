@@ -1,6 +1,6 @@
 # Story P2-2: Fixture Coverage Gap Analysis for Epic 2
 
-Status: ready-for-dev
+Status: done
 
 ## GitHub Issue
 
@@ -35,23 +35,23 @@ In Epic 1, v14 integration tests failed in CI because fixtures only worked local
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Enumerate existing fixtures
-  - [ ] List all directories under `tests/Fixtures/` and document what each covers
-  - [ ] Confirm integration tests reference them correctly
+- [x] Task 1: Enumerate existing fixtures
+  - [x] List all directories under `tests/Fixtures/` and document what each covers
+  - [x] Confirm integration tests reference them correctly
 
-- [ ] Task 2: Research Composer source entry formats
-  - [ ] Document the `repositories` key format for each GitLab/Bitbucket variant (from Composer docs)
-  - [ ] Document how these entries appear in `composer.lock` resolved packages (the `source` key)
-  - [ ] Document how they appear in `vendor/composer/installed.json`
+- [x] Task 2: Research Composer source entry formats
+  - [x] Document the `repositories` key format for each GitLab/Bitbucket variant (from Composer docs)
+  - [x] Document how these entries appear in `composer.lock` resolved packages (the `source` key)
+  - [x] Document how they appear in `vendor/composer/installed.json`
 
-- [ ] Task 3: Cross-reference with Epic 2 story requirements
-  - [ ] Map each 2.1–2.4 story to the source entry formats it must handle
-  - [ ] Identify gaps: required formats with no fixture
+- [x] Task 3: Cross-reference with Epic 2 story requirements
+  - [x] Map each 2.1–2.4 story to the source entry formats it must handle
+  - [x] Identify gaps: required formats with no fixture
 
-- [ ] Task 4: Produce gap analysis document and fixture templates
-  - [ ] Write `_bmad-output/planning-artifacts/fixture-coverage-gap-analysis.md`
-  - [ ] For each gap, provide minimal fixture file content (JSON snippets)
-  - [ ] Mark fixtures that can be created inline in 2.1 vs those needing the spike (P2-3)
+- [x] Task 4: Produce gap analysis document and fixture templates
+  - [x] Write `_bmad-output/planning-artifacts/fixture-coverage-gap-analysis.md`
+  - [x] For each gap, provide minimal fixture file content (JSON snippets)
+  - [x] Mark fixtures that can be created inline in 2.1 vs those needing the spike (P2-3)
 
 ## Output Artifact
 
@@ -60,3 +60,29 @@ In Epic 1, v14 integration tests failed in CI because fixtures only worked local
 ## Notes
 
 This is a research and documentation task. Fixture files are documented here but created in P2-3 or Story 2.1 depending on complexity.
+
+## Dev Agent Record
+
+### Agent Model Used
+
+claude-sonnet-4-6
+
+### Debug Log References
+
+(none — no implementation failures)
+
+### Completion Notes List
+
+- Enumerated all fixtures under `tests/Fixtures/` (top-level) and `tests/Integration/Fixtures/TYPO3Installations/`. Zero existing fixtures have a `repositories` key in `composer.json`. All `composer.lock` source URLs point to `github.com`.
+- Confirmed v11, v12, v13, v14 Composer installations and legacy installations are fully covered by integration tests.
+- Identified 10 missing fixture formats needed for Epic 2 stories 2.1–2.4.
+- Recommended 5 formats as inline Story 2.1 (GitHub private, path type, empty repositories array, malformed JSON, unmatched domain) and 5 for spike P2-3 (GitLab SaaS public/private, GitLab self-hosted, Bitbucket public/private).
+- Key finding documented: `source.type` is always `"git"` for VCS repos; provider identification must use `source.url` domain, not `source.type`. The `path` type is the only exception where `source.type` is diagnostic.
+
+## File List
+
+- `_bmad-output/planning-artifacts/fixture-coverage-gap-analysis.md` (created)
+
+## Change Log
+
+- 2026-03-25: Story implemented — gap analysis document produced (P2-2)
