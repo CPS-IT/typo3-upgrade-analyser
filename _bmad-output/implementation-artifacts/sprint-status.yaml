@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-25 (Epic 1 all done; Pre-Epic-2 block added after retrospective)
+# last_updated: 2026-03-25 (p2-7 story created)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -58,20 +58,34 @@ development_status:
   # Pre-Epic-2: Foundation Quality & Preparation (created 2026-03-25 after Epic 1 retrospective)
   # Sequence: P2-1 → P2-4 → P2-2 → P2-3, then P2-5/P2-6 evaluated at Epic 2 kickoff
   pre-epic-2: in-progress
-  p2-1-code-quality-audit: ready-for-dev                         # A1: audit Discovery/ExternalTool/Reporting
+  p2-1-code-quality-audit: done                                  # A1: audit Discovery/ExternalTool/Reporting
   p2-2-fixture-coverage-gap-analysis: ready-for-dev              # A2: gap analysis for Epic 2 fixture needs
-  p2-3-gitlab-bitbucket-source-spike: backlog                    # A3: fixture + design note (depends on P2-2)
+  p2-3-gitlab-bitbucket-source-spike: ready-for-dev              # A3: fixture + design note (depends on P2-2)
   p2-4-fix-packagestates-v5-composer-extensions: ready-for-dev   # Bug #163: extension state in Composer projects
   p2-5-direct-indirect-extension-distinction: backlog            # Feature #150: evaluate at Epic 2 kickoff
   p2-6-exclude-local-packages-from-version-checks: backlog       # Feature #149: candidate for Epic 5
 
   # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
+  #
+  # KICKOFF CHECKLIST — review these findings from quality-audit-pre-epic-2.md before writing Epic 2 stories:
+  #   F-D-03 (HIGH)  ConfigurationDiscoveryService: no VersionProfileRegistry usage — natural Epic 2 prep
+  #   F-D-04 (MED)   Three duplicate determineInstallationType() impls — all three classes touched in Epic 2
+  #   F-E-01 (HIGH)  TerApiHttpClient: incomplete HTTP status handling, no retry
+  #   F-E-02 (HIGH)  TerApiClient: \Throwable catch hides parser bugs
+  #   F-E-03 (HIGH)  AbstractGitProvider: \Throwable catch — GitLabProvider/BitbucketProvider extend this
+  #   F-E-04 (HIGH)  GitVersionParser: main-branch compatibility ≠ all-tag compatibility (false positives)
+  #   F-E-05 (MED)   GitHubClient: no GraphQL rate limit handling
+  #   F-E-08 (MED)   VersionCompatibilityChecker: fragile wildcard pattern parsing
+  #   Decision per finding: bundle into existing story, add small pre-epic-2 story, or defer again.
   epic-2: backlog
   2-1-composer-source-parser: backlog
   2-2-gitlab-provider-public-and-private-instances: backlog
   2-3-bitbucket-provider: backlog
   2-4-unmatched-repository-source-warning: backlog
   epic-2-retrospective: optional
+
+  # Pre-Epic-3: Reporting Hardening (must complete before Epic 3 streaming refactor)
+  pre-epic-3-reporting-hardening: backlog                        # F-R-01/02/03/04: Twig error wrapping, file write checks, narrow catch
 
   # Epic 3: Memory-Safe Analysis for Large Installations
   epic-3: backlog

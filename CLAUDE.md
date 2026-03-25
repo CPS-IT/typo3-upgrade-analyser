@@ -91,13 +91,13 @@ vendor/bin/phpunit --coverage-html var/coverage
 ### Code Quality
 ```bash
 # Check code style (dry-run)
-composer cs:check
+composer lint:php
 
 # Fix code style issues
-composer cs:fix
+composer fix:php
 
 # Run static analysis (PHPStan Level 8)
-composer static-analysis
+composer sca:php
 ```
 
 ### Application Commands
