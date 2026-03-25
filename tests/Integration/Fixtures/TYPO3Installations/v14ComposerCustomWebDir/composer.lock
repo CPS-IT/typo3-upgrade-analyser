@@ -1,0 +1,86 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "This is a simplified test fixture for integration testing"
+    ],
+    "content-hash": "test-hash-v14-custom-web-dir-12345",
+    "packages": [
+        {
+            "name": "typo3/cms-core",
+            "version": "v14.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/TYPO3/typo3.git",
+                "reference": "v14abc123"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/TYPO3/typo3/zipball/v14abc123",
+                "reference": "v14abc123",
+                "shasum": ""
+            },
+            "type": "typo3-cms-framework",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "core"
+                }
+            },
+            "time": "2025-01-01T10:00:00+00:00"
+        },
+        {
+            "name": "georgringer/news",
+            "version": "v12.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/georgringer/news.git",
+                "reference": "v12jkl012"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/georgringer/news/zipball/v12jkl012",
+                "reference": "v12jkl012",
+                "shasum": ""
+            },
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "news"
+                }
+            },
+            "time": "2025-01-05T16:45:00+00:00"
+        },
+        {
+            "name": "example/powermail",
+            "version": "v11.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/example/powermail.git",
+                "reference": "v11ghi789"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/example/powermail/zipball/v11ghi789",
+                "reference": "v11ghi789",
+                "shasum": ""
+            },
+            "type": "typo3-cms-extension",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "powermail"
+                }
+            },
+            "time": "2025-01-10T09:15:00+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {
+        "php": "^8.3"
+    },
+    "platform-dev": [],
+    "plugin-api-version": "2.6.0"
+}
