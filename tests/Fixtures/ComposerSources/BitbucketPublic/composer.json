@@ -1,0 +1,12 @@
+{
+    "name": "myproject/typo3-site",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://bitbucket.org/myvendor/typo3-form-ext"
+        }
+    ],
+    "require": {
+        "myvendor/typo3-form-ext": "^2.0"
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "_readme": [
+        "This file is locked, do not edit it.",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies"
+    ],
+    "content-hash": "e5f6a1b2c3e5f6a1b2c3e5f6a1b2c3e5",
+    "packages": [
+        {
+            "name": "myvendor/private-typo3-ext",
+            "version": "1.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/myvendor/private-typo3-ext.git",
+                "reference": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/myvendor/private-typo3-ext/get/1.0.4.zip",
+                "reference": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"
+            },
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {}
+}

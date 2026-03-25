@@ -1,0 +1,23 @@
+{
+    "packages": [
+        {
+            "name": "myvendor/typo3-form-ext",
+            "version": "2.0.3",
+            "version_normalized": "2.0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/myvendor/typo3-form-ext.git",
+                "reference": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/myvendor/typo3-form-ext/get/2.0.3.zip",
+                "reference": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"
+            },
+            "installation-source": "source",
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

@@ -1,0 +1,23 @@
+{
+    "packages": [
+        {
+            "name": "myvendor/private-typo3-ext",
+            "version": "1.5.2",
+            "version_normalized": "1.5.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://gitlab.com/myvendor/private-typo3-ext.git",
+                "reference": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/myvendor/private-typo3-ext/-/archive/1.5.2/private-typo3-ext-1.5.2.zip",
+                "reference": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+            },
+            "installation-source": "source",
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}
