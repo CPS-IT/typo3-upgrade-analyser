@@ -10,7 +10,7 @@ declare(strict_types=1);
  * of the License or any later version.
  */
 
-namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
+namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation;
 
 /**
  * Represents different TYPO3 installation modes.

@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Configuration\ConfigurationData;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Configuration\ConfigurationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
