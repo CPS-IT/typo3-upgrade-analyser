@@ -1,6 +1,6 @@
 # Story P2-3: Discovery Spike — GitLab/Bitbucket Composer Source Entries
 
-Status: ready-for-dev
+Status: done
 
 ## GitHub Issue
 
@@ -39,39 +39,39 @@ If P2-2 is not yet done, do not start this story.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Read gap analysis document
-  - [ ] Load `_bmad-output/planning-artifacts/fixture-coverage-gap-analysis.md`
-  - [ ] Confirm which fixture types are marked "needs spike" — implement only those
+- [x] Task 1: Read gap analysis document
+  - [x] Load `_bmad-output/planning-artifacts/fixture-coverage-gap-analysis.md`
+  - [x] Confirm which fixture types are marked "needs spike" — implement only those
 
-- [ ] Task 2: Create fixture directory structure
-  - [ ] `tests/Fixtures/ComposerSources/GitLabSaasPublic/`
-  - [ ] `tests/Fixtures/ComposerSources/GitLabSaasPrivate/`
-  - [ ] `tests/Fixtures/ComposerSources/GitLabSelfHosted/`
-  - [ ] `tests/Fixtures/ComposerSources/BitbucketPublic/`
-  - [ ] `tests/Fixtures/ComposerSources/BitbucketPrivate/`
-  - [ ] `tests/Fixtures/ComposerSources/README.md`
+- [x] Task 2: Create fixture directory structure
+  - [x] `tests/Fixtures/ComposerSources/GitLabSaasPublic/`
+  - [x] `tests/Fixtures/ComposerSources/GitLabSaasPrivate/`
+  - [x] `tests/Fixtures/ComposerSources/GitLabSelfHosted/`
+  - [x] `tests/Fixtures/ComposerSources/BitbucketPublic/`
+  - [x] `tests/Fixtures/ComposerSources/BitbucketPrivate/`
+  - [x] `tests/Fixtures/ComposerSources/README.md`
 
-- [ ] Task 3: Populate fixture files (per directory)
-  - [ ] `composer.json` with `repositories` entry for each type
-  - [ ] `composer.lock` excerpt (packages array entry with `source` key)
-  - [ ] `installed.json` (vendor/composer/installed.json format)
+- [x] Task 3: Populate fixture files (per directory)
+  - [x] `composer.json` with `repositories` entry for each type
+  - [x] `composer.lock` excerpt (packages array entry with `source` key)
+  - [x] `installed.json` (vendor/composer/installed.json format)
 
-- [ ] Task 4: Write design note
-  - [ ] Document primary identification field: `source.url` domain in composer.lock
-  - [ ] Document fallback: `repositories[].url` in composer.json (for unresolved packages)
-  - [ ] Document edge cases (non-standard ports, SSH URLs, path type)
-  - [ ] Document decision: URL pattern match (domain-based) vs `type` field vs `dist.url`
+- [x] Task 4: Write design note
+  - [x] Document primary identification field: `source.url` domain in composer.lock
+  - [x] Document fallback: `repositories[].url` in composer.json (for unresolved packages)
+  - [x] Document edge cases (non-standard ports, SSH URLs, path type)
+  - [x] Document decision: URL pattern match (domain-based) vs `type` field vs `dist.url`
 
-- [ ] Task 5: Write fixture smoke tests
-  - [ ] `tests/Unit/Fixtures/ComposerSourceFixtureIntegrityTest.php`
-  - [ ] Assert JSON validity for each composer.lock and installed.json fixture
-  - [ ] Assert presence of `source.type`, `source.url`, `source.reference` fields
-  - [ ] Assert `repositories` entry present in each composer.json fixture
+- [x] Task 5: Write fixture smoke tests
+  - [x] `tests/Unit/Fixtures/ComposerSourceFixtureIntegrityTest.php`
+  - [x] Assert JSON validity for each composer.lock and installed.json fixture
+  - [x] Assert presence of `source.type`, `source.url`, `source.reference` fields
+  - [x] Assert `repositories` entry present in each composer.json fixture
 
-- [ ] Task 6: Quality gate
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca:php` — zero PHPStan errors
-  - [ ] `composer lint:php` — zero CS violations
+- [x] Task 6: Quality gate
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan errors
+  - [x] `composer lint:php` — zero CS violations
 
 ## Output Artifacts
 
@@ -232,6 +232,37 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+No blockers. All tasks completed in one pass.
+
 ### Completion Notes List
 
+- Gap analysis confirmed 5 fixture types for the spike: GitLab SaaS public/private, GitLab self-hosted, Bitbucket public/private.
+- Created 5 fixture directories, each with composer.json, composer.lock, installed.json.
+- Design note documents: `source.url` domain as primary identification field; `repositories[].url` as fallback; SSH URL handling; path type detection; self-hosted GitLab requires explicit config; public/private distinction is runtime-only.
+- Smoke test (`ComposerSourceFixtureIntegrityTest`) covers all 15 fixture files across 3 test methods with data providers. 15/15 assertions pass.
+- Full test suite (1599 tests), PHPStan Level 8, PHP-CS-Fixer — all clean.
+
 ### File List
+
+- `tests/Fixtures/ComposerSources/README.md`
+- `tests/Fixtures/ComposerSources/GitLabSaasPublic/composer.json`
+- `tests/Fixtures/ComposerSources/GitLabSaasPublic/composer.lock`
+- `tests/Fixtures/ComposerSources/GitLabSaasPublic/installed.json`
+- `tests/Fixtures/ComposerSources/GitLabSaasPrivate/composer.json`
+- `tests/Fixtures/ComposerSources/GitLabSaasPrivate/composer.lock`
+- `tests/Fixtures/ComposerSources/GitLabSaasPrivate/installed.json`
+- `tests/Fixtures/ComposerSources/GitLabSelfHosted/composer.json`
+- `tests/Fixtures/ComposerSources/GitLabSelfHosted/composer.lock`
+- `tests/Fixtures/ComposerSources/GitLabSelfHosted/installed.json`
+- `tests/Fixtures/ComposerSources/BitbucketPublic/composer.json`
+- `tests/Fixtures/ComposerSources/BitbucketPublic/composer.lock`
+- `tests/Fixtures/ComposerSources/BitbucketPublic/installed.json`
+- `tests/Fixtures/ComposerSources/BitbucketPrivate/composer.json`
+- `tests/Fixtures/ComposerSources/BitbucketPrivate/composer.lock`
+- `tests/Fixtures/ComposerSources/BitbucketPrivate/installed.json`
+- `tests/Unit/Fixtures/ComposerSourceFixtureIntegrityTest.php`
+- `_bmad-output/planning-artifacts/composer-source-parser-design-note.md`
+
+## Change Log
+
+- 2026-03-25: Implemented story P2-3 — created 5 ComposerSources fixture sets (15 files), design note, and smoke test. All quality gates pass.

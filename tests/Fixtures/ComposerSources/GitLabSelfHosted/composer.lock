@@ -1,0 +1,32 @@
+{
+    "_readme": [
+        "This file is locked, do not edit it.",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies"
+    ],
+    "content-hash": "c3d4e5f6a1c3d4e5f6a1c3d4e5f6a1c3",
+    "packages": [
+        {
+            "name": "myvendor/internal-ext",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.example.com/myvendor/internal-ext.git",
+                "reference": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://git.example.com/myvendor/internal-ext/-/archive/1.0.0/internal-ext-1.0.0.zip",
+                "reference": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
+            },
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {}
+}

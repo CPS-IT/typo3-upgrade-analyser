@@ -1,0 +1,32 @@
+{
+    "_readme": [
+        "This file is locked, do not edit it.",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies"
+    ],
+    "content-hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "packages": [
+        {
+            "name": "myvendor/typo3-ext-news",
+            "version": "3.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://gitlab.com/myvendor/typo3-ext-news.git",
+                "reference": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/myvendor/typo3-ext-news/-/archive/3.0.1/typo3-ext-news-3.0.1.zip",
+                "reference": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3"
+            },
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {}
+}

@@ -1,0 +1,12 @@
+{
+    "name": "myproject/typo3-site",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/myvendor/typo3-ext-news"
+        }
+    ],
+    "require": {
+        "myvendor/typo3-ext-news": "^3.0"
+    }
+}

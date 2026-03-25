@@ -1,0 +1,12 @@
+{
+    "name": "myproject/typo3-site",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://git.example.com/myvendor/internal-ext"
+        }
+    ],
+    "require": {
+        "myvendor/internal-ext": "^1.0"
+    }
+}
