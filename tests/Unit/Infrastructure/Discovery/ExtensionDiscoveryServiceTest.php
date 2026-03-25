@@ -1163,6 +1163,102 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     }
 
     /**
+     * Regression test for issue #163: Composer installations must not use PackageStates.php
+     * to determine extension active state. Extensions in installed.json must be active.
+     */
+    public function testComposerInstallationSkipsPackageStatesAndUsesInstalledJson(): void
+    {
+        // Make it a Composer installation (has composer.json + public/)
+        file_put_contents($this->tempDir . '/composer.json', json_encode(['name' => 'test/project', 'type' => 'project']));
+        mkdir($this->tempDir . '/public', 0o755, true);
+
+        // PackageStates.php v5 format (no 'state' key — Composer-mode format, triggers the bug)
+        $packageStatesPath = $this->tempDir . '/public/typo3conf/PackageStates.php';
+        mkdir(\dirname($packageStatesPath), 0o755, true);
+        $packageStatesContent = "<?php\nreturn " . var_export([
+            'packages' => [
+                'news' => ['packagePath' => 'vendor/georgringer/news/'],
+                'powermail' => ['packagePath' => 'vendor/example/powermail/'],
+            ],
+            'version' => 5,
+        ], true) . ";\n";
+        file_put_contents($packageStatesPath, $packageStatesContent);
+
+        // installed.json is the authoritative source for Composer installations
+        $composerPackages = [
+            [
+                'name' => 'georgringer/news',
+                'type' => 'typo3-cms-extension',
+                'version' => '12.0.0',
+                'description' => 'News extension',
+                'extra' => ['typo3/cms' => ['extension-key' => 'news']],
+            ],
+            [
+                'name' => 'example/powermail',
+                'type' => 'typo3-cms-extension',
+                'version' => '11.0.0',
+                'description' => 'Powermail extension',
+                'extra' => ['typo3/cms' => ['extension-key' => 'powermail']],
+            ],
+        ];
+        $this->createComposerInstalledFile($composerPackages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        $this->assertTrue($result->isSuccessful());
+        $extensions = $result->getExtensions();
+        $this->assertCount(2, $extensions);
+
+        foreach ($extensions as $extension) {
+            $this->assertTrue(
+                $extension->isActive(),
+                \sprintf('Extension "%s" must be active in a Composer installation', $extension->getKey()),
+            );
+        }
+
+        $extensionKeys = array_map(static fn ($ext): string => $ext->getKey(), $extensions);
+        $this->assertContains('news', $extensionKeys);
+        $this->assertContains('powermail', $extensionKeys);
+    }
+
+    /**
+     * Regression test for issue #163: createExtensionFromPackageData() must not produce
+     * "Undefined array key state" warning when state key is absent.
+     */
+    public function testPackageStatesEntryWithoutStateKeyDefaultsToInactive(): void
+    {
+        // Non-Composer installation (no composer.json) with PackageStates missing 'state' key
+        $packages = [
+            'my_ext' => [
+                'packagePath' => 'typo3conf/ext/my_ext/',
+                // intentionally no 'state' key
+            ],
+        ];
+
+        $this->createPackageStatesFile($packages);
+        $this->createExtEmconfFile('my_ext', $this->tempDir . '/public/typo3conf/ext/my_ext', [
+            'title' => 'My Extension',
+            'version' => '1.0.0',
+        ]);
+
+        // Must not produce any PHP warnings
+        set_error_handler(static function (int $errno, string $errstr): bool {
+            throw new \ErrorException($errstr, $errno);
+        }, E_WARNING);
+
+        try {
+            $result = $this->service->discoverExtensions($this->tempDir);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertTrue($result->isSuccessful());
+        $extensions = $result->getExtensions();
+        $this->assertCount(1, $extensions);
+        $this->assertFalse($extensions[0]->isActive(), 'Extension without state key should default to inactive');
+    }
+
+    /**
      * Set up default PathResolutionService mocks that return successful responses
      * for the standard path types used in most tests.
      */

@@ -70,23 +70,40 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
             $successfulMethods = [];
             $discoveryMetadata = [];
 
+            // Determine installation type to select appropriate discovery methods
+            $installationType = $this->determineInstallationType($installationPath, $customPaths);
+            $isComposerInstallation = \in_array($installationType, [
+                InstallationTypeEnum::COMPOSER_STANDARD,
+                InstallationTypeEnum::COMPOSER_CUSTOM,
+            ], true);
+
             // Determine paths based on custom paths or defaults
-            $paths = $this->resolvePaths($installationPath, $customPaths);
+            $paths = $this->resolvePaths($installationPath, $customPaths, $installationType);
 
-            // Try PackageStates.php first (legacy and modern TYPO3)
-            $packageStatesData = $this->discoverFromPackageStates($installationPath, $paths);
-            $discoveryMetadata[] = [
-                'method' => 'PackageStates.php',
-                'attempted' => true,
-                'successful' => !empty($packageStatesData),
-                'extensions_found' => \count($packageStatesData),
-                'file_path' => $paths['package_states'],
-            ];
+            // Try PackageStates.php only for legacy (non-Composer) installations.
+            // Composer installations do not carry a 'state' key in PackageStates.php (v5 format),
+            // so reading it would silently mark all extensions inactive (issue #163).
+            if (!$isComposerInstallation) {
+                $packageStatesData = $this->discoverFromPackageStates($installationPath, $paths);
+                $discoveryMetadata[] = [
+                    'method' => 'PackageStates.php',
+                    'attempted' => true,
+                    'successful' => !empty($packageStatesData),
+                    'extensions_found' => \count($packageStatesData),
+                    'file_path' => $paths['package_states'],
+                ];
 
-            if (!empty($packageStatesData)) {
-                $extensions = array_merge($extensions, $packageStatesData);
-                $successfulMethods[] = 'PackageStates.php';
-                $this->logger->info('Found extensions via PackageStates.php', ['count' => \count($packageStatesData)]);
+                if (!empty($packageStatesData)) {
+                    $extensions = array_merge($extensions, $packageStatesData);
+                    $successfulMethods[] = 'PackageStates.php';
+                    $this->logger->info('Found extensions via PackageStates.php', ['count' => \count($packageStatesData)]);
+                }
+            } else {
+                $discoveryMetadata[] = [
+                    'method' => 'PackageStates.php',
+                    'attempted' => false,
+                    'reason' => 'Skipped for Composer installation (issue #163)',
+                ];
             }
 
             // Try composer installed.json for composer mode installations
@@ -143,12 +160,13 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
      * Resolve paths using PathResolutionService with sophisticated TYPO3 installation detection.
      * Falls back to hardcoded logic if PathResolutionService fails to ensure backward compatibility.
      *
-     * @param string     $installationPath Base installation path
-     * @param array|null $customPaths      Custom paths from installation metadata
+     * @param string               $installationPath Base installation path
+     * @param array|null           $customPaths      Custom paths from installation metadata
+     * @param InstallationTypeEnum $installationType Pre-computed installation type
      *
      * @return array<string, string> Resolved paths
      */
-    private function resolvePaths(string $installationPath, ?array $customPaths): array
+    private function resolvePaths(string $installationPath, ?array $customPaths, InstallationTypeEnum $installationType): array
     {
         try {
             // Create path configuration from custom paths
@@ -157,9 +175,6 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 'validateExists' => false, // Don't require existence for discovery
                 'followSymlinks' => true,
             ]);
-
-            // Determine installation type based on filesystem structure
-            $installationType = $this->determineInstallationType($installationPath, $customPaths);
 
             // Use PathResolutionService to resolve all required paths
             $resolvedPaths = [];
@@ -472,7 +487,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 null, // No composer name from PackageStates
             );
 
-            $extension->setActive('active' === $packageData['state']);
+            $extension->setActive(isset($packageData['state']) && 'active' === $packageData['state']);
             $extension->setEmConfiguration($emConfiguration);
 
             return $extension;

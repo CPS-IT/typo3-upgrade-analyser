@@ -120,6 +120,19 @@ final class Typo3V13ComposerDiscoveryTest extends AbstractIntegrationTestCase
         $this->assertContains('news', $extensionKeys, 'georgringer/news should be discovered');
         $this->assertContains('powermail', $extensionKeys, 'example/powermail should be discovered');
 
+        // Regression test for issue #163: all extensions must be active.
+        // The v13Composer fixture contains a v5 PackageStates.php without 'state' keys.
+        // Before the fix, reading that file caused extensions to be marked inactive.
+        foreach ($extensionResult->getExtensions() as $extension) {
+            $this->assertTrue(
+                $extension->isActive(),
+                \sprintf(
+                    'Extension "%s" must be active in a Composer installation (regression test for issue #163)',
+                    $extension->getKey(),
+                ),
+            );
+        }
+
         // Core packages must not appear (filtered by typo3/cms-* prefix)
         $composerNames = array_filter(
             array_map(static fn ($ext): ?string => $ext->getComposerName(), $extensionResult->getExtensions()),
