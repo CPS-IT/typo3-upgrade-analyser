@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-22 (Story 1.2 moved to review)
+# last_updated: 2026-03-25 (Epic 1 all done; Pre-Epic-2 block added after retrospective)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-22
+last_updated: 2026-03-25
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -43,12 +43,27 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 
 development_status:
   # Epic 1: Trustworthy Analysis Across TYPO3 Versions
-  epic-1: in-progress
+  epic-1: done
   1-1-version-profile-registry: done
   1-2-typo3-v11-core-extension-accurate-exclusion: done
-  1-3-typo3-v13-composer-installation-support: backlog
-  1-4-typo3-v14-composer-installation-support: backlog
-  epic-1-retrospective: optional
+  1-3-typo3-v13-composer-installation-support: done
+  1-4-fix-discovery-result-cache-null-installation: done
+  1-5-typo3-v14-composer-installation-support: done
+  1-6-fix-extension-discovery-cache-key-double-computation: done
+  1-7-add-negative-case-tests-installation-discovery: done
+  1-8-refactor-composer-installation-detection: done
+  1-9-cleanup-composer-installation-detector: done
+  epic-1-retrospective: done
+
+  # Pre-Epic-2: Foundation Quality & Preparation (created 2026-03-25 after Epic 1 retrospective)
+  # Sequence: P2-1 → P2-4 → P2-2 → P2-3, then P2-5/P2-6 evaluated at Epic 2 kickoff
+  pre-epic-2: in-progress
+  p2-1-code-quality-audit: ready-for-dev                         # A1: audit Discovery/ExternalTool/Reporting
+  p2-2-fixture-coverage-gap-analysis: ready-for-dev              # A2: gap analysis for Epic 2 fixture needs
+  p2-3-gitlab-bitbucket-source-spike: backlog                    # A3: fixture + design note (depends on P2-2)
+  p2-4-fix-packagestates-v5-composer-extensions: ready-for-dev   # Bug #163: extension state in Composer projects
+  p2-5-direct-indirect-extension-distinction: backlog            # Feature #150: evaluate at Epic 2 kickoff
+  p2-6-exclude-local-packages-from-version-checks: backlog       # Feature #149: candidate for Epic 5
 
   # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
   epic-2: backlog
