@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMetadata;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

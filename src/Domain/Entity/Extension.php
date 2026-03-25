@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**

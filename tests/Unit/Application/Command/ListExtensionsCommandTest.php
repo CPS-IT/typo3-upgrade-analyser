@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationServiceInterface;

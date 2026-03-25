@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Configuration\ConfigurationMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ParseResult;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ConfigurationDiscoveryService;

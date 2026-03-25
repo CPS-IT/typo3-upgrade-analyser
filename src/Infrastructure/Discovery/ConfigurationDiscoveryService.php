@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationData;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ConfigurationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Configuration\ConfigurationData;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Configuration\ConfigurationMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\ConfigurationParserInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;

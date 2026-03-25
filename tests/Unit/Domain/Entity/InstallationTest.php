@@ -14,8 +14,8 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMetadata;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\InstallationMode;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Installation\InstallationMode;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;

@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\Entity;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\ExtensionMetadata;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
