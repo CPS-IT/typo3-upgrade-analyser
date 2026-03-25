@@ -476,6 +476,468 @@ final class ComposerInstallationDetectorTest extends TestCase
         rmdir($dir);
     }
 
+    // -------------------------------------------------------------------------
+    // Task 1 – web-dir validation (AC 1) + edge-case hardening
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function testWebDirNullByteFallsBackToPublic(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => "web\x00dir"]],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testWebDirWindowsDriveLetterFallsBackToPublic(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => 'C:\www']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testWebDirTrailingSlashDoesNotCauseCustomInstallationType(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => 'public/']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        $capturedTypes = [];
+        $localPathService = $this->createMock(PathResolutionServiceInterface::class);
+        $localPathService->method('resolvePath')
+            ->willReturnCallback(function ($request) use (&$capturedTypes): PathResolutionResponse {
+                $capturedTypes[] = $request->installationType;
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'test',
+                    0,
+                    [],
+                    [],
+                    0.0,
+                    false,
+                    'test',
+                );
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $request->installationPath . '/public',
+                    $metadata,
+                    [],
+                    [],
+                    'cache_key',
+                    0.1,
+                );
+            });
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $localPathService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        foreach ($capturedTypes as $type) {
+            self::assertSame(InstallationTypeEnum::COMPOSER_STANDARD, $type);
+        }
+    }
+
+    #[Test]
+    public function testInvalidWebDirDoesNotCauseCustomInstallationTypeClassification(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => '/absolute/path']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        $capturedTypes = [];
+        $localPathService = $this->createMock(PathResolutionServiceInterface::class);
+        $localPathService->method('resolvePath')
+            ->willReturnCallback(function ($request) use (&$capturedTypes): PathResolutionResponse {
+                $capturedTypes[] = $request->installationType;
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'test',
+                    0,
+                    [],
+                    [],
+                    0.0,
+                    false,
+                    'test',
+                );
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $request->installationPath . '/public',
+                    $metadata,
+                    [],
+                    [],
+                    'cache_key',
+                    0.1,
+                );
+            });
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $localPathService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        foreach ($capturedTypes as $type) {
+            self::assertSame(InstallationTypeEnum::COMPOSER_STANDARD, $type);
+        }
+    }
+
+    #[Test]
+    public function testWebDirAbsolutePathFallsBackToPublic(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => '/absolute/path']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testWebDirPathTraversalFallsBackToPublic(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => '../traversal']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testWebDirEmptyStringFallsBackToPublic(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => '']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        mkdir($this->testDir . '/public/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    // -------------------------------------------------------------------------
+    // Task 2 – version-aware paths (AC 2, 3)
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function testDetectEnabledFeaturesUsesResolvedWebDirForV12(): void
+    {
+        $composerData = [
+            'require' => ['typo3/cms-core' => '^12.4'],
+            'extra' => ['typo3/cms' => ['web-dir' => 'web']],
+        ];
+        file_put_contents($this->testDir . '/composer.json', json_encode($composerData));
+
+        // Extension dir at the custom web-dir location
+        mkdir($this->testDir . '/web/typo3conf/ext', 0o755, true);
+
+        $workingStrategy = new TestableVersionStrategy(); // returns 12.4.8
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testDetectEnabledFeaturesUsesRootExtDirForV11(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        // In v11 the extension dir is at the installation root
+        mkdir($this->testDir . '/typo3conf/ext', 0o755, true);
+
+        $v11Strategy = new TestableVersionStrategyV11();
+        $v11VersionExtractor = new VersionExtractor([$v11Strategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $v11VersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertContains('extensions', $result->getMetadata()->getEnabledFeatures());
+    }
+
+    #[Test]
+    public function testDetectDatabaseConfigUsesV11Paths(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        mkdir($this->testDir . '/typo3conf', 0o755, true);
+        file_put_contents($this->testDir . '/typo3conf/LocalConfiguration.php', '<?php return [];');
+
+        $v11Strategy = new TestableVersionStrategyV11();
+        $v11VersionExtractor = new VersionExtractor([$v11Strategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $v11VersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertTrue($result->getMetadata()->getDatabaseConfig()['has_local_configuration'] ?? false);
+    }
+
+    #[Test]
+    public function testDetectDatabaseConfigDoesNotUseV12PathsForV11(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        // Create v12 path only — must NOT be detected when version is v11
+        mkdir($this->testDir . '/config/system', 0o755, true);
+        file_put_contents($this->testDir . '/config/system/settings.php', '<?php return [];');
+
+        $v11Strategy = new TestableVersionStrategyV11();
+        $v11VersionExtractor = new VersionExtractor([$v11Strategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $v11VersionExtractor,
+            $this->pathResolutionService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        self::assertNotNull($result->getMetadata());
+        self::assertFalse($result->getMetadata()->getDatabaseConfig()['has_local_configuration'] ?? false);
+    }
+
+    // -------------------------------------------------------------------------
+    // Task 3 – no Docker classification (AC 4)
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function testDockerFilesDoNotInfluenceInstallationType(): void
+    {
+        $this->createValidComposerTypo3Installation();
+        file_put_contents($this->testDir . '/docker-compose.yml', '');
+        file_put_contents($this->testDir . '/Dockerfile', '');
+
+        $capturedTypes = [];
+        $localPathService = $this->createMock(PathResolutionServiceInterface::class);
+        $localPathService->method('resolvePath')
+            ->willReturnCallback(function ($request) use (&$capturedTypes): PathResolutionResponse {
+                $capturedTypes[] = $request->installationType;
+
+                $metadata = new PathResolutionMetadata(
+                    $request->pathType,
+                    InstallationTypeEnum::COMPOSER_STANDARD,
+                    'test_strategy',
+                    0,
+                    [],
+                    [],
+                    0.0,
+                    false,
+                    'test',
+                );
+
+                return PathResolutionResponse::success(
+                    $request->pathType,
+                    $request->installationPath . '/public',
+                    $metadata,
+                    [],
+                    [],
+                    'cache_key',
+                    0.1,
+                );
+            });
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $localPathService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNotNull($result);
+        foreach ($capturedTypes as $type) {
+            self::assertNotSame(InstallationTypeEnum::DOCKER_CONTAINER, $type);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Task 4 – narrow exception handling (AC 5)
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function testDetectCatchesRuntimeExceptionFromPathResolutionService(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        $throwingPathService = $this->createMock(PathResolutionServiceInterface::class);
+        $throwingPathService->method('resolvePath')
+            ->willThrowException(new \RuntimeException('Path resolution failed'));
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+
+        $this->logger->expects(self::atLeastOnce())->method('error');
+
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $throwingPathService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $result = $detector->detect($this->testDir);
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function testDetectDoesNotSwallowErrors(): void
+    {
+        $this->createValidComposerTypo3Installation();
+
+        $throwingPathService = $this->createMock(PathResolutionServiceInterface::class);
+        $throwingPathService->method('resolvePath')
+            ->willThrowException(new \Error('Fatal error'));
+
+        $workingStrategy = new TestableVersionStrategy();
+        $workingVersionExtractor = new VersionExtractor([$workingStrategy], $this->logger);
+
+        $detector = new ComposerInstallationDetector(
+            $workingVersionExtractor,
+            $throwingPathService,
+            $this->logger,
+            $this->versionProfileRegistry,
+        );
+
+        $this->expectException(\Error::class);
+        $detector->detect($this->testDir);
+    }
+
     private function setupDefaultPathResolutionMocks(): void
     {
         // Mock vendor-dir resolution
@@ -578,6 +1040,42 @@ class TestableVersionStrategy implements VersionStrategyInterface
     public function getName(): string
     {
         return 'Testable Version Strategy';
+    }
+
+    public function getPriority(): int
+    {
+        return 100;
+    }
+
+    public function getReliabilityScore(): float
+    {
+        return 1.0;
+    }
+
+    public function getRequiredFiles(): array
+    {
+        return ['composer.json'];
+    }
+}
+
+/**
+ * Test strategy that returns a TYPO3 v11 version.
+ */
+class TestableVersionStrategyV11 implements VersionStrategyInterface
+{
+    public function supports(string $installationPath): bool
+    {
+        return file_exists($installationPath . '/composer.json');
+    }
+
+    public function extractVersion(string $installationPath): ?Version
+    {
+        return new Version('11.5.30');
+    }
+
+    public function getName(): string
+    {
+        return 'Testable Version Strategy V11';
     }
 
     public function getPriority(): int

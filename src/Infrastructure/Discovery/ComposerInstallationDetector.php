@@ -102,7 +102,7 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
             ]);
 
             return $installation;
-        } catch (\Throwable $e) {
+        } catch (\RuntimeException $e) {
             $this->logger->error('Error during Composer installation detection', [
                 'path' => $path,
                 'error' => $e->getMessage(),
@@ -226,9 +226,10 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
     private function createInstallationMetadata(string $path, Version $version, array $composerData): InstallationMetadata
     {
         $phpVersions = $this->detectPhpVersions($composerData);
-        $databaseConfig = $this->detectDatabaseConfig($path);
-        $enabledFeatures = $this->detectEnabledFeatures($path);
-        $customPaths = $this->detectCustomPaths($path, $version, $composerData);
+        $webDir = $this->getWebDirectoryForSupportsCheck($composerData);
+        $databaseConfig = $this->detectDatabaseConfig($path, $version);
+        $enabledFeatures = $this->detectEnabledFeatures($path, $webDir, $version);
+        $customPaths = $this->detectCustomPaths($path, $version, $composerData, $webDir);
         $lastModified = $this->getLastModifiedTime($path);
 
         return new InstallationMetadata(
@@ -261,20 +262,71 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
     }
 
     /**
+     * Validate and return the web-dir from composer.json extra config.
+     *
+     * Rejects absolute paths, path traversal sequences, and empty strings.
+     * Falls back to 'public' on any invalid value.
+     *
+     * @param array<mixed> $composerData Pre-parsed composer.json data
+     */
+    private function getWebDirectoryForSupportsCheck(array $composerData): string
+    {
+        $webDir = $composerData['extra']['typo3/cms']['web-dir'] ?? null;
+
+        if (!\is_string($webDir) || '' === $webDir) {
+            return 'public';
+        }
+
+        if (str_contains($webDir, "\x00")) {
+            $this->logger->warning('Invalid web-dir: null byte not allowed, falling back to public', ['web-dir' => $webDir]);
+
+            return 'public';
+        }
+
+        if ('/' === $webDir[0] || '\\' === $webDir[0]) {
+            $this->logger->warning('Invalid web-dir: absolute path not allowed, falling back to public', ['web-dir' => $webDir]);
+
+            return 'public';
+        }
+
+        if (1 === preg_match('/^[a-zA-Z]:[\/\\\\]/', $webDir)) {
+            $this->logger->warning('Invalid web-dir: Windows drive-letter path not allowed, falling back to public', ['web-dir' => $webDir]);
+
+            return 'public';
+        }
+
+        if (str_contains($webDir, '..')) {
+            $this->logger->warning('Invalid web-dir: path traversal not allowed, falling back to public', ['web-dir' => $webDir]);
+
+            return 'public';
+        }
+
+        return rtrim($webDir, '/\\');
+    }
+
+    /**
      * Detect database configuration from TYPO3 configuration.
      *
-     * @param string $path Installation path
+     * Uses version-aware paths: config/system/settings.php for v12+,
+     * typo3conf/LocalConfiguration.php for v11.
+     *
+     * @param string  $path    Installation path
+     * @param Version $version Detected TYPO3 version
      *
      * @return array<string, mixed> Database configuration
      */
-    private function detectDatabaseConfig(string $path): array
+    private function detectDatabaseConfig(string $path, Version $version): array
     {
-        $localConfigPath = $path . '/config/system/settings.php';
-        $additionalConfigPath = $path . '/config/system/additional.php';
-
-        // For now, return minimal database info
         // Full configuration parsing will be implemented in Phase 3
         $config = [];
+
+        if ($version->getMajor() >= 12) {
+            $localConfigPath = $path . '/config/system/settings.php';
+            $additionalConfigPath = $path . '/config/system/additional.php';
+        } else {
+            $localConfigPath = $path . '/typo3conf/LocalConfiguration.php';
+            $additionalConfigPath = $path . '/typo3conf/AdditionalConfiguration.php';
+        }
 
         if (file_exists($localConfigPath)) {
             $config['has_local_configuration'] = true;
@@ -290,16 +342,24 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
     /**
      * Detect enabled TYPO3 features.
      *
-     * @param string $path Installation path
+     * Uses the resolved web-dir and version-aware paths: {webDir}/typo3conf/ext
+     * for v12+, typo3conf/ext at the installation root for v11.
+     *
+     * @param string  $path    Installation path
+     * @param string  $webDir  Validated web directory (e.g. 'public')
+     * @param Version $version Detected TYPO3 version
      *
      * @return array<string> Enabled features
      */
-    private function detectEnabledFeatures(string $path): array
+    private function detectEnabledFeatures(string $path, string $webDir, Version $version): array
     {
         $features = [];
 
-        // Check for common TYPO3 features based on directory structure
-        if (is_dir($path . '/public/typo3conf/ext')) {
+        $extDir = $version->getMajor() >= 12
+            ? $path . '/' . $webDir . '/typo3conf/ext'
+            : $path . '/typo3conf/ext';
+
+        if (is_dir($extDir)) {
             $features[] = 'extensions';
         }
 
@@ -307,7 +367,11 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
             $features[] = 'site_configuration';
         }
 
-        if (file_exists($path . '/config/system/settings.php')) {
+        $settingsFile = $version->getMajor() >= 12
+            ? $path . '/config/system/settings.php'
+            : $path . '/typo3conf/LocalConfiguration.php';
+
+        if (file_exists($settingsFile)) {
             $features[] = 'system_configuration';
         }
 
@@ -323,9 +387,9 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
      *
      * @return array<string, string> Custom paths
      */
-    private function detectCustomPaths(string $path, Version $version, array $composerData): array
+    private function detectCustomPaths(string $path, Version $version, array $composerData, string $webDir): array
     {
-        $installationType = $this->determineInstallationType($path, $composerData);
+        $installationType = $this->determineInstallationType($composerData, $webDir);
         $pathConfiguration = PathConfiguration::createDefault();
 
         $pathTypes = [
@@ -384,21 +448,15 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
     /**
      * Determine installation type based on pre-parsed composer.json data and directory structure.
      *
-     * @param string       $path         Installation path
      * @param array<mixed> $composerData Pre-parsed composer.json data
      *
      * @return InstallationTypeEnum Installation type
      */
-    private function determineInstallationType(string $path, array $composerData): InstallationTypeEnum
+    private function determineInstallationType(array $composerData, string $validatedWebDir): InstallationTypeEnum
     {
-        // Check for custom TYPO3 configuration
-        if (isset($composerData['extra']['typo3/cms']) && \is_array($composerData['extra']['typo3/cms'])) {
-            $typo3Config = $composerData['extra']['typo3/cms'];
-
-            // If custom web-dir is configured, it's a custom installation
-            if (isset($typo3Config['web-dir']) && \is_string($typo3Config['web-dir']) && 'public' !== $typo3Config['web-dir']) {
-                return InstallationTypeEnum::COMPOSER_CUSTOM;
-            }
+        // If the validated web-dir differs from the default 'public', it's a custom installation
+        if ('public' !== $validatedWebDir) {
+            return InstallationTypeEnum::COMPOSER_CUSTOM;
         }
 
         // Check for custom vendor directory
@@ -408,11 +466,6 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
             && 'vendor' !== $composerData['config']['vendor-dir']
         ) {
             return InstallationTypeEnum::COMPOSER_CUSTOM;
-        }
-
-        // Check for Docker indicators
-        if (file_exists($path . '/docker-compose.yml') || file_exists($path . '/Dockerfile')) {
-            return InstallationTypeEnum::DOCKER_CONTAINER;
         }
 
         return InstallationTypeEnum::COMPOSER_STANDARD;

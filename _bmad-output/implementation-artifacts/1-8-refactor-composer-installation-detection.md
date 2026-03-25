@@ -1,6 +1,6 @@
 # Story 1.8: Fix Composer Installation Detection — Replace Filesystem Indicators
 
-Status: review
+Status: done
 
 ## Story
 

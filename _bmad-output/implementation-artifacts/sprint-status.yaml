@@ -52,7 +52,7 @@ development_status:
   1-6-fix-extension-discovery-cache-key-double-computation: done
   1-7-add-negative-case-tests-installation-discovery: done
   1-8-refactor-composer-installation-detection: done
-  1-9-cleanup-composer-installation-detector: backlog
+  1-9-cleanup-composer-installation-detector: done
   epic-1-retrospective: optional
 
   # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
