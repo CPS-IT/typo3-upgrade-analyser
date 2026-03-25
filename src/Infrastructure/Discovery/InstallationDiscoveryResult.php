@@ -319,6 +319,17 @@ final readonly class InstallationDiscoveryResult implements SerializableInterfac
     public static function fromArray(array $data): static
     {
         if ($data['successful']) {
+            if (!isset($data['installation']) || !\is_array($data['installation'])) {
+                return new self(
+                    null,
+                    false,
+                    'Cache deserialization error: successful result is missing installation data',
+                    null,
+                    [],
+                    $data['attempted_strategies'] ?? [],
+                );
+            }
+
             // Use Installation's own fromArray method for proper deserialization
             $installation = Installation::fromArray($data['installation']);
 

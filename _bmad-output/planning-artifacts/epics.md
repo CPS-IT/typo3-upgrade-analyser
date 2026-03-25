@@ -283,12 +283,29 @@ So that I can analyze projects targeting the current LTS release and the tool fo
 **And** core extensions defined in the v13 profile are excluded from results
 **And** a second fixture `v13ComposerCustomWebDir/` with a non-standard `web-dir` also passes, with the custom path read from `composer.json` and overriding the profile default
 **And** both fixtures are physical file trees (no dynamically generated content)
-**And** the v13 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: false`
+**And** the v13 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: true` (v13 supports both Composer and classic installation modes per official documentation)
 **And** PHPStan Level 8 reports zero errors
 
 ---
 
-### Story 1.4: TYPO3 v14 Composer Installation Support
+### Story 1.4: Fix `InstallationDiscoveryResult::fromArray` Null-Installation TypeError on Cache Replay
+
+As a developer,
+I want `InstallationDiscoveryResult::fromArray` to handle a missing or null `installation` key defensively,
+so that replaying a cached failure result (or any corrupted cache entry) never throws a `TypeError`.
+
+**Acceptance Criteria:**
+
+**Given** a serialized `InstallationDiscoveryResult` in which `successful` is `true` but `installation` is `null` or absent (e.g., cache written by an older build or a corrupt entry)
+**When** `InstallationDiscoveryResult::fromArray` deserializes that entry
+**Then** it must not call `Installation::fromArray(null)` and must not throw a `TypeError`
+**And** it returns a failed result with an error message indicating cache deserialization failure
+**And** the fix is covered by a new unit test in `InstallationDiscoveryResultTest` that exercises the corrupted-cache scenario
+**And** all existing tests continue to pass and PHPStan Level 8 reports zero errors
+
+---
+
+### Story 1.5: TYPO3 v14 Composer Installation Support
 
 As a developer,
 I want the tool to correctly discover extensions in a TYPO3 v14 Composer installation,
@@ -303,8 +320,43 @@ So that I can analyze projects targeting the next major release and the tool for
 **And** core extensions defined in the v14 profile are excluded from results
 **And** a second fixture `v14ComposerCustomWebDir/` with a non-standard `web-dir` also passes, with the custom path read from `composer.json` and overriding the profile default
 **And** both fixtures are physical file trees (no dynamically generated content)
-**And** the v14 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: false`
+**And** the v14 profile in `VersionProfileRegistry` is marked `supportsComposerMode: true` and `supportsLegacyMode: true` (v14 supports both Composer and classic installation modes per official documentation)
 **And** `VersionProfileRegistry::getProfile(14)` returns the v14 profile without error
+**And** PHPStan Level 8 reports zero errors
+
+---
+
+### Story 1.6: Fix `ExtensionDiscoveryService` Cache Key Double-Computation
+
+As a developer,
+I want the cache key in `ExtensionDiscoveryService::discoverExtensions` to be computed exactly once and reused,
+so that a cache miss on read can never be caused by a diverged key on write.
+
+**Acceptance Criteria:**
+
+**Given** `ExtensionDiscoveryService::discoverExtensions` is called with cache enabled
+**When** the service computes the cache key for the cache-read check
+**Then** the exact same key variable is reused for the cache-write — no second call to `$this->cacheService->generateKey` is made
+**And** the refactoring is covered by a unit test that verifies the cache key is passed identically to both `get` and `set`
+**And** no behaviour change is introduced: cache hit, miss, and disabled-cache paths all continue to work
+**And** PHPStan Level 8 reports zero errors and `composer cs:check` reports no violations
+
+---
+
+### Story 1.7: Add Negative-Case Tests for `InstallationDiscoveryService`
+
+As a developer,
+I want `InstallationDiscoveryService::discoverInstallation` to have explicit negative-case test coverage,
+so that error paths are verified and future regressions are detected immediately.
+
+**Acceptance Criteria:**
+
+**Given** a filesystem path that is a valid directory but contains no TYPO3 indicators (no `composer.json`, no `PackageStates.php`, no `typo3/` structure)
+**When** `discoverInstallation` is called on that path
+**Then** the returned result has `isSuccessful() === false`
+**And** `getErrorMessage()` is non-empty
+**And** no exception is thrown
+**And** all new tests are added to `InstallationDiscoveryServiceTest` without modifying existing tests
 **And** PHPStan Level 8 reports zero errors
 
 ---

@@ -1,6 +1,6 @@
 # Story 1.1: Version Profile Registry
 
-Status: review
+Status: done
 
 ## Story
 

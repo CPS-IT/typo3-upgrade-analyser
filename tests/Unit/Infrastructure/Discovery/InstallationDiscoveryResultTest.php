@@ -378,6 +378,16 @@ final class InstallationDiscoveryResultTest extends TestCase
         self::assertTrue($resultWithIssues->hasValidationIssues());
     }
 
+    public function testFromArrayReturnsFailedWhenSuccessfulFlagIsTrueButInstallationIsNull(): void
+    {
+        $data = ['successful' => true, 'installation' => null, 'attempted_strategies' => []];
+
+        $result = InstallationDiscoveryResult::fromArray($data);
+
+        self::assertFalse($result->isSuccessful());
+        self::assertStringContainsString('Cache deserialization error', $result->getErrorMessage());
+    }
+
     public function testFailedResultWithEmptyAttemptedStrategies(): void
     {
         $result = InstallationDiscoveryResult::failed('No strategies available');

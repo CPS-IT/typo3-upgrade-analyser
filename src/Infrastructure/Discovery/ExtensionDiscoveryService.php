@@ -39,12 +39,13 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
     {
         $this->logger->info('Starting extension discovery', ['path' => $installationPath]);
 
+        $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
+            'custom_paths' => $customPaths ?? [],
+        ]);
+
         try {
             // Check cache if enabled
             if ($this->configService->isResultCacheEnabled()) {
-                $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
-                    'custom_paths' => $customPaths ?? [],
-                ]);
                 $cachedResult = $this->cacheService->get($cacheKey);
 
                 if (null !== $cachedResult) {
@@ -127,9 +128,6 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             // Cache the result if enabled
             if ($this->configService->isResultCacheEnabled()) {
-                $cacheKey = $this->cacheService->generateKey('extension_discovery', $installationPath, [
-                    'custom_paths' => $customPaths ?? [],
-                ]);
                 $this->cacheService->set($cacheKey, $this->serializeResult($result));
             }
 
