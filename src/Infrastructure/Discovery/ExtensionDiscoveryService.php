@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
@@ -516,12 +517,20 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             $title = $packageData['description'] ?? $extensionKey;
 
+            if (isset($packageData['dist']['type'], $packageData['dist']['url'])) {
+                $distribution = new ExtensionDistribution($packageData['dist']['type'], $packageData['dist']['url']);
+            } else {
+                // In case a dist is not available, the extension is fetched from source
+                $distribution = null;
+            }
+
             $extension = new Extension(
                 $extensionKey,
                 $title,
                 Version::fromString($version),
                 'composer',
                 $packageName,
+                $distribution,
             );
 
             $extension->setActive(true); // Assume composer packages are active

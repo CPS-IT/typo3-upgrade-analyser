@@ -62,6 +62,16 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             'target_version' => $context->getTargetVersion()->toString(),
         ]);
 
+        $distribution = $extension->getDistribution();
+        if (null !== $distribution && 'path' === $distribution->getType()) {
+            $result->addMetric('skipped', true);
+            $result->addMetric('skip_reason', 'External version checks skipped for local extension');
+            $result->setRiskScore(1.0);
+            $result->addRecommendation('Use Rector and Fractor to upgrade the extension and do the rest by hand.');
+
+            return $result;
+        }
+
         // Check TER availability
         $terAvailable = $this->checkTerAvailability($extension, $context);
         $result->addMetric('ter_available', $terAvailable);
@@ -105,6 +115,10 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
         if ($extension->hasComposerName()) {
             $components['composer_name'] = $extension->getComposerName();
+        }
+
+        if (null !== $extension->getDistribution()) {
+            $components['distribution_type'] = $extension->getDistribution()->getType();
         }
 
         return $components;
