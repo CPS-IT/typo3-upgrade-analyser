@@ -63,9 +63,16 @@ NEVER document time estimates, durations, level of effort or completion times fo
 
 **Line Breaks:**
 
-- Two spaces at end of line + newline, OR
 - Blank line between paragraphs
-- NO single line breaks (they're ignored)
+- NO bare consecutive lines — they render as a single paragraph in CommonMark
+- Use list markers (`- `) for any series of items that must render on separate lines
+- Avoid trailing two-space soft breaks — they are invisible, fragile, and stripped by many editors
+
+**Structured Item Lists (FR, NFR, AC, etc.):**
+
+- Requirement lists (FR1, NFR1, AR1, etc.) MUST use list markers: `- FR1: ...`
+- Gherkin-style acceptance criteria MUST use list markers: `- **Given** ...`, `- **When** ...`, `- **Then** ...`, `- **And** ...`
+- Any series of consecutive lines that are logically separate items MUST be a proper markdown list
 
 ## Mermaid Diagrams: Valid Syntax Required
 
