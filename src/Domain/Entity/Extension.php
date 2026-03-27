@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
@@ -34,6 +35,7 @@ class Extension implements \JsonSerializable
         private readonly Version $version,
         private readonly string $type = 'local',
         private readonly ?string $composerName = null,
+        private readonly ?ExtensionDistribution $distribution = null,
     ) {
     }
 
@@ -65,6 +67,11 @@ class Extension implements \JsonSerializable
     public function hasComposerName(): bool
     {
         return null !== $this->composerName;
+    }
+
+    public function getDistribution(): ?ExtensionDistribution
+    {
+        return $this->distribution;
     }
 
     public function addDependency(string $extensionKey, ?string $version = null): void
@@ -234,6 +241,7 @@ class Extension implements \JsonSerializable
             'em_configuration' => $this->emConfiguration,
             'metadata' => $this->metadata?->toArray(),
             'is_active' => $this->isActive,
+            'distribution' => $this->distribution?->toArray(),
         ];
     }
 
@@ -249,6 +257,7 @@ class Extension implements \JsonSerializable
             'dependencies_count' => \count($this->dependencies),
             'files_count' => \count($this->files),
             'has_repository_url' => $this->hasRepositoryUrl(),
+            'distribution' => $this->distribution?->toArray(),
         ];
     }
 }

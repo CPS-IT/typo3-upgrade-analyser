@@ -199,6 +199,9 @@ class ReportContextBuilder
         $result = reset($versionResult);
 
         return [
+            'skipped' => $result->getMetric('skipped'),
+            'skip_reason' => $result->getMetric('skip_reason'),
+            'distribution_type' => $result->getExtension()->getDistribution()?->getType(),
             'ter_available' => $result->getMetric('ter_available'),
             'packagist_available' => $result->getMetric('packagist_available'),
             'git_available' => $result->getMetric('git_available'),

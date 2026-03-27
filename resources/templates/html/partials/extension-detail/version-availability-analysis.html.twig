@@ -6,27 +6,35 @@
 
                 <h3>Availability Status</h3>
                 <div class="status-grid">
-                    <div class="status-card">
-                        <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
-                            {{ version_analysis.ter_available ? '✅' : '❌' }}
+                    {% if version_analysis.skipped %}
+                        <div class="status-card">
+                            <div class="status-icon unknown">✖️</div>
+                            <strong>Analysis Skipped</strong><br>
+                            <small>{{ version_analysis.skip_reason }}</small>
                         </div>
-                        <strong>TER</strong><br>
-                        <small>TYPO3 Extension Repository</small>
-                    </div>
-                    <div class="status-card">
-                        <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
-                            {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                    {% else %}
+                        <div class="status-card">
+                            <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
+                                {{ version_analysis.ter_available ? '✅' : '❌' }}
+                            </div>
+                            <strong>TER</strong><br>
+                            <small>TYPO3 Extension Repository</small>
                         </div>
-                        <strong>Packagist</strong><br>
-                        <small>Composer Repository</small>
-                    </div>
-                    <div class="status-card">
-                        <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
-                            {{ version_analysis.git_available ? '✅' : '❌' }}
+                        <div class="status-card">
+                            <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
+                                {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                            </div>
+                            <strong>Packagist</strong><br>
+                            <small>Composer Repository</small>
                         </div>
-                        <strong>Git Repository</strong><br>
-                        <small>Source Code</small>
-                    </div>
+                        <div class="status-card">
+                            <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
+                                {{ version_analysis.git_available ? '✅' : '❌' }}
+                            </div>
+                            <strong>Git Repository</strong><br>
+                            <small>Source Code</small>
+                        </div>
+                    {% endif %}
                 </div>
 
                 {% if version_analysis.git_repository_url or version_analysis.git_repository_health or version_analysis.git_latest_version %}

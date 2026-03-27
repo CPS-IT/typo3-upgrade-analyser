@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
 
@@ -322,6 +323,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
                     Version::fromString($extensionData['version']),
                     $extensionData['type'],
                     $extensionData['composer_name'],
+                    ExtensionDistribution::fromArray($extensionData['distribution'] ?? null),
                 );
                 $extension->setActive($extensionData['is_active']);
                 $extension->setEmConfiguration($extensionData['em_configuration'] ?? []);
