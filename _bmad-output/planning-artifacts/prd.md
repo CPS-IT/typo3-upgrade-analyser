@@ -81,12 +81,12 @@ Medium-term direction: CI/CD integration as a first-class use case, and SaaS off
 
 ## Project Classification
 
-| Attribute | Value |
-|---|---|
-| **Project Type** | Developer Tool (CLI primary, CI/CD near-term, SaaS medium-term) |
-| **Domain** | DevOps / CMS Migration Tooling (TYPO3-specific) |
-| **Complexity** | Medium -- external API dependencies, multi-strategy analysis, TYPO3 version-matrix complexity |
-| **Project Context** | Brownfield -- Phase 1 complete, Phase 2 in progress, ~100 source files, ~140 test files |
+| Attribute           | Value                                                                                         |
+|---------------------|-----------------------------------------------------------------------------------------------|
+| **Project Type**    | Developer Tool (CLI primary, CI/CD near-term, SaaS medium-term)                               |
+| **Domain**          | DevOps / CMS Migration Tooling (TYPO3-specific)                                               |
+| **Complexity**      | Medium -- external API dependencies, multi-strategy analysis, TYPO3 version-matrix complexity |
+| **Project Context** | Brownfield -- Phase 1 complete, Phase 2 in progress, ~100 source files, ~140 test files       |
 
 ## Success Criteria
 
@@ -111,13 +111,13 @@ Medium-term direction: CI/CD integration as a first-class use case, and SaaS off
 
 ### Measurable Outcomes
 
-| Metric | Target | Timeframe |
-|---|---|---|
-| Internal team adoption | 100% of upgrade teams | 12 months |
-| Upgrade projects using tool | 10+ | 12 months |
-| Customers on continuous monitoring | 3-5 | 12 months |
-| Analysis accuracy vs manual | >90% agreement | Ongoing |
-| Time to produce upgrade estimate | <30 min (from hours) | Immediate |
+| Metric                             | Target                | Timeframe |
+|------------------------------------|-----------------------|-----------|
+| Internal team adoption             | 100% of upgrade teams | 12 months |
+| Upgrade projects using tool        | 10+                   | 12 months |
+| Customers on continuous monitoring | 3-5                   | 12 months |
+| Analysis accuracy vs manual        | >90% agreement        | Ongoing   |
+| Time to produce upgrade estimate   | <30 min (from hours)  | Immediate |
 
 ## User Journeys
 
@@ -191,15 +191,15 @@ Medium-term direction: CI/CD integration as a first-class use case, and SaaS off
 
 ### Journey Requirements Summary
 
-| Journey | Capabilities Required | Scope |
-|---|---|---|
-| Marco (senior dev, big-bang) | CLI workflow, multi-source checking, code analysis, risk scoring, HTML report | MVP (complete) |
-| Lisa (junior dev, first upgrade) | Clear report structure, actionable recommendations, risk categorization | MVP (complete, template improvements planned) |
-| Katrin (PM, offer document) | Customer-friendly report, customizable templates, branding, executive summary | MVP (priorities 4-5) |
-| CI Pipeline (continuous monitoring) | Non-interactive mode, JSON output, exit codes, delta detection | Growth (CI/CD integration mode) |
-| Thomas (director, portfolio) | Multi-installation dashboard, trend tracking, SaaS platform | Vision |
+| Journey                             | Capabilities Required                                                         | Scope                                         |
+|-------------------------------------|-------------------------------------------------------------------------------|-----------------------------------------------|
+| Marco (senior dev, big-bang)        | CLI workflow, multi-source checking, code analysis, risk scoring, HTML report | MVP (complete)                                |
+| Lisa (junior dev, first upgrade)    | Clear report structure, actionable recommendations, risk categorization       | MVP (complete, template improvements planned) |
+| Katrin (PM, offer document)         | Customer-friendly report, customizable templates, branding, executive summary | MVP (priorities 4-5)                          |
+| CI Pipeline (continuous monitoring) | Non-interactive mode, JSON output, exit codes, delta detection                | Growth (CI/CD integration mode)               |
+| Thomas (director, portfolio)        | Multi-installation dashboard, trend tracking, SaaS platform                   | Vision                                        |
 
-Cross-cutting: GitLab/Bitbucket availability checks (MVP priority 3) affect Marco, Lisa, and CI journeys. Streaming output (MVP priority 2) is a technical prerequisite that affects all journeys involving large installations. TYPO3 11 core extension bug fix (MVP priority 1) affects all journeys involving v11 installations.
+Cross-cutting: VCS source availability checks (MVP priority 3) affect Marco, Lisa, and CI journeys — covers all providers (GitHub, GitLab, Bitbucket, self-hosted) via Composer-based resolution. Streaming output (MVP priority 2) is a technical prerequisite that affects all journeys involving large installations. TYPO3 11 core extension bug fix (MVP priority 1) affects all journeys involving v11 installations.
 
 ## Developer Tool Specific Requirements
 
@@ -222,24 +222,24 @@ Priority: PHAR for developer usage, Docker for CI/CD. Composer install remains a
 
 **Core commands:**
 
-| Command | Purpose | Status |
-|---|---|---|
-| `analyze` | Full analysis workflow (discover, analyze, report) | Existing |
-| `list-analyzers` | Show available analyzers and their status | Existing |
-| `list-extensions` | Show discovered extensions | Existing |
-| `init-config` | Generate configuration file | Existing |
-| `cache:clear` | Clear analysis cache | Existing |
+| Command           | Purpose                                            | Status   |
+|-------------------|----------------------------------------------------|----------|
+| `analyze`         | Full analysis workflow (discover, analyze, report) | Existing |
+| `list-analyzers`  | Show available analyzers and their status          | Existing |
+| `list-extensions` | Show discovered extensions                         | Existing |
+| `init-config`     | Generate configuration file                        | Existing |
+| `cache:clear`     | Clear analysis cache                               | Existing |
 
 **Planned commands:**
 
-| Command | Purpose | Scope |
-|---|---|---|
-| `report generate` | Re-generate reports from cached analysis data | MVP |
-| `report customize` | Configure report templates, branding, format | MVP |
-| `risk configure` | User-provided risk weighing parameters | Growth |
-| `effort estimate` | Effort estimation based on analysis and risk data | Growth |
-| `analyze --quick` | Quick run with selected analyzers only | Growth |
-| `config wizard` | Interactive configuration helper | Growth |
+| Command            | Purpose                                           | Scope  |
+|--------------------|---------------------------------------------------|--------|
+| `report generate`  | Re-generate reports from cached analysis data     | MVP    |
+| `report customize` | Configure report templates, branding, format      | MVP    |
+| `risk configure`   | User-provided risk weighing parameters            | Growth |
+| `effort estimate`  | Effort estimation based on analysis and risk data | Growth |
+| `analyze --quick`  | Quick run with selected analyzers only            | Growth |
+| `config wizard`    | Interactive configuration helper                  | Growth |
 
 Design principle: `analyze` remains the workhorse. Additional commands serve specific sub-workflows without bloating the main command's option surface.
 
@@ -299,14 +299,14 @@ Design principle: `analyze` remains the workhorse. Additional commands serve spe
 
 **Must-have capabilities (adoption blockers):**
 
-| # | Feature | Rationale | Effort Estimate |
-|---|---|---|---|
-| 1 | TYPO3 11 core extension bug fix | Incorrect results for v11 installations erode trust | Small |
-| 2 | Streaming analyzer output | Memory exhaustion on large installations blocks reliability. Prerequisite for extended Fractor findings | Medium |
-| 3 | GitLab/Bitbucket availability checks | Many agency projects host extensions on GitLab, not GitHub. Without this, version availability is incomplete | Medium |
-| 4 | Customer-friendly report format | Non-technical report for customer offers. Key differentiator for selling upgrades | Medium |
-| 5 | Customizable report templates | Agency branding in reports. Makes output directly usable in offers without manual reformatting | Medium |
-| 6 | Documentation consolidation | Merge docs folders. Low effort, reduces contributor friction | Small |
+| # | Feature                                       | Rationale                                                                                                                                                  | Effort Estimate |
+|---|-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| 1 | TYPO3 11 core extension bug fix               | Incorrect results for v11 installations erode trust                                                                                                        | Small           |
+| 2 | Streaming analyzer output                     | Memory exhaustion on large installations blocks reliability. Prerequisite for extended Fractor findings                                                    | Medium          |
+| 3 | VCS source availability checks (any provider) | Many agency projects host extensions on GitLab, Bitbucket, or self-hosted Git. Composer-based resolution covers all providers without per-host API clients | Small--Medium   |
+| 4 | Customer-friendly report format               | Non-technical report for customer offers. Key differentiator for selling upgrades                                                                          | Medium          |
+| 5 | Customizable report templates                 | Agency branding in reports. Makes output directly usable in offers without manual reformatting                                                             | Medium          |
+| 6 | Documentation consolidation                   | Merge docs folders. Low effort, reduces contributor friction                                                                                               | Small           |
 
 **Dependency chain:**
 - #2 (streaming output) unblocks extended Fractor findings (Phase 2)
@@ -324,35 +324,35 @@ Design principle: `analyze` remains the workhorse. Additional commands serve spe
 
 **Phase 2 -- Growth (competitive advantage, CI/CD, broader adoption):**
 
-| Feature | Depends On | Business Value |
-|---|---|---|
-| Extended Fractor findings | Streaming output (Phase 1) | Deeper TypoScript migration analysis |
-| CI/CD integration mode | Core MVP stable | Enables continuous upgrade service offering |
-| PHPStan analyzer | None | Additional code quality dimension |
-| PHAR archive distribution | None | Lowers adoption barrier for external users |
-| Docker image | None | CI/CD-native distribution |
-| Risk weighing command | MVP reports in use | User-tunable risk assessment |
-| Effort estimation command | Risk weighing | Data-driven effort estimates in reports |
-| Config wizard | None | Reduces onboarding friction |
-| Streaming template rendering | Streaming output | Handles large report datasets |
-| Quick analysis mode | None | Faster feedback for selective checks |
+| Feature                      | Depends On                 | Business Value                              |
+|------------------------------|----------------------------|---------------------------------------------|
+| Extended Fractor findings    | Streaming output (Phase 1) | Deeper TypoScript migration analysis        |
+| CI/CD integration mode       | Core MVP stable            | Enables continuous upgrade service offering |
+| PHPStan analyzer             | None                       | Additional code quality dimension           |
+| PHAR archive distribution    | None                       | Lowers adoption barrier for external users  |
+| Docker image                 | None                       | CI/CD-native distribution                   |
+| Risk weighing command        | MVP reports in use         | User-tunable risk assessment                |
+| Effort estimation command    | Risk weighing              | Data-driven effort estimates in reports     |
+| Config wizard                | None                       | Reduces onboarding friction                 |
+| Streaming template rendering | Streaming output           | Handles large report datasets               |
+| Quick analysis mode          | None                       | Faster feedback for selective checks        |
 
 **Phase 3 -- Vision (platform, SaaS, portfolio):**
 
-| Feature | Business Value |
-|---|---|
-| SaaS platform | Agencies without local tooling, broader market |
-| Service tiers (Observe / React / Push Forward) | Fixed-price recurring revenue model |
-| Multi-installation dashboard | Portfolio view for agency directors |
-| Historical trend tracking | Visualize upgrade progress over time |
-| Automated upgrade path suggestions | Proactive migration recommendations |
-| Configuration parsing framework | Deep installation understanding (revisit if value validated) |
+| Feature                                        | Business Value                                               |
+|------------------------------------------------|--------------------------------------------------------------|
+| SaaS platform                                  | Agencies without local tooling, broader market               |
+| Service tiers (Observe / React / Push Forward) | Fixed-price recurring revenue model                          |
+| Multi-installation dashboard                   | Portfolio view for agency directors                          |
+| Historical trend tracking                      | Visualize upgrade progress over time                         |
+| Automated upgrade path suggestions             | Proactive migration recommendations                          |
+| Configuration parsing framework                | Deep installation understanding (revisit if value validated) |
 
 ### Risk Mitigation Strategy
 
 **Technical risks:**
 - *Memory exhaustion on large installations.* Mitigation: streaming output is MVP priority #2. Without it, the tool is unreliable for real-world projects with 40+ extensions.
-- *External API instability.* TER, Packagist, GitHub/GitLab APIs can change or rate-limit. Mitigation: caching layer (exists), graceful degradation on API failure, clear error reporting.
+- *External API/service instability.* TER, Packagist, and VCS hosts can be unavailable or rate-limit. Mitigation: caching layer (exists), graceful degradation on API/git failure, clear error reporting. Composer-based VCS resolution reduces API surface compared to per-provider clients.
 - *TYPO3 version matrix complexity.* Each major version has different discovery mechanisms. Mitigation: comprehensive test fixtures per version, the v11 bug fix establishes the pattern for version-specific handling.
 
 **Market/adoption risks:**
@@ -380,11 +380,11 @@ Design principle: `analyze` remains the workhorse. Additional commands serve spe
 
 - FR9: System can check extension availability on TER for the target TYPO3 version
 - FR10: System can check extension availability on Packagist for the target version
-- FR11: System can check extension availability on GitHub repositories (tags, branches, version constraints)
-- FR12: System can check extension availability on GitLab repositories, including private instances with authentication
-- FR13: System can check extension availability on Bitbucket repositories (tags, branches, version constraints)
+- FR11: System can check extension availability on any VCS repository declared in the installation's composer.json, using Composer CLI or git CLI as fallback, regardless of hosting provider (GitHub, GitLab, Bitbucket, Gitea, self-hosted, etc.)
+- ~~FR12: (removed -- merged into FR11)~~
+- ~~FR13: (removed -- merged into FR11)~~
 - FR14: System can aggregate availability data across all sources into a unified availability status per extension
-- FR15: System can detect abandoned or unmaintained extensions based on repository and registry metadata
+- FR15: System can detect abandoned or unmaintained extensions based on latest tag/commit age from Composer metadata or git history, and registry metadata (TER last-update, Packagist abandonment flag)
 
 ### Extension Type Analysis Strategy
 
@@ -453,7 +453,7 @@ Design principle: `analyze` remains the workhorse. Additional commands serve spe
 
 ### Reliability
 
-- NFR5: If an external API (TER, Packagist, GitHub, GitLab) is unavailable, the analysis completes with partial results and clear indication of what data is missing
+- NFR5: If an external API or VCS host (TER, Packagist, any git repository) is unavailable, the analysis completes with partial results and clear indication of what data is missing
 - NFR6: If an external tool (Rector, Fractor) crashes or times out for one extension, the analysis continues for remaining extensions
 - NFR7: Cached results are invalidated correctly -- stale cache must never produce silently incorrect reports
 - NFR8: Analysis results are deterministic -- same installation, same target version, same external data produces identical output
@@ -462,7 +462,7 @@ Design principle: `analyze` remains the workhorse. Additional commands serve spe
 
 - NFR9: API tokens and credentials are never stored in code, configuration files committed to version control, or analysis output
 - NFR10: Credentials are loaded from environment variables, `.env.local` files (local development), or injected secrets (CI/CD)
-- NFR11: Private GitLab instances are accessed via existing git credentials or API tokens -- the tool does not manage SSH keys
+- NFR11: Private VCS hosts (GitLab, Bitbucket, self-hosted) are accessed via Composer auth.json, existing git credentials, or SSH agent -- the tool does not manage SSH keys or store provider-specific tokens
 - NFR12: Private Packagist instances are accessed via Composer `auth.json` mechanisms -- the tool respects existing Composer authentication
 - NFR13: Filesystem access to the target installation is read-only -- the tool never modifies the analyzed system
 

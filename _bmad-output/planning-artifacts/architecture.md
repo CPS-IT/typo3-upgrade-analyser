@@ -181,18 +181,45 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
 
 ### Git Source Detection & Version Availability
 
-**Decision:** `composer.json` in the analyzed installation is the source of truth for extension origins. No URL-sniffing heuristics.
+**Decision:** `composer.json`/`composer.lock` in the analyzed installation is the source of truth for extension origins. Version resolution uses a two-tier strategy: Composer CLI as primary resolver, generic git CLI as fallback. No per-provider API clients. No URL-sniffing heuristics.
 
-**Detection flow:**
-1. Parse `repositories` in the analyzed installation's root `composer.json` → discover all declared package sources ("known sources")
-2. Known public registries (Packagist, TER, github.com, gitlab.com, bitbucket.org) → handled by existing clients
-3. Declared private sources (private GitLab instance, private Bitbucket, private Packagist) → require explicit configuration in `.typo3-analyzer.yaml`: URL, source type, auth method (API token, git-over-SSH, git-over-HTTPS). Auth configuration, not discovery — the URL already comes from `composer.json`.
-4. Any git URL not matched by a configured source → plain git over HTTPS, no credentials, public access only
-5. Unmatched source with no fallback result → explicit warning in report: "Repository `{url}` was not analyzed — configure a matching provider in `.typo3-analyzer.yaml`"
+**Resolution chain (explicit fallback order):**
 
-**Legacy installations (v11 non-Composer):** Extensions in `typo3conf/ext/` have no composer provenance. Version availability falls back to TER + key-based lookup only.
+1. `ComposerSourceParser` extracts VCS URLs from `composer.lock` `packages[].source.url` (primary) and `composer.json` `repositories[].url` (fallback for packages missing from lock)
 
-**Rationale:** Composer-based installations (mandatory from v13, strongly recommended from v12) already declare all sources. The installation itself provides the information; no heuristics needed. Silent wrong results are prevented by explicit warnings.
+2. **Tier 1 — Composer CLI resolution** (`ComposerVcsResolver`):
+   - Uses `composer show` with `--working-dir` pointing to the analyzed installation
+   - Exact command variant determined by research spike (Story 2.0). Candidates: `composer show -o -d /path --format=json` (batch), `composer show -liD -d /path --format=json` (batch), `composer show -a vendor/package --format=json` (per-package)
+   - Authentication: Composer uses the installation's `auth.json` and SSH agent automatically
+   - **When this tier is used:** Composer is available in the analysis environment and the analyzed installation has a valid `composer.lock`
+   - **When this tier fails:** Composer not installed, `composer.lock` missing/corrupt, network error, auth failure → falls through to Tier 2
+
+3. **Tier 2 — Generic git CLI resolution** (`GenericGitResolver`):
+   - Uses `git ls-remote --tags <url>` to list available tags without cloning
+   - Parses tag names into Composer-compatible version strings
+   - Optionally: `git ls-remote --heads <url>` for branch-based constraints (e.g. `dev-main`)
+   - Authentication: uses SSH agent and git credential helpers already configured on the host
+   - **When this tier is used:** Composer resolution failed or is unavailable; or for repositories not in the installation's Composer config
+   - **When this tier fails:** network error, auth failure → warn and record null
+
+4. **Failure handling:** If both tiers fail for a given repository, emit a Console WARNING with the URL and resolution errors from both tiers. Record availability as `null` (not `false`). Analysis continues for remaining extensions.
+
+**What each tier provides:**
+
+| Capability | Tier 1 (Composer) | Tier 2 (git CLI) |
+|---|---|---|
+| List available versions | Yes (rich) | Yes (tags only) |
+| Version constraint matching | Yes (native) | Manual parsing |
+| Dependency metadata (require) | Yes | No |
+| Branch-based versions (dev-*) | Yes | Via ls-remote |
+| Works without composer.lock | Partially | Yes |
+| Works without Composer installed | No | Yes |
+| Authentication | auth.json / SSH | SSH / git creds |
+| Batch resolution (all packages) | Yes (some modes) | No (per-URL) |
+
+**Legacy installations (v11 non-Composer):** Extensions in `typo3conf/ext/` have no composer provenance. Version availability falls back to TER + key-based lookup only. Tier 2 (git CLI) may be used if a repository URL can be derived from extension metadata.
+
+**Rationale:** Two-tier approach ensures coverage: Composer provides rich resolution for the common case (Composer-based installations), git CLI provides a universal fallback that works with any git-accessible URL regardless of hosting provider. Together they eliminate per-provider API clients while reusing existing authentication. See [Sprint Change Proposal 2026-03-26](sprint-change-proposal-2026-03-26.md) for full rationale.
 
 ---
 
@@ -268,15 +295,19 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 1. TYPO3 v11 core extension bug fix (uses new VersionProfileRegistry — implement profile first)
 2. VersionProfileRegistry + version profiles for v11–v13
 3. StreamingOutputManager pre-flight check + FileReference in Infrastructure
-4. Git source detection from `composer.json` + `GitProviderFactory` extension
-5. GitLab/Bitbucket configured provider support
-6. `report generate` subcommand + customer template set
-7. Exit code unit tests + `--no-interaction` env var support
+4. VCS resolution research spike (Story 2.0) — validate Composer CLI and git CLI approaches
+5. ComposerSourceParser + ComposerVcsResolver + GenericGitResolver (Stories 2.1–2.3)
+6. Integration: wire new resolvers into VersionAvailabilityAnalyzer, update metrics/templates (Story 2.5)
+7. Remove old GitProvider subsystem (Story 2.6)
+8. `report generate` subcommand + customer template set
+9. Exit code unit tests + `--no-interaction` env var support
 
 **Cross-Component Dependencies:**
 - VersionProfileRegistry feeds into InstallationDiscoveryService, ExtensionDiscoveryService, and core extension exclusion logic
 - StreamingOutputManager is a dependency of TemplateRenderer and both Rector/Fractor analyzers
-- Git source detection from `composer.json` is a prerequisite for any private source authentication configuration
+- VCS resolution research spike (Story 2.0) is a serial prerequisite for all Epic 2 implementation stories
+- ComposerVcsResolver and GenericGitResolver replace GitRepositoryAnalyzer in VersionAvailabilityAnalyzer
+- Metric rename (`git_*` → `vcs_*`) affects ReportContextBuilder and all 10 report templates
 - `report generate` subcommand requires caching to be reliable (NFR7) — reports generated from stale cache must be flagged
 
 ## Implementation Patterns & Consistency Rules
@@ -452,25 +483,26 @@ $diffFile = $diff !== null
 
 ---
 
-### Git Source Detection Pattern
+### VCS Source Detection Pattern
 
 **Where parsing happens:** `ComposerSourceParser` in `Infrastructure/Discovery/`. Returns `DeclaredRepository[]`.
 
-**`DeclaredRepository` value object:**
-- `url: string` — repository URL from composer.json
-- `type: string` — `vcs`, `composer`, `path`, etc.
-- `packages: array<string>` — declared package names (if known)
+**`DeclaredRepository` value object (simplified — no provider-type field):**
+- `url: string` — VCS URL from `composer.lock` `source.url` (primary) or `composer.json` `repositories[].url` (fallback)
+- `packages: array<string>` — package names associated with this URL
 
-**Provider resolution order in `GitProviderFactory`:**
-1. Known public hosts (exact domain: `github.com`, `gitlab.com`, `bitbucket.org`)
-2. Configured private providers in `.typo3-analyzer.yaml`
-3. Fallback: HTTPS git, no credentials
+**Resolution chain:**
+1. Pass `DeclaredRepository` to `ComposerVcsResolver` (Tier 1 — Composer CLI)
+2. On failure, pass to `GenericGitResolver` (Tier 2 — `git ls-remote`)
+3. On failure of both tiers, emit Console WARNING and record `null`
 
-**Warning for unmatched sources — Console output, not logger:**
+**Warning for unresolvable sources — Console output, not logger:**
 ```
-[WARNING] Repository "https://git.example.com/ext/foo" has no configured provider.
-          Analysis skipped. Add a provider in .typo3-analyzer.yaml to enable analysis.
+[WARNING] Could not resolve versions from "https://git.example.com/ext/foo".
+          Ensure Composer authentication (auth.json) or git credentials (SSH agent) are configured.
 ```
+
+**Metric naming:** VCS availability metrics use `vcs_` prefix (not `git_`): `vcs_available`, `vcs_repository_url`, `vcs_latest_version`. The `git_repository_health` metric is removed (no generic equivalent).
 
 ---
 
@@ -520,8 +552,10 @@ public static function riskLevelProvider(): iterable
 **Coverage requirements for new subsystems:**
 - `VersionProfileRegistry`: 100% (wrong profile = wrong analysis)
 - `StreamingOutputManager`: 100% for pre-flight check and fallback path
-- `ComposerSourceParser`: 100% for all repository type variants
-- JSON output schema: at least one functional test asserting exact structure
+- `ComposerSourceParser`: 100% for all source URL extraction variants
+- `ComposerVcsResolver`: successful resolution, failure fallthrough to Tier 2, Composer unavailable
+- `GenericGitResolver`: successful tag listing, tag-to-version parsing, network failure, SSH URL handling
+- JSON output schema: at least one functional test asserting exact structure including `vcs_*` metric names
 
 ---
 
@@ -574,13 +608,13 @@ src/
 │   │   ├── VersionProfile.php                  # NEW — per-version installation profile (readonly class)
 │   │   ├── VersionProfileRegistry.php          # NEW — registry, queried by major version int
 │   │   ├── VersionProfileRegistryFactory.php   # NEW — factory service, registered via services.yaml factory syntax
-│   │   └── ComposerSourceParser.php            # NEW — parses composer.json repositories section
+│   │   └── ComposerSourceParser.php            # NEW — extracts VCS URLs from composer.lock/composer.json
 │   │
 │   ├── ExternalTool/
-│   │   ├── GitProvider/
-│   │   │   ├── GitLabProvider.php              # NEW — private GitLab instance client
-│   │   │   └── BitbucketProvider.php           # NEW — Bitbucket client
-│   │   └── DeclaredRepository.php             # NEW — VO from ComposerSourceParser output
+│   │   ├── ComposerVcsResolver.php            # NEW — Tier 1: resolves versions via Composer CLI
+│   │   ├── GenericGitResolver.php             # NEW — Tier 2: resolves versions via git ls-remote
+│   │   ├── VcsResolutionException.php         # NEW — renamed from GitProviderException
+│   │   └── DeclaredRepository.php             # NEW — simplified VO (url + packages only)
 │   │
 │   ├── Streaming/                              # NEW directory
 │   │   ├── StreamingOutputManager.php          # NEW — pre-flight check + file writing orchestration
@@ -608,9 +642,8 @@ tests/
 │       │   ├── VersionProfileRegistryTest.php
 │       │   └── ComposerSourceParserTest.php
 │       ├── ExternalTool/
-│       │   └── GitProvider/
-│       │       ├── GitLabProviderTest.php
-│       │       └── BitbucketProviderTest.php
+│       │   ├── ComposerVcsResolverTest.php
+│       │   └── GenericGitResolverTest.php
 │       └── Streaming/
 │           ├── StreamingOutputManagerTest.php
 │           ├── ContentStreamWriterTest.php
@@ -661,10 +694,8 @@ ReportGenerateCommand
 |---|---|---|---|
 | TER API | `TerApiClient` | None (public) | Log warning, null result |
 | Packagist | `PackagistClient` | `auth.json` (Composer) | Log warning, null result |
-| GitHub | `GitHubClient` | `GITHUB_TOKEN` env var | Log warning, null result |
-| GitLab (public) | `GitLabProvider` | `GITLAB_TOKEN` env var | Log warning, null result |
-| GitLab (private) | `GitLabProvider` | Configured per-instance in `.typo3-analyzer.yaml` | Warning + skip with message |
-| Bitbucket | `BitbucketProvider` | `BITBUCKET_TOKEN` env var | Log warning, null result |
+| VCS repositories (Tier 1) | `ComposerVcsResolver` | Composer `auth.json` / SSH agent (via `--working-dir`) | Log warning, fall through to Tier 2 |
+| VCS repositories (Tier 2) | `GenericGitResolver` | SSH agent / git credential helpers | Log warning, null result |
 | Rector binary | `RectorExecutor` | None | Log warning, null riskScore, recommendation added |
 | Fractor binary | `FractorExecutor` | None | Log warning, null riskScore, recommendation added |
 
@@ -675,7 +706,7 @@ ReportGenerateCommand
 | FR Category | Primary Location |
 |---|---|
 | FR1–FR8 Installation Discovery | `Infrastructure/Discovery/` — `InstallationDiscoveryService`, `VersionProfileRegistry`, `ComposerSourceParser` |
-| FR9–FR15 Version Availability | `Infrastructure/ExternalTool/` — existing clients + `GitLabProvider`, `BitbucketProvider` |
+| FR9–FR11, FR14–FR15 Version Availability | `Infrastructure/ExternalTool/` — `TerApiClient`, `PackagistClient`, `ComposerVcsResolver`, `GenericGitResolver` (FR12/FR13 merged into FR11) |
 | FR16 Extension Type Strategy | `Infrastructure/Discovery/ExtensionDiscoveryService` + `VersionProfile.coreExtensionKeys` |
 | FR17–FR21 Code Analysis | `Infrastructure/Analyzer/` — existing analyzers + `CachingAnalyzerDecorator` |
 | FR22–FR26 Risk Scoring | `Domain/Entity/AnalysisResult` + `Infrastructure/Analyzer/` |
@@ -739,12 +770,11 @@ AnalyzeCommand::execute()
 
 ### Requirements Coverage
 
-**Functional Requirements:** All 47 FRs architecturally supported.
+**Functional Requirements:** All 45 FRs architecturally supported (FR12/FR13 merged into FR11).
 
 | Previously uncovered | Now covered by |
 |---|---|
-| FR12 GitLab availability | `GitLabProvider` — public + configured private instances |
-| FR13 Bitbucket availability | `BitbucketProvider` |
+| FR11 VCS availability (all providers) | `ComposerVcsResolver` (Tier 1) + `GenericGitResolver` (Tier 2) — replaces per-provider clients; covers GitHub, GitLab, Bitbucket, Gitea, self-hosted |
 | FR32–FR35 Customer report | `ReportGenerateCommand` + `resources/templates/customer/` |
 | FR43 Streaming output | `StreamingOutputManager` + `FileReference` |
 
