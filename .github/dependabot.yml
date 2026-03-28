@@ -3,6 +3,10 @@ updates:
   # Enable version updates for Composer
   - package-ecosystem: "composer"
     directory: "/"
+    exclude-paths:
+      - "vendor/**"
+      - "tests/Fixtures/**"
+      - "tests/Integration/Fixtures/**"
     schedule:
       interval: "weekly"
       day: "monday"
