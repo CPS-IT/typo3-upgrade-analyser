@@ -46,6 +46,8 @@ readonly class TerApiClient
 
     /**
      * Check if a version compatible with the target TYPO3 version exists.
+     *
+     * @throws TerApiException
      */
     public function hasVersionFor(string $extensionKey, Version $typo3Version): bool
     {
@@ -109,6 +111,8 @@ readonly class TerApiClient
     /**
      * Get extension and versions data in a single operation
      * This reduces the N+1 API calls problem.
+     *
+     * @throws TerExtensionNotFoundException
      */
     private function getExtensionWithVersions(string $extensionKey): array
     {

@@ -7,6 +7,10 @@
 - **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : (version_analysis.distribution_type is null ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
 - **TYPO3 Extension Repository (TER):** {{ version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
 - **Packagist (Composer):** {{ version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
+{% if version_analysis.packagist_latest_version %}
+  - **Latest Version:** {{ extension_data.extension.composerName ? '[' ~ version_analysis.packagist_latest_version ~ '](https://packagist.org/packages/' ~ extension_data.extension.composerName ~ ')' : version_analysis.packagist_latest_version }}
+  - **Compatible with Target:** {{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}
+{% endif %}
 - **Git Repository:** {{ version_analysis.git_available ? '✅ Available' : '❌ Not Available' }}
 
 ### Repository Information

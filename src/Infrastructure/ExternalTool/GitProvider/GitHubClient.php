@@ -27,8 +27,10 @@ class GitHubClient extends AbstractGitProvider
 {
     protected int $priority = 100; // High priority for GitHub
 
-    private const GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
-    private const REST_ENDPOINT = 'https://api.github.com';
+    private const string GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
+    private const string REST_ENDPOINT = 'https://api.github.com';
+
+    private readonly RepositoryUrlHandlerInterface $urlHandler;
 
     public function __construct(
         HttpClientServiceInterface $httpClient,
@@ -50,8 +52,6 @@ class GitHubClient extends AbstractGitProvider
             $this->logger->debug('GITHUB_API_TOKEN found, using authenticated GitHub API requests');
         }
     }
-
-    private readonly RepositoryUrlHandlerInterface $urlHandler;
 
     public function getName(): string
     {

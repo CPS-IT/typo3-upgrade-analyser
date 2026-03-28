@@ -1,43 +1,68 @@
 <div class="section" id="version-availability-analysis">
     <h2>Version Availability Analysis</h2>
 
+    {% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'git'] %}
+
     {% if extension_data.version_analysis %}
         {% set version_analysis = extension_data.version_analysis %}
 
         <h3>Availability Status</h3>
-        <div class="status-grid">
-            {% if version_analysis.skipped %}
+        {% if version_analysis.skipped %}
+            <div class="status-grid">
                 <div class="status-card">
                     <div class="status-icon unknown">✖️</div>
                     <strong>Analysis Skipped</strong><br>
                     <small>{{ version_analysis.skip_reason }}</small>
                 </div>
-            {% else %}
+            </div>
+        {% else %}
+            <div class="status-grid">
                 <div class="status-card">
-                    <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
-                        {{ version_analysis.ter_available ? '✅' : '❌' }}
+                    <div class="status-icon">
+                        {{ version_analysis.distribution_type == 'path' ? '🏠' : (version_analysis.distribution_type is null ? '⛲️' : '📦') }}
                     </div>
-                    <strong>TER</strong><br>
-                    <small>TYPO3 Extension Repository</small>
+                    <strong>Distribution</strong><br>
+                    <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : (version_analysis.distribution_type is null ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
                 </div>
-                <div class="status-card">
-                    <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
-                        {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                {% if 'ter' in enabled_sources %}
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.ter_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>TER</strong><br>
+                        <small>TYPO3 Extension Repository</small>
                     </div>
-                    <strong>Packagist</strong><br>
-                    <small>Composer Repository</small>
-                </div>
-                <div class="status-card">
-                    <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
-                        {{ version_analysis.git_available ? '✅' : '❌' }}
+                {% endif %}
+                {% if 'packagist' in enabled_sources %}
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.packagist_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.packagist_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Packagist</strong><br>
+                        <small>Composer Repository</small>
                     </div>
-                    <strong>Git Repository</strong><br>
-                    <small>Source Code</small>
-                </div>
-            {% endif %}
-        </div>
+                {% endif %}
+                {% if 'github' in enabled_sources or 'git' in enabled_sources %}
+                    <div class="status-card">
+                        <div class="status-icon {{ version_analysis.git_available ? 'available' : 'unavailable' }}">
+                            {{ version_analysis.git_available ? '✅' : '❌' }}
+                        </div>
+                        <strong>Git Repository</strong><br>
+                        <small>Source Code</small>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
 
-        {% if version_analysis.git_repository_url or version_analysis.git_repository_health or version_analysis.git_latest_version %}
+        {% if 'packagist' in enabled_sources and version_analysis.packagist_latest_version %}
+            <h3>Package Information</h3>
+            <div class="info-card">
+                <p><strong>Latest Version:</strong> {% if extension_data.extension.composerName %}<a href="https://packagist.org/packages/{{ extension_data.extension.composerName }}" target="_blank">{{ version_analysis.packagist_latest_version }}</a>{% else %}{{ version_analysis.packagist_latest_version }}{% endif %}</p>
+                <p><strong>Compatible with Target:</strong> <span class="{{ version_analysis.packagist_latest_compatible ? 'status-available' : 'status-unavailable' }}">{{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}</span></p>
+            </div>
+        {% endif %}
+
+        {% if ('github' in enabled_sources or 'git' in enabled_sources) and (version_analysis.git_repository_url or version_analysis.git_repository_health or version_analysis.git_latest_version) %}
             <h3>Repository Information</h3>
             <div class="info-card">
                 {% if version_analysis.git_repository_url %}
@@ -60,16 +85,20 @@
             <div class="recommendations">
                 <h3>Recommendations</h3>
                 <ul>
-                    {% for recommendation in version_analysis.recommendations %}
-                        <li>{{ recommendation }}</li>
-                    {% endfor %}
+                {% for recommendation in version_analysis.recommendations %}
+                    <li>{{ recommendation }}</li>
+                {% endfor %}
                 </ul>
             </div>
         {% endif %}
-
     {% else %}
-        <div class="error-message">
-            <strong>❌ Version availability analysis was not performed or failed for this extension.</strong>
+        <div class="error-card">
+            <h3>❌ Analysis Not Available</h3>
+            <p>Version availability analysis was not performed for this extension. This may occur when:</p>
+            <ul>
+                <li>The analysis was not enabled</li>
+                <li>There was an error fetching the available versions</li>
+            </ul>
         </div>
     {% endif %}
 </div>

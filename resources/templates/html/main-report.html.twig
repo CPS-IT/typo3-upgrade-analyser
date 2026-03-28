@@ -23,13 +23,9 @@
         <div class="section">
             <h2>Analyzer Results</h2>
 
-            {% include 'html/partials/main-report/version-availability-table.html.twig' %}
-
-            {% include 'html/partials/main-report/lines-of-code-table.html.twig' %}
-
-            {% include 'html/partials/main-report/rector-analysis-table.html.twig' %}
-
-            {% include 'html/partials/main-report/fractor-analysis-table.html.twig' %}
+            {% for analyzer in active_analyzers %}
+                {% include analyzer.templates.html %}
+            {% endfor %}
         </div>
 
         {% include 'html/partials/main-report/extension-links.html.twig' %}

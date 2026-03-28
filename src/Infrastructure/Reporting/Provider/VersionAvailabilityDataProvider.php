@@ -51,12 +51,29 @@ class VersionAvailabilityDataProvider implements AnalysisReportDataProviderInter
         /** @var AnalysisResult $result */
         $result = reset($versionResult);
 
+        $packagistLatestVersion = $result->getMetric('packagist_latest_version');
+        $hasNewerPackagistVersion = false;
+
+        if ($packagistLatestVersion && $result->getExtension()->getVersion()) {
+            $currentVersion = $result->getExtension()->getVersion()->toString();
+            // simple check to avoid comparing "dev-master" or similar non-semver strings if possible,
+            // but version_compare handles many cases.
+            // We assume strict semver for accurate comparison, but 'path' extensions might have arbitrary versions.
+            if ('N/A' !== $currentVersion) {
+                $packagistLatestVersionNormalized = ltrim((string) $packagistLatestVersion, 'v');
+                $hasNewerPackagistVersion = version_compare($packagistLatestVersionNormalized, $currentVersion, '>');
+            }
+        }
+
         return [
             'skipped' => $result->getMetric('skipped'),
             'skip_reason' => $result->getMetric('skip_reason'),
             'distribution_type' => $result->getExtension()->getDistribution()?->getType(),
             'ter_available' => $result->getMetric('ter_available'),
             'packagist_available' => $result->getMetric('packagist_available'),
+            'packagist_latest_version' => $packagistLatestVersion,
+            'packagist_latest_compatible' => $result->getMetric('packagist_latest_compatible'),
+            'has_newer_packagist_version' => $hasNewerPackagistVersion,
             'git_available' => $result->getMetric('git_available'),
             'git_repository_url' => $result->getMetric('git_repository_url'),
             'git_repository_health' => $result->getMetric('git_repository_health'),

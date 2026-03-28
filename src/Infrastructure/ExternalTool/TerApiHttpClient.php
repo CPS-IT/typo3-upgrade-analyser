@@ -21,7 +21,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 readonly class TerApiHttpClient
 {
-    private const API_BASE_URL = 'https://extensions.typo3.org/api/v1';
+    private const string API_BASE_URL = 'https://extensions.typo3.org/api/v1';
 
     public function __construct(
         private HttpClientServiceInterface $httpClient,

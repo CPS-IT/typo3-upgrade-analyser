@@ -13,6 +13,9 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\GitSource;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
@@ -399,9 +402,11 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         return new VersionAvailabilityAnalyzer(
             $this->createCacheService(),
             $this->createLogger(),
-            $terClient,
-            $packagistClient,
-            $gitAnalyzer,
+            [
+                new TerSource($terClient, $this->createLogger(), $this->createCacheService()),
+                new PackagistSource($packagistClient, $this->createLogger(), $this->createCacheService()),
+                new GitSource($gitAnalyzer, $this->createLogger(), $this->createCacheService()),
+            ],
         );
     }
 

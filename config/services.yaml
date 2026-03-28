@@ -71,15 +71,35 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
 
+  # Version Availability Sources
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+    tags: ['version_availability.source']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+    tags: ['version_availability.source']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\GitSource:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
+      - '@logger'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
+    tags: ['version_availability.source']
+
   # Working VersionAvailabilityAnalyzer with all API clients including Git
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer:
     public: true
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
       - '@logger'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer'
+      - !tagged_iterator 'version_availability.source'
     tags: ['analyzer']
 
   # Lines of Code Analyzer with PathResolutionService
