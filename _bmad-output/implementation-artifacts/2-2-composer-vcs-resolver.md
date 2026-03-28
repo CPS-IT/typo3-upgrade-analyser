@@ -1,6 +1,6 @@
 # Story 2.2: Composer VCS Resolver (Tier 1)
 
-Status: review
+Status: done
 
 ## Story
 
