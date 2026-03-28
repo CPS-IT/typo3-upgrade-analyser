@@ -81,7 +81,7 @@ development_status:
   2-0-vcs-resolution-mechanism-spike: done
   2-1-composer-source-parser: done
   2-2-composer-vcs-resolver: done
-  2-3-generic-git-resolver: ready-for-dev
+  2-3-generic-git-resolver: review
   2-4-unmatched-vcs-source-warning: backlog
   2-5-integrate-resolvers-and-update-data-model: backlog
   2-6-remove-git-provider-subsystem: backlog
