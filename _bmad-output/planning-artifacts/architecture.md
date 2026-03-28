@@ -40,28 +40,28 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **Functional Requirements (47 total across 8 categories):**
 
-| Category | FRs | Architectural Implication |
-|---|---|---|
-| Installation Discovery & Analysis | FR1–FR8 | Multi-strategy detection, TYPO3 v11–v14 variant handling, read-only filesystem access |
-| Version Availability Checking | FR9–FR15 | 5 external API sources (TER, Packagist, GitHub, GitLab, Bitbucket); GitLab/Bitbucket not yet implemented |
-| Extension Type Analysis Strategy | FR16 | Per-type routing: core excluded, public/proprietary get code analysis |
-| Code Analysis | FR17–FR21 | External process execution (Rector, Fractor binaries), temp config files, timeout + crash handling |
-| Risk Scoring & Assessment | FR22–FR26 | 0–100 score per extension, categorical risk levels, aggregate overview, machine-readable output |
-| Reporting — Technical | FR27–FR31 | HTML/MD/JSON multi-format, re-generation from cache, per-extension detail pages |
-| Reporting — Customer-Facing | FR32–FR35 | Reduced-detail report, branding customization, non-technical language — both unimplemented |
-| Configuration & Setup | FR36–FR40 | Zero-config default → CLI flags → YAML file → env vars (progressive depth) |
-| Caching & Performance | FR41–FR44 | File-based cache with TTL, streaming output to prevent memory exhaustion (FR43 unimplemented) |
-| Tool Management | FR45–FR47 | Analyzer listing, extension listing, external tool presence detection |
+| Category                          | FRs       | Architectural Implication                                                                                |
+|-----------------------------------|-----------|----------------------------------------------------------------------------------------------------------|
+| Installation Discovery & Analysis | FR1–FR8   | Multi-strategy detection, TYPO3 v11–v14 variant handling, read-only filesystem access                    |
+| Version Availability Checking     | FR9–FR15  | 5 external API sources (TER, Packagist, GitHub, GitLab, Bitbucket); GitLab/Bitbucket not yet implemented |
+| Extension Type Analysis Strategy  | FR16      | Per-type routing: core excluded, public/proprietary get code analysis                                    |
+| Code Analysis                     | FR17–FR21 | External process execution (Rector, Fractor binaries), temp config files, timeout + crash handling       |
+| Risk Scoring & Assessment         | FR22–FR26 | 0–100 score per extension, categorical risk levels, aggregate overview, machine-readable output          |
+| Reporting — Technical             | FR27–FR31 | HTML/MD/JSON multi-format, re-generation from cache, per-extension detail pages                          |
+| Reporting — Customer-Facing       | FR32–FR35 | Reduced-detail report, branding customization, non-technical language — both unimplemented               |
+| Configuration & Setup             | FR36–FR40 | Zero-config default → CLI flags → YAML file → env vars (progressive depth)                               |
+| Caching & Performance             | FR41–FR44 | File-based cache with TTL, streaming output to prevent memory exhaustion (FR43 unimplemented)            |
+| Tool Management                   | FR45–FR47 | Analyzer listing, extension listing, external tool presence detection                                    |
 
 **Non-Functional Requirements:**
 
-| Category | Key NFRs | Architectural Impact |
-|---|---|---|
-| Performance | NFR1–NFR4 | 5 min max for 40 extensions; graceful API timeout; constant memory via streaming; visible progress |
-| Reliability | NFR5–NFR8 | Partial results on API failure; continue on binary crash; deterministic output; correct cache invalidation |
-| Security | NFR9–NFR13 | Credentials via env/`.env.local`/CI secrets only; read-only filesystem access; Composer auth.json for private Packagist |
-| Integration | NFR14–NFR18 | Configurable HTTP timeouts; consistent User-Agent; stable JSON schema; conventional exit codes; non-interactive mode |
-| Maintainability | NFR19–NFR22 | PHPStan Level 8; 80%+ coverage (100% for risk/availability logic); plugin architecture via DI tags; one-day onboarding |
+| Category        | Key NFRs    | Architectural Impact                                                                                                    |
+|-----------------|-------------|-------------------------------------------------------------------------------------------------------------------------|
+| Performance     | NFR1–NFR4   | 5 min max for 40 extensions; graceful API timeout; constant memory via streaming; visible progress                      |
+| Reliability     | NFR5–NFR8   | Partial results on API failure; continue on binary crash; deterministic output; correct cache invalidation              |
+| Security        | NFR9–NFR13  | Credentials via env/`.env.local`/CI secrets only; read-only filesystem access; Composer auth.json for private Packagist |
+| Integration     | NFR14–NFR18 | Configurable HTTP timeouts; consistent User-Agent; stable JSON schema; conventional exit codes; non-interactive mode    |
+| Maintainability | NFR19–NFR22 | PHPStan Level 8; 80%+ coverage (100% for risk/availability logic); plugin architecture via DI tags; one-day onboarding  |
 
 **Scale & Complexity:**
 
@@ -94,13 +94,13 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 ### Pre-Existing Architectural Debt (from Aug 2025 review)
 
-| Issue | Status | Risk |
-|---|---|---|
-| ReportService (558 LOC, too many responsibilities) | Resolved — split into ReportContextBuilder, TemplateRenderer, ReportFileManager | Low |
-| Path resolution logic duplicated across analyzers | Partially resolved — PathResolutionService exists | Medium |
-| Memory exhaustion during rendering | Spec written (StreamingAnalyzerOutput, StreamingTemplateRendering), not implemented | High |
-| Oversized classes (YamlConfigurationParser 525, RectorRuleRegistry 498, PhpConfigurationParser 492, LinesOfCodeAnalyzer 466 LOC) | Open | Medium |
-| TYPO3 v11 core extension detection bug | Open — confirmed in real project | High (trust issue) |
+| Issue                                                                                                                            | Status                                                                              | Risk               |
+|----------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|--------------------|
+| ReportService (558 LOC, too many responsibilities)                                                                               | Resolved — split into ReportContextBuilder, TemplateRenderer, ReportFileManager     | Low                |
+| Path resolution logic duplicated across analyzers                                                                                | Partially resolved — PathResolutionService exists                                   | Medium             |
+| Memory exhaustion during rendering                                                                                               | Spec written (StreamingAnalyzerOutput, StreamingTemplateRendering), not implemented | High               |
+| Oversized classes (YamlConfigurationParser 525, RectorRuleRegistry 498, PhpConfigurationParser 492, LinesOfCodeAnalyzer 466 LOC) | Open                                                                                | Medium             |
+| TYPO3 v11 core extension detection bug                                                                                           | Open — confirmed in real project                                                    | High (trust issue) |
 
 ## Starter Template Evaluation
 
@@ -183,43 +183,62 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
 
 **Decision:** `composer.json`/`composer.lock` in the analyzed installation is the source of truth for extension origins. Version resolution uses a two-tier strategy: Composer CLI as primary resolver, generic git CLI as fallback. No per-provider API clients. No URL-sniffing heuristics.
 
+**Tool preconditions (checked at `AnalyzeCommand` startup, before any analysis):**
+
+- `composer` — **hard precondition.** Checked at startup by `ToolAvailabilityChecker` (see below). If unavailable: fail fast with error message `Required tool 'composer' not found on PATH. Install Composer (https://getcomposer.org/download/) and ensure it is available in your shell environment.` No analysis runs. No graceful degradation path.
+- `git` — **hard precondition.** Same check. If unavailable: fail fast with error message `Required tool 'git' not found on PATH. Install Git (https://git-scm.com/downloads) and ensure it is available in your shell environment.` Rationale: the tool targets developers and CI pipelines where both tools are standard infrastructure.
+- `vendor/` directory present in the analyzed installation — **soft precondition.** If present: enables optional pre-filter optimization (see step 2 below). If absent: emit INFO, skip optimization, continue with full per-package resolution. Analysis is not blocked. **Stale `vendor/` caveat:** If `composer.lock` has been updated but `composer install` has not been run, the pre-filter may report packages as up-to-date that have been added or changed since the last install. No reliable detection mechanism exists — treat a present `vendor/` as "potentially stale" and document this as a known limitation of the pre-filter.
+
+`composer` is required because Tier 1 and the pre-filter depend on it; Tier 2 does not use it but is never intended to operate as a standalone resolution path.
+
 **Resolution chain (explicit fallback order):**
 
 1. `ComposerSourceParser` extracts VCS URLs from `composer.lock` `packages[].source.url` (primary) and `composer.json` `repositories[].url` (fallback for packages missing from lock)
 
-2. **Tier 1 — Composer CLI resolution** (`ComposerVcsResolver`):
-   - Uses `composer show` with `--working-dir` pointing to the analyzed installation
-   - Exact command variant determined by research spike (Story 2.0). Candidates: `composer show -o -d /path --format=json` (batch), `composer show -liD -d /path --format=json` (batch), `composer show -a vendor/package --format=json` (per-package)
-   - Authentication: Composer uses the installation's `auth.json` and SSH agent automatically
-   - **When this tier is used:** Composer is available in the analysis environment and the analyzed installation has a valid `composer.lock`
-   - **When this tier fails:** Composer not installed, `composer.lock` missing/corrupt, network error, auth failure → falls through to Tier 2
+2. **Optional pre-filter** (only when `vendor/` is present):
+   - Run `composer show -liD -d /path --format=json` once — returns all direct dependencies with `latest` version and `latest-status` in ~14s for a typical installation
+   - Skip per-package Tier 1 calls for packages where `latest-status == "up-to-date"` — they cannot have a TYPO3-compatible newer version
+   - Coverage: direct dependencies only; transitive VCS-sourced extensions not covered by this filter
+   - **Known limitation:** Transitive `typo3-cms-extension` packages sourced from private VCS are not discovered by the pre-filter or Tier 1. These are the highest-risk category (private, potentially unmaintained) but require `composer.lock` `packages[]` traversal beyond direct deps — not implemented in this tier. Frequency in real TYPO3 projects is not assessed
 
-3. **Tier 2 — Generic git CLI resolution** (`GenericGitResolver`):
-   - Uses `git ls-remote --tags <url>` to list available tags without cloning
-   - Parses tag names into Composer-compatible version strings
-   - Optionally: `git ls-remote --heads <url>` for branch-based constraints (e.g. `dev-main`)
-   - Authentication: uses SSH agent and git credential helpers already configured on the host
-   - **When this tier is used:** Composer resolution failed or is unavailable; or for repositories not in the installation's Composer config
-   - **When this tier fails:** network error, auth failure → warn and record null
+3. **Tier 1 — Composer CLI resolution** (`PackagistVersionResolver`):
+   - Command: `composer show --all --format=json vendor/package` (no `--working-dir`) — Packagist-indexed packages only (~315ms/pkg; ~400ms with Xdebug active)
+   - **Two-call strategy per package:** first call (no version) returns full version list + `requires` for the latest version. If latest is not compatible with the target TYPO3 version, use binary search on the version list with versioned calls (`composer show --all --format=json vendor/package X.Y.Z`) to find the newest compatible version (~315ms per additional call). Binary search reduces worst-case from O(N) to O(log N) — relevant for extensions like `ext-solr` (139 versions)
+   - `--working-dir` is NOT used — confirmed to add 11–13s overhead per call due to full repository initialisation on every subprocess. VCS-only packages (not on Packagist) go directly to Tier 2
+   - Batch commands (`-o`, `-liD`) are NOT used for version resolution: they lack the `requires` block needed for TYPO3 compatibility matching
+   - **When this tier is used:** package name resolves on Packagist
+   - **When this tier fails:** package not on Packagist, or network/auth failure → falls through to Tier 2
 
-4. **Failure handling:** If both tiers fail for a given repository, emit a Console WARNING with the URL and resolution errors from both tiers. Record availability as `null` (not `false`). Analysis continues for remaining extensions.
+4. **Tier 2 — Generic git CLI resolution** (`GenericGitResolver`):
+   - **Trigger:** Packagist lookup returned no result (VCS-only package) or Tier 1 network/auth failure. NOT triggered by Composer being unavailable — that is a startup error
+   - Command: `git ls-remote -t --refs <url>` (the `--refs` flag suppresses peeled `^{}` entries; do NOT use `--tags` alone)
+   - Parses tag names into Composer version strings; dominant TYPO3 extension pattern is `X.Y.Z` (no `v` prefix)
+   - For `dev-*` constraints: `git ls-remote --refs <url>` (without `-t`) returns both tags and branches in one call
+   - Authentication: SSH agent for `git@host:` URLs; git credential helpers for HTTPS. No tool-specific tokens. Confirmed working for private SSH GitLab repos (~630ms/URL)
+   - **Limitation:** tag names only — no `requires` block. Fetch `composer.json` from the most recent stable tag ref to determine TYPO3 compatibility (one additional HTTP call per package). **Unverified assumption:** The HTTP cost of this fetch was not benchmarked. For 40 private extensions on a slow internal GitLab instance, 40 raw-file HTTP fetches may significantly exceed the ls-remote timings measured in the spike
+   - Performance: ~315–560ms/URL across GitHub, GitLab.com, and private self-hosted GitLab (unaffected by Xdebug)
+   - **When this tier fails:** network error, auth failure → emit Console WARNING, record `null`
+
+5. **Failure handling:** If Tier 2 fails for a given repository, emit a Console WARNING with the URL and error. Record availability as `null` (not `false`). Analysis continues for remaining extensions.
+
+6. **Future optimization — parallel execution:** Both tiers are currently designed as serial workloads (40 × ~315ms ≈ 12.6s for Tier 1; 40 × ~560ms ≈ 22.5s for Tier 2). These are within NFR budget for serial execution. Parallel subprocess execution (e.g. `symfony/process` with concurrent pools) is a viable optimization if serial timings become a bottleneck in larger installations. Not planned for initial implementation.
 
 **What each tier provides:**
 
-| Capability | Tier 1 (Composer) | Tier 2 (git CLI) |
-|---|---|---|
-| List available versions | Yes (rich) | Yes (tags only) |
-| Version constraint matching | Yes (native) | Manual parsing |
-| Dependency metadata (require) | Yes | No |
-| Branch-based versions (dev-*) | Yes | Via ls-remote |
-| Works without composer.lock | Partially | Yes |
-| Works without Composer installed | No | Yes |
-| Authentication | auth.json / SSH | SSH / git creds |
-| Batch resolution (all packages) | Yes (some modes) | No (per-URL) |
+| Capability                       | Tier 1 (Composer, Packagist)          | Tier 2 (git CLI)                             |
+|----------------------------------|---------------------------------------|----------------------------------------------|
+| List available versions          | Yes (rich)                            | Yes (tags only)                              |
+| Version constraint matching      | Yes (native)                          | Manual parsing                               |
+| Dependency metadata (require)    | Yes — latest and per specific version | No (requires separate `composer.json` fetch) |
+| Branch-based versions (dev-*)    | Yes                                   | Via `ls-remote --refs`                       |
+| Works without vendor/            | Yes                                   | Yes                                          |
+| Covers VCS-only private packages | No                                    | Yes                                          |
+| Authentication                   | None (Packagist is public)            | SSH agent / git credential helpers           |
+| Per-package timing               | ~315ms (warm)                         | ~560ms                                       |
 
 **Legacy installations (v11 non-Composer):** Extensions in `typo3conf/ext/` have no composer provenance. Version availability falls back to TER + key-based lookup only. Tier 2 (git CLI) may be used if a repository URL can be derived from extension metadata.
 
-**Rationale:** Two-tier approach ensures coverage: Composer provides rich resolution for the common case (Composer-based installations), git CLI provides a universal fallback that works with any git-accessible URL regardless of hosting provider. Together they eliminate per-provider API clients while reusing existing authentication. See [Sprint Change Proposal 2026-03-26](sprint-change-proposal-2026-03-26.md) for full rationale.
+**Rationale:** Targeting developers and CI pipelines makes `composer` and `git` safe hard requirements — simplifying error handling and eliminating graceful-degradation complexity. The two-tier split is not a Composer-availability fallback but a Packagist-coverage split: Tier 1 handles all Packagist-indexed extensions efficiently; Tier 2 covers VCS-only private packages that Packagist cannot resolve. See [Sprint Change Proposal 2026-03-26](sprint-change-proposal-2026-03-26.md) and [Story 2.0 spike](../../documentation/implementation/development/feature/VcsResolutionSpike.md) for empirical basis.
 
 ---
 
@@ -296,7 +315,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 2. VersionProfileRegistry + version profiles for v11–v13
 3. StreamingOutputManager pre-flight check + FileReference in Infrastructure
 4. VCS resolution research spike (Story 2.0) — validate Composer CLI and git CLI approaches
-5. ComposerSourceParser + ComposerVcsResolver + GenericGitResolver (Stories 2.1–2.3)
+5. ComposerSourceParser + PackagistVersionResolver + GenericGitResolver (Stories 2.1–2.3)
 6. Integration: wire new resolvers into VersionAvailabilityAnalyzer, update metrics/templates (Story 2.5)
 7. Remove old GitProvider subsystem (Story 2.6)
 8. `report generate` subcommand + customer template set
@@ -306,7 +325,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 - VersionProfileRegistry feeds into InstallationDiscoveryService, ExtensionDiscoveryService, and core extension exclusion logic
 - StreamingOutputManager is a dependency of TemplateRenderer and both Rector/Fractor analyzers
 - VCS resolution research spike (Story 2.0) is a serial prerequisite for all Epic 2 implementation stories
-- ComposerVcsResolver and GenericGitResolver replace GitRepositoryAnalyzer in VersionAvailabilityAnalyzer
+- PackagistVersionResolver and GenericGitResolver replace GitRepositoryAnalyzer in VersionAvailabilityAnalyzer
 - Metric rename (`git_*` → `vcs_*`) affects ReportContextBuilder and all 10 report templates
 - `report generate` subcommand requires caching to be reliable (NFR7) — reports generated from stale cache must be flagged
 
@@ -344,17 +363,17 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 
 **Layer placement rules (non-negotiable):**
 
-| Component | Layer | Never in |
-|---|---|---|
-| `FileReference` | `Infrastructure/Streaming/` | `Domain/` |
-| `VersionProfile`, `VersionProfileRegistry` | `Infrastructure/Discovery/` | `Domain/` |
-| `ComposerSourceParser` | `Infrastructure/Discovery/` | `Domain/`, `Application/` |
-| `GitProviderFactory` extensions | `Infrastructure/ExternalTool/GitProvider/` | anywhere else |
-| `ReportGenerateCommand` | `Application/Command/` | — |
-| `StreamingOutputManager` | `Infrastructure/Streaming/` | — |
-| `CachingAnalyzerDecorator` | `Infrastructure/Analyzer/` | — |
-| `AnalysisResultSerializer` | `Infrastructure/Analyzer/` | — |
-| `FileSystemUtility` | `Infrastructure/` | `Domain/` |
+| Component                                  | Layer                                      | Never in                  |
+|--------------------------------------------|--------------------------------------------|---------------------------|
+| `FileReference`                            | `Infrastructure/Streaming/`                | `Domain/`                 |
+| `VersionProfile`, `VersionProfileRegistry` | `Infrastructure/Discovery/`                | `Domain/`                 |
+| `ComposerSourceParser`                     | `Infrastructure/Discovery/`                | `Domain/`, `Application/` |
+| `GitProviderFactory` extensions            | `Infrastructure/ExternalTool/GitProvider/` | anywhere else             |
+| `ReportGenerateCommand`                    | `Application/Command/`                     | —                         |
+| `StreamingOutputManager`                   | `Infrastructure/Streaming/`                | —                         |
+| `CachingAnalyzerDecorator`                 | `Infrastructure/Analyzer/`                 | —                         |
+| `AnalysisResultSerializer`                 | `Infrastructure/Analyzer/`                 | —                         |
+| `FileSystemUtility`                        | `Infrastructure/`                          | `Domain/`                 |
 
 **Test location:** Mirror source exactly. `src/Infrastructure/Discovery/VersionProfileRegistry.php` → `tests/Unit/Infrastructure/Discovery/VersionProfileRegistryTest.php`.
 
@@ -407,6 +426,20 @@ CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\MyFastAnalyzer:
 **`getDirectoryModificationTime()`** moves to `Infrastructure/FileSystemUtility`. Used by `LinesOfCodeAnalyzer` and any analyzer needing file mtime checks.
 
 **`getRequiredTools()` / `hasRequiredTools()`** remain on `AnalyzerInterface` — concrete analyzers implement them directly.
+
+**Startup precondition checks (global, not per-analyzer):** `composer` and `git` availability is checked once by `AnalyzeCommand` at startup via `ToolAvailabilityChecker::assertAvailable('composer', 'git')`. The checker runs `<tool> --version`, throwing a `\RuntimeException` with the error message template defined in the preconditions section above if the binary is not found. This is not routed through `getRequiredTools()` (which is a per-analyzer concern) — it is a command-level pre-flight gate. Resolver classes (`PackagistVersionResolver`, `GenericGitResolver`) have no tool-checking responsibility. `vendor/` presence is checked separately and emits INFO only.
+
+**`ToolAvailabilityChecker` service** (`Infrastructure/ExternalTool/`):
+```php
+final class ToolAvailabilityChecker
+{
+    /** @throws \RuntimeException if any tool is not found on PATH */
+    public function assertAvailable(string ...$tools): void;
+
+    public function isAvailable(string $tool): bool;
+}
+```
+Error message pattern: `Required tool '<name>' not found on PATH. Install <Name> (<url>) and ensure it is available in your shell environment.` Tool-to-URL mapping is an internal constant of the checker.
 
 **Technical debt migration:**
 - `AbstractCachedAnalyzer` is not deleted until all 4 existing analyzers are migrated
@@ -492,7 +525,7 @@ $diffFile = $diff !== null
 - `packages: array<string>` — package names associated with this URL
 
 **Resolution chain:**
-1. Pass `DeclaredRepository` to `ComposerVcsResolver` (Tier 1 — Composer CLI)
+1. Pass `DeclaredRepository` to `PackagistVersionResolver` (Tier 1 — Composer CLI)
 2. On failure, pass to `GenericGitResolver` (Tier 2 — `git ls-remote`)
 3. On failure of both tiers, emit Console WARNING and record `null`
 
@@ -522,13 +555,13 @@ Rules for any agent adding metrics or output fields (NFR16 — stable contract):
 
 ### Error Handling Pattern in Analyzers
 
-| Error Type | Pattern |
-|---|---|
-| External API unavailable | Log warning, return partial result with `null` metrics |
-| Binary crash / timeout | Log warning, set `riskScore = null`, add recommendation |
-| Invalid analyzer config | Throw `AnalyzerException` — stops this extension's analysis |
-| TER API fatal / malformed | Re-throw — do not swallow |
-| File not found in discovery | Log warning, skip extension, continue |
+| Error Type                  | Pattern                                                     |
+|-----------------------------|-------------------------------------------------------------|
+| External API unavailable    | Log warning, return partial result with `null` metrics      |
+| Binary crash / timeout      | Log warning, set `riskScore = null`, add recommendation     |
+| Invalid analyzer config     | Throw `AnalyzerException` — stops this extension's analysis |
+| TER API fatal / malformed   | Re-throw — do not swallow                                   |
+| File not found in discovery | Log warning, skip extension, continue                       |
 
 **Never:** silent `catch (\Throwable $e) {}`. Every catch must re-throw, log, or produce a visible warning.
 
@@ -553,7 +586,8 @@ public static function riskLevelProvider(): iterable
 - `VersionProfileRegistry`: 100% (wrong profile = wrong analysis)
 - `StreamingOutputManager`: 100% for pre-flight check and fallback path
 - `ComposerSourceParser`: 100% for all source URL extraction variants
-- `ComposerVcsResolver`: successful resolution, failure fallthrough to Tier 2, Composer unavailable
+- `ToolAvailabilityChecker`: 100% — tool found, tool not found (exception with correct message), multiple tools
+- `PackagistVersionResolver`: successful resolution, failure fallthrough to Tier 2
 - `GenericGitResolver`: successful tag listing, tag-to-version parsing, network failure, SSH URL handling
 - JSON output schema: at least one functional test asserting exact structure including `vcs_*` metric names
 
@@ -563,16 +597,16 @@ public static function riskLevelProvider(): iterable
 
 **Composer quality scripts:**
 
-| Action | Command |
-|---|---|
-| Check all | `composer lint` |
-| Check PHP style | `composer lint:php` |
-| Check Rector | `composer lint:rector` |
-| Static analysis | `composer sca:php` |
-| Fix all | `composer fix` |
-| Fix PHP style | `composer fix:php` |
-| Fix Rector | `composer fix:rector` |
-| Unit tests | `composer test` or `composer test:unit` |
+| Action          | Command                                 |
+|-----------------|-----------------------------------------|
+| Check all       | `composer lint`                         |
+| Check PHP style | `composer lint:php`                     |
+| Check Rector    | `composer lint:rector`                  |
+| Static analysis | `composer sca:php`                      |
+| Fix all         | `composer fix`                          |
+| Fix PHP style   | `composer fix:php`                      |
+| Fix Rector      | `composer fix:rector`                   |
+| Unit tests      | `composer test` or `composer test:unit` |
 
 **All AI agents MUST:**
 - Read `project-context.md` before implementing any code
@@ -611,7 +645,8 @@ src/
 │   │   └── ComposerSourceParser.php            # NEW — extracts VCS URLs from composer.lock/composer.json
 │   │
 │   ├── ExternalTool/
-│   │   ├── ComposerVcsResolver.php            # NEW — Tier 1: resolves versions via Composer CLI
+│   │   ├── ToolAvailabilityChecker.php        # NEW — startup precondition check for required binaries
+│   │   ├── PackagistVersionResolver.php       # NEW — Tier 1: resolves versions via Composer CLI (Packagist)
 │   │   ├── GenericGitResolver.php             # NEW — Tier 2: resolves versions via git ls-remote
 │   │   ├── VcsResolutionException.php         # NEW — renamed from GitProviderException
 │   │   └── DeclaredRepository.php             # NEW — simplified VO (url + packages only)
@@ -642,7 +677,8 @@ tests/
 │       │   ├── VersionProfileRegistryTest.php
 │       │   └── ComposerSourceParserTest.php
 │       ├── ExternalTool/
-│       │   ├── ComposerVcsResolverTest.php
+│       │   ├── ToolAvailabilityCheckerTest.php
+│       │   ├── PackagistVersionResolverTest.php
 │       │   └── GenericGitResolverTest.php
 │       └── Streaming/
 │           ├── StreamingOutputManagerTest.php
@@ -663,13 +699,13 @@ tests/
 
 **Layer boundary enforcement:**
 
-| Boundary | Rule | Enforcement |
-|---|---|---|
-| Domain ← Infrastructure | Domain never imports Infrastructure types | PHPStan namespace rules |
-| `FileReference` stays in `Infrastructure/Streaming/` | Never referenced in `src/Domain/` | PHPStan + code review |
-| `VersionProfile` stays in `Infrastructure/Discovery/` | Domain uses version integers only | PHPStan namespace rules |
-| `ComposerSourceParser` reads analyzed installation | Never reads the tool's own composer.json | Class name + test fixture isolation |
-| `ReportGenerateCommand` reads only from cache | Never triggers fresh analysis | `CacheService` dependency only — no `AnalyzerInterface` injection |
+| Boundary                                              | Rule                                      | Enforcement                                                       |
+|-------------------------------------------------------|-------------------------------------------|-------------------------------------------------------------------|
+| Domain ← Infrastructure                               | Domain never imports Infrastructure types | PHPStan namespace rules                                           |
+| `FileReference` stays in `Infrastructure/Streaming/`  | Never referenced in `src/Domain/`         | PHPStan + code review                                             |
+| `VersionProfile` stays in `Infrastructure/Discovery/` | Domain uses version integers only         | PHPStan namespace rules                                           |
+| `ComposerSourceParser` reads analyzed installation    | Never reads the tool's own composer.json  | Class name + test fixture isolation                               |
+| `ReportGenerateCommand` reads only from cache         | Never triggers fresh analysis             | `CacheService` dependency only — no `AnalyzerInterface` injection |
 
 **Service communication boundaries:**
 
@@ -690,31 +726,31 @@ ReportGenerateCommand
 
 **External integration boundaries:**
 
-| External System | Client | Auth Mechanism | Failure Behavior |
-|---|---|---|---|
-| TER API | `TerApiClient` | None (public) | Log warning, null result |
-| Packagist | `PackagistClient` | `auth.json` (Composer) | Log warning, null result |
-| VCS repositories (Tier 1) | `ComposerVcsResolver` | Composer `auth.json` / SSH agent (via `--working-dir`) | Log warning, fall through to Tier 2 |
-| VCS repositories (Tier 2) | `GenericGitResolver` | SSH agent / git credential helpers | Log warning, null result |
-| Rector binary | `RectorExecutor` | None | Log warning, null riskScore, recommendation added |
-| Fractor binary | `FractorExecutor` | None | Log warning, null riskScore, recommendation added |
+| External System           | Client                     | Auth Mechanism                     | Failure Behavior                                  |
+|---------------------------|----------------------------|------------------------------------|---------------------------------------------------|
+| TER API                   | `TerApiClient`             | None (public)                      | Log warning, null result                          |
+| Packagist                 | `PackagistClient`          | `auth.json` (Composer)             | Log warning, null result                          |
+| VCS repositories (Tier 1) | `PackagistVersionResolver` | None (Packagist is public)         | Network/auth failure → fall through to Tier 2     |
+| VCS repositories (Tier 2) | `GenericGitResolver`       | SSH agent / git credential helpers | Log warning, null result                          |
+| Rector binary             | `RectorExecutor`           | None                               | Log warning, null riskScore, recommendation added |
+| Fractor binary            | `FractorExecutor`          | None                               | Log warning, null riskScore, recommendation added |
 
 ---
 
 ### Requirements to Structure Mapping
 
-| FR Category | Primary Location |
-|---|---|
-| FR1–FR8 Installation Discovery | `Infrastructure/Discovery/` — `InstallationDiscoveryService`, `VersionProfileRegistry`, `ComposerSourceParser` |
-| FR9–FR11, FR14–FR15 Version Availability | `Infrastructure/ExternalTool/` — `TerApiClient`, `PackagistClient`, `ComposerVcsResolver`, `GenericGitResolver` (FR12/FR13 merged into FR11) |
-| FR16 Extension Type Strategy | `Infrastructure/Discovery/ExtensionDiscoveryService` + `VersionProfile.coreExtensionKeys` |
-| FR17–FR21 Code Analysis | `Infrastructure/Analyzer/` — existing analyzers + `CachingAnalyzerDecorator` |
-| FR22–FR26 Risk Scoring | `Domain/Entity/AnalysisResult` + `Infrastructure/Analyzer/` |
-| FR27–FR31 Technical Reporting | `Infrastructure/Reporting/` + `Infrastructure/Streaming/` |
-| FR32–FR35 Customer Reporting | `Application/Command/ReportGenerateCommand` + `resources/templates/customer/` |
-| FR36–FR40 Configuration | `Infrastructure/Configuration/ConfigurationService` + `.typo3-analyzer.yaml` schema |
-| FR41–FR44 Caching & Streaming | `Infrastructure/Cache/CacheService` + `Infrastructure/Streaming/StreamingOutputManager` |
-| FR45–FR47 Tool Management | `Application/Command/ListAnalyzersCommand`, `ListExtensionsCommand` |
+| FR Category                              | Primary Location                                                                                                                                  |
+|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| FR1–FR8 Installation Discovery           | `Infrastructure/Discovery/` — `InstallationDiscoveryService`, `VersionProfileRegistry`, `ComposerSourceParser`                                    |
+| FR9–FR11, FR14–FR15 Version Availability | `Infrastructure/ExternalTool/` — `TerApiClient`, `PackagistClient`, `PackagistVersionResolver`, `GenericGitResolver` (FR12/FR13 merged into FR11) |
+| FR16 Extension Type Strategy             | `Infrastructure/Discovery/ExtensionDiscoveryService` + `VersionProfile.coreExtensionKeys`                                                         |
+| FR17–FR21 Code Analysis                  | `Infrastructure/Analyzer/` — existing analyzers + `CachingAnalyzerDecorator`                                                                      |
+| FR22–FR26 Risk Scoring                   | `Domain/Entity/AnalysisResult` + `Infrastructure/Analyzer/`                                                                                       |
+| FR27–FR31 Technical Reporting            | `Infrastructure/Reporting/` + `Infrastructure/Streaming/`                                                                                         |
+| FR32–FR35 Customer Reporting             | `Application/Command/ReportGenerateCommand` + `resources/templates/customer/`                                                                     |
+| FR36–FR40 Configuration                  | `Infrastructure/Configuration/ConfigurationService` + `.typo3-analyzer.yaml` schema                                                               |
+| FR41–FR44 Caching & Streaming            | `Infrastructure/Cache/CacheService` + `Infrastructure/Streaming/StreamingOutputManager`                                                           |
+| FR45–FR47 Tool Management                | `Application/Command/ListAnalyzersCommand`, `ListExtensionsCommand`                                                                               |
 
 ---
 
@@ -772,21 +808,21 @@ AnalyzeCommand::execute()
 
 **Functional Requirements:** All 45 FRs architecturally supported (FR12/FR13 merged into FR11).
 
-| Previously uncovered | Now covered by |
-|---|---|
-| FR11 VCS availability (all providers) | `ComposerVcsResolver` (Tier 1) + `GenericGitResolver` (Tier 2) — replaces per-provider clients; covers GitHub, GitLab, Bitbucket, Gitea, self-hosted |
-| FR32–FR35 Customer report | `ReportGenerateCommand` + `resources/templates/customer/` |
-| FR43 Streaming output | `StreamingOutputManager` + `FileReference` |
+| Previously uncovered                  | Now covered by                                                                                                                                            |
+|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| FR11 VCS availability (all providers) | `PackagistVersionResolver` (Tier 1) + `GenericGitResolver` (Tier 2) — replaces per-provider clients; covers GitHub, GitLab, Bitbucket, Gitea, self-hosted |
+| FR32–FR35 Customer report             | `ReportGenerateCommand` + `resources/templates/customer/`                                                                                                 |
+| FR43 Streaming output                 | `StreamingOutputManager` + `FileReference`                                                                                                                |
 
 **Non-Functional Requirements:** All 22 NFRs covered.
 
-| NFR | Resolution |
-|---|---|
-| NFR3 Memory | `StreamingOutputManager` removes large content from in-memory objects |
-| NFR7 Cache invalidation | `CachingAnalyzerDecorator` + `AnalysisResultSerializer` |
-| NFR8 Determinism | Deterministic file naming via hash — no random IDs or timestamps |
-| NFR17 Exit codes | TTY-independent exit code logic, separately tested |
-| NFR18 Non-interactive | `--no-interaction` / `TYPO3_ANALYZER_NO_INTERACTION=1` |
+| NFR                     | Resolution                                                            |
+|-------------------------|-----------------------------------------------------------------------|
+| NFR3 Memory             | `StreamingOutputManager` removes large content from in-memory objects |
+| NFR7 Cache invalidation | `CachingAnalyzerDecorator` + `AnalysisResultSerializer`               |
+| NFR8 Determinism        | Deterministic file naming via hash — no random IDs or timestamps      |
+| NFR17 Exit codes        | TTY-independent exit code logic, separately tested                    |
+| NFR18 Non-interactive   | `--no-interaction` / `TYPO3_ANALYZER_NO_INTERACTION=1`                |
 
 ---
 

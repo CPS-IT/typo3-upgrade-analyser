@@ -111,7 +111,7 @@ Technical requirements from Architecture that impact implementation:
 - AR1: `VersionProfileRegistry` — explicit per-version profiles (v11–v14) centralizing discovery paths, core extension lists, and composer.json override keys; required before v11 bug fix and v13/v14 support claims
 - AR2: `StreamingOutputManager` — pre-flight writability check at command startup; file-based storage for large content fields (diff, code_before, code_after, error output); deterministic file naming via sha256 hash (never random or time-based); null return on write failure (not exception); Infrastructure-only concern — Domain holds `string|null`, never `FileReference`
 - AR3: `ComposerSourceParser` — extracts VCS URLs from `composer.lock` `source.url` (primary) and `composer.json` `repositories[].url` (fallback); no URL-sniffing heuristics; no provider-type classification
-- AR4: Two-tier VCS resolution — `ComposerVcsResolver` (Tier 1: Composer CLI via `--working-dir`) + `GenericGitResolver` (Tier 2: `git ls-remote`); replaces per-provider API clients; auth via Composer `auth.json` / SSH agent; no tool-specific tokens
+- AR4: Two-tier VCS resolution — `PackagistVersionResolver` (Tier 1: Composer CLI via `--working-dir`) + `GenericGitResolver` (Tier 2: `git ls-remote`); replaces per-provider API clients; auth via Composer `auth.json` / SSH agent; no tool-specific tokens
 - AR5: `CachingAnalyzerDecorator` — new analyzers implement `AnalyzerInterface` directly (never extend `AbstractCachedAnalyzer`); `autoconfigure: false` mandatory to prevent double-tagging; `AnalysisResultSerializer` handles result serialization/deserialization
 - AR6: `ReportGenerateCommand` — separate `report generate` subcommand; reads only from cache (no `AnalyzerInterface` injection); also requires `StreamingOutputManager.validateOutputDirectory()` pre-flight
 - AR7: Customer Twig templates — `resources/templates/customer/` using Twig `{% extends %}` inheritance over technical base templates; `--format=customer --branding=agency.yaml` flags
@@ -198,7 +198,7 @@ Implements: `VersionProfile`, `VersionProfileRegistry`, `VersionProfileRegistryF
 
 ### Epic 2: Complete Extension Source Coverage — All VCS Providers
 Developer gets version availability data for extensions hosted on any VCS provider (GitHub, GitLab, Bitbucket, Codeberg, self-hosted, etc.), using Composer CLI as primary resolver and generic git CLI as fallback. Replaces per-provider API clients with provider-agnostic resolution. Unresolvable sources produce a visible warning.
-Implements: `ComposerSourceParser` (AR3), `ComposerVcsResolver`, `GenericGitResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
+Implements: `ComposerSourceParser` (AR3), `PackagistVersionResolver`, `GenericGitResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
 **FRs covered:** FR11 (consolidated), FR14 (completing aggregation), FR15 (simplified)
 
 ### Epic 3: Memory-Safe Analysis for Large Installations
@@ -418,13 +418,13 @@ So that version availability is checked for all VCS providers without per-host A
 **Acceptance Criteria:**
 
 - **Given** `ComposerSourceParser` has extracted `DeclaredRepository[]` with VCS URLs
-- **When** `ComposerVcsResolver` resolves versions for those repositories
+- **When** `PackagistVersionResolver` resolves versions for those repositories
 - **Then** it uses the Composer CLI approach determined by the research spike (batch command or per-package command)
 - **And** `--working-dir` points to the analyzed installation so Composer uses its `auth.json` and `repositories` configuration
 - **And** resolved versions are matched against the target TYPO3 version constraints to determine compatibility
 - **And** if resolution fails (network error, auth failure, Composer not installed), the failure is recorded per-extension and control passes to the fallback resolver (Story 2.3)
 - **And** operations use configurable timeouts (NFR2, NFR14)
-- **And** `ComposerVcsResolver` lives in `Infrastructure/ExternalTool/`
+- **And** `PackagistVersionResolver` lives in `Infrastructure/ExternalTool/`
 - **And** unit tests cover: successful resolution, no compatible version, network failure, auth failure, Composer not installed
 - **And** PHPStan Level 8 reports zero errors
 
@@ -442,7 +442,7 @@ So that extensions on hosts without Composer integration still get version avail
 
 **Acceptance Criteria:**
 
-- **Given** `ComposerVcsResolver` has failed for one or more VCS URLs (auth failure, Composer not installed, timeout)
+- **Given** `PackagistVersionResolver` has failed for one or more VCS URLs (auth failure, Composer not installed, timeout)
 - **When** `GenericGitResolver` attempts resolution for those URLs
 - **Then** it executes `git ls-remote --tags <url>` and `git ls-remote --heads <url>` to list available refs
 - **And** tag names are parsed into version numbers and matched against the target TYPO3 version constraints
@@ -465,7 +465,7 @@ So that I know the analysis is incomplete for that source and can act on it.
 
 **Acceptance Criteria:**
 
-- **Given** an extension whose VCS URL failed resolution in both `ComposerVcsResolver` (Tier 1) and `GenericGitResolver` (Tier 2)
+- **Given** an extension whose VCS URL failed resolution in both `PackagistVersionResolver` (Tier 1) and `GenericGitResolver` (Tier 2)
 - **When** the `VersionAvailabilityAnalyzer` runs
 - **Then** a Console-level WARNING is written in the format: `[WARNING] VCS source "{url}" could not be resolved. Ensure Composer authentication is configured for this URL.`
 - **And** the extension's VCS availability metric is recorded as `null` (not `false`) to distinguish "unknown" from "not available"
@@ -487,7 +487,7 @@ So that all VCS sources are resolved through the new two-tier chain and reports 
 
 - **Given** Stories 2.1–2.4 are complete and tested
 - **When** `VersionAvailabilityAnalyzer` is updated
-- **Then** it delegates VCS resolution to `ComposerVcsResolver` → `GenericGitResolver` instead of `GitRepositoryAnalyzer`
+- **Then** it delegates VCS resolution to `PackagistVersionResolver` → `GenericGitResolver` instead of `GitRepositoryAnalyzer`
 - **And** analysis result metrics are renamed: `git_available` → `vcs_available`, `git_repository_url` → `vcs_source_url`, `git_latest_version` → `vcs_latest_version`
 - **And** `git_repository_health` metric is removed entirely (GitHub vanity metric with no equivalent in the new approach)
 - **And** risk scoring in `VersionAvailabilityAnalyzer` replaces health-weighted git scoring with binary VCS availability scoring
@@ -495,7 +495,7 @@ So that all VCS sources are resolved through the new two-tier chain and reports 
 - **And** HTML templates update: "Git" status card → "VCS" status card; "Repository Health" percentage removed; "Latest Compatible Version" retained
 - **And** version availability table column header changes from "Git" to "VCS"
 - **And** JSON output under `analyzers.version-availability` uses the new `vcs_*` field names (breaking schema change — documented)
-- **And** `services.yaml` wires `ComposerVcsResolver` and `GenericGitResolver`; `GitRepositoryAnalyzer` is unwired but not deleted
+- **And** `services.yaml` wires `PackagistVersionResolver` and `GenericGitResolver`; `GitRepositoryAnalyzer` is unwired but not deleted
 - **And** all existing functional and integration tests are updated to use the new metric names
 - **And** PHPStan Level 8 reports zero errors
 
