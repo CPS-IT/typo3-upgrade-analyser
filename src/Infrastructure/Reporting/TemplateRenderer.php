@@ -33,6 +33,8 @@ readonly class TemplateRenderer
      * @param array<string, mixed> $context Report context data
      * @param string               $format  Output format (markdown, html, json)
      *
+     * @throws \JsonException
+     *
      * @return array{content: string, filename: string} Rendered content and suggested filename
      */
     public function renderMainReport(array $context, string $format): array
@@ -75,6 +77,7 @@ readonly class TemplateRenderer
                 'target_version' => $context['target_version'],
                 'extension' => $extensionData['extension'],
                 'extension_data' => $extensionData,
+                'configuration' => $context['configuration'] ?? [],
                 'generated_at' => $context['generated_at'],
             ];
 

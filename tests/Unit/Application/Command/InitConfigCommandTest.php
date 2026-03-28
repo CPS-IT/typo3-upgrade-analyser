@@ -139,7 +139,7 @@ class InitConfigCommandTest extends TestCase
 
         self::assertArrayHasKey('version_availability', $analyzers);
         self::assertTrue($analyzers['version_availability']['enabled']);
-        self::assertEquals(['ter', 'packagist', 'github'], $analyzers['version_availability']['sources']);
+        self::assertEquals(['ter', 'packagist', 'git'], $analyzers['version_availability']['sources']);
 
         self::assertArrayHasKey('static_analysis', $analyzers);
         self::assertTrue($analyzers['static_analysis']['enabled']);

@@ -22,11 +22,7 @@ class TerApiResponseParser
      */
     public function parseExtensionData(array $responseData): ?array
     {
-        if (!isset($responseData[0])) {
-            return null;
-        }
-
-        return $responseData[0];
+        return $responseData[0] ?? null;
     }
 
     /**
@@ -34,11 +30,7 @@ class TerApiResponseParser
      */
     public function parseVersionsData(array $responseData): ?array
     {
-        if (!isset($responseData[0])) {
-            return null;
-        }
-
-        return $responseData[0];
+        return $responseData[0] ?? null;
     }
 
     /**

@@ -9,7 +9,7 @@ analysis:
   analyzers:
     version_availability:
       enabled: true
-      sources: [ter, packagist, github]
+      sources: [ter, packagist, git]
       timeout: 30
     static_analysis:
       enabled: true

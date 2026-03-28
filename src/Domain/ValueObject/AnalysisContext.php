@@ -47,6 +47,19 @@ readonly class AnalysisContext
 
     public function getConfigurationValue(string $key, mixed $default = null): mixed
     {
+        if (str_contains($key, '.')) {
+            $parts = explode('.', $key);
+            $value = $this->configuration;
+            foreach ($parts as $part) {
+                if (!\is_array($value) || !\array_key_exists($part, $value)) {
+                    return $default;
+                }
+                $value = $value[$part];
+            }
+
+            return $value;
+        }
+
         return $this->configuration[$key] ?? $default;
     }
 

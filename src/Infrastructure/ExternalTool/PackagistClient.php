@@ -22,20 +22,22 @@ use Psr\Log\LoggerInterface;
 /**
  * Client for interacting with the Packagist API.
  */
-class PackagistClient
+readonly class PackagistClient
 {
-    private const API_BASE_URL = 'https://packagist.org/packages';
+    private const string API_BASE_URL = 'https://packagist.org/packages';
 
     public function __construct(
-        private readonly HttpClientServiceInterface $httpClient,
-        private readonly LoggerInterface $logger,
-        private readonly ComposerConstraintCheckerInterface $constraintChecker,
-        private readonly RepositoryUrlHandlerInterface $urlHandler,
+        private HttpClientServiceInterface $httpClient,
+        private LoggerInterface $logger,
+        private ComposerConstraintCheckerInterface $constraintChecker,
+        private RepositoryUrlHandlerInterface $urlHandler,
     ) {
     }
 
     /**
      * Check if a version compatible with the target TYPO3 version exists.
+     *
+     * @throws ExternalToolException
      */
     public function hasVersionFor(string $packageName, Version $typo3Version): bool
     {
@@ -61,6 +63,8 @@ class PackagistClient
 
     /**
      * Get the latest version for a specific TYPO3 version.
+     *
+     * @throws ExternalToolException
      */
     public function getLatestVersion(string $packageName, Version $typo3Version): ?string
     {
@@ -81,6 +85,72 @@ class PackagistClient
             ]);
 
             throw new ExternalToolException(\sprintf('Failed to get latest version from Packagist for package "%s": %s', $packageName, $e->getMessage()), 'packagist_api', $e);
+        }
+    }
+
+    /**
+     * Get information about the latest version on Packagist.
+     *
+     * @throws ExternalToolException
+     *
+     * @return array{latest_version: ?string, is_compatible: bool}
+     */
+    public function getLatestVersionInfo(string $packageName, Version $typo3Version): array
+    {
+        try {
+            $response = $this->httpClient->get(self::API_BASE_URL . '/' . $packageName . '.json');
+
+            if (200 !== $response->getStatusCode()) {
+                return ['latest_version' => null, 'is_compatible' => false];
+            }
+
+            $data = $response->toArray();
+
+            if (!isset($data['package']['versions']) || !\is_array($data['package']['versions'])) {
+                return ['latest_version' => null, 'is_compatible' => false];
+            }
+
+            // Get all versions
+            $versions = array_keys($data['package']['versions']);
+
+            // Filter out dev versions if possible to find latest stable
+            $stableVersions = array_filter($versions, static function ($version): bool {
+                $preReleaseMarkers = ['dev', 'alpha', 'beta', 'rc', 'snapshot'];
+                foreach ($preReleaseMarkers as $marker) {
+                    if (str_contains(strtolower($version), $marker)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            if (!empty($stableVersions)) {
+                usort($stableVersions, static fn (string $a, string $b): int => version_compare(ltrim($a, 'v'), ltrim($b, 'v')));
+                $latestVersion = end($stableVersions);
+            } else {
+                usort($versions, static fn (string $a, string $b): int => version_compare(ltrim($a, 'v'), ltrim($b, 'v')));
+                $latestVersion = end($versions);
+            }
+
+            if (!$latestVersion) {
+                return ['latest_version' => null, 'is_compatible' => false];
+            }
+
+            $versionData = $data['package']['versions'][$latestVersion] ?? [];
+            $isCompatible = $this->isVersionCompatible($versionData, $typo3Version);
+
+            return [
+                'latest_version' => ltrim((string) $latestVersion, 'v'),
+                'is_compatible' => $isCompatible,
+            ];
+        } catch (HttpClientException $e) {
+            $this->logger->error('Packagist API request failed', [
+                'package_name' => $packageName,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new ExternalToolException(\sprintf('Failed to get latest version info from Packagist for package "%s": %s', $packageName, $e->getMessage()), 'packagist_api', $e);
         }
     }
 
@@ -160,13 +230,13 @@ class PackagistClient
         });
 
         if (!empty($stableVersions)) {
-            usort($stableVersions, static fn (string $a, string $b): int => version_compare($a, $b));
+            usort($stableVersions, static fn (string $a, string $b): int => version_compare(ltrim($a, 'v'), ltrim($b, 'v')));
 
             return end($stableVersions);
         }
 
         // Fall back to dev versions if no stable versions available
-        usort($compatibleVersions, static fn (string $a, string $b): int => version_compare($a, $b));
+        usort($compatibleVersions, static fn (string $a, string $b): int => version_compare(ltrim($a, 'v'), ltrim($b, 'v')));
 
         return end($compatibleVersions);
     }

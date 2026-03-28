@@ -30,7 +30,7 @@ class ConfigurationService implements ConfigurationServiceInterface
     public const bool DEFAULT_INCLUDE_CHARTS = false;
 
     // Analyzer defaults
-    public const array DEFAULT_VERSION_AVAILABILITY_SOURCES = ['ter', 'packagist', 'github'];
+    public const array DEFAULT_VERSION_AVAILABILITY_SOURCES = ['ter', 'packagist', 'git'];
     public const int DEFAULT_ANALYZER_TIMEOUT = 30;
     public const int DEFAULT_PHPSTAN_LEVEL = 6;
     public const int DEFAULT_COMPLEXITY_THRESHOLD = 10;

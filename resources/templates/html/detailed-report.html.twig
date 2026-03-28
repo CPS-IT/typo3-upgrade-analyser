@@ -208,6 +208,7 @@
 </div>
 
 <h2>Extensions Overview</h2>
+{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'git'] %}
 <table>
     <thead>
     <tr>
@@ -224,7 +225,7 @@
             <td><strong>{{ data.extension.key }}</strong></td>
             <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
             <td><span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span></td>
-            <td>{% if data.version_analysis %}{% if data.version_analysis.ter_available or data.version_analysis.packagist_available or data.version_analysis.git_available %}✅{% else %}❌{% endif %}{% else %}❓{% endif %}</td>
+            <td>{% if data.version_analysis %}{% if data.version_analysis.skipped %}✖️{% elseif ('ter' in enabled_sources and data.version_analysis.ter_available) or ('packagist' in enabled_sources and data.version_analysis.packagist_available) or (('github' in enabled_sources or 'git' in enabled_sources) and data.version_analysis.git_available) %}✅{% else %}❌{% endif %}{% else %}❓{% endif %}</td>
             <td>{{ data.version_analysis and data.version_analysis.git_latest_version ? data.version_analysis.git_latest_version : 'N/A' }}</td>
         </tr>
     {% endfor %}
@@ -276,25 +277,42 @@
                 <div>
                     <h4>Version Availability</h4>
                     {% if data.version_analysis %}
-                        <div class="availability">
-                            <span class="availability-item {{ data.version_analysis.ter_available ? 'available' : 'unavailable' }}">
-                                TER {{ data.version_analysis.ter_available ? '✓' : '✗' }}
-                            </span>
-                            <span class="availability-item {{ data.version_analysis.packagist_available ? 'available' : 'unavailable' }}">
-                                Packagist {{ data.version_analysis.packagist_available ? '✓' : '✗' }}
-                            </span>
-                            <span class="availability-item {{ data.version_analysis.git_available ? 'available' : 'unavailable' }}">
-                                Git {{ data.version_analysis.git_available ? '✓' : '✗' }}
-                            </span>
-                        </div>
+                        {% if data.version_analysis.skipped %}
+                             <p><strong>Status:</strong> ✖️ Skipped ({{ data.version_analysis.skip_reason }})</p>
+                        {% else %}
+                            <div class="availability">
+                                {% if 'ter' in enabled_sources %}
+                                    <span class="availability-item {{ data.version_analysis.ter_available ? 'available' : 'unavailable' }}">
+                                        TER {{ data.version_analysis.ter_available ? '✓' : '✗' }}
+                                    </span>
+                                {% endif %}
+                                {% if 'packagist' in enabled_sources %}
+                                    <span class="availability-item {{ data.version_analysis.packagist_available ? 'available' : 'unavailable' }}">
+                                        Packagist {{ data.version_analysis.packagist_available ? '✓' : '✗' }}
+                                    </span>
+                                {% endif %}
+                                {% if 'github' in enabled_sources or 'git' in enabled_sources %}
+                                    <span class="availability-item {{ data.version_analysis.git_available ? 'available' : 'unavailable' }}">
+                                        Git {{ data.version_analysis.git_available ? '✓' : '✗' }}
+                                    </span>
+                                {% endif %}
+                            </div>
 
-                        {% if data.version_analysis.git_repository_url %}
+                            {% if 'packagist' in enabled_sources and data.version_analysis.packagist_latest_version %}
+                                <p><strong>Packagist Latest:</strong> {% if data.extension.composerName %}<a href="https://packagist.org/packages/{{ data.extension.composerName }}" target="_blank">{{ data.version_analysis.packagist_latest_version }}</a>{% else %}{{ data.version_analysis.packagist_latest_version }}{% endif %}
+                                ({{ data.version_analysis.packagist_latest_compatible ? '✅ Compatible' : '❌ Incompatible' }})
+                                </p>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if ('github' in enabled_sources or 'git' in enabled_sources) and data.version_analysis.git_repository_url %}
                             <p><strong>Git Repository:</strong>
                                 <a href="{{ data.version_analysis.git_repository_url }}" target="_blank">{{ data.version_analysis.git_repository_url }}</a>
                             </p>
                             {% if data.version_analysis.git_repository_health %}
                                 <p><strong>Repository Health:</strong> {{ "%.0f"|format(data.version_analysis.git_repository_health * 100) }}%</p>
                             {% endif %}
+
                             {% if data.version_analysis.git_latest_version %}
                                 <p><strong>Latest Compatible Version:</strong> {{ data.version_analysis.git_latest_version }}</p>
                             {% endif %}

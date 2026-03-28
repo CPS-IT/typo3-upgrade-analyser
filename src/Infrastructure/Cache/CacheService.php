@@ -16,8 +16,8 @@ use Psr\Log\LoggerInterface;
 
 readonly class CacheService
 {
-    private const CACHE_DIRECTORY = 'var/results';
-    private const FILE_EXTENSION = '.json';
+    private const string CACHE_DIRECTORY = 'var/results';
+    private const string FILE_EXTENSION = '.json';
 
     public function __construct(
         private LoggerInterface $logger,
@@ -160,7 +160,7 @@ readonly class CacheService
             'type' => $type,
             'path' => $path,
             'params' => $additionalParams,
-            'timestamp' => filemtime($path) ?: time(),
+            'timestamp' => file_exists($path) ? filemtime($path) : null,
         ];
 
         $jsonData = json_encode($data);
@@ -169,6 +169,17 @@ readonly class CacheService
         }
 
         return $type . '_' . hash('sha256', $jsonData);
+    }
+
+    public function generateSimpleKey(string $type, string $identifier, array $params = []): string
+    {
+        $data = [
+            'type' => $type,
+            'identifier' => $identifier,
+            'params' => $params,
+        ];
+
+        return $type . '_' . hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     private function getCacheFilePath(string $key): string
