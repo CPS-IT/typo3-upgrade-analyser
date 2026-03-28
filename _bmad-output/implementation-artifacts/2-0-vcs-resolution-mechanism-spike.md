@@ -1,6 +1,6 @@
 # Story 2.0: VCS Resolution Mechanism Research Spike
 
-Status: review
+Status: done
 
 ## Story
 
