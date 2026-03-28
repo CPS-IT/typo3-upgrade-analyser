@@ -1,6 +1,6 @@
 # Story 2.3: Generic Git Resolver (Tier 2 Fallback)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -71,32 +71,32 @@ so that extensions on hosts without Packagist integration still get version avai
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement `GenericGitResolver` (AC: 1–9)
-  - [ ] Create `src/Infrastructure/ExternalTool/GenericGitResolver.php`
-  - [ ] Implement `resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult`
-  - [ ] Implement private `runLsRemote(string $vcsUrl): ?string` — runs `git ls-remote -t --refs <url>`, returns stdout or null on failure/timeout; logs WARNING on failure
-  - [ ] Implement private `parseTagsFromOutput(string $output): list<string>` — extract semver version strings per AC2 regex
-  - [ ] Implement private `findMostRecentStableTag(list<string> $versions): ?string` — sort with `version_compare()`, skip pre-release suffixes, return newest stable or null
-  - [ ] Implement private `fetchComposerJson(string $vcsUrl, string $tag): ?array` — runs `git archive --remote=<url> refs/tags/<tag> -- composer.json | tar -xO` via `Process::fromShellCommandline()`; returns decoded array or null on failure; logs DEBUG on failure
-  - [ ] Implement private `isCompatible(?array $composerJsonRequire, Version $targetVersion): bool` — uses `findTypo3Requirements()` + `isConstraintCompatible()`; no TYPO3 req = returns `true`
-  - [ ] Apply `$timeoutSeconds` to `runLsRemote` subprocess
+- [x] Task 1: Implement `GenericGitResolver` (AC: 1–9)
+  - [x] Create `src/Infrastructure/ExternalTool/GenericGitResolver.php`
+  - [x] Implement `resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult`
+  - [x] Implement private `runLsRemote(string $vcsUrl): ?string` — runs `git ls-remote -t --refs <url>`, returns stdout or null on failure/timeout; logs WARNING on failure
+  - [x] Implement private `parseTagsFromOutput(string $output): list<string>` — extract semver version strings per AC2 regex
+  - [x] Implement private `findMostRecentStableTag(list<string> $versions): ?string` — sort with `version_compare()`, skip pre-release suffixes, return newest stable or null
+  - [x] Implement private `fetchComposerJson(string $vcsUrl, string $tag): ?array` — runs `git archive --remote=<url> refs/tags/<tag> -- composer.json | tar -xO` via `Process::fromShellCommandline()`; returns decoded array or null on failure; logs DEBUG on failure
+  - [x] Implement private `isCompatible(?array $composerJsonRequire, Version $targetVersion): bool` — uses `findTypo3Requirements()` + `isConstraintCompatible()`; no TYPO3 req = returns `true`
+  - [x] Apply `$timeoutSeconds` to `runLsRemote` subprocess
 
-- [ ] Task 2: Write unit tests (AC: 10)
-  - [ ] Create `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php`
-  - [ ] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` succeeds, most recent stable tag is TYPO3-compatible
-  - [ ] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` fails (null), treated as compatible
-  - [ ] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` succeeds, `composer.json` has no TYPO3 requirement (treated as compatible)
-  - [ ] Test: `RESOLVED_NO_MATCH` — ls-remote returns tags, most recent stable tag is NOT compatible with target
-  - [ ] Test: `RESOLVED_NO_MATCH` — ls-remote succeeds but no valid semver tags after parsing
-  - [ ] Test: `FAILURE` — ls-remote exits non-zero
-  - [ ] Test: `FAILURE` — ls-remote times out (`ProcessTimedOutException`)
-  - [ ] Test: `FAILURE` — git binary not available
-  - [ ] Test: tag parsing covers all variants from AC2 (v-prefix, pre-release, `dev-*` skip, non-semver skip)
+- [x] Task 2: Write unit tests (AC: 10)
+  - [x] Create `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php`
+  - [x] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` succeeds, most recent stable tag is TYPO3-compatible
+  - [x] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` fails (null), treated as compatible
+  - [x] Test: `RESOLVED_COMPATIBLE` — ls-remote returns tags, `git archive` succeeds, `composer.json` has no TYPO3 requirement (treated as compatible)
+  - [x] Test: `RESOLVED_NO_MATCH` — ls-remote returns tags, most recent stable tag is NOT compatible with target
+  - [x] Test: `RESOLVED_NO_MATCH` — ls-remote succeeds but no valid semver tags after parsing
+  - [x] Test: `FAILURE` — ls-remote exits non-zero
+  - [x] Test: `FAILURE` — ls-remote times out (`ProcessTimedOutException`)
+  - [x] Test: `FAILURE` — git binary not available
+  - [x] Test: tag parsing covers all variants from AC2 (v-prefix, pre-release, `dev-*` skip, non-semver skip)
 
-- [ ] Task 3: PHPStan and code style verification (AC: 10, 11)
-  - [ ] Run `composer sca:php` — zero errors
-  - [ ] Run `composer lint:php` — zero violations
-  - [ ] Run `composer test` — all tests green
+- [x] Task 3: PHPStan and code style verification (AC: 10, 11)
+  - [x] Run `composer sca:php` — zero errors
+  - [x] Run `composer lint:php` — zero violations
+  - [x] Run `composer test` — all tests green
 
 ## Dev Notes
 
@@ -292,20 +292,27 @@ No changes to `config/services.yaml`, `VersionAvailabilityAnalyzer`, `GitHubClie
 
 ### Agent Model Used
 
-(to be filled)
+claude-sonnet-4-6
 
 ### Debug Log References
 
-(to be filled)
+- Used `createStub()` for process mocks (avoids PHPUnit 12 strict notices — same lesson as story 2.2)
+- `fetchComposerJson` uses `Process::fromShellCommandline()` via a separate non-injected `createArchiveProcess()` method; `$processFactory` is used only for `runLsRemote` (array-command subprocess). This follows Dev Notes option 1.
+- `ProcessFailedException` catch in `runLsRemote` covers "git binary not available" — throws before producing output when the binary is missing.
 
 ### Completion Notes List
 
-(to be filled)
+- Implemented `GenericGitResolver` in `src/Infrastructure/ExternalTool/GenericGitResolver.php` with all required private methods and correct AC2 tag-parsing regex.
+- Used `findTypo3Requirements()` + `isConstraintCompatible()` pattern (NOT `isComposerJsonCompatible()`) per Dev Notes.
+- 11 unit tests pass covering all specified variants: RESOLVED_COMPATIBLE (3 cases), RESOLVED_NO_MATCH (3 cases), FAILURE (3 cases), tag-parsing variants, pre-release-only output.
+- PHPStan Level 8: zero errors. CS-Fixer: clean after one auto-fix (`sprintf` → `\sprintf` preference). Full test suite: 1752 tests, no failures.
 
 ### File List
 
-(to be filled)
+- `src/Infrastructure/ExternalTool/GenericGitResolver.php` (new)
+- `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php` (new)
 
 ## Change Log
 
 - 2026-03-28: Story created (bmad-create-story)
+- 2026-03-28: Implementation complete — GenericGitResolver and unit tests added; PHPStan/CS/tests all green (claude-sonnet-4-6)
