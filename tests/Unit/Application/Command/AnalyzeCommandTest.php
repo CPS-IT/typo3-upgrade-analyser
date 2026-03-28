@@ -217,7 +217,7 @@ class AnalyzeCommandTest extends TestCase
         $method = $reflection->getMethod('getAnalyzersToRun');
 
         // Test with no specific analyzers requested
-        $result = $method->invoke($command, null);
+        $result = $method->invoke($command, [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3], null);
 
         // Should return only enabled analyzers (typo3_rector and version_availability)
         self::assertCount(2, $result);
@@ -267,7 +267,7 @@ class AnalyzeCommandTest extends TestCase
         $method = $reflection->getMethod('getAnalyzersToRun');
 
         // Test with specific analyzer requested via command line
-        $result = $method->invoke($command, ['typo3_rector']);
+        $result = $method->invoke($command, [$mockAnalyzer1, $mockAnalyzer2, $mockAnalyzer3], ['typo3_rector']);
 
         // Should return only the requested analyzer (that is also enabled in config)
         self::assertCount(1, $result);
@@ -304,7 +304,7 @@ class AnalyzeCommandTest extends TestCase
         $method = $reflection->getMethod('getAnalyzersToRun');
 
         // Test requesting a disabled analyzer via command line
-        $result = $method->invoke($command, ['fractor']);
+        $result = $method->invoke($command, [$mockAnalyzer1], ['fractor']);
 
         // Should return empty array (analyzer is disabled in config, so command line can't override)
         self::assertCount(0, $result);

@@ -202,12 +202,14 @@ class AnalyzeCommand extends Command
             return [];
         }
 
+        $allAnalyzers = iterator_to_array($this->analyzers);
+
         // Filter analyzers if specific ones were requested
-        $analyzersToRun = $this->getAnalyzersToRun($requestedAnalyzers);
+        $analyzersToRun = $this->getAnalyzersToRun($allAnalyzers, $requestedAnalyzers);
 
         if (empty($analyzersToRun)) {
             $io->warning('No analyzers available to run');
-            $io->text(\sprintf('Total analyzers configured: %d', \count(iterator_to_array($this->analyzers))));
+            $io->text(\sprintf('Total analyzers configured: %d', \count($allAnalyzers)));
 
             return [];
         }
@@ -376,14 +378,13 @@ class AnalyzeCommand extends Command
     /**
      * Get analyzers to run based on configuration settings and command-line options.
      *
-     * @param array<string>|null $requestedAnalyzers
+     * @param array<AnalyzerInterface> $allAnalyzers
+     * @param array<string>|null       $requestedAnalyzers
      *
      * @return array<AnalyzerInterface>
      */
-    private function getAnalyzersToRun(?array $requestedAnalyzers): array
+    private function getAnalyzersToRun(array $allAnalyzers, ?array $requestedAnalyzers): array
     {
-        $allAnalyzers = iterator_to_array($this->analyzers);
-
         // First filter by configuration - only include analyzers that are enabled in config
         $enabledAnalyzers = [];
         foreach ($allAnalyzers as $analyzer) {
