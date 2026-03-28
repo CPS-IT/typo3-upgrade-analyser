@@ -328,6 +328,12 @@ services:
       - !tagged_iterator 'analysis_report_data_provider'
 
   # Report Data Providers
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\VersionAvailabilityDataProvider:
+    tags: ['analysis_report_data_provider']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\LinesOfCodeDataProvider:
+    tags: ['analysis_report_data_provider']
+
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\RectorDataProvider:
     arguments:
       - '@CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter'
