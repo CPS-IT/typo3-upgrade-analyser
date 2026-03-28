@@ -1,0 +1,274 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 Upgrade Analyzer.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License or any later version.
+ */
+
+namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
+
+/**
+ * Collection class for categorized Fractor findings with structured access methods.
+ */
+readonly class FractorFindingsCollection implements \JsonSerializable
+{
+    /**
+     * @param array<FractorFinding>                $breakingChanges
+     * @param array<FractorFinding>                $deprecations
+     * @param array<FractorFinding>                $improvements
+     * @param array<string, array<FractorFinding>> $bySeverity
+     * @param array<string, array<FractorFinding>> $byFile
+     * @param array<string, array<FractorFinding>> $byRule
+     */
+    public function __construct(
+        private array $breakingChanges,
+        private array $deprecations,
+        private array $improvements,
+        private array $bySeverity,
+        private array $byFile,
+        private array $byRule,
+    ) {
+    }
+
+    /**
+     * Get all breaking change findings.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getBreakingChanges(): array
+    {
+        return $this->breakingChanges;
+    }
+
+    /**
+     * Get all deprecation findings.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getDeprecations(): array
+    {
+        return $this->deprecations;
+    }
+
+    /**
+     * Get all improvement findings.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getImprovements(): array
+    {
+        return $this->improvements;
+    }
+
+    /**
+     * Get findings grouped by severity level.
+     *
+     * @return array<string, array<FractorFinding>>
+     */
+    public function getBySeverity(): array
+    {
+        return $this->bySeverity;
+    }
+
+    /**
+     * Get findings for a specific severity level.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getFindingsWithSeverity(FractorRuleSeverity $severity): array
+    {
+        return $this->bySeverity[$severity->value] ?? [];
+    }
+
+    /**
+     * Get findings grouped by file path.
+     *
+     * @return array<string, array<FractorFinding>>
+     */
+    public function getByFile(): array
+    {
+        return $this->byFile;
+    }
+
+    /**
+     * Get findings for a specific file.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getFindingsInFile(string $filePath): array
+    {
+        return $this->byFile[$filePath] ?? [];
+    }
+
+    /**
+     * Get findings grouped by Fractor rule class.
+     *
+     * @return array<string, array<FractorFinding>>
+     */
+    public function getByRule(): array
+    {
+        return $this->byRule;
+    }
+
+    /**
+     * Get findings for a specific Fractor rule.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getFindingsForRule(string $ruleClass): array
+    {
+        return $this->byRule[$ruleClass] ?? [];
+    }
+
+    /**
+     * Check if there are any breaking changes.
+     */
+    public function hasBreakingChanges(): bool
+    {
+        return !empty($this->breakingChanges);
+    }
+
+    /**
+     * Check if there are any deprecations.
+     */
+    public function hasDeprecations(): bool
+    {
+        return !empty($this->deprecations);
+    }
+
+    /**
+     * Check if there are any improvements.
+     */
+    public function hasImprovements(): bool
+    {
+        return !empty($this->improvements);
+    }
+
+    /**
+     * Get total count of findings across all categories.
+     */
+    public function getTotalCount(): int
+    {
+        return \count($this->breakingChanges) + \count($this->deprecations) + \count($this->improvements);
+    }
+
+    /**
+     * Get count of findings by severity.
+     *
+     * @return array<string, int>
+     */
+    public function getSeverityCounts(): array
+    {
+        return array_map('count', $this->bySeverity);
+    }
+
+    /**
+     * Get count of findings by file.
+     *
+     * @return array<string, int>
+     */
+    public function getFileCounts(): array
+    {
+        return array_map('count', $this->byFile);
+    }
+
+    /**
+     * Get count of findings by rule.
+     *
+     * @return array<string, int>
+     */
+    public function getRuleCounts(): array
+    {
+        return array_map('count', $this->byRule);
+    }
+
+    /**
+     * Get files with the most findings (sorted descending).
+     *
+     * @return array<string, int>
+     */
+    public function getTopAffectedFiles(int $limit = 10): array
+    {
+        $fileCounts = $this->getFileCounts();
+        arsort($fileCounts);
+
+        return \array_slice($fileCounts, 0, $limit, true);
+    }
+
+    /**
+     * Get rules that were triggered most often (sorted descending).
+     *
+     * @return array<string, int>
+     */
+    public function getTopTriggeredRules(int $limit = 10): array
+    {
+        $ruleCounts = $this->getRuleCounts();
+        arsort($ruleCounts);
+
+        return \array_slice($ruleCounts, 0, $limit, true);
+    }
+
+    /**
+     * Get count of unique files affected.
+     */
+    public function getAffectedFileCount(): int
+    {
+        return \count($this->byFile);
+    }
+
+    /**
+     * Get count of unique rules triggered.
+     */
+    public function getTriggeredRuleCount(): int
+    {
+        return \count($this->byRule);
+    }
+
+    /**
+     * Get count of findings by change type.
+     *
+     * @return array<string, int>
+     */
+    public function getTypeCounts(): array
+    {
+        $counts = [];
+        $allFindings = array_merge($this->breakingChanges, $this->deprecations, $this->improvements);
+
+        foreach ($allFindings as $finding) {
+            $type = $finding->getChangeType()->value;
+            $counts[$type] = ($counts[$type] ?? 0) + 1;
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Provide safe JSON serialization avoiding object duplication.
+     *
+     * Returns only summary data and counts instead of duplicating objects
+     * across multiple grouping arrays, which prevents memory issues during
+     * template rendering.
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'total_count' => $this->getTotalCount(),
+            'breaking_changes_count' => \count($this->breakingChanges),
+            'deprecations_count' => \count($this->deprecations),
+            'improvements_count' => \count($this->improvements),
+            'severity_counts' => $this->getSeverityCounts(),
+            'file_counts' => $this->getFileCounts(),
+            'rule_counts' => $this->getRuleCounts(),
+            'type_counts' => $this->getTypeCounts(),
+            'affected_file_count' => $this->getAffectedFileCount(),
+            'triggered_rule_count' => $this->getTriggeredRuleCount(),
+            'top_affected_files' => $this->getTopAffectedFiles(10),
+            'top_triggered_rules' => $this->getTopTriggeredRules(10),
+        ];
+    }
+}

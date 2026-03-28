@@ -13,27 +13,33 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Fractor;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(FractorExecutor::class)]
 class FractorExecutorTest extends TestCase
 {
     private FractorExecutor $executor;
     private MockObject&LoggerInterface $logger;
+    private MockObject&DiffProcessor $diffProcessor;
     private string $tempBinaryPath;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->diffProcessor = $this->createMock(DiffProcessor::class);
         $this->tempBinaryPath = tempnam(sys_get_temp_dir(), 'fractor_test_');
 
         $this->executor = new FractorExecutor(
             $this->tempBinaryPath,
             $this->logger,
+            $this->diffProcessor,
             300,
         );
     }
@@ -49,7 +55,7 @@ class FractorExecutorTest extends TestCase
     public function isAvailableReturnsFalseWhenBinaryNotExists(): void
     {
         $nonExistentPath = '/nonexistent/path/fractor';
-        $executor = new FractorExecutor($nonExistentPath, $this->logger);
+        $executor = new FractorExecutor($nonExistentPath, $this->logger, $this->diffProcessor);
 
         self::assertFalse($executor->isAvailable());
     }

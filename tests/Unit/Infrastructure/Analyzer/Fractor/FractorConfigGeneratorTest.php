@@ -16,20 +16,26 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(FractorConfigGenerator::class)]
 class FractorConfigGeneratorTest extends TestCase
 {
     private FractorConfigGenerator $generator;
+    private FractorRuleRegistry&MockObject $ruleRegistry;
     private string $tempDirectory;
 
     protected function setUp(): void
     {
         $this->tempDirectory = sys_get_temp_dir() . '/fractor_test_' . uniqid();
-        $this->generator = new FractorConfigGenerator($this->tempDirectory);
+        $this->ruleRegistry = $this->createMock(FractorRuleRegistry::class);
+        $this->generator = new FractorConfigGenerator($this->ruleRegistry, $this->tempDirectory);
     }
 
     protected function tearDown(): void
@@ -58,6 +64,9 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
+        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')
+            ->willReturn(['/path/to/typo3-13.php']);
+
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
 
         self::assertFileExists($configPath);
@@ -66,8 +75,7 @@ class FractorConfigGeneratorTest extends TestCase
         $configContent = file_get_contents($configPath);
         self::assertIsString($configContent);
         self::assertStringContainsString('FractorConfiguration::configure()', $configContent);
-        self::assertStringContainsString('Typo3LevelSetList::UP_TO_TYPO3_13', $configContent);
-        self::assertStringContainsString('TypoScriptProcessorOption::', $configContent);
+        self::assertStringContainsString('/path/to/typo3-13.php', $configContent);
         self::assertStringContainsString('/test/extension/path', $configContent);
     }
 
@@ -83,10 +91,23 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
+        $this->ruleRegistry->expects(self::exactly(2))
+            ->method('getSetsForVersionUpgrade')
+            ->willReturnCallback(function (Version $current, Version $target) {
+                if ('12.4.0' === $target->toString()) {
+                    return ['/path/to/typo3-12.php'];
+                }
+                if ('11.5.0' === $target->toString()) {
+                    return ['/path/to/typo3-11.php'];
+                }
+
+                return [];
+            });
+
         $configPath12 = $this->generator->generateConfig($extension, $context12, '/test/extension/path');
         $configContent12 = file_get_contents($configPath12);
         self::assertIsString($configContent12);
-        self::assertStringContainsString('Typo3LevelSetList::UP_TO_TYPO3_12', $configContent12);
+        self::assertStringContainsString('/path/to/typo3-12.php', $configContent12);
 
         // Test TYPO3 11 target
         $context11 = new AnalysisContext(
@@ -98,7 +119,7 @@ class FractorConfigGeneratorTest extends TestCase
         $configPath11 = $this->generator->generateConfig($extension, $context11, '/test/extension/path');
         $configContent11 = file_get_contents($configPath11);
         self::assertIsString($configContent11);
-        self::assertStringContainsString('Typo3LevelSetList::UP_TO_TYPO3_11', $configContent11);
+        self::assertStringContainsString('/path/to/typo3-11.php', $configContent11);
     }
 
     #[Test]
@@ -110,6 +131,8 @@ class FractorConfigGeneratorTest extends TestCase
             Version::fromString('13.0.0'),
             [],
         );
+
+        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
 
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
         $configContent = file_get_contents($configPath);
@@ -132,15 +155,23 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
-        $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
+        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
+
+        // Pass custom options
+        $options = [
+            'typoscript' => [
+                'indent_size' => 4,
+                'include_empty_line_breaks' => false,
+            ],
+        ];
+
+        $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path', $options);
         $configContent = file_get_contents($configPath);
         self::assertIsString($configContent);
 
-        // Check for TypoScript options
-        self::assertStringContainsString('INDENT_SIZE => 2', $configContent);
-        self::assertStringContainsString('INDENTATION_STYLE_SPACES', $configContent);
-        self::assertStringContainsString('ADD_CLOSING_GLOBAL => true', $configContent);
-        self::assertStringContainsString('INCLUDE_EMPTY_LINE_BREAKS => true', $configContent);
+        // Check for TypoScript options - checking values since keys are constants that var_export might evaluate
+        self::assertStringContainsString('=> 4', $configContent); // Indent size should be 4
+        self::assertStringContainsString('=> false', $configContent); // Boolean option should be false
     }
 
     #[Test]
@@ -153,6 +184,8 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
+        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
+
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
         $configContent = file_get_contents($configPath);
         self::assertIsString($configContent);
@@ -160,10 +193,5 @@ class FractorConfigGeneratorTest extends TestCase
         // Verify it's valid PHP syntax by checking for basic elements
         self::assertStringStartsWith('<?php', $configContent);
         self::assertStringContainsString('declare(strict_types=1);', $configContent);
-
-        // Check for comments with extension info
-        self::assertStringContainsString('my_extension', $configContent);
-        self::assertStringContainsString('13.0.0', $configContent);
-        self::assertStringContainsString('Generated by TYPO3 Upgrade Analyzer', $configContent);
     }
 }

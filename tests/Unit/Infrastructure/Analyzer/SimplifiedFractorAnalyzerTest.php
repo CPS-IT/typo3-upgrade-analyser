@@ -20,6 +20,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
@@ -45,6 +46,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $this->createMock(FractorExecutor::class),
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(FractorRuleRegistry::class),
             $this->createMock(PathResolutionServiceInterface::class),
         );
     }
@@ -91,6 +93,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $executor,
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(FractorRuleRegistry::class),
             $this->createMock(PathResolutionServiceInterface::class),
         );
 
@@ -106,6 +109,7 @@ class SimplifiedFractorAnalyzerTest extends TestCase
             $executor,
             $this->createMock(FractorConfigGenerator::class),
             $this->createMock(FractorResultParser::class),
+            $this->createMock(FractorRuleRegistry::class),
             $this->createMock(PathResolutionServiceInterface::class),
         );
 
@@ -130,14 +134,27 @@ class SimplifiedFractorAnalyzerTest extends TestCase
         $configGenerator->method('generateConfig')->willReturn('/tmp/test-config.php');
 
         $executor = $this->createMock(FractorExecutor::class);
-        $executionResult = new FractorExecutionResult(0, 'test output', '', true);
+        $executionResult = new FractorExecutionResult(true, [], [], 0.5, 0, 'test output', 10);
         $executor->method('execute')->willReturn($executionResult);
 
         $parser = $this->createMock(FractorResultParser::class);
-        $summary = new FractorAnalysisSummary(5, 2, [], true, 3, 10, ['file1.xml'], ['TestRule']);
-        $parser->method('parse')->willReturn($summary);
+        $summary = new FractorAnalysisSummary(
+            5,
+            2,
+            1,
+            1,
+            1,
+            3,
+            10,
+            ['TestRule' => 5],
+            ['file1.xml' => 5],
+            ['change' => 5],
+            1.5,
+            30,
+        );
+        $parser->method('aggregateFindings')->willReturn($summary);
 
-        $analyzer = new FractorAnalyzer($cacheService, new NullLogger(), $executor, $configGenerator, $parser, $this->createMock(PathResolutionServiceInterface::class));
+        $analyzer = new FractorAnalyzer($cacheService, new NullLogger(), $executor, $configGenerator, $parser, $this->createMock(FractorRuleRegistry::class), $this->createMock(PathResolutionServiceInterface::class));
 
         $result = $analyzer->analyze($extension, $context);
 

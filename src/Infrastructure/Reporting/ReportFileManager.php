@@ -57,6 +57,7 @@ class ReportFileManager
         $extensionsPath = $outputPath . 'extensions/';
 
         if (!is_dir($extensionsPath)) {
+            /* @noinspection MkdirRaceConditionInspection */
             mkdir($extensionsPath, 0o755, true);
         }
 
@@ -114,22 +115,32 @@ class ReportFileManager
     }
 
     /**
-     * Ensure rector-findings subdirectory exists within the output path.
+     * Extended file writing that includes Rector detail pages.
      *
-     * @param string $outputPath Output path where rector-findings directory should be created
+     * @param array{content: string, filename: string}                                $mainReport        Main report data
+     * @param array<int, array{content: string, filename: string, extension: string}> $extensionReports  Extension reports data
+     * @param array<int, array{content: string, filename: string, extension: string}> $rectorDetailPages Rector detail pages data
+     * @param string                                                                  $outputPath        Output directory path
      *
-     * @return string The rector-findings subdirectory path
+     * @return array<int, array{type: string, extension?: string, path: string, size: int}> All file metadata
      */
-    public function ensureRectorFindingsDirectory(string $outputPath): string
-    {
-        $outputPath = rtrim($outputPath, '/') . '/';
-        $rectorPath = $outputPath . 'rector-findings/';
+    public function writeReportFilesWithRectorPages(
+        array $mainReport,
+        array $extensionReports,
+        array $rectorDetailPages,
+        array $fractorDetailPages,
+        string $outputPath,
+    ): array {
+        // Use existing method for main and extension reports
+        $files = $this->writeReportFiles($mainReport, $extensionReports, $outputPath);
 
-        if (!is_dir($rectorPath)) {
-            mkdir($rectorPath, 0o755, true);
-        }
+        // Add Rector detail pages
+        $rectorFiles = $this->writeRectorDetailPages($rectorDetailPages, $outputPath);
 
-        return $rectorPath;
+        // Add Rector detail pages
+        $fractorFiles = $this->writeFractorDetailPages($fractorDetailPages, $outputPath);
+
+        return array_merge($files, $rectorFiles, $fractorFiles);
     }
 
     /**
@@ -165,6 +176,78 @@ class ReportFileManager
     }
 
     /**
+     * Ensure rector-findings subdirectory exists within the output path.
+     *
+     * @param string $outputPath Output path where rector-findings directory should be created
+     *
+     * @return string The rector-findings subdirectory path
+     */
+    public function ensureRectorFindingsDirectory(string $outputPath): string
+    {
+        $outputPath = rtrim($outputPath, '/') . '/';
+        $rectorPath = $outputPath . 'rector-findings/';
+
+        if (!is_dir($rectorPath)) {
+            /* @noinspection MkdirRaceConditionInspection */
+            mkdir($rectorPath, 0o755, true);
+        }
+
+        return $rectorPath;
+    }
+
+    /**
+     * Write rector detail pages to fractor-findings subdirectory.
+     *
+     * @param array<int, array{content: string, filename: string, extension: string}> $fractorDetailPages Rendered Fractor detail pages
+     * @param string                                                                  $outputPath         Output directory path
+     *
+     * @return array<int, array{type: string, extension: string, path: string, size: int}> File metadata array
+     */
+    public function writeFractorDetailPages(array $fractorDetailPages, string $outputPath): array
+    {
+        if (empty($fractorDetailPages)) {
+            return [];
+        }
+
+        $rectorPath = $this->ensureFractorFindingsDirectory($outputPath);
+        $files = [];
+
+        foreach ($fractorDetailPages as $page) {
+            $filename = $rectorPath . $page['filename'];
+            file_put_contents($filename, $page['content']);
+
+            $files[] = [
+                'type' => 'fractor_detail_page',
+                'extension' => $page['extension'],
+                'path' => $filename,
+                'size' => filesize($filename) ?: 0,
+            ];
+        }
+
+        return $files;
+    }
+
+    /**
+     * Ensure fractor-findings subdirectory exists within the output path.
+     *
+     * @param string $outputPath Output path where fractor-findings directory should be created
+     *
+     * @return string The rector-findings subdirectory path
+     */
+    public function ensureFractorFindingsDirectory(string $outputPath): string
+    {
+        $outputPath = rtrim($outputPath, '/') . '/';
+        $fractorPath = $outputPath . 'fractor-findings/';
+
+        if (!is_dir($fractorPath)) {
+            /* @noinspection MkdirRaceConditionInspection */
+            mkdir($fractorPath, 0o755, true);
+        }
+
+        return $fractorPath;
+    }
+
+    /**
      * Write all report files and return combined metadata.
      *
      * @param array{content: string, filename: string}                                $mainReport       Main report data
@@ -186,30 +269,5 @@ class ReportFileManager
         }
 
         return array_merge($mainReportFiles, $extensionReportFiles);
-    }
-
-    /**
-     * Extended file writing that includes Rector detail pages.
-     *
-     * @param array{content: string, filename: string}                                $mainReport        Main report data
-     * @param array<int, array{content: string, filename: string, extension: string}> $extensionReports  Extension reports data
-     * @param array<int, array{content: string, filename: string, extension: string}> $rectorDetailPages Rector detail pages data
-     * @param string                                                                  $outputPath        Output directory path
-     *
-     * @return array<int, array{type: string, extension?: string, path: string, size: int}> All file metadata
-     */
-    public function writeReportFilesWithRectorPages(
-        array $mainReport,
-        array $extensionReports,
-        array $rectorDetailPages,
-        string $outputPath,
-    ): array {
-        // Use existing method for main and extension reports
-        $files = $this->writeReportFiles($mainReport, $extensionReports, $outputPath);
-
-        // Add Rector detail pages
-        $rectorFiles = $this->writeRectorDetailPages($rectorDetailPages, $outputPath);
-
-        return array_merge($files, $rectorFiles);
     }
 }

@@ -5,9 +5,7 @@ This analyzer uses TYPO3 Rector to detect deprecated code patterns, breaking cha
 | Extension | Processed Files | Total Findings | Breaking Changes | Deprecations | Upgrade Readiness | Fix Time (hrs) |
 |-----------|-----------------|----------------|------------------|--------------|-------------------|----------------|
 {% for data in extension_data %}
-{% if data.rector_analysis %}
+{% if data.rector_analysis and data.rector_analysis.total_findings > 0 %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#typo3-rector-analysis) | {{ data.rector_analysis.processed_files }} | {{ data.rector_analysis.total_findings }} | {{ data.rector_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }} | {{ data.rector_analysis.has_deprecations ? '📋 Yes' : '✅ No' }} | {{ "%.1f"|format(data.rector_analysis.upgrade_readiness_score) }}/10 | {{ "%.1f"|format(data.rector_analysis.estimated_fix_time_hours) }} |
-{% else %}
-| [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#typo3-rector-analysis) | N/A | N/A | ❓ | ❓ | N/A | N/A |
 {% endif %}
 {% endfor %}

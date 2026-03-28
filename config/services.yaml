@@ -103,6 +103,7 @@ services:
       - '@logger'
       - '%rector.timeout_seconds%'
       - '%app.project_root%'
+      - '@CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorConfigGenerator:
     arguments:
@@ -127,19 +128,26 @@ services:
     tags: ['analyzer']
 
   # Fractor Analyzer and supporting services
+  CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry:
+    arguments:
+      - '@logger'
+
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor:
     factory: ['@CPSIT\UpgradeAnalyzer\Shared\Utility\BinaryPathResolver', 'createFractorExecutor']
     arguments:
       - '@logger'
       - '%fractor.timeout_seconds%'
       - '%app.project_root%'
+      - '@CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator:
     arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry'
       - '%app.root_dir%/var/temp'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser:
     arguments:
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry'
       - '@logger'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer:
@@ -150,6 +158,7 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser'
+      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface'
     tags: ['analyzer']
 
@@ -159,6 +168,10 @@ services:
 
   # Binary Path Resolver
   CPSIT\UpgradeAnalyzer\Shared\Utility\BinaryPathResolver: ~
+
+  CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor: ~
+
+  CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter: ~
 
   # Twig
   Twig\Environment:
@@ -311,6 +324,19 @@ services:
   # Report Context Builder
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder:
     public: false
+    arguments:
+      - !tagged_iterator 'analysis_report_data_provider'
+
+  # Report Data Providers
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\RectorDataProvider:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter'
+    tags: ['analysis_report_data_provider']
+
+  CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\FractorDataProvider:
+    arguments:
+      - '@CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter'
+    tags: ['analysis_report_data_provider']
 
   # Template Renderer
   CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer:

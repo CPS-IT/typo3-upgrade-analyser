@@ -56,6 +56,16 @@ readonly class RectorConfigGenerator
     }
 
     /**
+     * Select appropriate sets for version upgrade.
+     *
+     * @return array<string>
+     */
+    private function selectSetsForVersion(Version $currentVersion, Version $targetVersion): array
+    {
+        return $this->ruleRegistry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+    }
+
+    /**
      * Generate minimal configuration with specific sets.
      *
      * @param array<string> $setNames
@@ -94,34 +104,6 @@ readonly class RectorConfigGenerator
         );
 
         return $this->writeConfigFile($configArray, $extension->getKey() . '_' . $category);
-    }
-
-    /**
-     * Clean up generated configuration files.
-     */
-    public function cleanup(): void
-    {
-        if ($this->filesystem->exists($this->tempDirectory)) {
-            // Remove only config files, keep cache directory
-            $pattern = $this->tempDirectory . '/rector_*.php';
-            $files = glob($pattern);
-            if (false === $files) {
-                return;
-            }
-            foreach ($files as $file) {
-                $this->filesystem->remove($file);
-            }
-        }
-    }
-
-    /**
-     * Select appropriate sets for version upgrade.
-     *
-     * @return array<string>
-     */
-    private function selectSetsForVersion(Version $currentVersion, Version $targetVersion): array
-    {
-        return $this->ruleRegistry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
     }
 
     /**
@@ -188,37 +170,16 @@ readonly class RectorConfigGenerator
     {
         $content = "<?php\n\n";
         $content .= "declare(strict_types=1);\n\n";
+
         $content .= "use Rector\\Config\\RectorConfig;\n";
         $content .= "use Rector\\ValueObject\\PhpVersion;\n\n";
+
         $content .= "return static function (RectorConfig \$rectorConfig): void {\n";
 
         // Add paths
         if (!empty($config['paths'])) {
             $paths = var_export($config['paths'], true);
-            $content .= "    \$rectorConfig->paths({$paths});\n\n";
-        }
-
-        // Add PHP version
-        if (!empty($config['php_version'])) {
-            $phpVersionConstant = $this->getPhpVersionConstant($config['php_version']);
-            $content .= "    \$rectorConfig->phpVersion({$phpVersionConstant});\n\n";
-        }
-
-        // Add parallel processing
-        if (!empty($config['parallel'])) {
-            $content .= "    \$rectorConfig->parallel();\n\n";
-        }
-
-        // Add cache directory
-        if (!empty($config['cache_directory'])) {
-            $cacheDir = var_export($config['cache_directory'], true);
-            $content .= "    \$rectorConfig->cacheDirectory({$cacheDir});\n\n";
-        }
-
-        // Add skip patterns
-        if (!empty($config['skip'])) {
-            $skip = var_export($config['skip'], true);
-            $content .= "    \$rectorConfig->skip({$skip});\n\n";
+            $content .= "    \$rectorConfig->paths({$paths});\n";
         }
 
         // Add sets
@@ -228,7 +189,30 @@ readonly class RectorConfigGenerator
                 $setPath = var_export($set, true);
                 $content .= "        {$setPath},\n";
             }
-            $content .= "    ]);\n\n";
+            $content .= "    ]);\n";
+        }
+
+        // Add skip patterns
+        if (!empty($config['skip'])) {
+            $skip = var_export($config['skip'], true);
+            $content .= "    \$rectorConfig->skip({$skip});\n";
+        }
+
+        // Add PHP version
+        if (!empty($config['php_version'])) {
+            $phpVersionConstant = $this->getPhpVersionConstant($config['php_version']);
+            $content .= "    \$rectorConfig->phpVersion({$phpVersionConstant});\n";
+        }
+
+        // Add parallel processing
+        if (!empty($config['parallel'])) {
+            $content .= "    \$rectorConfig->parallel();\n";
+        }
+
+        // Add cache directory
+        if (!empty($config['cache_directory'])) {
+            $cacheDir = var_export($config['cache_directory'], true);
+            $content .= "    \$rectorConfig->cacheDirectory({$cacheDir});\n";
         }
 
         $content .= "};\n";
@@ -339,6 +323,24 @@ readonly class RectorConfigGenerator
                 $this->filesystem->mkdir($this->tempDirectory, 0o755);
             } catch (\Exception $e) {
                 throw new AnalyzerException("Failed to create temp directory: {$this->tempDirectory}", 'RectorConfigGenerator', $e);
+            }
+        }
+    }
+
+    /**
+     * Clean up generated configuration files.
+     */
+    public function cleanup(): void
+    {
+        if ($this->filesystem->exists($this->tempDirectory)) {
+            // Remove only config files, keep cache directory
+            $pattern = $this->tempDirectory . '/rector_*.php';
+            $files = glob($pattern);
+            if (false === $files) {
+                return;
+            }
+            foreach ($files as $file) {
+                $this->filesystem->remove($file);
             }
         }
     }

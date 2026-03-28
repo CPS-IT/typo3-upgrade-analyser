@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
@@ -25,12 +26,15 @@ class RectorExecutor
 {
     private readonly RectorOutputParser $outputParser;
 
+    private ?string $versionCache = null;
+
     public function __construct(
         private readonly string $rectorBinaryPath,
         private readonly LoggerInterface $logger,
+        private readonly DiffProcessor $diffProcessor,
         private readonly int $timeoutSeconds = 300,
     ) {
-        $this->outputParser = new RectorOutputParser($this->logger);
+        $this->outputParser = new RectorOutputParser($this->logger, $this->diffProcessor);
     }
 
     /**
@@ -54,9 +58,10 @@ class RectorExecutor
 
         $startTime = microtime(true);
 
+        $process = new Process($command);
+        $process->setTimeout($this->timeoutSeconds);
+
         try {
-            $process = new Process($command);
-            $process->setTimeout($this->timeoutSeconds);
             $process->run();
 
             $executionTime = microtime(true) - $startTime;
@@ -140,6 +145,10 @@ class RectorExecutor
             return null;
         }
 
+        if (null !== $this->versionCache) {
+            return $this->versionCache;
+        }
+
         try {
             $process = new Process([$this->rectorBinaryPath, '--version']);
             $process->setTimeout(10);
@@ -149,8 +158,12 @@ class RectorExecutor
                 $output = trim($process->getOutput());
                 // Extract version number from output like "Rector 0.15.25"
                 if (preg_match('/Rector (\d+\.\d+\.\d+)/', $output, $matches)) {
+                    $this->versionCache = $matches[1];
+
                     return $matches[1];
                 }
+
+                $this->versionCache = $output;
 
                 return $output;
             }

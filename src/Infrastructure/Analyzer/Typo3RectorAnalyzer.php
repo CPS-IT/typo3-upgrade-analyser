@@ -36,8 +36,7 @@ use Psr\Log\LoggerInterface;
 class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
 {
     public const string NAME = 'typo3_rector';
-    public const string DESCRIPTION =
-        'Uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements';
+    public const string DESCRIPTION = 'Uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements';
 
     public function __construct(
         CacheService $cacheService,
@@ -337,6 +336,11 @@ class Typo3RectorAnalyzer extends AbstractCachedAnalyzer
         RectorAnalysisSummary $summary,
         RectorExecutionResult $executionResult,
     ): void {
+        // Store error message if analysis failed
+        if (!$executionResult->isSuccessful()) {
+            $result->addMetric('error_message', $executionResult->getRawOutput());
+        }
+
         // Core metrics
         $result->addMetric('total_findings', $summary->getTotalFindings());
         $result->addMetric('affected_files', $summary->getAffectedFiles());

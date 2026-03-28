@@ -6,48 +6,175 @@
 
         <div class="analysis-grid">
             <div class="info-card">
-                <h3>Code Modernization Assessment</h3>
-                <p><strong>Files with Changes:</strong> {{ fractor_analysis.files_changed }}</p>
+                <h3>Analysis Status</h3>
+                <p><strong>Analysis Result:</strong>
+                    {% if fractor_analysis.isSuccessful %}
+                        <span style="color: #28a745;">✅ Successful</span>
+                    {% else %}
+                        <span style="color: #dc3545;">❌ Failed</span>
+                    {% endif %}
+                </p>
+                <!--{% if fractor_analysis.error_message %}
+                    <p><strong>Error:</strong> <span style="color: #dc3545;">{{ fractor_analysis.error_message }}</span></p>
+                {% endif %}-->
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="info-card">
+                <h3>Code Quality Assessment</h3>
+                <p><strong>Processed Files:</strong> {{ fractor_analysis.processed_files }}</p>
+                <p><strong>Total Files Analyzed:</strong> {{ fractor_analysis.total_files }}</p>
+                <p><strong>Affected Files:</strong> {{ fractor_analysis.affected_files }}</p>
+                <p><strong>File Impact:</strong> {{ "%.1f"|format(fractor_analysis.file_impact_percentage) }}%</p>
+
+                <!--<p><strong>Files with Changes:</strong> {{ fractor_analysis.files_changed }}</p>
                 <p><strong>Change Blocks:</strong> {{ fractor_analysis.change_blocks }}</p>
                 <p><strong>Changed Lines:</strong> {{ fractor_analysis.changed_lines }}</p>
                 <p><strong>Rules Applied:</strong> {{ fractor_analysis.rules_applied }}</p>
                 <p><strong>Has Modernization Opportunities:</strong>
-                    {% if not fractor_analysis.analysis_successful %}
+                    {% if not fractor_analysis.isSuccessful %}
                         <span style="color: #6c757d;">❓ Unknown (Analysis Failed)</span>
                     {% elseif fractor_analysis.has_findings %}
                         <span style="color: #ffc107;">📋 Yes</span>
                     {% else %}
                         <span style="color: #28a745;">✅ No</span>
                     {% endif %}
-                </p>
+                </p>-->
             </div>
 
             <div class="info-card">
-                <h3>Analysis Status</h3>
-                <p><strong>Analysis Result:</strong>
-                    {% if fractor_analysis.analysis_successful %}
-                        <span style="color: #28a745;">✅ Successful</span>
+                <h3>Findings Summary</h3>
+                <p><strong>Total Findings:</strong> {{ fractor_analysis.total_findings }}</p>
+                <p><strong>Breaking Changes:</strong>
+                    {% if fractor_analysis.has_breaking_changes %}
+                        <span style="color: #dc3545;">⚠️ Yes</span>
                     {% else %}
-                        <span style="color: #dc3545;">❌ Failed</span>
+                        <span style="color: #28a745;">✅ No</span>
                     {% endif %}
                 </p>
-                {% if fractor_analysis.error_message %}
-                    <p><strong>Error:</strong> <span style="color: #dc3545;">{{ fractor_analysis.error_message }}</span></p>
-                {% endif %}
+                <p><strong>Deprecated Patterns:</strong>
+                    {% if fractor_analysis.has_deprecations %}
+                        <span style="color: #ffc107;">📋 Yes</span>
+                    {% else %}
+                        <span style="color: #28a745;">✅ No</span>
+                    {% endif %}
+                </p>
             </div>
         </div>
 
-        {% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}
+        {% if fractor_analysis.findings_by_severity %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Findings by Severity</h3>
+                    <div class="severity-grid">
+                        {% for severity, count in fractor_analysis.findings_by_severity %}
+                            {% if count > 0 %}
+                                <div class="severity-item">
+                                    <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
+                                    <span class="count">{{ count }}</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="analysis-grid">
             <div class="info-card">
-                <h3>Affected Files</h3>
-                <ul>
-                    {% for file_path in fractor_analysis.file_paths|slice(0, 8) %}
+                <h3>Upgrade Assessment</h3>
+                <p><strong>Upgrade Readiness:</strong> {{ "%.1f"|format(fractor_analysis.upgrade_readiness_score) }}/10.0</p>
+                <p><strong>Complexity Score:</strong> {{ "%.1f"|format(fractor_analysis.complexity_score) }}/10.0</p>
+                <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(fractor_analysis.estimated_fix_time_hours) }} hours</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Analysis Details</h3>
+                <p><strong>Analysis Duration:</strong> {{ "%.2f"|format(fractor_analysis.execution_time) }} seconds</p>
+                <p><strong>Fractor Version:</strong> {{ fractor_analysis.fractor_version }}</p>
+            </div>
+        </div>
+
+        {% if fractor_analysis.top_affected_files %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Most Affected Files</h3>
+                    <ul>
+                        {% for file, count in fractor_analysis.top_affected_files %}
+                            <li><strong>{{ file }}:</strong> {{ count }} findings</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if fractor_analysis.top_rules_triggered %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Most Triggered Rules</h3>
+                    <ul>
+                        {% for rule, count in fractor_analysis.top_rules_triggered %}
+                            <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if fractor_analysis.summary_text %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Summary</h3>
+                    <p>{{ fractor_analysis.summary_text }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if fractor_analysis.recommendations %}
+            <div class="analysis-grid">
+                <div class="recommendations">
+                    <h3>Fractor Recommendations</h3>
+                    <ul>
+                        {% for recommendation in fractor_analysis.recommendations %}
+                            <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if fractor_analysis.detailed_findings.findings is defined and fractor_analysis.detailed_findings.findings|length > 0 %}
+            <div class="analysis-grid">
+                <div class="findings-actions">
+                    <h3>Detailed Analysis</h3>
+                    <p>{{ fractor_analysis.detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
+                    <div class="action-buttons">
+                        <a href="../fractor-findings/{{ extension.key }}.html" class="btn btn-primary">
+                            🔍 View Detailed Findings
+                        </a>
+                        <small class="text-muted">
+                            Includes code examples, fix suggestions, and file-by-file breakdown
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+
+        <!--{% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Affected Files</h3>
+                    <ul>
+                        {% for file_path in fractor_analysis.file_paths|slice(0, 8) %}
                         <li><code>{{ file_path }}</code></li>
-                    {% endfor %}
-                    {% if fractor_analysis.file_paths|length > 8 %}
+                        {% endfor %}
+                        {% if fractor_analysis.file_paths|length > 8 %}
                         <li><em>... and {{ fractor_analysis.file_paths|length - 8 }} more files</em></li>
-                    {% endif %}
-                </ul>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         {% endif %}
 
@@ -85,14 +212,14 @@
                 <p><strong>Risk Score:</strong> {{ "%.1f"|format(fractor_analysis.risk_score) }}/10.0</p>
                 <div class="risk-bar">
                     <div class="risk-fill" style="width: {{ (fractor_analysis.risk_score / 10 * 100)|round }}%;
-                        background-color: {% if fractor_analysis.risk_score < 3 %}#28a745{% elseif fractor_analysis.risk_score < 7 %}#ffc107{% else %}#dc3545{% endif %};"></div>
+                         background-color: {% if fractor_analysis.risk_score < 3 %}#28a745{% elseif fractor_analysis.risk_score < 7 %}#ffc107{% else %}#dc3545{% endif %};"></div>
                 </div>
             </div>
 
             <div class="info-card">
                 <h3>Code Quality Impact</h3>
-                {% if not fractor_analysis.analysis_successful %}
-                    <p><strong>Status:</strong> <span style="color: #6c757d;">❓ N/A (Analysis Failed)</span></p>
+                {% if not fractor_analysis.isSuccessful %}
+                <p><strong>Status:</strong> <span style="color: #6c757d;">❓ N/A (Analysis Failed)</span></p>
                 {% elseif fractor_analysis.rules_applied > 0 %}
                     <p><strong>Improvement Potential:</strong>
                         {% if fractor_analysis.rules_applied > 20 %}
@@ -128,13 +255,28 @@
             </div>
         {% endif %}
 
+        {% if fractor_analysis.detailed_findings.findings is defined and fractor_analysis.detailed_findings.findings|length > 0 %}
+            <div class="findings-actions">
+                <h3>Detailed Analysis</h3>
+                <p>{{ fractor_analysis.detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
+                <div class="action-buttons">
+                    <a href="../fractor-findings/{{ extension.key }}.html" class="btn btn-primary">
+                        🔍 View Detailed Findings
+                    </a>
+                    <small class="text-muted">
+                        Includes code examples, fix suggestions, and file-by-file breakdown
+                    </small>
+                </div>
+            </div>
+        {% endif %}-->
     {% else %}
         <div class="error-card">
             <h3>❌ Analysis Not Available</h3>
             <p>Fractor analysis was not performed for this extension. This may occur when:</p>
             <ul>
+                <li>The analysis was not enabled</li>
                 <li>Fractor binary is not available</li>
-                <li>No PHP files were found to analyze</li>
+                <li>No files were found to analyze</li>
                 <li>The extension path could not be resolved</li>
                 <li>Analysis failed due to configuration issues</li>
             </ul>

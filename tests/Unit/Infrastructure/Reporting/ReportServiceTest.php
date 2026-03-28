@@ -81,12 +81,16 @@ class ReportServiceTest extends TestCase
             ->with($context, 'markdown')
             ->willReturn([]);
 
+        $this->templateRenderer->method('renderFractorFindingsDetailPages')
+            ->with($context, 'markdown')
+            ->willReturn([]);
+
         $this->fileManager->method('ensureOutputDirectory')
             ->with('var/reports/', 'markdown')
             ->willReturn('/test/markdown/');
 
         $this->fileManager->method('writeReportFilesWithRectorPages')
-            ->with($mainReport, $extensionReports, [], '/test/markdown/')
+            ->with($mainReport, $extensionReports, [], [], '/test/markdown/')
             ->willReturn($files);
 
         // Act

@@ -36,6 +36,15 @@ class ConfigurationService implements ConfigurationServiceInterface
     public const int DEFAULT_COMPLEXITY_THRESHOLD = 10;
     public const int DEFAULT_LOC_THRESHOLD = 1000;
 
+    public const int DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_SIZE = 4;
+    public const string DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_CHARACTER = 'space';
+    public const bool DEFAULT_FRACTOR_TYPOSCRIPT_ADD_CLOSING_GLOBAL = true;
+    public const bool DEFAULT_FRACTOR_TYPOSCRIPT_INCLUDE_EMPTY_LINE_BREAKS = true;
+    public const bool DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_CONDITIONS = true;
+
+    public const int DEFAULT_FRACTOR_XML_INDENT_SIZE = 4;
+    public const string DEFAULT_FRACTOR_XML_INDENT_CHARACTER = 'space';
+
     // External tool defaults
     public const string DEFAULT_RECTOR_BINARY = 'vendor/bin/rector';
     public const string DEFAULT_FRACTOR_BINARY = 'vendor/bin/fractor';
@@ -134,7 +143,10 @@ class ConfigurationService implements ConfigurationServiceInterface
 
         try {
             $config = Yaml::parseFile($this->configPath);
-            $this->configuration = \is_array($config) ? $config : [];
+            $loadedConfig = \is_array($config) ? $config : [];
+
+            // Merge loaded configuration with defaults
+            $this->configuration = $this->mergeConfiguration($this->getDefaultConfiguration(), $loadedConfig);
 
             $this->logger->debug('Configuration loaded', ['path' => $this->configPath]);
         } catch (\Exception $e) {
@@ -144,6 +156,25 @@ class ConfigurationService implements ConfigurationServiceInterface
             ]);
             $this->configuration = $this->getDefaultConfiguration();
         }
+    }
+
+    /**
+     * Merge configuration arrays.
+     * Replaces indexed arrays (lists) entirely, but merges associative arrays.
+     */
+    private function mergeConfiguration(array $base, array $override): array
+    {
+        foreach ($override as $key => $value) {
+            // If both are arrays and the override is associative, recurse
+            if (isset($base[$key]) && \is_array($base[$key]) && \is_array($value) && !array_is_list($value)) {
+                $base[$key] = $this->mergeConfiguration($base[$key], $value);
+            } else {
+                // Otherwise (scalar, list, or new key), replace entirely
+                $base[$key] = $value;
+            }
+        }
+
+        return $base;
     }
 
     /**
@@ -192,6 +223,17 @@ class ConfigurationService implements ConfigurationServiceInterface
                     ],
                     'fractor' => [
                         'enabled' => true,
+                        'typoscript' => [
+                            'indent_size' => self::DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_SIZE,
+                            'indent_character' => self::DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_CHARACTER,
+                            'add_closing_global' => self::DEFAULT_FRACTOR_TYPOSCRIPT_ADD_CLOSING_GLOBAL,
+                            'include_empty_line_breaks' => self::DEFAULT_FRACTOR_TYPOSCRIPT_INCLUDE_EMPTY_LINE_BREAKS,
+                            'indent_conditions' => self::DEFAULT_FRACTOR_TYPOSCRIPT_INDENT_CONDITIONS,
+                        ],
+                        'xml' => [
+                            'indent_size' => self::DEFAULT_FRACTOR_XML_INDENT_SIZE,
+                            'indent_character' => self::DEFAULT_FRACTOR_XML_INDENT_CHARACTER,
+                        ],
                     ],
                 ],
             ],

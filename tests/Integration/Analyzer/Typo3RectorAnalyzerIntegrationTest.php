@@ -20,6 +20,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -53,7 +54,7 @@ class Typo3RectorAnalyzerIntegrationTest extends TestCase
         }
 
         $ruleRegistry = new RectorRuleRegistry($logger);
-        $rectorExecutor = new RectorExecutor(__DIR__ . '/../../../vendor/bin/rector', $logger, 300);
+        $rectorExecutor = new RectorExecutor(__DIR__ . '/../../../vendor/bin/rector', $logger, new DiffProcessor(), 300);
         $configGenerator = new RectorConfigGenerator($ruleRegistry, $tempDir);
         $resultParser = new RectorResultParser($ruleRegistry, $logger);
 

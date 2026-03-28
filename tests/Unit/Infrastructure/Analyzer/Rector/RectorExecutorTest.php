@@ -14,7 +14,9 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorExecutor;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -24,10 +26,12 @@ use Psr\Log\NullLogger;
 class RectorExecutorTest extends TestCase
 {
     private NullLogger $logger;
+    private DiffProcessor&MockObject $diffProcessor;
 
     protected function setUp(): void
     {
         $this->logger = new NullLogger();
+        $this->diffProcessor = $this->createMock(DiffProcessor::class);
     }
 
     public function testIsAvailableWithValidBinary(): void
@@ -40,9 +44,9 @@ class RectorExecutorTest extends TestCase
         if (!file_exists($rectorPath) || !is_executable($rectorPath)) {
             $tempFile = tempnam(sys_get_temp_dir(), 'rector_test_');
             chmod($tempFile, 0o755);
-            $executor = new RectorExecutor($tempFile, $this->logger, 300);
+            $executor = new RectorExecutor($tempFile, $this->logger, $this->diffProcessor, 300);
         } else {
-            $executor = new RectorExecutor($rectorPath, $this->logger, 300);
+            $executor = new RectorExecutor($rectorPath, $this->logger, $this->diffProcessor, 300);
         }
 
         $this->assertTrue($executor->isAvailable());
@@ -55,14 +59,14 @@ class RectorExecutorTest extends TestCase
 
     public function testIsAvailableWithInvalidBinary(): void
     {
-        $executor = new RectorExecutor('/non/existent/rector', $this->logger, 300);
+        $executor = new RectorExecutor('/non/existent/rector', $this->logger, $this->diffProcessor, 300);
 
         $this->assertFalse($executor->isAvailable());
     }
 
     public function testExecuteWithUnavailableBinary(): void
     {
-        $executor = new RectorExecutor('/non/existent/rector', $this->logger, 300);
+        $executor = new RectorExecutor('/non/existent/rector', $this->logger, $this->diffProcessor, 300);
 
         $this->expectException(AnalyzerException::class);
         $this->expectExceptionMessage('Rector binary not found');
@@ -72,7 +76,7 @@ class RectorExecutorTest extends TestCase
 
     public function testGetVersionWithUnavailableBinary(): void
     {
-        $executor = new RectorExecutor('/non/existent/rector', $this->logger, 300);
+        $executor = new RectorExecutor('/non/existent/rector', $this->logger, $this->diffProcessor, 300);
 
         $version = $executor->getVersion();
 
@@ -82,7 +86,7 @@ class RectorExecutorTest extends TestCase
     #[DataProvider('buildCommandDataProvider')]
     public function testBuildCommand(string $configPath, string $targetPath, array $options, array $expectedInCommand): void
     {
-        $executor = new RectorExecutor('/usr/bin/rector', $this->logger, 300);
+        $executor = new RectorExecutor('/usr/bin/rector', $this->logger, $this->diffProcessor, 300);
 
         // Use reflection to test private method
         $reflection = new \ReflectionClass($executor);
@@ -130,7 +134,7 @@ class RectorExecutorTest extends TestCase
 
     public function testCreateTempConfigWithRules(): void
     {
-        $executor = new RectorExecutor('/usr/bin/rector', $this->logger, 300);
+        $executor = new RectorExecutor('/usr/bin/rector', $this->logger, $this->diffProcessor, 300);
 
         $rules = ['Rule1', 'Rule2'];
         $targetPath = '/tmp/target';

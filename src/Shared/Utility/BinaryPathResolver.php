@@ -146,6 +146,7 @@ class BinaryPathResolver
      * @param LoggerInterface $logger         Logger instance
      * @param int             $timeoutSeconds Execution timeout
      * @param string          $projectRoot    Project root directory
+     * @param DiffProcessor   $diffProcessor  Diff processor service
      *
      * @return FractorExecutor Configured executor instance
      */
@@ -153,12 +154,14 @@ class BinaryPathResolver
         LoggerInterface $logger,
         int $timeoutSeconds,
         string $projectRoot,
+        DiffProcessor $diffProcessor,
     ): FractorExecutor {
         $binaryPath = self::resolveBinaryPath('fractor', $projectRoot);
 
         return new FractorExecutor(
             $binaryPath,
             $logger,
+            $diffProcessor,
             $timeoutSeconds,
         );
     }
@@ -169,6 +172,7 @@ class BinaryPathResolver
      * @param LoggerInterface $logger         Logger instance
      * @param int             $timeoutSeconds Execution timeout
      * @param string          $projectRoot    Project root directory
+     * @param DiffProcessor   $diffProcessor  Diff processor service
      *
      * @return RectorExecutor Configured executor instance
      */
@@ -176,12 +180,14 @@ class BinaryPathResolver
         LoggerInterface $logger,
         int $timeoutSeconds,
         string $projectRoot,
+        DiffProcessor $diffProcessor,
     ): RectorExecutor {
         $binaryPath = self::resolveBinaryPath('rector', $projectRoot);
 
         return new RectorExecutor(
             $binaryPath,
             $logger,
+            $diffProcessor,
             $timeoutSeconds,
         );
     }

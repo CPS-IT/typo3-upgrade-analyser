@@ -19,6 +19,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
 
 /**
  * Trait providing VFS setup for tests that need realistic TYPO3 directory structures.
+ *
+ * @phpstan-ignore trait.unused
  */
 trait VfsTestTrait
 {

@@ -17,13 +17,14 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorAnalysisSummary;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorConfigGenerator;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionException;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorExecutor;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorResultParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\ExtensionIdentifier;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathConfiguration;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequestBuilder;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionRequest;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
@@ -43,6 +44,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         private readonly FractorExecutor $fractorExecutor,
         private readonly FractorConfigGenerator $configGenerator,
         private readonly FractorResultParser $resultParser,
+        private readonly FractorRuleRegistry $ruleRegistry,
         private readonly PathResolutionServiceInterface $pathResolutionService,
     ) {
         parent::__construct($cacheService, $logger);
@@ -60,7 +62,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
 
     public function supports(Extension $extension): bool
     {
-        // Support all extensions that have PHP files to analyze
+        // Support all extensions that have files to analyze
         return true;
     }
 
@@ -91,6 +93,7 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         $this->logger->info('Starting Fractor analysis', [
             'extension' => $extension->getKey(),
             'target_version' => $context->getTargetVersion()->toString(),
+            'current_version' => $context->getCurrentVersion()->toString(),
         ]);
 
         try {
@@ -101,38 +104,46 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
             $configPath = $this->generateFractorConfig($extension, $context, $extensionPath);
 
             // Execute Fractor analysis
-            $executionResult = $this->fractorExecutor->execute($configPath, $extensionPath, true);
+            $executionResult = $this->fractorExecutor->execute($configPath, $extensionPath, []);
 
-            // Parse results
-            $summary = $this->resultParser->parse($executionResult);
+            // Parse results into structured data
+            $summary = $this->resultParser->aggregateFindings($executionResult->getFindings());
 
-            // Store results in AnalysisResult
-            $this->storeResults($result, $summary, $extension);
+            // Add metrics to result
+            $this->addMetricsToResult($result, $summary, $executionResult);
 
-            // Clean up temporary config file
-            if (file_exists($configPath)) {
-                unlink($configPath);
+            // Store raw objects for detailed findings export
+            if (!empty($executionResult->getFindings())) {
+                $result->addMetric('raw_findings', array_map(static fn ($finding): array => $finding->toArray(), $executionResult->getFindings()));
+                $result->addMetric('raw_summary', $summary->toArray());
             }
-        } catch (FractorExecutionException $e) {
-            $this->logger->error('Fractor execution failed', [
-                'extension' => $extension->getKey(),
-                'error' => $e->getMessage(),
-            ]);
 
-            // Return partial result with error indication
-            $result->addMetric('execution_failed', true);
-            $result->addMetric('error_message', $e->getMessage());
-            $result->setRiskScore(8.0); // High risk due to analysis failure
-            $result->addRecommendation('Fractor analysis failed - manual code review recommended');
+            // Calculate risk score
+            $riskScore = $this->calculateRiskScore($summary);
+            $result->setRiskScore($riskScore);
+
+            // Generate recommendations
+            $recommendations = $this->generateRecommendations($summary, $context);
+            foreach ($recommendations as $recommendation) {
+                $result->addRecommendation($recommendation);
+            }
+
+            $this->logger->info('Fractor analysis completed', [
+                'extension' => $extension->getKey(),
+                'findings_count' => $summary->getTotalFindings(),
+                'risk_score' => $riskScore,
+                'execution_time' => $executionResult->getExecutionTime(),
+            ]);
         } catch (\Throwable $e) {
-            $this->logger->error('Unexpected error during Fractor analysis', [
+            $this->logger->error('Fractor analysis failed', [
                 'extension' => $extension->getKey(),
                 'error' => $e->getMessage(),
             ]);
 
-            $result->addMetric('analysis_error', true);
-            $result->setRiskScore(5.0);
-            $result->addRecommendation('Analysis encountered errors - results may be incomplete');
+            throw new AnalyzerException("Fractor analysis failed for extension {$extension->getKey()}: {$e->getMessage()}", $this->getName(), $e);
+        } finally {
+            // Clean up generated configuration files
+            $this->configGenerator->cleanup();
         }
 
         return $result;
@@ -140,37 +151,27 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
 
     protected function getAnalyzerSpecificCacheKeyComponents(Extension $extension, AnalysisContext $context): array
     {
-        return [
-            'target_version' => $context->getTargetVersion()->toString(),
-            'extension_path' => $this->getExtensionPathForCache($extension, $context),
-        ];
-    }
+        $components = [];
 
-    private function getExtensionPath(Extension $extension, AnalysisContext $context): string
-    {
-        // Get installation path from context
-        $installationPath = $context->getConfigurationValue('installation_path', '');
+        // Include version information in cache key
+        $components['current_version'] = $context->getCurrentVersion()->toString();
+        $components['target_version'] = $context->getTargetVersion()->toString();
+        $components['extension_path'] = $this->getExtensionPathForCache($extension, $context);
 
-        if (empty($installationPath)) {
-            throw new AnalyzerException('No installation path available in context', $this->getName());
+        // Include Rector version if available
+        $fractorVersion = $this->fractorExecutor->getVersion();
+        if ($fractorVersion) {
+            $components['fractor_version'] = $fractorVersion;
         }
 
-        // Convert relative path to absolute path
-        if (!str_starts_with($installationPath, '/')) {
-            $installationPath = realpath(getcwd() . '/' . $installationPath);
-            if (!$installationPath) {
-                throw new AnalyzerException('Invalid installation path - could not resolve to absolute path', $this->getName());
-            }
-        }
+        // Include set count to invalidate cache when sets change
+        $sets = $this->ruleRegistry->getSetsForVersionUpgrade(
+            $context->getCurrentVersion(),
+            $context->getTargetVersion(),
+        );
+        $components['set_count'] = \count($sets);
 
-        // Use PathResolutionService to find extension path
-        $extensionPath = $this->findExtensionPath($installationPath, $extension->getKey(), $context, $extension);
-
-        if (!$extensionPath || !is_dir($extensionPath)) {
-            throw new AnalyzerException(\sprintf('Extension directory not found for %s (attempted: %s)', $extension->getKey(), $extensionPath ?? 'unknown'), $this->getName());
-        }
-
-        return $extensionPath;
+        return $components;
     }
 
     private function getExtensionPathForCache(Extension $extension, AnalysisContext $context): string
@@ -182,174 +183,364 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         }
     }
 
+    /**
+     * Generate Fractor configuration for the extension.
+     */
     private function generateFractorConfig(Extension $extension, AnalysisContext $context, string $extensionPath): string
     {
-        return $this->configGenerator->generateConfig($extension, $context, $extensionPath);
-    }
-
-    private function storeResults(AnalysisResult $result, FractorAnalysisSummary $summary, Extension $extension): void
-    {
-        // Store basic metrics
-        $result->addMetric('files_scanned', $summary->filesScanned);
-        $result->addMetric('files_changed', $summary->filesScanned); // Same as files_scanned since Fractor only reports files with changes
-        $result->addMetric('rules_applied', $summary->rulesApplied);
-        $result->addMetric('total_issues', $summary->getTotalIssues());
-        $result->addMetric('has_findings', $summary->hasFindings());
-        $result->addMetric('analysis_successful', $summary->successful);
-
-        // Store detailed metrics from parser
-        $result->addMetric('change_blocks', $summary->changeBlocks ?? 0);
-        $result->addMetric('changed_lines', $summary->changedLines ?? 0);
-        $result->addMetric('file_paths', $summary->filePaths ?? []);
-        $result->addMetric('applied_rules', $summary->appliedRules ?? []);
-
-        // Store error message if analysis failed
-        if ($summary->errorMessage) {
-            $result->addMetric('error_message', $summary->errorMessage);
+        // Extract Fractor options from context configuration
+        $options = [];
+        if ($context->hasConfiguration('analysis')) {
+            $analysisConfig = $context->getConfigurationValue('analysis');
+            if (isset($analysisConfig['analyzers']['fractor'])) {
+                $options = $analysisConfig['analyzers']['fractor'];
+            }
         }
 
-        // Store findings (limited to avoid excessive data) - excluding diff changes
-        $limitedFindings = \array_slice($summary->findings, 0, 20);
-        $result->addMetric('findings', $limitedFindings);
-
-        // Calculate risk score
-        $riskScore = $this->calculateRiskScore($summary);
-        $result->setRiskScore($riskScore);
-
-        // Add recommendations
-        $recommendations = $this->generateRecommendations($summary, $extension);
-        foreach ($recommendations as $recommendation) {
-            $result->addRecommendation($recommendation);
-        }
-
-        $this->logger->info('Fractor analysis completed', [
-            'extension' => $extension->getKey(),
-            'files_scanned' => $summary->filesScanned,
-            'rules_applied' => $summary->rulesApplied,
-            'change_blocks' => $summary->changeBlocks ?? 0,
-            'changed_lines' => $summary->changedLines ?? 0,
-            'risk_score' => $riskScore,
-        ]);
-    }
-
-    private function calculateRiskScore(FractorAnalysisSummary $summary): float
-    {
-        // Base score on number of issues found
-        $score = 1.0; // Baseline low risk
-
-        if (!$summary->successful) {
-            return 9.0; // High risk if analysis failed
-        }
-
-        // Add risk based on number of rules that would be applied
-        $rulesApplied = $summary->rulesApplied;
-        if ($rulesApplied > 50) {
-            $score += 4.0; // Many changes needed
-        } elseif ($rulesApplied > 20) {
-            $score += 3.0; // Moderate changes
-        } elseif ($rulesApplied > 5) {
-            $score += 2.0; // Some changes
-        } elseif ($rulesApplied > 0) {
-            $score += 1.0; // Minor changes
-        }
-
-        // Add risk based on files affected
-        $filesScanned = $summary->filesScanned;
-        if ($filesScanned > 20) {
-            $score += 2.0; // Many files affected
-        } elseif ($filesScanned > 5) {
-            $score += 1.0; // Some files affected
-        }
-
-        return min($score, 10.0); // Cap at 10.0
+        return $this->configGenerator->generateConfig($extension, $context, $extensionPath, $options);
     }
 
     /**
+     * Get extension path for analysis using PathResolutionService.
+     * Uses sophisticated path resolution with TYPO3 version awareness and installation type detection.
+     */
+    private function getExtensionPath(Extension $extension, AnalysisContext $context): string
+    {
+        $installationPath = $context->getConfigurationValue('installation_path', '');
+        $customPaths = $context->getConfigurationValue('custom_paths', []);
+
+        if (empty($installationPath)) {
+            $this->logger->warning('No installation path available - using fallback path', [
+                'extension' => $extension->getKey(),
+            ]);
+
+            return 'typo3conf/ext/' . $extension->getKey();
+        }
+
+        try {
+            // Create extension identifier from the Extension domain object
+            $extensionIdentifier = new ExtensionIdentifier(
+                $extension->getKey(),
+                $extension->hasComposerName() ? $extension->getComposerName() : null,
+                null, // No namespace for extensions
+                $extension->hasComposerName() ? $extension->getComposerName() : null,
+            );
+
+            // Create path configuration from custom paths
+            $pathConfiguration = PathConfiguration::fromArray([
+                'customPaths' => $customPaths,
+                'validateExists' => true,
+                'followSymlinks' => true,
+            ]);
+
+            // Determine installation type based on available information
+            $installationType = $this->determineInstallationType($installationPath, $customPaths);
+
+            // Create path resolution request
+            $request = PathResolutionRequest::create(
+                PathTypeEnum::EXTENSION,
+                $installationPath,
+                $installationType,
+                $pathConfiguration,
+                $extensionIdentifier,
+            );
+
+            // Use PathResolutionService to resolve the extension path
+            $response = $this->pathResolutionService->resolvePath($request);
+
+            if ($response->isSuccess() && $response->resolvedPath) {
+                $this->logger->info('Successfully resolved extension path using PathResolutionService', [
+                    'extension' => $extension->getKey(),
+                    'extension_type' => $extension->getType(),
+                    'composer_name' => $extension->getComposerName(),
+                    'installation_path' => $installationPath,
+                    'installation_type' => $installationType->value,
+                    'resolved_path' => $response->resolvedPath,
+                    'resolution_strategy' => $response->metadata->usedStrategy,
+                    'resolution_time' => $response->resolutionTime ?? 0,
+                ]);
+
+                return $response->resolvedPath;
+            }
+
+            // If PathResolutionService fails, log detailed error information
+            $this->logger->warning('PathResolutionService failed to resolve extension path, using fallback', [
+                'extension' => $extension->getKey(),
+                'installation_path' => $installationPath,
+                'installation_type' => $installationType->value,
+                'response_status' => $response->status->value,
+                'errors' => $response->errors,
+                'attempted_paths' => $response->metadata->attemptedPaths,
+                'alternative_paths' => $response->alternativePaths,
+            ]);
+
+            // Fallback to legacy path resolution
+            return $this->getFallbackExtensionPath($extension, $installationPath, $customPaths);
+        } catch (\Throwable $e) {
+            $this->logger->error('Error using PathResolutionService, falling back to legacy method', [
+                'extension' => $extension->getKey(),
+                'installation_path' => $installationPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback to legacy path resolution
+            return $this->getFallbackExtensionPath($extension, $installationPath, $customPaths);
+        }
+    }
+
+    /**
+     * Determine installation type based on available information.
+     */
+    private function determineInstallationType(string $installationPath, array $customPaths): InstallationTypeEnum
+    {
+        // Check if it's a Composer installation
+        if (file_exists($installationPath . '/composer.json')) {
+            // Check for custom web directory
+            $webDir = $customPaths['web-dir'] ?? null;
+            if ($webDir && 'public' !== $webDir) {
+                return InstallationTypeEnum::COMPOSER_CUSTOM;
+            }
+
+            // Check if public directory exists (standard Composer layout)
+            if (is_dir($installationPath . '/public')) {
+                return InstallationTypeEnum::COMPOSER_STANDARD;
+            }
+
+            return InstallationTypeEnum::COMPOSER_CUSTOM;
+        }
+
+        // Check for legacy source installation
+        if (is_dir($installationPath . '/typo3_src') || is_dir($installationPath . '/typo3/sysext')) {
+            return InstallationTypeEnum::LEGACY_SOURCE;
+        }
+
+        // Default to auto-detect if unsure
+        return InstallationTypeEnum::AUTO_DETECT;
+    }
+
+    /**
+     * Legacy fallback method for extension path resolution.
+     * Used when PathResolutionService fails or is unavailable.
+     */
+    private function getFallbackExtensionPath(Extension $extension, string $installationPath, array $customPaths): string
+    {
+        $typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';
+
+        // Handle direct extension path (for test fixtures)
+        if ($typo3confDir === $extension->getKey()) {
+            return $installationPath . '/' . $typo3confDir;
+        }
+
+        // Standard typo3conf/ext structure
+        return $installationPath . '/' . $typo3confDir . '/ext/' . $extension->getKey();
+    }
+
+    private function addMetricsToResult(
+        AnalysisResult $result,
+        FractorAnalysisSummary $summary,
+        FractorExecutionResult $executionResult,
+    ): void {
+        // Store error message if analysis failed
+        if (!$executionResult->isSuccessful()) {
+            $result->addMetric('error_message', $executionResult->getRawOutput());
+        }
+
+        // Core metrics
+        $result->addMetric('total_findings', $summary->getTotalFindings());
+        $result->addMetric('affected_files', $summary->getAffectedFiles());
+        $result->addMetric('total_files', $summary->getTotalFiles());
+        $result->addMetric('execution_time', $executionResult->getExecutionTime());
+
+        // Severity breakdown
+        $severityDistribution = $summary->getSeverityDistribution();
+        $result->addMetric('findings_by_severity', $severityDistribution);
+
+        // Type breakdown
+        $result->addMetric('findings_by_type', $summary->getTypeBreakdown());
+
+        // Top affected files (limit to 10)
+        $result->addMetric('top_affected_files', $summary->getTopIssuesByFile(10));
+
+        // Top triggered rules (limit to 10)
+        $result->addMetric('top_rules_triggered', $summary->getTopIssuesByRule(10));
+
+        // Time and complexity metrics
+        $result->addMetric('estimated_fix_time', $summary->getEstimatedFixTime());
+        $result->addMetric('estimated_fix_time_hours', $summary->getEstimatedFixTimeHours());
+        $result->addMetric('complexity_score', $summary->getComplexityScore());
+
+        // Upgrade readiness metrics
+        $result->addMetric('upgrade_readiness_score', $summary->getUpgradeReadinessScore());
+        $result->addMetric('has_breaking_changes', $summary->hasBreakingChanges());
+        $result->addMetric('has_deprecations', $summary->hasDeprecations());
+
+        // File impact percentage
+        $result->addMetric('file_impact_percentage', $summary->getFileImpactPercentage());
+
+        // Summary text
+        $result->addMetric('summary_text', $summary->getSummaryText());
+
+        // Additional Fractor-specific metrics
+        $result->addMetric('fractor_version', $this->fractorExecutor->getVersion());
+        $result->addMetric('processed_files', $executionResult->getProcessedFileCount());
+    }
+
+    /**
+     * Calculate risk score based on analysis summary.
+     */
+    private function calculateRiskScore(FractorAnalysisSummary $summary): float
+    {
+        $baseRisk = 1.0;
+
+        // If no findings, return low risk
+        if (0 === $summary->getTotalFindings()) {
+            return $baseRisk;
+        }
+
+        // Breaking changes contribute heavily to risk
+        $baseRisk += $summary->getCriticalIssues() * 1.2;
+
+        // Deprecations contribute moderately
+        $baseRisk += $summary->getWarnings() * 0.6;
+
+        // Info issues contribute lightly
+        $baseRisk += $summary->getInfoIssues() * 0.2;
+
+        // File coverage impact
+        $fileImpactRatio = $summary->getFileImpactPercentage() / 100;
+        $baseRisk += $fileImpactRatio * 1.5;
+
+        // Complexity multiplier
+        $complexityMultiplier = 1 + ($summary->getComplexityScore() / 20); // Divide by 20 to get 0.5 max multiplier
+        $baseRisk *= $complexityMultiplier;
+
+        // Estimated effort factor (hours)
+        $effortHours = $summary->getEstimatedFixTimeHours();
+        if ($effortHours > 16) { // More than 2 days
+            $baseRisk += 2.0;
+        } elseif ($effortHours > 8) { // More than 1 day
+            $baseRisk += 1.0;
+        } elseif ($effortHours > 4) { // More than half day
+            $baseRisk += 0.5;
+        }
+
+        // Cap at 10.0
+        return min($baseRisk, 10.0);
+    }
+
+    /**
+     * Generate recommendations based on analysis results.
+     *
      * @return array<string>
      */
-    private function generateRecommendations(FractorAnalysisSummary $summary, Extension $extension): array
-    {
+    private function generateRecommendations(
+        FractorAnalysisSummary $summary,
+        AnalysisContext $context,
+    ): array {
         $recommendations = [];
 
-        if (!$summary->successful) {
-            $recommendations[] = 'Fractor analysis failed - consider manual code review and modernization';
+        if (0 === $summary->getTotalFindings()) {
+            $recommendations[] = 'No deprecated code patterns detected - extension appears ready for TYPO3 ' . $context->getTargetVersion()->toString();
 
             return $recommendations;
         }
 
-        $rulesApplied = $summary->rulesApplied;
-        $filesScanned = $summary->filesScanned;
+        // Critical issues recommendations
+        if ($summary->hasBreakingChanges()) {
+            $recommendations[] = \sprintf(
+                'Critical: %d breaking changes must be fixed before upgrading to TYPO3 %s',
+                $summary->getCriticalIssues(),
+                $context->getTargetVersion()->toString(),
+            );
+        }
 
-        if (0 === $rulesApplied) {
-            $recommendations[] = 'Code appears to follow modern patterns - minimal refactoring needed';
-        } elseif ($rulesApplied > 50) {
-            $recommendations[] = "Many modernization opportunities found ({$rulesApplied} rules) - consider systematic refactoring";
-            $recommendations[] = 'Plan extensive testing after applying Fractor suggestions';
-        } elseif ($rulesApplied > 20) {
-            $recommendations[] = "Moderate modernization opportunities found ({$rulesApplied} rules) - review and apply selectively";
-        } elseif ($rulesApplied > 5) {
-            $recommendations[] = "Some modernization opportunities found ({$rulesApplied} rules) - consider applying before upgrade";
+        // Deprecation recommendations
+        if ($summary->hasDeprecations()) {
+            $recommendations[] = \sprintf(
+                'Update %d deprecated code patterns to ensure compatibility with future TYPO3 versions',
+                $summary->getWarnings(),
+            );
+        }
+
+        // Effort-based recommendations
+        $effortHours = $summary->getEstimatedFixTimeHours();
+        if ($effortHours > 16) {
+            $recommendations[] = \sprintf(
+                'Large refactoring effort required (~%.1f hours). Consider staged implementation over multiple releases',
+                $effortHours,
+            );
+        } elseif ($effortHours > 8) {
+            $recommendations[] = \sprintf(
+                'Significant refactoring needed (~%.1f hours). Plan dedicated development time for upgrade',
+                $effortHours,
+            );
+        } elseif ($effortHours > 2) {
+            $recommendations[] = \sprintf(
+                'Moderate changes required (~%.1f hours). Review and test thoroughly',
+                $effortHours,
+            );
+        }
+
+        // Complexity-based recommendations
+        if ($summary->getComplexityScore() > 7.0) {
+            $recommendations[] = 'High complexity changes detected. Consider code review and extensive testing';
+        } elseif ($summary->getComplexityScore() > 5.0) {
+            $recommendations[] = 'Moderate complexity changes. Test all affected functionality thoroughly';
+        }
+
+        // File impact recommendations
+        if ($summary->getFileImpactPercentage() > 50) {
+            $recommendations[] = 'More than half of extension files are affected. Consider comprehensive testing strategy';
+        } elseif ($summary->getFileImpactPercentage() > 25) {
+            $recommendations[] = 'Significant portion of files affected. Focus testing on modified components';
+        }
+
+        // Top rule-based recommendations
+        $topRules = $summary->getTopIssuesByRule(3);
+        foreach ($topRules as $rule => $count) {
+            if ($count > 5) { // Only mention rules with significant occurrences
+                // For individual rules found in findings, we can still provide basic description
+                $ruleDescription = $this->getBasicRuleDescription($rule);
+                $recommendations[] = \sprintf(
+                    'Focus on %s (%d occurrences): %s',
+                    $rule,
+                    $count,
+                    $ruleDescription,
+                );
+            }
+        }
+
+        // Upgrade readiness recommendation
+        $readinessScore = $summary->getUpgradeReadinessScore();
+        if ($readinessScore < 4.0) {
+            $recommendations[] = 'Extension requires significant work before upgrade. Consider alternatives or extensive refactoring';
+        } elseif ($readinessScore < 6.0) {
+            $recommendations[] = 'Extension needs moderate changes but should be upgradeable with effort';
         } else {
-            $recommendations[] = "Minor modernization opportunities found ({$rulesApplied} rules) - low priority for upgrade";
-        }
-
-        if ($filesScanned > 10) {
-            $recommendations[] = "Analysis covered {$filesScanned} files - coordinate with development team for implementation";
-        } elseif ($filesScanned > 0) {
-            $recommendations[] = "Analysis covered {$filesScanned} files - review impact before applying changes";
-        }
-
-        // Add specific recommendations based on findings
-        if ($summary->hasFindings()) {
-            $recommendations[] = 'Review specific Fractor suggestions in detailed analysis results';
+            $recommendations[] = 'Extension is in good shape for upgrade with minimal changes required';
         }
 
         return $recommendations;
     }
 
     /**
-     * Find extension path using PathResolutionService.
+     * Get basic description for a rule found in analysis results.
      */
-    private function findExtensionPath(string $installationPath, string $extensionKey, AnalysisContext $context, Extension $extension): ?string
+    private function getBasicRuleDescription(string $rule): string
     {
-        $customPaths = $context->getConfigurationValue('custom_paths', null);
-
-        $extensionIdentifier = new ExtensionIdentifier(
-            $extension->getKey(),
-            $extension->getVersion()->toString(),
-            $extension->getType(),
-            $extension->getComposerName(),
-        );
-
-        $pathConfiguration = PathConfiguration::fromArray([
-            'customPaths' => $customPaths ?? [],
-        ]);
-
-        $builder = new PathResolutionRequestBuilder();
-        $request = $builder
-            ->installationPath($installationPath)
-            ->pathType(PathTypeEnum::EXTENSION)
-            ->installationType(InstallationTypeEnum::AUTO_DETECT) // Let PathResolutionService auto-detect
-            ->pathConfiguration($pathConfiguration)
-            ->extensionIdentifier($extensionIdentifier)
-            ->build();
-
-        $response = $this->pathResolutionService->resolvePath($request);
-
-        if ($response->isSuccess()) {
-            $this->logger->debug('PathResolutionService found extension path', [
-                'extension' => $extensionKey,
-                'path' => $response->resolvedPath,
-            ]);
-
-            return $response->resolvedPath;
+        // Simple heuristic-based descriptions for common patterns
+        if (str_contains($rule, 'Remove')) {
+            return 'Deprecated code or Code removal';
         }
 
-        $this->logger->warning('PathResolutionService failed to find extension path', [
-            'extension' => $extensionKey,
-            'errors' => $response->errors,
-        ]);
+        if (str_contains($rule, 'Substitute') || str_contains($rule, 'Replace')) {
+            return 'Code replacement required';
+        }
 
-        return null;
+        if (str_contains($rule, 'Migrate')) {
+            return 'Code migration needed';
+        }
+
+        return 'Code modernization required';
     }
 }

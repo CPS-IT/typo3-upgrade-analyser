@@ -224,7 +224,15 @@ final class ConfigurationServiceTest extends TestCase
 
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
-        $this->assertSame($config, $service->getAll());
+        $all = $service->getAll();
+
+        // Should contain custom keys
+        $this->assertArrayHasKey('key1', $all);
+        $this->assertSame('value1', $all['key1']);
+
+        // Should contain defaults
+        $this->assertArrayHasKey('analysis', $all);
+        $this->assertSame('13.4', $all['analysis']['targetVersion']);
     }
 
     public function testGetAllAfterModification(): void
@@ -391,8 +399,11 @@ final class ConfigurationServiceTest extends TestCase
     {
         $service = new ConfigurationService($this->logger, $this->tempConfigFile);
 
-        // Should use method's default parameter, not the service default
-        $this->assertSame('12.4', $service->get('analysis.targetVersion', '12.4'));
+        // 'analysis.targetVersion' is now present in defaults, so fallback is ignored
+        $this->assertSame('13.4', $service->get('analysis.targetVersion', '12.4'));
+
+        // Test a truly missing key uses fallback
+        $this->assertSame('12.4', $service->get('analysis.missingKey', '12.4'));
     }
 
     public function testDefaultConfigurationStructure(): void
@@ -448,5 +459,39 @@ final class ConfigurationServiceTest extends TestCase
         // Test non-existent nested keys
         $this->assertNull($service->get('analysis.analyzers.nonexistent.enabled'));
         $this->assertSame('default', $service->get('output.nonexistent.key', 'default'));
+    }
+
+    public function testMergeConfiguration(): void
+    {
+        $config = [
+            'analysis' => [
+                'targetVersion' => '12.4', // Should override default
+                'phpVersions' => ['8.2'], // Should replace default list ['8.3', '8.4']
+                'analyzers' => [
+                    'fractor' => [
+                        'typoscript' => [
+                            'indent_size' => 2, // Should override default 4
+                            // indent_character should remain default 'space'
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        file_put_contents($this->tempConfigFile, Yaml::dump($config));
+
+        $service = new ConfigurationService($this->logger, $this->tempConfigFile);
+
+        // Check overrides
+        $this->assertSame('12.4', $service->get('analysis.targetVersion'));
+        $this->assertSame(['8.2'], $service->get('analysis.phpVersions'));
+        $this->assertSame(2, $service->get('analysis.analyzers.fractor.typoscript.indent_size'));
+
+        // Check defaults are preserved for missing keys in merged sections
+        $this->assertSame('space', $service->get('analysis.analyzers.fractor.typoscript.indent_character'));
+        $this->assertTrue($service->get('analysis.analyzers.fractor.typoscript.add_closing_global'));
+
+        // Check defaults are preserved for sections not touched
+        $this->assertTrue($service->get('analysis.analyzers.version_availability.enabled'));
     }
 }

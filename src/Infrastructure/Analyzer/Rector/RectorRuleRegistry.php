@@ -21,7 +21,7 @@ use Ssch\TYPO3Rector\Set\Typo3SetList;
  */
 class RectorRuleRegistry
 {
-    public const KEY_CATEGORY = 'category';
+    public const string KEY_CATEGORY = 'category';
     public const string KEY_CHANGE_TYPE = 'changeType';
     public const string KEY_DESCRIPTION = 'description';
     public const string KEY_EFFORT = 'effort';
@@ -31,7 +31,7 @@ class RectorRuleRegistry
      * TYPO3 version-specific Rector sets mapping.
      * Organized by target version with sets that should be applied when upgrading TO that version.
      */
-    private const TYPO3_VERSION_SETS = [
+    private const array TYPO3_VERSION_SETS = [
         '10.0' => [
             Typo3SetList::TYPO3_10,
         ],
@@ -52,7 +52,7 @@ class RectorRuleRegistry
     /**
      * General TYPO3 sets that apply across versions.
      */
-    private const GENERAL_SETS = [
+    private const array GENERAL_SETS = [
         'general' => [Typo3SetList::GENERAL],
         'code_quality' => [Typo3SetList::CODE_QUALITY],
     ];
@@ -60,7 +60,7 @@ class RectorRuleRegistry
     /**
      * Set metadata for providing descriptions and categorization.
      */
-    private const SET_METADATA = [
+    private const array SET_METADATA = [
         Typo3SetList::TYPO3_10 => [
             self::KEY_DESCRIPTION => 'TYPO3 10 upgrade rules',
             self::KEY_CATEGORY => 'version_upgrade',

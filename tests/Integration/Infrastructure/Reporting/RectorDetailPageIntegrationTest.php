@@ -147,6 +147,7 @@ class RectorDetailPageIntegrationTest extends AbstractIntegrationTestCase
             $mainReport,
             $extensionReports,
             $rectorDetailPages,
+            [],
             $this->tempOutputDir,
         );
 

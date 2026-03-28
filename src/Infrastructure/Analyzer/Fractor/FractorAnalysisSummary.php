@@ -17,31 +17,294 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
  */
 readonly class FractorAnalysisSummary
 {
-    /**
-     * @param array<string> $findings
-     * @param array<string> $filePaths
-     * @param array<string> $appliedRules
-     */
     public function __construct(
-        public int $filesScanned,
-        public int $rulesApplied,
-        public array $findings,
-        public bool $successful,
-        public int $changeBlocks = 0,
-        public int $changedLines = 0,
-        public array $filePaths = [],
-        public array $appliedRules = [],
-        public ?string $errorMessage = null,
+        private int $totalFindings,
+        private int $criticalIssues,
+        private int $warnings,
+        private int $infoIssues,
+        private int $suggestions,
+        private int $affectedFiles,
+        private int $totalFiles,
+        private array $ruleBreakdown,
+        private array $fileBreakdown,
+        private array $typeBreakdown,
+        private float $complexityScore,
+        private int $estimatedFixTime,
     ) {
     }
 
-    public function hasFindings(): bool
+    public function getTotalFindings(): int
     {
-        return $this->filesScanned > 0 || $this->getTotalIssues() > 0;
+        return $this->totalFindings;
     }
 
-    public function getTotalIssues(): int
+    public function getCriticalIssues(): int
     {
-        return $this->rulesApplied;
+        return $this->criticalIssues;
+    }
+
+    public function getWarnings(): int
+    {
+        return $this->warnings;
+    }
+
+    public function getInfoIssues(): int
+    {
+        return $this->infoIssues;
+    }
+
+    public function getSuggestions(): int
+    {
+        return $this->suggestions;
+    }
+
+    public function getAffectedFiles(): int
+    {
+        return $this->affectedFiles;
+    }
+
+    public function getTotalFiles(): int
+    {
+        return $this->totalFiles;
+    }
+
+    /**
+     * Get breakdown of findings by rule class.
+     *
+     * @return array<string, int> Rule class name => count
+     */
+    public function getRuleBreakdown(): array
+    {
+        return $this->ruleBreakdown;
+    }
+
+    /**
+     * Get breakdown of findings by file.
+     *
+     * @return array<string, int> File path => count
+     */
+    public function getFileBreakdown(): array
+    {
+        return $this->fileBreakdown;
+    }
+
+    /**
+     * Get breakdown of findings by change type.
+     *
+     * @return array<string, int> Change type => count
+     */
+    public function getTypeBreakdown(): array
+    {
+        return $this->typeBreakdown;
+    }
+
+    public function getComplexityScore(): float
+    {
+        return $this->complexityScore;
+    }
+
+    /**
+     * Get estimated time to fix all issues in minutes.
+     */
+    public function getEstimatedFixTime(): int
+    {
+        return $this->estimatedFixTime;
+    }
+
+    /**
+     * Get estimated time to fix all issues in hours (rounded).
+     */
+    public function getEstimatedFixTimeHours(): float
+    {
+        return round($this->estimatedFixTime / 60, 1);
+    }
+
+    /**
+     * Check if there are breaking changes present.
+     */
+    public function hasBreakingChanges(): bool
+    {
+        return $this->criticalIssues > 0;
+    }
+
+    /**
+     * Check if there are deprecations present.
+     */
+    public function hasDeprecations(): bool
+    {
+        return $this->warnings > 0;
+    }
+
+    /**
+     * Check if analysis found any issues.
+     */
+    public function hasIssues(): bool
+    {
+        return $this->totalFindings > 0;
+    }
+
+    /**
+     * Get percentage of files affected by issues.
+     */
+    public function getFileImpactPercentage(): float
+    {
+        if (0 === $this->totalFiles) {
+            return 0.0;
+        }
+
+        return round(($this->affectedFiles / $this->totalFiles) * 100, 1);
+    }
+
+    /**
+     * Get top issues by file count.
+     *
+     * @return array<string, int> Top files with most issues
+     */
+    public function getTopIssuesByFile(int $limit = 10): array
+    {
+        $breakdown = $this->fileBreakdown;
+        arsort($breakdown);
+
+        return \array_slice($breakdown, 0, $limit, true);
+    }
+
+    /**
+     * Get top issues by rule count.
+     *
+     * @return array<string, int> Top rules with most occurrences
+     */
+    public function getTopIssuesByRule(int $limit = 10): array
+    {
+        $breakdown = $this->ruleBreakdown;
+        arsort($breakdown);
+
+        return \array_slice($breakdown, 0, $limit, true);
+    }
+
+    /**
+     * Get severity distribution.
+     *
+     * @return array<string, int> Severity level => count
+     */
+    public function getSeverityDistribution(): array
+    {
+        return [
+            'critical' => $this->criticalIssues,
+            'warning' => $this->warnings,
+            'info' => $this->infoIssues,
+            'suggestion' => $this->suggestions,
+        ];
+    }
+
+    /**
+     * Get upgrade readiness score (1-10, higher = more ready).
+     */
+    public function getUpgradeReadinessScore(): float
+    {
+        $baseScore = 10.0;
+
+        // Penalize based on issues found
+        $baseScore -= ($this->criticalIssues * 0.8);
+        $baseScore -= ($this->warnings * 0.3);
+        $baseScore -= ($this->infoIssues * 0.1);
+
+        // Factor in complexity
+        $baseScore -= ($this->complexityScore / 2);
+
+        // Factor in file impact
+        $fileImpactPenalty = ($this->getFileImpactPercentage() / 100) * 2;
+        $baseScore -= $fileImpactPenalty;
+
+        return max(1.0, min(10.0, $baseScore));
+    }
+
+    /**
+     * Get risk assessment level.
+     */
+    public function getRiskLevel(): string
+    {
+        $readinessScore = $this->getUpgradeReadinessScore();
+
+        if ($readinessScore >= 8.0) {
+            return 'low';
+        }
+
+        if ($readinessScore >= 6.0) {
+            return 'medium';
+        }
+
+        if ($readinessScore >= 3.0) {
+            return 'high';
+        }
+
+        return 'critical';
+    }
+
+    /**
+     * Get human-readable summary.
+     */
+    public function getSummaryText(): string
+    {
+        if (0 === $this->totalFindings) {
+            return 'No issues found - extension appears ready for upgrade';
+        }
+
+        $parts = [];
+
+        if ($this->criticalIssues > 0) {
+            $parts[] = "{$this->criticalIssues} critical issue" . ($this->criticalIssues > 1 ? 's' : '');
+        }
+
+        if ($this->warnings > 0) {
+            $parts[] = "{$this->warnings} deprecation" . ($this->warnings > 1 ? 's' : '');
+        }
+
+        if ($this->infoIssues > 0) {
+            $parts[] = "{$this->infoIssues} improvement" . ($this->infoIssues > 1 ? 's' : '');
+        }
+
+        $summary = 'Found ' . implode(', ', $parts);
+        $summary .= " affecting {$this->affectedFiles} file" . ($this->affectedFiles > 1 ? 's' : '');
+
+        if ($this->estimatedFixTime > 0) {
+            $hours = $this->getEstimatedFixTimeHours();
+            $summary .= " (est. {$hours}h to fix)";
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Convert summary to array format for serialization.
+     *
+     * @return array<string, mixed> Summary data as associative array
+     */
+    public function toArray(): array
+    {
+        return [
+            'total_findings' => $this->totalFindings,
+            'critical_issues' => $this->criticalIssues,
+            'warnings' => $this->warnings,
+            'info_issues' => $this->infoIssues,
+            'suggestions' => $this->suggestions,
+            'affected_files' => $this->affectedFiles,
+            'total_files' => $this->totalFiles,
+            'rule_breakdown' => $this->ruleBreakdown,
+            'file_breakdown' => $this->fileBreakdown,
+            'type_breakdown' => $this->typeBreakdown,
+            'complexity_score' => $this->complexityScore,
+            'estimated_fix_time' => $this->estimatedFixTime,
+            'estimated_fix_time_hours' => $this->getEstimatedFixTimeHours(),
+            'file_impact_percentage' => $this->getFileImpactPercentage(),
+            'upgrade_readiness_score' => $this->getUpgradeReadinessScore(),
+            'risk_level' => $this->getRiskLevel(),
+            'summary_text' => $this->getSummaryText(),
+            'has_breaking_changes' => $this->hasBreakingChanges(),
+            'has_deprecations' => $this->hasDeprecations(),
+            'has_issues' => $this->hasIssues(),
+            'severity_distribution' => $this->getSeverityDistribution(),
+            'top_issues_by_file' => $this->getTopIssuesByFile(10),
+            'top_issues_by_rule' => $this->getTopIssuesByRule(10),
+        ];
     }
 }

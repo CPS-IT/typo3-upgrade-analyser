@@ -23,7 +23,7 @@ use Psr\Log\LoggerInterface;
  */
 abstract class AbstractCachedAnalyzer implements AnalyzerInterface
 {
-    protected const DEFAULT_CACHE_TTL = 3600; // 1 hour default TTL
+    protected const int DEFAULT_CACHE_TTL = 3600; // 1 hour default TTL
 
     public function __construct(
         protected readonly CacheService $cacheService,

@@ -387,11 +387,14 @@ class ReportFileManagerTest extends TestCase
             ],
         ];
 
+        $fractorDetailPages = [];
+
         // Act
         $result = $this->subject->writeReportFilesWithRectorPages(
             $mainReport,
             $extensionReports,
             $rectorDetailPages,
+            $fractorDetailPages,
             $this->tempDir,
         );
 
@@ -445,12 +448,14 @@ class ReportFileManagerTest extends TestCase
         ];
         $extensionReports = [];
         $rectorDetailPages = [];
+        $fractorDetailPages = [];
 
         // Act
         $result = $this->subject->writeReportFilesWithRectorPages(
             $mainReport,
             $extensionReports,
             $rectorDetailPages,
+            $fractorDetailPages,
             $this->tempDir,
         );
 
@@ -481,12 +486,14 @@ class ReportFileManagerTest extends TestCase
             ],
         ];
         $rectorDetailPages = []; // No rector pages
+        $fractorDetailPages = [];
 
         // Act
         $result = $this->subject->writeReportFilesWithRectorPages(
             $mainReport,
             $extensionReports,
             $rectorDetailPages,
+            $fractorDetailPages,
             $this->tempDir,
         );
 

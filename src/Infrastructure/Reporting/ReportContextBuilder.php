@@ -37,6 +37,7 @@ class ReportContextBuilder
         array $extensions,
         array $groupedResults,
         ?string $targetVersion = null,
+        array $configuration = [],
     ): array {
         // Discovery results
         $discoveryResults = $groupedResults['discovery'];
@@ -91,6 +92,7 @@ class ReportContextBuilder
                 'version_availability' => $versionAnalysis,
             ],
             'statistics' => $stats,
+            'configuration' => $configuration,
             'generated_at' => new \DateTimeImmutable(),
         ];
     }
