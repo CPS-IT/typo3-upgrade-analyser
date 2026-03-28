@@ -78,7 +78,7 @@ development_status:
   #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
   #   Decision per finding: bundle into existing story or add pre-epic story.
   epic-2: in-progress
-  2-0-vcs-resolution-mechanism-spike: review
+  2-0-vcs-resolution-mechanism-spike: done
   2-1-composer-source-parser: backlog
   2-2-composer-vcs-resolver: backlog
   2-3-generic-git-resolver: backlog
