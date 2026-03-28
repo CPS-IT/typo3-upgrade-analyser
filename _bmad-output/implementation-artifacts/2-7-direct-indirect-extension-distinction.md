@@ -1,4 +1,4 @@
-# Story P2-5: Distinguish Direct and Indirect Extension Dependencies (Issue #150)
+# Story 2-7: Distinguish Direct and Indirect Extension Dependencies (Issue #150)
 
 Status: backlog
 
@@ -6,9 +6,9 @@ Status: backlog
 
 [#150 — Feature: List direct and indirect extensions](https://github.com/CPS-IT/typo3-upgrade-analyser/issues/150)
 
-## Placement Recommendation
+## Placement
 
-This story is a candidate for **Epic 2** (Complete Extension Source Coverage), specifically as a companion to Story 2.1 (ComposerSourceParser). The `ComposerSourceParser` will need to read both `composer.json` (direct requirements) and `composer.lock` (full resolved tree) — the data required for this distinction is produced as a natural side effect. Evaluate at Epic 2 kickoff whether to include this as Story 2.5 or defer to a later epic.
+Epic 2 (Complete Extension Source Coverage), Story 2-7. Placed after Story 2-6 (GitProvider cleanup). Natural companion to Story 2-1 (ComposerSourceParser) — the direct/indirect data is a side effect of reading `composer.json` require keys alongside `composer.lock`.
 
 ## Story
 

@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-25 (p2-3 done)
+# last_updated: 2026-03-28 (kickoff checklist updated; p2-4 done; p2-5→2-7, p2-6→5-6)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-25
+last_updated: 2026-03-28
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -56,32 +56,36 @@ development_status:
   epic-1-retrospective: done
 
   # Pre-Epic-2: Foundation Quality & Preparation (created 2026-03-25 after Epic 1 retrospective)
-  # Sequence: P2-1 → P2-4 → P2-2 → P2-3, then P2-5/P2-6 evaluated at Epic 2 kickoff
-  pre-epic-2: in-progress
+  # Sequence: P2-1 → P2-4 → P2-2 → P2-3 (complete)
+  pre-epic-2: done
   p2-1-code-quality-audit: done                                  # A1: audit Discovery/ExternalTool/Reporting
   p2-2-fixture-coverage-gap-analysis: done                      # A2: gap analysis for Epic 2 fixture needs
   p2-3-gitlab-bitbucket-source-spike: done                      # A3: fixture + design note (depends on P2-2)
-  p2-4-fix-packagestates-v5-composer-extensions: ready-for-dev   # Bug #163: extension state in Composer projects
-  p2-5-direct-indirect-extension-distinction: backlog            # Feature #150: evaluate at Epic 2 kickoff
-  p2-6-exclude-local-packages-from-version-checks: backlog       # Feature #149: candidate for Epic 5
+  p2-4-fix-packagestates-v5-composer-extensions: done            # Bug #163: merged in PR #195 (2026-03-25)
 
-  # Epic 2: Complete Extension Source Coverage — GitLab & Bitbucket
+  # Epic 2: Complete Extension Source Coverage — All VCS Providers (Composer-based)
+  # Sprint change proposal 2026-03-26: GitProvider architecture replaced by ComposerVcsResolver + GenericGitResolver
+  # Story sequence: 2-0 (spike) → 2-1 → 2-2+2-3 (parallel) → 2-4 → 2-5 (integration) → 2-6 (cleanup) → 2-7
   #
-  # KICKOFF CHECKLIST — review these findings from quality-audit-pre-epic-2.md before writing Epic 2 stories:
-  #   F-D-03 (HIGH)  ConfigurationDiscoveryService: no VersionProfileRegistry usage — natural Epic 2 prep
-  #   F-D-04 (MED)   Three duplicate determineInstallationType() impls — all three classes touched in Epic 2
-  #   F-E-01 (HIGH)  TerApiHttpClient: incomplete HTTP status handling, no retry
-  #   F-E-02 (HIGH)  TerApiClient: \Throwable catch hides parser bugs
-  #   F-E-03 (HIGH)  AbstractGitProvider: \Throwable catch — GitLabProvider/BitbucketProvider extend this
-  #   F-E-04 (HIGH)  GitVersionParser: main-branch compatibility ≠ all-tag compatibility (false positives)
-  #   F-E-05 (MED)   GitHubClient: no GraphQL rate limit handling
-  #   F-E-08 (MED)   VersionCompatibilityChecker: fragile wildcard pattern parsing
-  #   Decision per finding: bundle into existing story, add small pre-epic-2 story, or defer again.
+  # KICKOFF CHECKLIST — review before writing story files (updated 2026-03-28 after sprint change proposal):
+  #   F-D-03 (HIGH)  ConfigurationDiscoveryService: no VersionProfileRegistry usage — re-evaluate if touched in new story set
+  #   F-D-04 (MED)   Three duplicate determineInstallationType() impls — re-evaluate; original Epic 2 classes no longer all touched
+  #   F-E-01 (HIGH)  TerApiHttpClient: incomplete HTTP status handling, no retry — still applies (TER unaffected by sprint change)
+  #   F-E-02 (HIGH)  TerApiClient: \Throwable catch hides parser bugs — still applies
+  #   F-E-04 (HIGH)  GitVersionParser: branch ≠ tag compatibility — reframe for GenericGitResolver (git ls-remote tag parsing)
+  #   F-E-08 (MED)   VersionCompatibilityChecker: fragile wildcard pattern parsing — still applies
+  #   DROPPED F-E-03: AbstractGitProvider deleted in Story 2-6
+  #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
+  #   Decision per finding: bundle into existing story or add pre-epic story.
   epic-2: backlog
+  2-0-vcs-resolution-mechanism-spike: backlog
   2-1-composer-source-parser: backlog
-  2-2-gitlab-provider-public-and-private-instances: backlog
-  2-3-bitbucket-provider: backlog
-  2-4-unmatched-repository-source-warning: backlog
+  2-2-composer-vcs-resolver: backlog
+  2-3-generic-git-resolver: backlog
+  2-4-unmatched-vcs-source-warning: backlog
+  2-5-integrate-resolvers-and-update-data-model: backlog
+  2-6-remove-git-provider-subsystem: backlog
+  2-7-direct-indirect-extension-distinction: backlog             # Feature #150 (was p2-5)
   epic-2-retrospective: optional
 
   # Pre-Epic-3: Reporting Hardening (must complete before Epic 3 streaming refactor)
@@ -108,6 +112,7 @@ development_status:
   5-3-stable-json-output-schema: backlog
   5-4-cache-clear-command: backlog
   5-5-documentation-consolidation: backlog
+  5-6-exclude-local-packages-from-version-checks: backlog        # Feature #149 (was p2-6)
   epic-5-retrospective: optional
 
   # Epic 6: PHPStan Static Code Quality Analysis (Phase 2 Growth)
