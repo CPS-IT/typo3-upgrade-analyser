@@ -117,24 +117,17 @@ class AnalyzeCommand extends Command
                 'config_path' => $configPath,
             ]);
 
-            $io->progressStart(3);
-
             // Phase 1: Discovery
-            $io->text('Phase 1: Discovering installation and extensions...');
+            $io->section('Phase 1: Discovering installation and extensions...');
             [$installation, $extensions, $extensionResult] = $this->executeDiscoveryPhase($installationPath, $io);
-            $io->progressAdvance();
 
             // Phase 2: Analysis
-            $io->text('Phase 2: Running analyzers...');
+            $io->section('Phase 2: Running analyzers...');
             $analysisResults = $this->executeAnalysisPhase($installation, $extensions, $targetVersion, $input->getOption('analyzers'), $io);
-            $io->progressAdvance();
 
             // Phase 3: Reporting
-            $io->text('Phase 3: Generating reports...');
+            $io->section('Phase 3: Generating reports...');
             $this->executeReportingPhase($configurationService, $installation, $extensions, $extensionResult, $analysisResults, $io);
-            $io->progressAdvance();
-
-            $io->progressFinish();
 
             $io->success('Analysis completed successfully!');
 
