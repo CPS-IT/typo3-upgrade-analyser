@@ -6,6 +6,15 @@
             <p><strong>Extension Key:</strong> {{ extension.key }}</p>
             <p><strong>Current Version:</strong> {{ extension.version ? extension.version.toString() : 'N/A' }}</p>
             <p><strong>Composer Name:</strong> {{ extension.composerName ?: 'N/A' }}</p>
+            {% if extension.authors %}
+                <div><strong>Authors:</strong>
+                    <ul style="margin: 5px 0 10px 20px;">
+                    {% for author in extension.authors %}
+                        <li>{{ author.name }}{% if author.email %} (<a href="mailto:{{ author.email }}">{{ author.email }}</a>){% endif %}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             <p><strong>Type:</strong> {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}</p>
             <p><strong>Target TYPO3 Version:</strong> {{ target_version }}</p>
         </div>

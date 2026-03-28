@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionAuthor;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
@@ -524,6 +525,16 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 $distribution = null;
             }
 
+            $authors = [];
+            if (isset($packageData['authors'])) {
+                foreach ($packageData['authors'] as $authorData) {
+                    if (!isset($authorData['name'])) {
+                        continue;
+                    }
+                    $authors[] = new ExtensionAuthor($authorData['name'], $authorData['email'] ?? null);
+                }
+            }
+
             $extension = new Extension(
                 $extensionKey,
                 $title,
@@ -531,6 +542,7 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 'composer',
                 $packageName,
                 $distribution,
+                $authors,
             );
 
             $extension->setActive(true); // Assume composer packages are active
