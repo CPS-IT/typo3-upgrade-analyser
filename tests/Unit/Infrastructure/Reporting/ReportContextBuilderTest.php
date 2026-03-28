@@ -17,7 +17,12 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\FractorDataProvider;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\LinesOfCodeDataProvider;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\RectorDataProvider;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\VersionAvailabilityDataProvider;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter;
 use PHPUnit\Framework\TestCase;
 
 class ReportContextBuilderTest extends TestCase
@@ -26,7 +31,14 @@ class ReportContextBuilderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->subject = new ReportContextBuilder();
+        $diffHtmlFormatter = new DiffHtmlFormatter();
+        $providers = [
+            new VersionAvailabilityDataProvider(),
+            new LinesOfCodeDataProvider(),
+            new RectorDataProvider($diffHtmlFormatter),
+            new FractorDataProvider($diffHtmlFormatter),
+        ];
+        $this->subject = new ReportContextBuilder($providers);
     }
 
     public function testBuildReportContextCreatesBasicStructure(): void
