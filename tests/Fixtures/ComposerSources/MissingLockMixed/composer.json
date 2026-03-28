@@ -1,0 +1,22 @@
+{
+    "name": "myvendor/typo3-site",
+    "description": "TYPO3 site project",
+    "type": "project",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://composer.typo3.org"
+        },
+        {
+            "type": "path",
+            "url": "../local-packages/*"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/myvendor/private-ext.git"
+        }
+    ],
+    "require": {
+        "myvendor/private-ext": "^2.0"
+    }
+}

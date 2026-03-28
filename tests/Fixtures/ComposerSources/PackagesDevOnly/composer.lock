@@ -1,0 +1,24 @@
+{
+    "_readme": ["This file is locked, do not edit it."],
+    "content-hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "packages": [],
+    "packages-dev": [
+        {
+            "name": "vendor/dev-ext",
+            "version": "0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vendor/dev-ext.git",
+                "reference": "abc1234"
+            },
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {}
+}
