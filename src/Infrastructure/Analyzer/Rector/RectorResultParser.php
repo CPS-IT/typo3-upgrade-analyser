@@ -246,8 +246,6 @@ readonly class RectorResultParser
             severity: $severity,
             changeType: $changeType,
             suggestedFix: $suggestedFix,
-            oldCode: $oldCode,
-            newCode: $newCode,
             context: $rectorData,
         );
     }

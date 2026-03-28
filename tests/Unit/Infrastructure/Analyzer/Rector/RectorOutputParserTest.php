@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Rector;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorOutputParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -25,11 +26,13 @@ class RectorOutputParserTest extends TestCase
 {
     private RectorOutputParser $parser;
     private LoggerInterface&MockObject $logger;
+    private DiffProcessor&MockObject $diffProcessor;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->parser = new RectorOutputParser($this->logger);
+        $this->diffProcessor = $this->createMock(DiffProcessor::class);
+        $this->parser = new RectorOutputParser($this->logger, $this->diffProcessor);
     }
 
     public function testParseEmptyOutput(): void
@@ -104,6 +107,10 @@ class RectorOutputParserTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        $this->diffProcessor->expects($this->exactly(2))
+            ->method('extractDiff')
+            ->willReturnArgument(0); // Return the input diff as is for this test
+
         $result = $this->parser->parse($json ?: '{}');
 
         $this->assertEquals(3, $result->processedFiles);
@@ -117,20 +124,22 @@ class RectorOutputParserTest extends TestCase
         $this->assertEquals('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\RemoveTypoScriptConstantsFromTemplateServiceRector', $firstFinding->getRuleClass());
         $this->assertEquals(RectorRuleSeverity::CRITICAL, $firstFinding->getSeverity());
         $this->assertEquals(RectorChangeType::BREAKING_CHANGE, $firstFinding->getChangeType()); // Remove rules default to BREAKING_CHANGE
-        $this->assertNotNull($firstFinding->getOldCode());
-        $this->assertNotNull($firstFinding->getNewCode());
+        $this->assertNotNull($firstFinding->getDiff());
+        $this->assertEquals("@@ -10,7 +10,7 @@\n-    \$old = oldMethod();\n+    \$new = newMethod();\n", $firstFinding->getDiff());
 
         $secondFinding = $result->findings[1];
         $this->assertEquals('src/Controller/TestController.php', $secondFinding->getFile());
         $this->assertEquals('Ssch\\TYPO3Rector\\Rector\\v11\\v0\\SubstituteGeneralUtilityMkdirDeepRector', $secondFinding->getRuleClass());
         $this->assertEquals(RectorRuleSeverity::WARNING, $secondFinding->getSeverity());
         $this->assertEquals(RectorChangeType::DEPRECATION, $secondFinding->getChangeType());
+        $this->assertNotNull($secondFinding->getDiff());
 
         $thirdFinding = $result->findings[2];
         $this->assertEquals('src/Model/TestModel.php', $thirdFinding->getFile());
         $this->assertEquals('Rector\\DeadCode\\Rector\\ClassMethod\\RemoveUnusedParameterRector', $thirdFinding->getRuleClass());
         $this->assertEquals(RectorRuleSeverity::CRITICAL, $thirdFinding->getSeverity());
         $this->assertEquals(RectorChangeType::METHOD_SIGNATURE, $thirdFinding->getChangeType()); // Remove + Method = METHOD_SIGNATURE
+        $this->assertNull($thirdFinding->getDiff());
     }
 
     public function testParseOlderRectorVersionWithChangedFiles(): void
@@ -147,8 +156,7 @@ class RectorOutputParserTest extends TestCase
                             'class' => 'Ssch\\TYPO3Rector\\Rector\\v12\\v0\\MigrateRequiredFlagRector',
                             'message' => 'Migrate required flag usage',
                             'line' => 25,
-                            'old' => '$field->setRequired(true)',
-                            'new' => '$field->setAttribute("required", true)',
+                            'diff' => 'some diff content',
                         ],
                     ],
                 ],
@@ -165,6 +173,11 @@ class RectorOutputParserTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        $this->diffProcessor->expects($this->once())
+            ->method('extractDiff')
+            ->with('some diff content')
+            ->willReturn('cleaned diff content');
+
         $result = $this->parser->parse($json ?: '{}');
 
         $this->assertEquals(2, $result->processedFiles);
@@ -177,9 +190,8 @@ class RectorOutputParserTest extends TestCase
         $this->assertEquals(25, $firstFinding->getLine());
         $this->assertEquals('Ssch\\TYPO3Rector\\Rector\\v12\\v0\\MigrateRequiredFlagRector', $firstFinding->getRuleClass());
         $this->assertEquals('Migrate required flag usage', $firstFinding->getMessage());
-        $this->assertEquals('$field->setRequired(true)', $firstFinding->getOldCode());
-        $this->assertEquals('$field->setAttribute("required", true)', $firstFinding->getNewCode());
-        $this->assertEquals("Replace '\$field->setRequired(true)' with '\$field->setAttribute(\"required\", true)'", $firstFinding->getSuggestedFix());
+        $this->assertEquals('cleaned diff content', $firstFinding->getDiff());
+        $this->assertEquals('Apply Rector changes', $firstFinding->getSuggestedFix());
         $this->assertEquals(RectorRuleSeverity::WARNING, $firstFinding->getSeverity());
         $this->assertEquals(RectorChangeType::CONFIGURATION_CHANGE, $firstFinding->getChangeType());
 
@@ -188,8 +200,7 @@ class RectorOutputParserTest extends TestCase
         $this->assertEquals(15, $secondFinding->getLine());
         $this->assertEquals('Rector\\Php80\\Rector\\Class_\\AnnotationToAttributeRector', $secondFinding->getRuleClass());
         $this->assertEquals('Convert annotation to attribute', $secondFinding->getMessage());
-        $this->assertNull($secondFinding->getOldCode());
-        $this->assertNull($secondFinding->getNewCode());
+        $this->assertNull($secondFinding->getDiff());
         $this->assertNull($secondFinding->getSuggestedFix());
     }
 
@@ -407,13 +418,14 @@ class RectorOutputParserTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        $this->diffProcessor->expects($this->once())
+            ->method('extractDiff')
+            ->willReturn('cleaned diff');
+
         $result = $this->parser->parse($json ?: '{}');
         $finding = $result->findings[0];
 
-        $this->assertNotNull($finding->getOldCode());
-        $this->assertNotNull($finding->getNewCode());
-        $this->assertStringContainsString('oldMethod', $finding->getOldCode());
-        $this->assertStringContainsString('newMethod', $finding->getNewCode());
+        $this->assertEquals('cleaned diff', $finding->getDiff());
         $this->assertEquals('Update code according to diff', $finding->getSuggestedFix());
     }
 
@@ -429,12 +441,14 @@ class RectorOutputParserTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        $this->diffProcessor->expects($this->once())
+            ->method('extractDiff')
+            ->willReturn('cleaned diff no changes');
+
         $result = $this->parser->parse($json ?: '{}');
         $finding = $result->findings[0];
 
-        $this->assertNull($finding->getOldCode());
-        $this->assertNull($finding->getNewCode());
-        $this->assertNull($finding->getSuggestedFix());
+        $this->assertEquals('cleaned diff no changes', $finding->getDiff());
     }
 
     public function testParseComplexMixedStructure(): void
@@ -480,6 +494,10 @@ class RectorOutputParserTest extends TestCase
             ->method('warning')
             ->with('Rector execution errors detected', $this->anything());
 
+        $this->diffProcessor->expects($this->exactly(2))
+            ->method('extractDiff')
+            ->willReturn('cleaned diff');
+
         $result = $this->parser->parse($json ?: '{}');
 
         $this->assertEquals(5, $result->processedFiles);
@@ -519,6 +537,13 @@ class RectorOutputParserTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        // Expect extractDiff to be called for the first file (second has no diff)
+        $this->diffProcessor->expects($this->once())
+            ->method('extractDiff')
+            ->willReturnCallback(function ($diff) {
+                return $diff; // Just return input
+            });
+
         $result = $this->parser->parse($json ?: '{}');
 
         $this->assertEquals(2, $result->processedFiles);
@@ -531,8 +556,8 @@ class RectorOutputParserTest extends TestCase
         $this->assertEquals('SubstituteGeneralUtilityMkdirDeepRector', $firstFinding->getRuleName());
         $this->assertEquals(RectorRuleSeverity::WARNING, $firstFinding->getSeverity());
         $this->assertEquals(RectorChangeType::DEPRECATION, $firstFinding->getChangeType());
-        $this->assertStringContainsString('mkdir_deep', $firstFinding->getOldCode() ?? '');
-        $this->assertStringContainsString('mkdir', $firstFinding->getNewCode() ?? '');
+        $this->assertNotNull($firstFinding->getDiff());
+        $this->assertStringContainsString('mkdir_deep', $firstFinding->getDiff());
 
         $secondFinding = $result->findings[1];
         $this->assertEquals('Configuration/TCA/tx_myext_domain_model_item.php', $secondFinding->getFile());

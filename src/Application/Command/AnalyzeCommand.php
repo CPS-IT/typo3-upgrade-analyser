@@ -123,7 +123,7 @@ class AnalyzeCommand extends Command
 
             // Phase 2: Analysis
             $io->section('Phase 2: Running analyzers...');
-            $analysisResults = $this->executeAnalysisPhase($installation, $extensions, $targetVersion, $input->getOption('analyzers'), $io);
+            $analysisResults = $this->executeAnalysisPhase($configurationService, $installation, $extensions, $targetVersion, $input->getOption('analyzers'), $io);
 
             // Phase 3: Reporting
             $io->section('Phase 3: Generating reports...');
@@ -194,7 +194,7 @@ class AnalyzeCommand extends Command
      *
      * @return array<string, array<AnalysisResult>>
      */
-    private function executeAnalysisPhase(?Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
+    private function executeAnalysisPhase(ConfigurationServiceInterface $configurationService, ?Installation $installation, array $extensions, string $targetVersion, ?array $requestedAnalyzers, SymfonyStyle $io): array
     {
         if (empty($extensions)) {
             $io->warning('No extensions found to analyze');
@@ -215,14 +215,18 @@ class AnalyzeCommand extends Command
         // Get custom paths from installation metadata
         $customPaths = $installation?->getMetadata()?->getCustomPaths() ?? [];
 
+        // Get the full configuration to pass to the context
+        $configData = $configurationService->getAll();
+        $contextConfig = array_merge($configData, [
+            'installation_path' => $installation?->getPath() ?? '',
+            'custom_paths' => $customPaths,
+        ]);
+
         $context = new AnalysisContext(
             $installation?->getVersion() ?? Version::fromString('12.4'), // Use actual detected version
             Version::fromString($targetVersion),
             [], // phpVersions
-            [
-                'installation_path' => $installation?->getPath() ?? '',
-                'custom_paths' => $customPaths,
-            ],
+            $contextConfig,
         );
         $results = [];
 
@@ -334,6 +338,7 @@ class AnalyzeCommand extends Command
                 $formats,
                 $outputDir,
                 $configurationService->getTargetVersion(),
+                $configurationService->getAll(),
             );
 
             // Log report generation results
@@ -394,7 +399,7 @@ class AnalyzeCommand extends Command
         }
 
         // Then filter by command-line option if specified
-        if (null === $requestedAnalyzers || empty($requestedAnalyzers)) {
+        if (empty($requestedAnalyzers)) {
             return $enabledAnalyzers;
         }
 

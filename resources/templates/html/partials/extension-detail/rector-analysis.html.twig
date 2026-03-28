@@ -6,6 +6,22 @@
 
         <div class="analysis-grid">
             <div class="info-card">
+                <h3>Analysis Status</h3>
+                <p><strong>Analysis Result:</strong>
+                    {% if rector_analysis.isSuccessful %}
+                        <span style="color: #28a745;">✅ Successful</span>
+                    {% else %}
+                        <span style="color: #dc3545;">❌ Failed</span>
+                    {% endif %}
+                </p>
+                <!--{% if rector_analysis.error_message %}
+                    <p><strong>Error:</strong> <span style="color: #dc3545;">{{ rector_analysis.error_message }}</span></p>
+                {% endif %}-->
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="info-card">
                 <h3>Code Quality Assessment</h3>
                 <p><strong>Processed Files:</strong> {{ rector_analysis.processed_files }}</p>
                 <p><strong>Total Files Analyzed:</strong> {{ rector_analysis.total_files }}</p>
@@ -34,17 +50,19 @@
         </div>
 
         {% if rector_analysis.findings_by_severity %}
-            <div class="info-card">
-                <h3>Findings by Severity</h3>
-                <div class="severity-grid">
-                    {% for severity, count in rector_analysis.findings_by_severity %}
-                        {% if count > 0 %}
-                            <div class="severity-item">
-                                <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
-                                <span class="count">{{ count }}</span>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Findings by Severity</h3>
+                    <div class="severity-grid">
+                        {% for severity, count in rector_analysis.findings_by_severity %}
+                            {% if count > 0 %}
+                                <div class="severity-item">
+                                    <span class="badge badge-{{ severity == 'critical' ? 'critical' : (severity == 'warning' ? 'high' : 'low') }}">{{ severity|upper }}</span>
+                                    <span class="count">{{ count }}</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         {% endif %}
@@ -54,7 +72,7 @@
                 <h3>Upgrade Assessment</h3>
                 <p><strong>Upgrade Readiness:</strong> {{ "%.1f"|format(rector_analysis.upgrade_readiness_score) }}/10.0</p>
                 <p><strong>Complexity Score:</strong> {{ "%.1f"|format(rector_analysis.complexity_score) }}/10.0</p>
-                <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(rector_analysis.estimated_fix_time_hours) }}hours</p>
+                <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(rector_analysis.estimated_fix_time_hours) }} hours</p>
             </div>
 
             <div class="info-card">
@@ -65,65 +83,75 @@
         </div>
 
         {% if rector_analysis.top_affected_files %}
-            <div class="info-card">
-                <h3>Most Affected Files</h3>
-                <ul>
-                    {% for file, count in rector_analysis.top_affected_files %}
-                        <li><strong>{{ file }}:</strong> {{ count }} findings</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-        {% if rector_analysis.top_rules_triggered %}
-            <div class="info-card">
-                <h3>Most Triggered Rules</h3>
-                <ul>
-                    {% for rule, count in rector_analysis.top_rules_triggered %}
-                        <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-        {% if rector_analysis.summary_text %}
-            <div class="info-card">
-                <h3>Summary</h3>
-                <p>{{ rector_analysis.summary_text }}</p>
-            </div>
-        {% endif %}
-
-        {% if rector_analysis.recommendations %}
-            <div class="recommendations">
-                <h3>Rector Recommendations</h3>
-                <ul>
-                    {% for recommendation in rector_analysis.recommendations %}
-                        <li>{{ recommendation }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-        {% if rector_analysis.detailed_findings.findings is defined and rector_analysis.detailed_findings.findings|length > 0 %}
-            <div class="findings-actions">
-                <h3>Detailed Analysis</h3>
-                <p>{{ rector_analysis.detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
-                <div class="action-buttons">
-                    <a href="../rector-findings/{{ extension.key }}.html" class="btn btn-primary">
-                        🔍 View Detailed Findings
-                    </a>
-                    <small class="text-muted">
-                        Includes code examples, fix suggestions, and file-by-file breakdown
-                    </small>
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Most Affected Files</h3>
+                    <ul>
+                        {% for file, count in rector_analysis.top_affected_files %}
+                            <li><strong>{{ file }}:</strong> {{ count }} findings</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         {% endif %}
 
+        {% if rector_analysis.top_rules_triggered %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Most Triggered Rules</h3>
+                    <ul>
+                        {% for rule, count in rector_analysis.top_rules_triggered %}
+                            <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if rector_analysis.summary_text %}
+            <div class="analysis-grid">
+                <div class="info-card">
+                    <h3>Summary</h3>
+                    <p>{{ rector_analysis.summary_text }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if rector_analysis.recommendations %}
+            <div class="analysis-grid">
+                <div class="recommendations">
+                    <h3>Rector Recommendations</h3>
+                    <ul>
+                        {% for recommendation in rector_analysis.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if rector_analysis.detailed_findings.findings is defined and rector_analysis.detailed_findings.findings|length > 0 %}
+            <div class="analysis-grid">
+                <div class="findings-actions">
+                    <h3>Detailed Analysis</h3>
+                    <p>{{ rector_analysis.detailed_findings.findings|length }} detailed findings are available for in-depth review.</p>
+                    <div class="action-buttons">
+                        <a href="../rector-findings/{{ extension.key }}.html" class="btn btn-primary">
+                            🔍 View Detailed Findings
+                        </a>
+                        <small class="text-muted">
+                            Includes code examples, fix suggestions, and file-by-file breakdown
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     {% else %}
         <div class="error-card">
             <h3>❌ Analysis Not Available</h3>
             <p>TYPO3 Rector analysis was not performed for this extension. This may occur when:</p>
             <ul>
+                <li>The analysis was not enabled</li>
                 <li>Rector binary is not available</li>
                 <li>No PHP files were found to analyze</li>
                 <li>The extension path could not be resolved</li>

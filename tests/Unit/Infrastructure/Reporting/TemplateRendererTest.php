@@ -208,6 +208,9 @@ class TemplateRendererTest extends TestCase
         // Arrange
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
         $context = [
+            'installation' => new Installation('/test', new Version('12.0.0')),
+            'target_version' => '13.0',
+            'generated_at' => '2023-01-01T00:00:00+00:00',
             'extension_data' => [
                 ['extension' => $extension],
             ],
@@ -426,6 +429,7 @@ class TemplateRendererTest extends TestCase
         $extension = new Extension('test_ext', 'Test Extension', new Version('1.0.0'), 'local');
 
         $context = [
+            'generated_at' => '2023-01-01T00:00:00+00:00',
             'extension_data' => [
                 [
                     'extension' => $extension,

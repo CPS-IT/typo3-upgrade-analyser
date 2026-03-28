@@ -13,7 +13,7 @@
         <div class="info-card">
             <h3>Impact Assessment</h3>
             <p><strong>Total Findings:</strong> {{ detailed_findings.summary.total_findings }}</p>
-            <p><strong>Affected Files:</strong> {{ detailed_findings.summary.affected_files }}/ {{ detailed_findings.summary.total_files }}</p>
+            <p><strong>Affected Files:</strong> {{ detailed_findings.summary.affected_files }} / {{ detailed_findings.summary.total_files }}</p>
             <p><strong>File Impact:</strong> {{ "%.1f"|format(detailed_findings.summary.file_impact_percentage) }}%</p>
             <p><strong>Estimated Fix Time:</strong> {{ "%.1f"|format(detailed_findings.summary.estimated_fix_time_hours) }} hours</p>
         </div>
@@ -62,17 +62,19 @@
                     {% endfor %}
                 </ul>
             </div>
+        </div>
+    {% endif %}
 
-            {% if detailed_findings.summary.top_issues_by_rule %}
-                <div class="info-card">
-                    <h3>Most Triggered Rules</h3>
-                    <ul>
-                        {% for rule, count in detailed_findings.summary.top_issues_by_rule %}
-                            <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
+    {% if detailed_findings.summary.top_issues_by_rule %}
+        <div class="analysis-grid">
+            <div class="info-card">
+                <h3>Most Triggered Rules</h3>
+                <ul>
+                    {% for rule, count in detailed_findings.summary.top_issues_by_rule %}
+                        <li><strong>{{ rule }}:</strong> {{ count }} occurrences</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     {% endif %}
 </div>

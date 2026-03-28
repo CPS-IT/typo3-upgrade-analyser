@@ -32,8 +32,7 @@ class RectorFindingTest extends TestCase
             severity: RectorRuleSeverity::WARNING,
             changeType: RectorChangeType::DEPRECATION,
             suggestedFix: 'Replace with new method',
-            oldCode: '$template->getTypoScriptConstants()',
-            newCode: '$template->getConstants()',
+            diff: 'some diff content',
             context: ['rector_version' => '0.15.25'],
         );
 
@@ -44,8 +43,7 @@ class RectorFindingTest extends TestCase
         $this->assertEquals(RectorRuleSeverity::WARNING, $finding->getSeverity());
         $this->assertEquals(RectorChangeType::DEPRECATION, $finding->getChangeType());
         $this->assertEquals('Replace with new method', $finding->getSuggestedFix());
-        $this->assertEquals('$template->getTypoScriptConstants()', $finding->getOldCode());
-        $this->assertEquals('$template->getConstants()', $finding->getNewCode());
+        $this->assertEquals('some diff content', $finding->getDiff());
         $this->assertEquals(['rector_version' => '0.15.25'], $finding->getContext());
     }
 
@@ -61,8 +59,7 @@ class RectorFindingTest extends TestCase
         );
 
         $this->assertNull($finding->getSuggestedFix());
-        $this->assertNull($finding->getOldCode());
-        $this->assertNull($finding->getNewCode());
+        $this->assertNull($finding->getDiff());
         $this->assertEquals([], $finding->getContext());
     }
 
@@ -237,8 +234,7 @@ class RectorFindingTest extends TestCase
             message: 'Test message',
             severity: RectorRuleSeverity::INFO,
             changeType: RectorChangeType::BEST_PRACTICE,
-            oldCode: 'old code',
-            newCode: 'new code',
+            diff: 'some diff content',
         );
 
         $withoutCodeChange = new RectorFinding(
@@ -264,8 +260,7 @@ class RectorFindingTest extends TestCase
             severity: RectorRuleSeverity::WARNING,
             changeType: RectorChangeType::DEPRECATION,
             suggestedFix: 'Replace with new method',
-            oldCode: '$template->getTypoScriptConstants()',
-            newCode: '$template->getConstants()',
+            diff: 'some diff content',
             context: ['rector_version' => '0.15.25'],
         );
 
@@ -279,8 +274,7 @@ class RectorFindingTest extends TestCase
         $this->assertArrayHasKey('severity', $array);
         $this->assertArrayHasKey('change_type', $array);
         $this->assertArrayHasKey('suggested_fix', $array);
-        $this->assertArrayHasKey('old_code', $array);
-        $this->assertArrayHasKey('new_code', $array);
+        $this->assertArrayHasKey('diff', $array);
         $this->assertArrayHasKey('context', $array);
         $this->assertArrayHasKey('priority_score', $array);
         $this->assertArrayHasKey('estimated_effort', $array);

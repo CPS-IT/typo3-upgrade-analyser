@@ -17,9 +17,9 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
  */
 enum RectorRuleSeverity: string
 {
-    case CRITICAL = 'critical';    // Breaking changes that prevent upgrade
-    case WARNING = 'warning';      // Deprecations that will break in future versions
-    case INFO = 'info';           // Code improvements and best practices
+    case CRITICAL = 'critical';     // Breaking changes that prevent upgrade
+    case WARNING = 'warning';       // Deprecations that will break in future versions
+    case INFO = 'info';             // Code improvements and best practices
     case SUGGESTION = 'suggestion'; // Optional optimizations and enhancements
 
     /**

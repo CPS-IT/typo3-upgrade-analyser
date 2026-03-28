@@ -25,8 +25,7 @@ readonly class RectorFinding
         private RectorRuleSeverity $severity,
         private RectorChangeType $changeType,
         private ?string $suggestedFix = null,
-        private ?string $oldCode = null,
-        private ?string $newCode = null,
+        private ?string $diff = null,
         private array $context = [],
     ) {
     }
@@ -72,14 +71,9 @@ readonly class RectorFinding
         return $this->suggestedFix;
     }
 
-    public function getOldCode(): ?string
+    public function getDiff(): ?string
     {
-        return $this->oldCode;
-    }
-
-    public function getNewCode(): ?string
-    {
-        return $this->newCode;
+        return $this->diff;
     }
 
     public function getContext(): array
@@ -93,7 +87,7 @@ readonly class RectorFinding
     public function isBreakingChange(): bool
     {
         return RectorRuleSeverity::CRITICAL === $this->severity
-               || RectorChangeType::BREAKING_CHANGE === $this->changeType;
+            || RectorChangeType::BREAKING_CHANGE === $this->changeType;
     }
 
     /**
@@ -102,7 +96,7 @@ readonly class RectorFinding
     public function isDeprecation(): bool
     {
         return RectorChangeType::DEPRECATION === $this->changeType
-               || RectorRuleSeverity::WARNING === $this->severity;
+            || RectorRuleSeverity::WARNING === $this->severity;
     }
 
     /**
@@ -111,7 +105,7 @@ readonly class RectorFinding
     public function isImprovement(): bool
     {
         return RectorRuleSeverity::INFO === $this->severity
-               || RectorRuleSeverity::SUGGESTION === $this->severity;
+            || RectorRuleSeverity::SUGGESTION === $this->severity;
     }
 
     /**
@@ -143,7 +137,7 @@ readonly class RectorFinding
      */
     public function hasDiff(): bool
     {
-        return null !== $this->oldCode && null !== $this->newCode;
+        return null !== $this->diff;
     }
 
     /**
@@ -171,7 +165,7 @@ readonly class RectorFinding
      */
     public function hasCodeChange(): bool
     {
-        return null !== $this->oldCode && null !== $this->newCode;
+        return null !== $this->diff;
     }
 
     /**
@@ -196,8 +190,7 @@ readonly class RectorFinding
             'severity' => $this->severity->value,
             'change_type' => $this->changeType->value,
             'suggested_fix' => $this->suggestedFix,
-            'old_code' => $this->oldCode,
-            'new_code' => $this->newCode,
+            'diff' => $this->diff,
             'context' => $this->context,
             'priority_score' => $this->getPriorityScore(),
             'estimated_effort' => $this->getEstimatedEffort(),

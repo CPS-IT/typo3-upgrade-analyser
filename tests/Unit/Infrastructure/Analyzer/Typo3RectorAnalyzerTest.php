@@ -237,7 +237,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test protected method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getAnalyzerSpecificCacheKeyComponents');
-        $method->setAccessible(true);
 
         $components = $method->invoke($this->analyzer, $extension, $context);
 
@@ -289,7 +288,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
-        $method->setAccessible(true);
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
@@ -332,7 +330,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
-        $method->setAccessible(true);
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
@@ -375,7 +372,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
-        $method->setAccessible(true);
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 
@@ -402,7 +398,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('calculateRiskScore');
-        $method->setAccessible(true);
 
         $riskScore = $method->invoke($this->analyzer, $summary);
 
@@ -429,7 +424,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('calculateRiskScore');
-        $method->setAccessible(true);
 
         $riskScore = $method->invoke($this->analyzer, $summary);
 
@@ -459,7 +453,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('generateRecommendations');
-        $method->setAccessible(true);
 
         $recommendations = $method->invoke($this->analyzer, $summary, $context);
 
@@ -492,7 +485,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('generateRecommendations');
-        $method->setAccessible(true);
 
         $recommendations = $method->invoke($this->analyzer, $summary, $context);
 
@@ -545,7 +537,6 @@ class Typo3RectorAnalyzerTest extends TestCase
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->analyzer);
         $method = $reflection->getMethod('getExtensionPath');
-        $method->setAccessible(true);
 
         $path = $method->invoke($this->analyzer, $extension, $context);
 

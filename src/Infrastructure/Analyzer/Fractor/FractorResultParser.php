@@ -20,241 +20,287 @@ use Psr\Log\LoggerInterface;
 readonly class FractorResultParser
 {
     public function __construct(
+        private FractorRuleRegistry $ruleRegistry,
         private LoggerInterface $logger,
     ) {
     }
 
-    public function parse(FractorExecutionResult $result): FractorAnalysisSummary
+    /**
+     * Parse Fractor JSON output into structured findings.
+     *
+     * @return array<FractorFinding>
+     */
+    public function parseFractorOutput(string $jsonOutput): array
     {
-        $this->logger->debug('Parsing Fractor results', [
-            'exit_code' => $result->exitCode,
-            'has_output' => $result->hasOutput(),
-            'has_error' => $result->hasErrorOutput(),
-        ]);
-
-        $filesScanned = 0;
-        $rulesApplied = 0;
-        $findings = [];
-        $data = [];
-        $errorMessage = null;
-
-        if ($result->hasOutput()) {
-            $output = trim($result->output);
-
-            // Try to parse JSON output first
-            if ($this->isJsonOutput($output)) {
-                $data = $this->parseJsonOutput($output);
-                $filesScanned = $data['files_scanned'] ?? $data['files_changed'] ?? 0;
-                $rulesApplied = $data['rules_applied'] ?? 0;
-                $findings = $data['findings'] ?? [];
-            } else {
-                // Parse text output
-                $data = $this->parseTextOutput($output);
-                $filesScanned = $data['files_scanned'];
-                $rulesApplied = $data['rules_applied'];
-                $findings = $data['findings'];
-            }
+        if (empty(trim($jsonOutput))) {
+            return [];
         }
 
-        // Handle error output
-        if ($result->hasErrorOutput()) {
-            $errorMessage = trim($result->errorOutput);
-            $this->logger->warning('Fractor reported errors', [
-                'errors' => $errorMessage,
+        try {
+            $data = json_decode($jsonOutput, true, 512, JSON_THROW_ON_ERROR);
+
+            return $this->extractFindingsFromData($data);
+        } catch (\JsonException $e) {
+            $this->logger->error('Failed to parse Fractor JSON output', [
+                'error' => $e->getMessage(),
+                'output_preview' => substr($jsonOutput, 0, 200),
             ]);
-        }
 
-        // Determine success based on whether we got meaningful output
-        // Fractor may return non-zero exit code even when analysis is successful
-        $analysisSuccessful = $this->determineAnalysisSuccess($result, $findings);
+            return [];
+        }
+    }
+
+    /**
+     * Aggregate findings into summary statistics.
+     */
+    public function aggregateFindings(array $findings): FractorAnalysisSummary
+    {
+        $categorized = $this->categorizeFindings($findings);
+
+        $severityCounts = $categorized->getSeverityCounts();
+        $fileCounts = $categorized->getFileCounts();
+        $ruleCounts = $categorized->getRuleCounts();
+        $typeCounts = $categorized->getTypeCounts();
+
+        $totalFiles = $this->countUniqueFiles($findings);
+        $complexityScore = $this->calculateComplexityScore($findings);
+        $estimatedFixTime = $this->calculateEstimatedFixTime($findings);
 
         return new FractorAnalysisSummary(
-            $filesScanned,
-            $rulesApplied,
-            $findings,
-            $analysisSuccessful,
-            $data['change_blocks'] ?? 0,
-            $data['changed_lines'] ?? 0,
-            $data['file_paths'] ?? [],
-            $data['applied_rules'] ?? [],
-            $errorMessage,
+            totalFindings: \count($findings),
+            criticalIssues: $severityCounts['critical'] ?? 0,
+            warnings: $severityCounts['warning'] ?? 0,
+            infoIssues: $severityCounts['info'] ?? 0,
+            suggestions: $severityCounts['suggestion'] ?? 0,
+            affectedFiles: $categorized->getAffectedFileCount(),
+            totalFiles: $totalFiles,
+            ruleBreakdown: $ruleCounts,
+            fileBreakdown: $fileCounts,
+            typeBreakdown: $typeCounts,
+            complexityScore: $complexityScore,
+            estimatedFixTime: $estimatedFixTime,
         );
     }
 
-    private function isJsonOutput(string $output): bool
-    {
-        return str_starts_with(trim($output), '{') || str_starts_with(trim($output), '[');
-    }
-
     /**
-     * @return array<string, mixed>
+     * Categorize findings by various criteria.
+     *
+     * @param array<FractorFinding> $findings
      */
-    private function parseJsonOutput(string $output): array
+    public function categorizeFindings(array $findings): FractorFindingsCollection
     {
-        try {
-            $data = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+        $breakingChanges = [];
+        $deprecations = [];
+        $improvements = [];
+        $bySeverity = [
+            'critical' => [],
+            'warning' => [],
+            'info' => [],
+            'suggestion' => [],
+        ];
+        $byFile = [];
+        $byRule = [];
 
-            return [
-                'files_changed' => $data['files_changed'] ?? 0,
-                'rules_applied' => $data['rules_applied'] ?? 0,
-                'findings' => $data['findings'] ?? [],
-            ];
-        } catch (\JsonException $e) {
-            $this->logger->warning('Failed to parse Fractor JSON output', [
-                'error' => $e->getMessage(),
-                'output' => substr($output, 0, 500),
-            ]);
+        foreach ($findings as $finding) {
+            // Categorize by impact type
+            if ($finding->isBreakingChange()) {
+                $breakingChanges[] = $finding;
+            } elseif ($finding->isDeprecation()) {
+                $deprecations[] = $finding;
+            } else {
+                $improvements[] = $finding;
+            }
 
-            return [
-                'files_changed' => 0,
-                'rules_applied' => 0,
-                'findings' => [],
-            ];
+            // Categorize by severity
+            $severityKey = $finding->getSeverity()->value;
+            $bySeverity[$severityKey][] = $finding;
+
+            // Categorize by file
+            $file = $finding->getFile();
+            if (!isset($byFile[$file])) {
+                $byFile[$file] = [];
+            }
+            $byFile[$file][] = $finding;
+
+            // Categorize by rule
+            $rule = $finding->getRuleClass();
+            if (!isset($byRule[$rule])) {
+                $byRule[$rule] = [];
+            }
+            $byRule[$rule][] = $finding;
         }
+
+        return new FractorFindingsCollection(
+            $breakingChanges,
+            $deprecations,
+            $improvements,
+            $bySeverity,
+            $byFile,
+            $byRule,
+        );
     }
 
     /**
-     * @return array<string, mixed>
+     * Calculate complexity score based on findings characteristics.
      */
-    private function parseTextOutput(string $output): array
+    public function calculateComplexityScore(array $findings): float
     {
-        $filesWithChanges = 0;
-        $rulesApplied = 0;
-        $changeBlocks = 0;
-        $changedLines = 0;
+        if (empty($findings)) {
+            return 0.0;
+        }
+
+        $totalComplexity = 0.0;
+        $weights = [
+            'rule_diversity' => 0.3,    // More unique rules = more complex
+            'file_spread' => 0.2,       // More files affected = more complex
+            'severity_mix' => 0.3,      // Mix of severities = more complex
+            'manual_intervention' => 0.2, // More manual fixes = more complex
+        ];
+
+        // Rule diversity factor
+        $uniqueRules = \count(array_unique(array_map(static fn ($f) => $f->getRuleClass(), $findings)));
+        $ruleDiversity = min($uniqueRules / 10, 1.0); // Normalize to 0-1
+        $totalComplexity += $ruleDiversity * $weights['rule_diversity'];
+
+        // File spread factor
+        $uniqueFiles = \count(array_unique(array_map(static fn ($f) => $f->getFile(), $findings)));
+        $fileSpread = min($uniqueFiles / 20, 1.0); // Normalize to 0-1
+        $totalComplexity += $fileSpread * $weights['file_spread'];
+
+        // Severity mix factor
+        $categorized = $this->categorizeFindings($findings);
+        $severityCounts = $categorized->getSeverityCounts();
+        $severityEntropy = $this->calculateEntropy(array_values($severityCounts));
+        $totalComplexity += $severityEntropy * $weights['severity_mix'];
+
+        // Manual intervention factor
+        $manualCount = \count(array_filter($findings, static fn ($f) => $f->requiresManualIntervention()));
+        $manualRatio = $manualCount / \count($findings);
+        $totalComplexity += $manualRatio * $weights['manual_intervention'];
+
+        return round($totalComplexity * 10, 1); // Scale to 0-10
+    }
+
+    /**
+     * Extract findings from parsed JSON data.
+     *
+     * @return array<FractorFinding>
+     */
+    private function extractFindingsFromData(array $data): array
+    {
         $findings = [];
-        $filePaths = [];
-        $appliedRules = [];
 
-        $lines = explode("\n", $output);
-        $inDiff = false;
-        $currentFile = '';
+        if (!isset($data['changed_files']) || !\is_array($data['changed_files'])) {
+            return $findings;
+        }
 
-        foreach ($lines as $line) {
-            $line = trim($line);
+        foreach ($data['changed_files'] as $fileData) {
+            $file = $fileData['file'] ?? '';
 
-            // Skip empty lines
-            if (empty($line)) {
+            if (!isset($fileData['applied_rectors']) || !\is_array($fileData['applied_rectors'])) {
                 continue;
             }
 
-            // Parse the summary line: "22 files with changes"
-            if (preg_match('/(\d+)\s+files?\s+with\s+changes/', $line, $matches)) {
-                $filesWithChanges = (int) $matches[1];
-                continue;
-            }
-
-            // Parse numbered file entries: "1) ../path/to/file.xml:8"
-            if (preg_match('/^\d+\)\s+(.+)/', $line, $matches)) {
-                $currentFile = $matches[1];
-                $filePaths[] = $currentFile;
-                continue;
-            }
-
-            // Track diff sections
-            if (str_contains($line, '---------- begin diff ----------')) {
-                $inDiff = true;
-                ++$changeBlocks;
-                continue;
-            }
-
-            if (str_contains($line, '----------- end diff -----------')) {
-                $inDiff = false;
-                continue;
-            }
-
-            // Count changed lines within diff sections (but don't include as findings)
-            if ($inDiff && (str_starts_with($line, '-') || str_starts_with($line, '+'))) {
-                if (!str_starts_with($line, '---') && !str_starts_with($line, '+++')) {
-                    ++$changedLines;
-                }
-                continue;
-            }
-
-            // Parse applied rules: "* RuleName (url)"
-            if (str_starts_with($line, '* ') && str_contains($line, 'Fractor')) {
-                $ruleName = trim(explode('(', $line)[0]);
-                $ruleName = str_replace('* ', '', $ruleName);
-                if (!\in_array($ruleName, $appliedRules, true)) {
-                    $appliedRules[] = $ruleName;
-                }
-                continue;
+            foreach ($fileData['applied_rectors'] as $rectorData) {
+                $findings[] = $this->createFindingFromFractorData($file, $rectorData);
             }
         }
 
-        // Count unique rules applied
-        $rulesApplied = \count($appliedRules);
-
-        // Use files with changes as files scanned (since Fractor only reports files that need changes)
-        $filesScanned = $filesWithChanges;
-
-        $this->logger->debug('Parsed Fractor output', [
-            'files_with_changes' => $filesWithChanges,
-            'files_scanned' => $filesScanned,
-            'change_blocks' => $changeBlocks,
-            'changed_lines' => $changedLines,
-            'rules_applied' => $rulesApplied,
-            'unique_file_paths' => \count($filePaths),
-            'applied_rules' => $appliedRules,
+        $this->logger->info('Parsed Fractor findings', [
+            'total_findings' => \count($findings),
+            'affected_files' => \count($data['changed_files']),
         ]);
 
-        return [
-            'files_scanned' => $filesScanned,
-            'rules_applied' => $rulesApplied,
-            'change_blocks' => $changeBlocks,
-            'changed_lines' => $changedLines,
-            'findings' => $findings,
-            'file_paths' => \array_slice($filePaths, 0, 10), // Limit to prevent excessive data
-            'applied_rules' => $appliedRules,
-        ];
+        return $findings;
     }
 
     /**
-     * @param array<string> $findings
+     * Create FractorFinding from raw Fractor data.
      */
-    private function determineAnalysisSuccess(FractorExecutionResult $result, array $findings): bool
+    private function createFindingFromFractorData(string $file, array $rectorData): FractorFinding
     {
-        // If process was successful, trust that
-        if ($result->successful) {
-            return true;
+        $ruleClass = $rectorData['class'] ?? 'UnknownRule';
+        $message = $rectorData['message'] ?? 'No message provided';
+        $line = (int) ($rectorData['line'] ?? 0);
+        $oldCode = $rectorData['old'] ?? null;
+        $newCode = $rectorData['new'] ?? null;
+
+        // Determine severity and change type based on rule class name patterns
+        $severity = $this->ruleRegistry->getRuleSeverity($ruleClass);
+        $changeType = $this->ruleRegistry->getRuleChangeType($ruleClass);
+
+        $suggestedFix = null;
+        if ($oldCode && $newCode && $oldCode !== $newCode) {
+            $suggestedFix = "Replace '{$oldCode}' with '{$newCode}'";
+        } elseif ($newCode && !$oldCode) {
+            $suggestedFix = "Add: '{$newCode}'";
+        } elseif ($oldCode && !$newCode) {
+            $suggestedFix = "Remove: '{$oldCode}'";
         }
 
-        // Check for fatal error indicators in error output
-        if ($result->hasErrorOutput()) {
-            $errorOutput = strtolower($result->errorOutput);
+        return new FractorFinding(
+            file: $file,
+            line: $line,
+            ruleClass: $ruleClass,
+            message: $message,
+            severity: $severity,
+            changeType: $changeType,
+            suggestedFix: $suggestedFix,
+            context: $rectorData,
+        );
+    }
 
-            // These indicate serious failures
-            if (str_contains($errorOutput, 'fatal error')
-                || str_contains($errorOutput, 'configuration file not found')
-                || str_contains($errorOutput, 'no such file or directory')
-                || str_contains($errorOutput, 'permission denied')) {
-                return false;
+    /**
+     * Count unique files in findings.
+     *
+     * @param array<FractorFinding> $findings
+     */
+    private function countUniqueFiles(array $findings): int
+    {
+        $files = array_unique(array_map(static fn ($f): string => $f->getFile(), $findings));
+
+        return \count($files);
+    }
+
+    /**
+     * Calculate estimated time to fix all findings.
+     *
+     * @param array<FractorFinding> $findings
+     */
+    private function calculateEstimatedFixTime(array $findings): int
+    {
+        $totalMinutes = 0;
+
+        foreach ($findings as $finding) {
+            $totalMinutes += $finding->getEstimatedEffort();
+        }
+
+        return $totalMinutes;
+    }
+
+    /**
+     * Calculate entropy for measuring distribution diversity.
+     *
+     * @param array<int> $values
+     */
+    private function calculateEntropy(array $values): float
+    {
+        $total = array_sum($values);
+
+        if (0 === $total) {
+            return 0.0;
+        }
+
+        $entropy = 0.0;
+
+        foreach ($values as $value) {
+            if ($value > 0) {
+                $probability = $value / $total;
+                $entropy -= $probability * log($probability, 2);
             }
         }
 
-        // If we have output with findings, consider it successful even with non-zero exit
-        if ($result->hasOutput()) {
-            $output = strtolower(trim($result->output));
-
-            // Check for positive indicators
-            if (!empty($findings)
-                || str_contains($output, 'processed')
-                || str_contains($output, 'analyzed')
-                || str_contains($output, 'completed')
-                || str_contains($output, '[ok]')
-                || str_contains($output, 'files with changes')
-                || str_contains($output, 'would have been changed')) {
-                return true;
-            }
-        }
-
-        // If no clear success indicators but also no fatal errors,
-        // and we have an exit code that might just mean "changes suggested"
-        if (\in_array($result->exitCode, [0, 1, 2], true)) {
-            return !empty($findings);
-        }
-
-        // Default to the process result for other cases
-        return $result->successful;
+        // Normalize to 0-1 range (max entropy for 4 categories is log2(4) = 2)
+        return $entropy / 2;
     }
 }

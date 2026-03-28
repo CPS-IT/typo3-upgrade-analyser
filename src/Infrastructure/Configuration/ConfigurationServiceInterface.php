@@ -90,4 +90,11 @@ interface ConfigurationServiceInterface
      * @return mixed Configuration value or default
      */
     public function get(string $key, mixed $default = null): mixed;
+
+    /**
+     * Gets the full configuration array.
+     *
+     * @return array Full configuration
+     */
+    public function getAll(): array;
 }

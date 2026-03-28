@@ -50,6 +50,7 @@ readonly class ReportService
         array $formats = ['markdown'],
         string $outputDirectory = 'var/reports/',
         ?string $targetVersion = null,
+        array $configuration = [],
     ): array {
         $this->logger->info('Starting report generation', [
             'extensions_count' => \count($extensions),
@@ -65,7 +66,13 @@ readonly class ReportService
 
         // Generate context for templates using ReportContextBuilder
         $this->logger->debug('Building report context for templates');
-        $context = $this->contextBuilder->buildReportContext($installation, $extensions, $groupedResults, $targetVersion);
+        $context = $this->contextBuilder->buildReportContext(
+            $installation,
+            $extensions,
+            $groupedResults,
+            $targetVersion,
+            $configuration,
+        );
         $this->logger->debug('Report context built successfully');
 
         foreach ($formats as $format) {
@@ -148,13 +155,24 @@ readonly class ReportService
         $this->logger->debug('Rendering Rector findings detail pages', ['format' => $format]);
         $rectorDetailPages = $this->templateRenderer->renderRectorFindingsDetailPages($context, $format);
 
+        // Render Fractor findings detail pages for HTML/Markdown formats
+        $this->logger->debug('Rendering Fractor findings detail pages', ['format' => $format]);
+        $fractorDetailPages = $this->templateRenderer->renderFractorFindingsDetailPages($context, $format);
+
         // 3. Write files using ReportFileManager
         $this->logger->debug('Writing report files', [
             'format' => $format,
             'extension_reports_count' => \count($extensionReports),
             'rector_detail_pages_count' => \count($rectorDetailPages),
+            'fractor_detail_pages_count' => \count($fractorDetailPages),
         ]);
-        $allFiles = $this->fileManager->writeReportFilesWithRectorPages($mainReport, $extensionReports, $rectorDetailPages, $formatOutputPath);
+        $allFiles = $this->fileManager->writeReportFilesWithRectorPages(
+            $mainReport,
+            $extensionReports,
+            $rectorDetailPages,
+            $fractorDetailPages,
+            $formatOutputPath,
+        );
 
         // 4. Create result object
         $result = new ReportingResult(

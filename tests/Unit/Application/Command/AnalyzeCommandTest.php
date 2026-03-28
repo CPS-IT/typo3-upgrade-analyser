@@ -215,14 +215,13 @@ class AnalyzeCommandTest extends TestCase
         // Use reflection to call the private method
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('getAnalyzersToRun');
-        $method->setAccessible(true);
 
         // Test with no specific analyzers requested
         $result = $method->invoke($command, null);
 
         // Should return only enabled analyzers (typo3_rector and version_availability)
         self::assertCount(2, $result);
-        $analyzerNames = array_map(fn ($analyzer) => $analyzer->getName(), $result);
+        $analyzerNames = array_map(static fn ($analyzer) => $analyzer->getName(), $result);
         self::assertContains('typo3_rector', $analyzerNames);
         self::assertContains('version_availability', $analyzerNames);
         self::assertNotContains('fractor', $analyzerNames);
@@ -266,7 +265,6 @@ class AnalyzeCommandTest extends TestCase
         // Use reflection to call the private method
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('getAnalyzersToRun');
-        $method->setAccessible(true);
 
         // Test with specific analyzer requested via command line
         $result = $method->invoke($command, ['typo3_rector']);
@@ -304,7 +302,6 @@ class AnalyzeCommandTest extends TestCase
         // Use reflection to call the private method
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('getAnalyzersToRun');
-        $method->setAccessible(true);
 
         // Test requesting a disabled analyzer via command line
         $result = $method->invoke($command, ['fractor']);

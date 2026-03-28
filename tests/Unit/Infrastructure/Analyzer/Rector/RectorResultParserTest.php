@@ -357,6 +357,83 @@ class RectorResultParserTest extends TestCase
      *
      * @throws \JsonException
      */
+    public function testParseRectorOutputWithMultipleRulesPerFile(): void
+    {
+        $jsonOutput = json_encode([
+            'changed_files' => [
+                [
+                    'file' => 'Classes/Controller/TestController.php',
+                    'applied_rectors' => [
+                        [
+                            'class' => 'RenameClassRector',
+                            'message' => 'Rename deprecated class',
+                            'line' => 15,
+                            'old' => 'OldClass',
+                            'new' => 'NewClass',
+                        ],
+                        [
+                            'class' => 'RemoveUnusedVariableRector',
+                            'message' => 'Remove unused variable',
+                            'line' => 30,
+                            'old' => '$unused = null;',
+                            'new' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $findings = $this->parser->parseRectorOutput($jsonOutput);
+
+        $this->assertCount(2, $findings);
+        $this->assertSame('RenameClassRector', $findings[0]->getRuleClass());
+        $this->assertSame('RemoveUnusedVariableRector', $findings[1]->getRuleClass());
+        $this->assertSame('Classes/Controller/TestController.php', $findings[0]->getFile());
+        $this->assertSame('Classes/Controller/TestController.php', $findings[1]->getFile());
+    }
+
+    public function testEndToEndParsingAndAggregationWorkflow(): void
+    {
+        $jsonOutput = json_encode([
+            'changed_files' => [
+                [
+                    'file' => 'Classes/Controller/EventController.php',
+                    'applied_rectors' => [
+                        [
+                            'class' => 'RenameClassRector',
+                            'message' => 'Rename deprecated class',
+                            'line' => 8,
+                            'old' => 'OldEventController',
+                            'new' => 'EventController',
+                        ],
+                    ],
+                ],
+                [
+                    'file' => 'Classes/Domain/Model/Event.php',
+                    'applied_rectors' => [
+                        [
+                            'class' => 'RenameClassRector',
+                            'message' => 'Rename deprecated class',
+                            'line' => 12,
+                            'old' => 'OldEvent',
+                            'new' => 'Event',
+                        ],
+                    ],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $findings = $this->parser->parseRectorOutput($jsonOutput);
+        $summary = $this->parser->aggregateFindings($findings);
+
+        $this->assertCount(2, $findings);
+        $this->assertEquals(2, $summary->getTotalFindings());
+        $this->assertEquals(2, $summary->getAffectedFiles());
+        $this->assertTrue($summary->hasIssues());
+        $this->assertArrayHasKey('RenameClassRector', $summary->getRuleBreakdown());
+        $this->assertSame(2, $summary->getRuleBreakdown()['RenameClassRector']);
+    }
+
     public function testSuggestedFixGeneration(): void
     {
         $jsonOutput = json_encode([

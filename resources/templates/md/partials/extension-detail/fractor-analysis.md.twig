@@ -8,12 +8,18 @@
 - **Change Blocks:** {{ fractor_analysis.change_blocks }}
 - **Changed Lines:** {{ fractor_analysis.changed_lines }}
 - **Rules Applied:** {{ fractor_analysis.rules_applied }}
-- **Has Modernization Opportunities:** {% if not fractor_analysis.analysis_successful %}❓ Unknown (Analysis Failed){% elseif fractor_analysis.has_findings %}📋 Yes{% else %}✅ No{% endif %}
+- **Has Modernization Opportunities:** {% if not fractor_analysis.isSuccessful %}❓ Unknown (Analysis Failed){% elseif fractor_analysis.has_findings %}📋 Yes{% else %}✅ No{% endif %}
 
-### Analysis Status
-- **Analysis Result:** {{ fractor_analysis.analysis_successful ? '✅ Successful' : '❌ Failed' }}
-{% if fractor_analysis.error_message %}
-- **Error:** {{ fractor_analysis.error_message }}
+### Findings Summary
+- **Total Findings:** {{ fractor_analysis.total_findings }}
+- **Breaking Changes:** {{ fractor_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }}
+- **Deprecated Patterns:** {{ fractor_analysis.has_deprecations ? '📋 Yes' : '✅ No' }}
+
+### Findings by Severity
+{% if fractor_analysis.findings_by_severity %}
+{% for severity, count in fractor_analysis.findings_by_severity %}
+{% if count > 0 %}
+- **{{ severity|upper }}:** {{ count }} findings
 {% endif %}
 
 ### Affected Files
@@ -56,7 +62,7 @@ No sample changes available.
 - **Risk Score:** {{ "%.1f"|format(fractor_analysis.risk_score) }}/10.0
 - **Code Quality Impact:** {% if fractor_analysis.rules_applied > 20 %}High{% elseif fractor_analysis.rules_applied > 5 %}Medium{% else %}Low{% endif %}
 
-{% if not fractor_analysis.analysis_successful %}
+{% if not fractor_analysis.isSuccessful %}
 - **Status:** ❓ N/A (Analysis Failed)
 {% elseif fractor_analysis.rules_applied > 0 %}
 - **Estimated Effort:** {% set effort_hours = (fractor_analysis.rules_applied * 0.25)|round(1) %}{% if effort_hours < 1 %}< 1 hour{% else %}{{ effort_hours }} hours{% endif %}
@@ -71,6 +77,18 @@ No sample changes available.
 {% endfor %}
 {% else %}
 No specific Fractor recommendations available.
+{% endif %}
+
+{% if fractor_analysis.detailed_findings.findings is defined and fractor_analysis.detailed_findings.findings|length > 0 %}
+
+## Detailed Analysis
+
+**{{ fractor_analysis.detailed_findings.findings|length }} detailed findings** are available for in-depth review.
+
+[🔍 **View Detailed Findings**](../fractor-findings/{{ extension.key }}.md)
+
+*Includes code examples, fix suggestions, and file-by-file breakdown*
+
 {% endif %}
 
 {% else %}

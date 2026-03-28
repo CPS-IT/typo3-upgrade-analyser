@@ -17,21 +17,141 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
  */
 readonly class FractorExecutionResult
 {
+    /**
+     * @param array<FractorFinding> $findings
+     * @param array<string>         $errors
+     */
     public function __construct(
-        public int $exitCode,
-        public string $output,
-        public string $errorOutput,
-        public bool $successful,
+        private bool $successful,
+        private array $findings,
+        private array $errors,
+        private float $executionTime,
+        private int $exitCode,
+        private string $rawOutput,
+        private int $processedFileCount = 0,
     ) {
     }
 
-    public function hasOutput(): bool
+    public function isSuccessful(): bool
     {
-        return !empty(trim($this->output));
+        return $this->successful;
     }
 
-    public function hasErrorOutput(): bool
+    /**
+     * @return array<FractorFinding>
+     */
+    public function getFindings(): array
     {
-        return !empty(trim($this->errorOutput));
+        return $this->findings;
+    }
+
+    public function hasErrors(): bool
+    {
+        return !empty($this->errors);
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+    public function getExecutionTime(): float
+    {
+        return $this->executionTime;
+    }
+
+    public function getExitCode(): int
+    {
+        return $this->exitCode;
+    }
+
+    public function getRawOutput(): string
+    {
+        return $this->rawOutput;
+    }
+
+    public function getProcessedFileCount(): int
+    {
+        return $this->processedFileCount;
+    }
+
+    public function getTotalIssueCount(): int
+    {
+        return \count($this->findings);
+    }
+
+    /**
+     * Check if execution was successful and found issues.
+     */
+    public function hasFindings(): bool
+    {
+        return $this->successful && !empty($this->findings);
+    }
+
+    /**
+     * Get findings by severity level.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getFindingsBySeverity(FractorRuleSeverity $severity): array
+    {
+        return array_values(array_filter(
+            $this->findings,
+            static fn (FractorFinding $finding): bool => $finding->getSeverity() === $severity,
+        ));
+    }
+
+    /**
+     * Get findings by change type.
+     *
+     * @return array<FractorFinding>
+     */
+    public function getFindingsByChangeType(FractorChangeType $changeType): array
+    {
+        return array_values(array_filter(
+            $this->findings,
+            static fn (FractorFinding $finding): bool => $finding->getChangeType() === $changeType,
+        ));
+    }
+
+    /**
+     * Get summary statistics.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSummaryStats(): array
+    {
+        $severityCounts = [
+            'critical' => 0,
+            'warning' => 0,
+            'info' => 0,
+            'suggestion' => 0,
+        ];
+
+        $typeCounts = [];
+        $fileCounts = [];
+
+        foreach ($this->findings as $finding) {
+            ++$severityCounts[$finding->getSeverity()->value];
+
+            $type = $finding->getChangeType()->value;
+            $typeCounts[$type] = ($typeCounts[$type] ?? 0) + 1;
+
+            $file = $finding->getFile();
+            $fileCounts[$file] = ($fileCounts[$file] ?? 0) + 1;
+        }
+
+        return [
+            'total_findings' => \count($this->findings),
+            'processed_files' => $this->processedFileCount,
+            'affected_files' => \count($fileCounts),
+            'execution_time' => $this->executionTime,
+            'severity_counts' => $severityCounts,
+            'type_counts' => $typeCounts,
+            'file_counts' => $fileCounts,
+        ];
     }
 }

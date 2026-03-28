@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 
+use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffProcessor;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -21,6 +22,7 @@ readonly class RectorOutputParser
 {
     public function __construct(
         private LoggerInterface $logger,
+        private DiffProcessor $diffProcessor,
     ) {
     }
 
@@ -133,16 +135,23 @@ readonly class RectorOutputParser
         $ruleClass = $rectorData['class'] ?? 'Unknown';
         $message = $rectorData['message'] ?? 'No message provided';
         $line = (int) ($rectorData['line'] ?? 0);
-        $oldCode = $rectorData['old'] ?? null;
-        $newCode = $rectorData['new'] ?? null;
+        $diff = null;
+
+        if (isset($rectorData['diff'])) {
+            $diff = $this->diffProcessor->extractDiff($rectorData['diff']);
+        } elseif (isset($rectorData['old'], $rectorData['new'])) {
+            // Deprecated path: try to construct a diff if old/new exist but no diff
+            // This is a fallback and might not produce a real diff
+            // $diff = ...
+        }
 
         // Determine severity and change type from rule class
         $severity = $this->determineSeverityFromRule($ruleClass);
         $changeType = $this->determineChangeTypeFromRule($ruleClass);
 
         $suggestedFix = null;
-        if ($oldCode && $newCode) {
-            $suggestedFix = "Replace '{$oldCode}' with '{$newCode}'";
+        if ($diff) {
+            $suggestedFix = 'Apply Rector changes';
         }
 
         return new RectorFinding(
@@ -153,8 +162,7 @@ readonly class RectorOutputParser
             severity: $severity,
             changeType: $changeType,
             suggestedFix: $suggestedFix,
-            oldCode: $oldCode,
-            newCode: $newCode,
+            diff: $diff,
             context: $rectorData,
         );
     }
@@ -166,19 +174,18 @@ readonly class RectorOutputParser
     {
         $message = 'Code change detected by ' . $rectorClass;
         $line = 0; // Line number not available in this format
-        $oldCode = null;
-        $newCode = null;
+        $diff = null;
 
         // Try to extract code changes from diff if available
         if (isset($fileDiff['diff'])) {
-            $this->extractCodeFromDiff($fileDiff['diff'], $oldCode, $newCode);
+            $diff = $this->diffProcessor->extractDiff($fileDiff['diff']);
         }
 
         // Determine severity and change type from rule class
         $severity = $this->determineSeverityFromRule($rectorClass);
         $changeType = $this->determineChangeTypeFromRule($rectorClass);
 
-        $suggestedFix = $newCode ? 'Update code according to diff' : null;
+        $suggestedFix = $diff ? 'Update code according to diff' : null;
 
         return new RectorFinding(
             file: $file,
@@ -188,8 +195,7 @@ readonly class RectorOutputParser
             severity: $severity,
             changeType: $changeType,
             suggestedFix: $suggestedFix,
-            oldCode: $oldCode,
-            newCode: $newCode,
+            diff: $diff,
             context: $fileDiff,
         );
     }
@@ -207,8 +213,7 @@ readonly class RectorOutputParser
             severity: RectorRuleSeverity::INFO,
             changeType: RectorChangeType::BEST_PRACTICE,
             suggestedFix: 'Review changes in file',
-            oldCode: null,
-            newCode: null,
+            diff: null,
             context: ['file' => $file],
         );
     }
@@ -218,11 +223,23 @@ readonly class RectorOutputParser
      */
     private function determineSeverityFromRule(string $ruleClass): RectorRuleSeverity
     {
-        if (str_contains($ruleClass, 'Remove') || str_contains($ruleClass, 'Breaking')) {
+        if (str_contains($ruleClass, 'CodeQuality')) {
+            return RectorRuleSeverity::SUGGESTION;
+        }
+
+        if (str_contains($ruleClass, 'Remove')
+            || str_contains($ruleClass, 'Drop')
+            || str_contains($ruleClass, 'Breaking')
+            || str_contains($ruleClass, 'Strict')
+        ) {
             return RectorRuleSeverity::CRITICAL;
         }
 
-        if (str_contains($ruleClass, 'Substitute') || str_contains($ruleClass, 'Migrate')) {
+        if (str_contains($ruleClass, 'Substitute')
+            || str_contains($ruleClass, 'Migrate')
+            || str_contains($ruleClass, 'Replace')
+            || str_contains($ruleClass, 'Change')
+        ) {
             return RectorRuleSeverity::WARNING;
         }
 
@@ -250,31 +267,10 @@ readonly class RectorOutputParser
             return RectorChangeType::DEPRECATION;
         }
 
-        if (str_contains($ruleClass, 'Migrate')) {
+        if (str_contains($ruleClass, 'Migrate') || str_contains($ruleClass, 'Tca')) {
             return RectorChangeType::CONFIGURATION_CHANGE;
         }
 
         return RectorChangeType::BEST_PRACTICE;
-    }
-
-    /**
-     * Extract code snippets from diff text.
-     */
-    private function extractCodeFromDiff(string $diff, ?string &$oldCode, ?string &$newCode): void
-    {
-        $lines = explode("\n", $diff);
-        $oldLines = [];
-        $newLines = [];
-
-        foreach ($lines as $line) {
-            if (str_starts_with($line, '-') && !str_starts_with($line, '---')) {
-                $oldLines[] = substr($line, 1);
-            } elseif (str_starts_with($line, '+') && !str_starts_with($line, '+++')) {
-                $newLines[] = substr($line, 1);
-            }
-        }
-
-        $oldCode = !empty($oldLines) ? implode("\n", $oldLines) : null;
-        $newCode = !empty($newLines) ? implode("\n", $newLines) : null;
     }
 }
