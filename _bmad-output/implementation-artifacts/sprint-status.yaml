@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-28 (kickoff checklist updated; p2-4 done; p2-5→2-7, p2-6→5-6)
+# last_updated: 2026-03-28 (kickoff checklist updated; p2-4 done; p2-5→2-7, p2-6→5-6; 2-0 story created)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -77,8 +77,8 @@ development_status:
   #   DROPPED F-E-03: AbstractGitProvider deleted in Story 2-6
   #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
   #   Decision per finding: bundle into existing story or add pre-epic story.
-  epic-2: backlog
-  2-0-vcs-resolution-mechanism-spike: backlog
+  epic-2: in-progress
+  2-0-vcs-resolution-mechanism-spike: ready-for-dev
   2-1-composer-source-parser: backlog
   2-2-composer-vcs-resolver: backlog
   2-3-generic-git-resolver: backlog
