@@ -3,6 +3,12 @@
 - **Extension Key:** {{ extension.key }}
 - **Current Version:** {{ extension.version ? extension.version.toString() : 'N/A' }}
 - **Composer Name:** {{ extension.composerName ?: 'N/A' }}
+{% if extension.authors %}
+- **Authors:**
+{% for author in extension.authors %}
+  - {{ author.name }}{% if author.email %} ([{{ author.email }}](mailto:{{ author.email }})){% endif %}
+{% endfor %}
+{% endif %}
 - **Type:** {{ extension.isSystemExtension ? 'System Extension' : (extension.isLocalExtension ? 'Local Extension' : 'Third-party Extension') }}
 - **Target TYPO3 Version:** {{ target_version }}
 

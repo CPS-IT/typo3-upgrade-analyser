@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Domain\Entity;
 
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionAuthor;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionMetadata;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
@@ -29,6 +30,9 @@ class Extension implements \JsonSerializable
     private ?ExtensionMetadata $metadata = null;
     private bool $isActive = false;
 
+    /**
+     * @param list<ExtensionAuthor> $authors
+     */
     public function __construct(
         private readonly string $key,
         private readonly string $title,
@@ -36,6 +40,7 @@ class Extension implements \JsonSerializable
         private readonly string $type = 'local',
         private readonly ?string $composerName = null,
         private readonly ?ExtensionDistribution $distribution = null,
+        private readonly array $authors = [],
     ) {
     }
 
@@ -72,6 +77,24 @@ class Extension implements \JsonSerializable
     public function getDistribution(): ?ExtensionDistribution
     {
         return $this->distribution;
+    }
+
+    /**
+     * @return list<ExtensionAuthor>
+     */
+    public function getAuthors(): array
+    {
+        return $this->authors;
+    }
+
+    public function getAuthorsList(): string
+    {
+        $authors = [];
+        foreach ($this->getAuthors() as $author) {
+            $authors[] = $author->getName() . ($author->getEmail() ? ' (' . $author->getEmail() . ')' : '');
+        }
+
+        return implode(', ', $authors);
     }
 
     public function addDependency(string $extensionKey, ?string $version = null): void
@@ -242,6 +265,7 @@ class Extension implements \JsonSerializable
             'metadata' => $this->metadata?->toArray(),
             'is_active' => $this->isActive,
             'distribution' => $this->distribution?->toArray(),
+            'authors' => array_map(static fn (ExtensionAuthor $a): array => $a->toArray(), $this->authors),
         ];
     }
 
@@ -258,6 +282,7 @@ class Extension implements \JsonSerializable
             'files_count' => \count($this->files),
             'has_repository_url' => $this->hasRepositoryUrl(),
             'distribution' => $this->distribution?->toArray(),
+            'authors' => array_map(static fn (ExtensionAuthor $a): array => $a->toArray(), $this->authors),
         ];
     }
 }

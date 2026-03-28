@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionAuthor;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\SerializableInterface;
@@ -317,6 +318,14 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
             // Reconstruct extensions from cached data
             $extensions = [];
             foreach ($data['extensions'] as $extensionData) {
+                $authors = [];
+                foreach ($extensionData['authors'] ?? [] as $authorData) {
+                    $author = ExtensionAuthor::fromArray($authorData);
+                    if (null !== $author) {
+                        $authors[] = $author;
+                    }
+                }
+
                 $extension = new Extension(
                     $extensionData['key'],
                     $extensionData['title'],
@@ -324,6 +333,7 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
                     $extensionData['type'],
                     $extensionData['composer_name'],
                     ExtensionDistribution::fromArray($extensionData['distribution'] ?? null),
+                    $authors,
                 );
                 $extension->setActive($extensionData['is_active']);
                 $extension->setEmConfiguration($extensionData['em_configuration'] ?? []);
