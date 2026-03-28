@@ -72,7 +72,7 @@ class DeclaredRepositoryTest extends TestCase
 
         $reflection = new \ReflectionClass($repo);
         $properties = array_map(
-            fn (\ReflectionProperty $p) => $p->getName(),
+            fn (\ReflectionProperty $p): string => $p->getName(),
             $reflection->getProperties(),
         );
 
