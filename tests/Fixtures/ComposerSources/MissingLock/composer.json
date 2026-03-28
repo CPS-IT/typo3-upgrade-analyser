@@ -1,0 +1,14 @@
+{
+    "name": "myvendor/typo3-site",
+    "description": "TYPO3 site project",
+    "type": "project",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/myvendor/private-ext.git"
+        }
+    ],
+    "require": {
+        "myvendor/private-ext": "^2.0"
+    }
+}

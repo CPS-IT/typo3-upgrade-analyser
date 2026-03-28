@@ -1,0 +1,34 @@
+{
+    "_readme": ["This file is locked, do not edit it."],
+    "content-hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "packages": [
+        {
+            "name": "vendor/ext-alpha",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://gitlab.com/myvendor/mono-repo.git",
+                "reference": "abc1234"
+            },
+            "type": "typo3-cms-extension"
+        },
+        {
+            "name": "vendor/ext-beta",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://gitlab.com/myvendor/mono-repo.git",
+                "reference": "abc1234"
+            },
+            "type": "typo3-cms-extension"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {}
+}

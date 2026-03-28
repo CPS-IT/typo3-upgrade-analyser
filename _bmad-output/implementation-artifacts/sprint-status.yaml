@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-28 (kickoff checklist updated; p2-4 done; p2-5→2-7, p2-6→5-6; 2-0 story created)
+# last_updated: 2026-03-28 (kickoff checklist updated; p2-4 done; p2-5→2-7, p2-6→5-6; 2-0 story created; 2-1 created)
 # project: typo3-upgrade-analyser
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-28
+last_updated: 2026-03-28 (2-1 review)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -79,7 +79,7 @@ development_status:
   #   Decision per finding: bundle into existing story or add pre-epic story.
   epic-2: in-progress
   2-0-vcs-resolution-mechanism-spike: done
-  2-1-composer-source-parser: backlog
+  2-1-composer-source-parser: review
   2-2-composer-vcs-resolver: backlog
   2-3-generic-git-resolver: backlog
   2-4-unmatched-vcs-source-warning: backlog
