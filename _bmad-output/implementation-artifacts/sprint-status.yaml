@@ -64,7 +64,7 @@ development_status:
   p2-4-fix-packagestates-v5-composer-extensions: done            # Bug #163: merged in PR #195 (2026-03-25)
 
   # Epic 2: Complete Extension Source Coverage — All VCS Providers (Composer-based)
-  # Sprint change proposal 2026-03-26: GitProvider architecture replaced by ComposerVcsResolver + GenericGitResolver
+  # Sprint change proposal 2026-03-26: GitProvider architecture replaced by PackagistVersionResolver + GenericGitResolver
   # Story sequence: 2-0 (spike) → 2-1 → 2-2+2-3 (parallel) → 2-4 → 2-5 (integration) → 2-6 (cleanup) → 2-7
   #
   # KICKOFF CHECKLIST — review before writing story files (updated 2026-03-28 after sprint change proposal):
@@ -78,7 +78,7 @@ development_status:
   #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
   #   Decision per finding: bundle into existing story or add pre-epic story.
   epic-2: in-progress
-  2-0-vcs-resolution-mechanism-spike: ready-for-dev
+  2-0-vcs-resolution-mechanism-spike: review
   2-1-composer-source-parser: backlog
   2-2-composer-vcs-resolver: backlog
   2-3-generic-git-resolver: backlog

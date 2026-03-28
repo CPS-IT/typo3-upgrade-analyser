@@ -31,44 +31,44 @@ The per-provider approach inflates scope (each provider requires a full API clie
 
 ### Epic Impact
 
-| Epic | Impact |
-|------|--------|
+| Epic       | Impact                                                                                                                                                                                                                                                            |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Epic 2** | Major rewrite. 3 stories cancelled, 2 rewritten, 4 new stories added. Net: 4 stories → 7 (including research spike). Transition path preserves existing GitHub resolution until replacement is validated and integrated (Story 2.5), then cleaned up (Story 2.6). |
-| Epic 1 | No impact. `VersionProfileRegistry` and v11 bug fix are independent. |
-| Epic 3 | No impact. Streaming infrastructure is independent. |
-| Epic 4 | No impact. Customer report templates are independent. |
-| Epic 5 | No impact. JSON schema namespace `analyzers.version-availability` unchanged; data source changes transparently. |
-| Epic 6 | No impact. PHPStan analyzer and `CachingAnalyzerDecorator` are independent. |
+| Epic 1     | No impact. `VersionProfileRegistry` and v11 bug fix are independent.                                                                                                                                                                                              |
+| Epic 3     | No impact. Streaming infrastructure is independent.                                                                                                                                                                                                               |
+| Epic 4     | No impact. Customer report templates are independent.                                                                                                                                                                                                             |
+| Epic 5     | No impact. JSON schema namespace `analyzers.version-availability` unchanged; data source changes transparently.                                                                                                                                                   |
+| Epic 6     | No impact. PHPStan analyzer and `CachingAnalyzerDecorator` are independent.                                                                                                                                                                                       |
 
 ### Story Impact
 
-| Story | Current Status | Action |
-|-------|---------------|--------|
-| P2-3 (GitLab/Bitbucket spike) | ready-for-dev | **Cancel.** Provider-type fixture identification unnecessary. |
-| 2.1 (ComposerSourceParser) | backlog | **Rewrite.** Scope reduces: extract VCS URLs, no provider-type classification. |
-| 2.2 (GitLabProvider) | backlog | **Cancel.** Replaced by Composer-based and generic git resolution. |
-| 2.3 (BitbucketProvider) | backlog | **Cancel.** Replaced by Composer-based and generic git resolution. |
-| 2.4 (Unmatched source warning) | backlog | **Rewrite → 2.4.** Warning mechanism valid; remedy changes from "configure a provider" to "check Composer auth." |
-| NEW 2.0 (Research spike) | — | **New.** Evaluate Composer CLI, git CLI, Composer PHP API before implementation. |
-| NEW 2.2 (ComposerVcsResolver) | — | **New.** Composer CLI version resolution (Tier 1). |
-| NEW 2.3 (GenericGitResolver) | — | **New.** Generic git CLI fallback (Tier 2) replacing all provider-specific clients. |
-| NEW 2.5 (Integration + data model) | — | **New.** Wire new resolvers into analyzer, update metrics (`git_*` → `vcs_*`), update 10 templates, update risk scoring. Transition gate. |
-| NEW 2.6 (Remove GitProvider) | — | **New.** Delete old code after 2.5 is validated. Pure cleanup. |
+| Story                              | Current Status | Action                                                                                                                                    |
+|------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| P2-3 (GitLab/Bitbucket spike)      | ready-for-dev  | **Cancel.** Provider-type fixture identification unnecessary.                                                                             |
+| 2.1 (ComposerSourceParser)         | backlog        | **Rewrite.** Scope reduces: extract VCS URLs, no provider-type classification.                                                            |
+| 2.2 (GitLabProvider)               | backlog        | **Cancel.** Replaced by Composer-based and generic git resolution.                                                                        |
+| 2.3 (BitbucketProvider)            | backlog        | **Cancel.** Replaced by Composer-based and generic git resolution.                                                                        |
+| 2.4 (Unmatched source warning)     | backlog        | **Rewrite → 2.4.** Warning mechanism valid; remedy changes from "configure a provider" to "check Composer auth."                          |
+| NEW 2.0 (Research spike)           | —              | **New.** Evaluate Composer CLI, git CLI, Composer PHP API before implementation.                                                          |
+| NEW 2.2 (PackagistVersionResolver) | —              | **New.** Composer CLI version resolution (Tier 1).                                                                                        |
+| NEW 2.3 (GenericGitResolver)       | —              | **New.** Generic git CLI fallback (Tier 2) replacing all provider-specific clients.                                                       |
+| NEW 2.5 (Integration + data model) | —              | **New.** Wire new resolvers into analyzer, update metrics (`git_*` → `vcs_*`), update 10 templates, update risk scoring. Transition gate. |
+| NEW 2.6 (Remove GitProvider)       | —              | **New.** Delete old code after 2.5 is validated. Pure cleanup.                                                                            |
 
 ### Artifact Conflicts
 
-| Artifact | Sections Affected |
-|----------|-------------------|
-| PRD | FR11/FR12/FR13 consolidation; FR15 simplification; MVP Feature #3 description |
-| Architecture | Git Source Detection Pattern; External integration boundaries table; Project Structure; Implementation Patterns |
-| Epics | Epic 2 summary and all stories |
-| `VersionAvailabilityAnalyzer.php` | Dependencies, metrics, risk scoring, recommendation logic |
-| `ReportContextBuilder.php` | Metric extraction (lines 202–206), availability stats (lines 108–129) |
-| 10 report templates (HTML + MD) | Column headers, metric variable names, health display removal |
-| JSON output schema | Field renames (`git_*` → `vcs_*`), field removal (`git_repository_health`) — **breaking change** |
-| `composer-source-parser-design-note.md` | Sections 6 (DeclaredRepository type field) and 7 (provider resolution order) |
-| `GitRepositoryVersionSupport.md` | Superseded by new approach |
-| `config/services.yaml` | GitProvider service wiring (6 lines) |
+| Artifact                                | Sections Affected                                                                                               |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| PRD                                     | FR11/FR12/FR13 consolidation; FR15 simplification; MVP Feature #3 description                                   |
+| Architecture                            | Git Source Detection Pattern; External integration boundaries table; Project Structure; Implementation Patterns |
+| Epics                                   | Epic 2 summary and all stories                                                                                  |
+| `VersionAvailabilityAnalyzer.php`       | Dependencies, metrics, risk scoring, recommendation logic                                                       |
+| `ReportContextBuilder.php`              | Metric extraction (lines 202–206), availability stats (lines 108–129)                                           |
+| 10 report templates (HTML + MD)         | Column headers, metric variable names, health display removal                                                   |
+| JSON output schema                      | Field renames (`git_*` → `vcs_*`), field removal (`git_repository_health`) — **breaking change**                |
+| `composer-source-parser-design-note.md` | Sections 6 (DeclaredRepository type field) and 7 (provider resolution order)                                    |
+| `GitRepositoryVersionSupport.md`        | Superseded by new approach                                                                                      |
+| `config/services.yaml`                  | GitProvider service wiring (6 lines)                                                                            |
 
 ### Data Structure and View Impact
 
@@ -76,14 +76,14 @@ The current system stores and renders availability as three separate boolean col
 
 **Metrics affected in `VersionAvailabilityAnalyzer`:**
 
-| Current Metric | Status | Notes |
-|----------------|--------|-------|
-| `ter_available` (bool) | **Unchanged** | TER check is independent |
-| `packagist_available` (bool) | **Unchanged** | Packagist check is independent |
-| `git_available` (bool) | **Semantics change** | Was "found on GitHub." Becomes "found in any VCS source declared in composer.json" |
-| `git_repository_health` (float) | **Remove** | GitHub-specific vanity metric. No generic equivalent. |
-| `git_repository_url` (string) | **Keep** | Still useful — now the resolved VCS URL from composer.lock |
-| `git_latest_version` (string) | **Keep** | Still useful — latest compatible version from VCS |
+| Current Metric                  | Status               | Notes                                                                              |
+|---------------------------------|----------------------|------------------------------------------------------------------------------------|
+| `ter_available` (bool)          | **Unchanged**        | TER check is independent                                                           |
+| `packagist_available` (bool)    | **Unchanged**        | Packagist check is independent                                                     |
+| `git_available` (bool)          | **Semantics change** | Was "found on GitHub." Becomes "found in any VCS source declared in composer.json" |
+| `git_repository_health` (float) | **Remove**           | GitHub-specific vanity metric. No generic equivalent.                              |
+| `git_repository_url` (string)   | **Keep**             | Still useful — now the resolved VCS URL from composer.lock                         |
+| `git_latest_version` (string)   | **Keep**             | Still useful — latest compatible version from VCS                                  |
 
 **Risk scoring affected (`calculateRiskScore`):**
 - Currently weights `git_available` by `git_repository_health`. Health score is removed.
@@ -97,15 +97,15 @@ The current system stores and renders availability as three separate boolean col
 
 **Report templates affected (10 files):**
 
-| Template | Change |
-|----------|--------|
+| Template                                                                 | Change                                                                           |
+|--------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | `html/partials/extension-detail/version-availability-analysis.html.twig` | Remove "Repository Health" display. "Git Repository" label becomes "VCS Source." |
-| `html/partials/main-report/version-availability-table.html.twig` | Column header "Git" → "VCS." Remove `git_repository_health` reference. |
-| `md/partials/extension-detail/version-availability-analysis.md.twig` | Same changes as HTML variant |
-| `md/partials/main-report/version-availability-table.md.twig` | Same changes as HTML variant |
-| `html/extension-detail.html.twig` | Verify — may reference git metrics directly |
-| `md/extension-detail.md.twig` | Verify — may reference git metrics directly |
-| Remaining 4 report templates | Audit for `git_repository_health` or `git_available` references |
+| `html/partials/main-report/version-availability-table.html.twig`         | Column header "Git" → "VCS." Remove `git_repository_health` reference.           |
+| `md/partials/extension-detail/version-availability-analysis.md.twig`     | Same changes as HTML variant                                                     |
+| `md/partials/main-report/version-availability-table.md.twig`             | Same changes as HTML variant                                                     |
+| `html/extension-detail.html.twig`                                        | Verify — may reference git metrics directly                                      |
+| `md/extension-detail.md.twig`                                            | Verify — may reference git metrics directly                                      |
+| Remaining 4 report templates                                             | Audit for `git_repository_health` or `git_available` references                  |
 
 **`ReportContextBuilder` affected:**
 - Lines 202–206: `git_repository_health` metric extraction removed.
@@ -138,13 +138,13 @@ The current system stores and renders availability as three separate boolean col
 
 A research spike (Story 2.0) validates the Composer/git CLI mechanism before implementation begins. Then Epic 2 is rewritten to use Composer-based VCS resolution, and the existing `GitProvider/` subsystem is removed.
 
-| Dimension | Assessment |
-|-----------|------------|
-| Effort | **Medium** — simpler than original 4-story plan; net code reduction. Research spike adds 1 day. |
-| Risk | **Low** — Composer VCS resolution is mature. Spike de-risks performance and auth concerns before code is written. |
-| Timeline impact | **Neutral to positive** — fewer implementation stories, though spike adds a serial dependency. |
-| Team impact | **Positive** — reduces cognitive load; no need to learn 3 provider APIs. |
-| Long-term maintenance | **Significantly reduced** — zero provider-specific API maintenance. |
+| Dimension             | Assessment                                                                                                        |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------|
+| Effort                | **Medium** — simpler than original 4-story plan; net code reduction. Research spike adds 1 day.                   |
+| Risk                  | **Low** — Composer VCS resolution is mature. Spike de-risks performance and auth concerns before code is written. |
+| Timeline impact       | **Neutral to positive** — fewer implementation stories, though spike adds a serial dependency.                    |
+| Team impact           | **Positive** — reduces cognitive load; no need to learn 3 provider APIs.                                          |
+| Long-term maintenance | **Significantly reduced** — zero provider-specific API maintenance.                                               |
 
 **Alternatives considered:**
 
@@ -234,7 +234,7 @@ resolver, generic git CLI as fallback. No per-provider API clients.
 1. `ComposerSourceParser` extracts VCS URLs from `composer.lock` `packages[].source.url`
    (primary) and `composer.json` `repositories[].url` (fallback for packages missing from lock)
 
-2. **Tier 1 — Composer CLI resolution** (`ComposerVcsResolver`):
+2. **Tier 1 — Composer CLI resolution** (`PackagistVersionResolver`):
    - Uses `composer show` with `--working-dir` pointing to the analyzed installation
    - Exact command variant determined by research spike (Story 2.0). Candidates:
      - `composer show -o -d /path --format=json` (batch: all outdated in one call)
@@ -288,7 +288,7 @@ API clients while reusing existing authentication.
 Replace four provider-specific rows with:
 
 ```
-| VCS repositories | `ComposerVcsResolver` | Composer `auth.json` / SSH agent (via --working-dir) | Log warning, null result |
+| VCS repositories | `PackagistVersionResolver` | Composer `auth.json` / SSH agent (via --working-dir) | Log warning, null result |
 ```
 
 Remove rows for: GitHub (`GitHubClient`), GitLab public (`GitLabProvider`), GitLab private (`GitLabProvider`), Bitbucket (`BitbucketProvider`).
@@ -309,7 +309,7 @@ With:
 
 ```
 │   ├── ExternalTool/
-│   │   ├── ComposerVcsResolver.php           # NEW — resolves versions via Composer/git CLI
+│   │   ├── PackagistVersionResolver.php           # NEW — resolves versions via Composer/git CLI
 │   │   ├── VcsResolutionException.php        # Renamed from GitProviderException
 │   │   └── DeclaredRepository.php            # SIMPLIFIED — url and packages only, no type
 ```
@@ -340,7 +340,7 @@ instances configured in `.typo3-analyzer.yaml`
 
 **NEW:**
 ```
-AR4: `ComposerVcsResolver` — resolves VCS versions via Composer CLI or `git ls-remote` fallback;
+AR4: `PackagistVersionResolver` — resolves VCS versions via Composer CLI or `git ls-remote` fallback;
 uses Composer `auth.json` / SSH agent for authentication (via --working-dir pointing to analyzed
 installation); no per-provider API clients; no tool-specific token configuration
 ```
@@ -360,7 +360,7 @@ other — using Composer-based resolution that covers all providers through a si
 Replaces the provider-specific GitHub client with a generic approach. Unresolvable sources
 produce a visible warning.
 
-Implements: `ComposerSourceParser` (AR3 simplified), `ComposerVcsResolver` (AR4 replaced),
+Implements: `ComposerSourceParser` (AR3 simplified), `PackagistVersionResolver` (AR4 replaced),
 removal of existing `GitProvider/` subsystem.
 **FRs covered:** FR11 (consolidated), FR14 (completing aggregation)
 ```
@@ -454,13 +454,13 @@ So that version availability is checked for all VCS providers without per-host A
 **Acceptance Criteria:**
 
 - **Given** `ComposerSourceParser` has extracted `DeclaredRepository[]` with VCS URLs
-- **When** `ComposerVcsResolver` resolves versions for those repositories
+- **When** `PackagistVersionResolver` resolves versions for those repositories
 - **Then** it uses the Composer CLI approach determined by the research spike (batch command or per-package command)
 - **And** `--working-dir` points to the analyzed installation so Composer uses its `auth.json` and `repositories` configuration
 - **And** resolved versions are matched against the target TYPO3 version constraints to determine compatibility
 - **And** if resolution fails (network error, auth failure, Composer not installed), the failure is recorded per-extension and control passes to the fallback resolver (Story 2.3)
 - **And** operations use configurable timeouts (NFR2, NFR14)
-- **And** `ComposerVcsResolver` lives in `Infrastructure/ExternalTool/`
+- **And** `PackagistVersionResolver` lives in `Infrastructure/ExternalTool/`
 - **And** unit tests cover: successful resolution, no compatible version, network failure, auth failure, Composer not installed
 - **And** PHPStan Level 8 reports zero errors
 
@@ -518,7 +518,7 @@ So that I know the analysis is incomplete and can fix my authentication.
 #### Story 2.5: Integrate New Resolvers and Update Data Model (transition story)
 
 As a developer,
-I want `VersionAvailabilityAnalyzer` to use the new `ComposerVcsResolver` and `GenericGitResolver` instead of the old `GitRepositoryAnalyzer`,
+I want `VersionAvailabilityAnalyzer` to use the new `PackagistVersionResolver` and `GenericGitResolver` instead of the old `GitRepositoryAnalyzer`,
 So that the analyzer produces provider-agnostic VCS availability data with updated metrics and reporting.
 
 **Prerequisite:** Stories 2.2 and 2.3 are complete and independently tested.
@@ -526,7 +526,7 @@ So that the analyzer produces provider-agnostic VCS availability data with updat
 **Acceptance Criteria:**
 
 **Integration:**
-- **Given** `ComposerVcsResolver` and `GenericGitResolver` are implemented
+- **Given** `PackagistVersionResolver` and `GenericGitResolver` are implemented
 - **When** `VersionAvailabilityAnalyzer` is updated
 - **Then** the constructor dependency changes from `GitRepositoryAnalyzer` to the new resolvers
 - **And** `checkGitAvailability()` is rewritten to call Composer resolver first, then git CLI resolver as fallback
@@ -606,7 +606,7 @@ So that the codebase carries no dead code.
 
 `composer-source-parser-design-note.md`:
 - **Section 6** (`DeclaredRepository` type field): Remove `type` field. VO carries `url` and `packages` only.
-- **Section 7** (provider resolution order): Replace with "pass URL to `ComposerVcsResolver`."
+- **Section 7** (provider resolution order): Replace with "pass URL to `PackagistVersionResolver`."
 - **Sections 1–5** remain valid (source.url as primary field, SSH URL handling, path repositories, dist-only packages, packages-dev scanning).
 
 `GitRepositoryVersionSupport.md`: Superseded by new approach. Mark as archived or remove.
@@ -624,7 +624,7 @@ Requires backlog reorganization (Epic 2 rewrite) and architectural document upda
 ```
 2.0 (Research spike)
   → 2.1 (ComposerSourceParser)
-  → 2.2 (ComposerVcsResolver)    ─┐
+  → 2.2 (PackagistVersionResolver)    ─┐
   → 2.3 (GenericGitResolver)      ─┤ can be parallelized
   → 2.4 (Unresolvable warning)   ─┘ depends on 2.2 + 2.3 failure contract
   → 2.5 (Integration + data model + templates)  ← transition: old code still exists but unwired
@@ -637,11 +637,11 @@ Story 2.0 is a serial prerequisite. Stories 2.2 and 2.3 can be parallelized. Sto
 
 ### Handoff Responsibilities
 
-| Role | Responsibility |
-|------|---------------|
-| PO/SM (Dirk) | Approve this proposal; update planning artifacts per sections 4A–4D |
-| Development | Execute Story 2.0 first; implement 2.1–2.4 based on spike findings |
-| Architect | Review architecture updates after Story 2.0 completes (spike may refine the resolution pattern) |
+| Role         | Responsibility                                                                                  |
+|--------------|-------------------------------------------------------------------------------------------------|
+| PO/SM (Dirk) | Approve this proposal; update planning artifacts per sections 4A–4D                             |
+| Development  | Execute Story 2.0 first; implement 2.1–2.4 based on spike findings                              |
+| Architect    | Review architecture updates after Story 2.0 completes (spike may refine the resolution pattern) |
 
 ### Success Criteria
 
