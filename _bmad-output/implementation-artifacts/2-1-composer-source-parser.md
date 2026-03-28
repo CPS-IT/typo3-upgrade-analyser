@@ -1,6 +1,6 @@
 # Story 2.1: Composer Source Parser
 
-Status: review
+Status: done
 
 ## Story
 
