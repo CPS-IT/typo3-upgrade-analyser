@@ -3,43 +3,43 @@
 
 <table>
     <thead>
-        <tr>
-            <th></th>
-            <th>Extension</th>
-            <th>Current Version</th>
-            <th>TER</th>
-            <th>Packagist</th>
-            <th>Git</th>
-            <th>Risk Level</th>
-            <th>Latest Version</th>
-        </tr>
+    <tr>
+        <th></th>
+        <th>Extension</th>
+        <th>Current Version</th>
+        <th>TER</th>
+        <th>Packagist</th>
+        <th>Git</th>
+        <th>Risk Level</th>
+        <th>Latest Version</th>
+    </tr>
     </thead>
     <tbody>
-        {% for data in extension_data %}
-            <tr>
-                <td>
-                    {% if data.version_analysis and data.version_analysis.distribution_type == 'path' %}
-                        <span title="Local extension">🏠</span>
-                    {% elseif data.version_analysis and data.version_analysis.distribution_type is null %}
-                        <span title="From Source">⛲️</span>
-                    {% endif %}
-                </td>
-                <td><strong><a href="extensions/{{ data.extension.key }}.html#version-availability-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
-                <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
-                {% if data.version_analysis %}
-                    <td><span class="{{ data.version_analysis.ter_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.ter_available ? '✅' : '❌' }}</span></td>
-                    <td><span class="{{ data.version_analysis.packagist_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.packagist_available ? '✅' : '❌' }}</span></td>
-                    <td><span class="{{ data.version_analysis.git_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.git_available ? '✅' : '❌' }}</span></td>
-                    <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
-                    <td>{{ data.version_analysis.git_latest_version ?: 'N/A' }}</td>
-                {% else %}
-                    <td><span class="status-unknown">❓</span></td>
-                    <td><span class="status-unknown">❓</span></td>
-                    <td><span class="status-unknown">❓</span></td>
-                    <td><span class="badge badge-unknown">UNKNOWN</span></td>
-                    <td>N/A</td>
+    {% for data in extension_data %}
+        <tr>
+            <td>
+                {% if data.version_analysis and data.version_analysis.distribution_type == 'path' %}
+                    <span title="Local extension">🏠</span>
+                {% elseif data.version_analysis and data.version_analysis.distribution_type is null %}
+                    <span title="From Source">⛲️</span>
                 {% endif %}
-            </tr>
-        {% endfor %}
+            </td>
+            <td><strong><a href="extensions/{{ data.extension.key }}.html#version-availability-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+            <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
+            {% if data.version_analysis %}
+                <td><span class="{{ data.version_analysis.ter_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.ter_available ? '✅' : '❌' }}</span></td>
+                <td><span class="{{ data.version_analysis.packagist_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.packagist_available ? '✅' : '❌' }}</span></td>
+                <td><span class="{{ data.version_analysis.git_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.git_available ? '✅' : '❌' }}</span></td>
+                <td><span class="badge badge-{{ data.version_analysis.risk_level }}">{{ data.version_analysis.risk_level|upper }}</span></td>
+                <td>{{ data.version_analysis.git_latest_version ?: 'N/A' }}</td>
+            {% else %}
+                <td><span class="status-unknown">❓</span></td>
+                <td><span class="status-unknown">❓</span></td>
+                <td><span class="status-unknown">❓</span></td>
+                <td><span class="badge badge-unknown">UNKNOWN</span></td>
+                <td>N/A</td>
+            {% endif %}
+        </tr>
+    {% endfor %}
     </tbody>
 </table>

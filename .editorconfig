@@ -65,3 +65,8 @@ indent_size = 2
 # .htaccess
 [{_.htaccess,.htaccess}]
 indent_style = tab
+
+# *twig
+[*.twig]
+indent_style = space
+indent_size = 4
