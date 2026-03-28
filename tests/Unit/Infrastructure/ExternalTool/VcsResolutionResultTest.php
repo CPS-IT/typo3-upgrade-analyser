@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ResolutionStatus;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionResult;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -24,41 +24,41 @@ class VcsResolutionResultTest extends TestCase
 
     public function testResolvedCompatibleHasVersion(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_COMPATIBLE, self::SOURCE_URL, '1.2.3');
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, self::SOURCE_URL, '1.2.3');
 
-        self::assertSame(ResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame(self::SOURCE_URL, $result->sourceUrl);
         self::assertSame('1.2.3', $result->latestCompatibleVersion);
     }
 
     public function testResolvedNoMatchHasNullVersion(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_NO_MATCH, self::SOURCE_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, self::SOURCE_URL, null);
 
         self::assertNull($result->latestCompatibleVersion);
     }
 
     public function testShouldTryFallbackReturnsFalseForResolvedCompatible(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_COMPATIBLE, self::SOURCE_URL, '1.0.0');
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, self::SOURCE_URL, '1.0.0');
         self::assertFalse($result->shouldTryFallback());
     }
 
     public function testShouldTryFallbackReturnsFalseForResolvedNoMatch(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_NO_MATCH, self::SOURCE_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, self::SOURCE_URL, null);
         self::assertFalse($result->shouldTryFallback());
     }
 
-    public function testShouldTryFallbackReturnsTrueForNotOnPackagist(): void
+    public function testShouldTryFallbackReturnsTrueForNotFound(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::NOT_ON_PACKAGIST, self::SOURCE_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::NOT_FOUND, self::SOURCE_URL, null);
         self::assertTrue($result->shouldTryFallback());
     }
 
     public function testShouldTryFallbackReturnsTrueForFailure(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::FAILURE, self::SOURCE_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::FAILURE, self::SOURCE_URL, null);
         self::assertTrue($result->shouldTryFallback());
     }
 }

@@ -23,22 +23,21 @@ use Symfony\Component\Process\Process;
  *
  * Pre-condition: intended for packages that appear in a DeclaredRepository
  * (i.e. VCS-sourced extensions). May be called for any package name — a
- * NOT_ON_PACKAGIST result is the expected outcome for extensions that are
- * not Packagist-indexed.
+ * NOT_FOUND result is the expected outcome for extensions that are not
+ * Packagist-indexed.
  *
  * Note: --working-dir is never used in any subprocess call. It adds 11–13 s
  * overhead per call (VcsResolutionSpike.md §8).
  */
 class PackagistVersionResolver
 {
-    private ?bool $composerVersionOk = null;
-
     /**
      * @param (\Closure(list<string>): Process)|null $processFactory
      */
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ComposerConstraintCheckerInterface $constraintChecker,
+        private readonly ComposerEnvironment $composerEnvironment,
         private readonly int $timeoutSeconds = 30,
         private readonly ?\Closure $processFactory = null,
     ) {
@@ -46,8 +45,8 @@ class PackagistVersionResolver
 
     public function resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult
     {
-        if (!$this->checkComposerVersion()) {
-            return new VcsResolutionResult(ResolutionStatus::FAILURE, $vcsUrl, null);
+        if (!$this->composerEnvironment->isVersionSufficient()) {
+            return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
         }
 
         $process = $this->createProcess(['composer', 'show', '--all', '--format=json', $packageName]);
@@ -58,7 +57,7 @@ class PackagistVersionResolver
         } catch (ProcessTimedOutException) {
             $this->logger->warning('composer show timed out for package {package}', ['package' => $packageName]);
 
-            return new VcsResolutionResult(ResolutionStatus::FAILURE, $vcsUrl, null);
+            return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
         }
 
         if (!$process->isSuccessful()) {
@@ -74,67 +73,31 @@ class PackagistVersionResolver
                 ['package' => $packageName, 'message' => $e->getMessage()],
             );
 
-            return new VcsResolutionResult(ResolutionStatus::FAILURE, $vcsUrl, null);
+            return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
         }
 
         $versions = $data['versions'] ?? [];
         $latestRequires = $data['requires'] ?? [];
 
         if ([] === $versions) {
-            return new VcsResolutionResult(ResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
+            return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
         }
 
         // Check the latest version first (single-call fast path).
         $latestVersion = $versions[0];
         if ($this->isCompatible($latestRequires, $targetVersion)) {
-            return new VcsResolutionResult(ResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $latestVersion);
+            return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $latestVersion);
         }
 
         // Linear scan for newest compatible version (newest-to-oldest, start after index 0).
-        // Binary search is available as binarySearchCompatible() for future opt-in once
-        // real-world data confirms the monotone-compatibility precondition holds.
+        // Binary search is available in git history on feature/2-2-composer-vcs-resolver for future
+        // opt-in once real-world data confirms the monotone-compatibility precondition holds.
         $found = $this->linearScan($packageName, $versions, $targetVersion, 1);
         if (null !== $found) {
-            return new VcsResolutionResult(ResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $found);
+            return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $found);
         }
 
-        return new VcsResolutionResult(ResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
-    }
-
-    private function checkComposerVersion(): bool
-    {
-        if (null !== $this->composerVersionOk) {
-            return $this->composerVersionOk;
-        }
-
-        $process = $this->createProcess(['composer', '--version']);
-        $process->setTimeout($this->timeoutSeconds);
-
-        try {
-            $process->run();
-        } catch (ProcessTimedOutException) {
-            return $this->composerVersionOk = false;
-        }
-
-        if (!$process->isSuccessful()) {
-            return $this->composerVersionOk = false;
-        }
-
-        if (!preg_match('/version (\d+\.\d+)/', $process->getOutput(), $m)) {
-            $this->logger->warning('Could not determine Composer version from output; assuming incompatible');
-
-            return $this->composerVersionOk = false;
-        }
-
-        if (version_compare($m[1], '2.1', '<')) {
-            $this->logger->warning(
-                \sprintf('Composer 2.1+ required for stable JSON output; found %s', $m[1]),
-            );
-
-            return $this->composerVersionOk = false;
-        }
-
-        return $this->composerVersionOk = true;
+        return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
     }
 
     private function handleNonZeroExit(string $packageName, string $vcsUrl, string $stderr): VcsResolutionResult
@@ -142,7 +105,7 @@ class PackagistVersionResolver
         if (false !== stripos($stderr, 'not found') || false !== stripos($stderr, 'Could not find package')) {
             $this->logger->debug('Package {package} not found on Packagist', ['package' => $packageName]);
 
-            return new VcsResolutionResult(ResolutionStatus::NOT_ON_PACKAGIST, $vcsUrl, null);
+            return new VcsResolutionResult(VcsResolutionStatus::NOT_FOUND, $vcsUrl, null);
         }
 
         $this->logger->warning(
@@ -150,7 +113,7 @@ class PackagistVersionResolver
             ['package' => $packageName, 'stderr' => $stderr],
         );
 
-        return new VcsResolutionResult(ResolutionStatus::FAILURE, $vcsUrl, null);
+        return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
     }
 
     /**

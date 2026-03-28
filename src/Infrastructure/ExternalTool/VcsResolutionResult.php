@@ -18,7 +18,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 final readonly class VcsResolutionResult
 {
     public function __construct(
-        public ResolutionStatus $status,
+        public VcsResolutionStatus $status,
         public string $sourceUrl,
         public ?string $latestCompatibleVersion,
     ) {
@@ -26,7 +26,7 @@ final readonly class VcsResolutionResult
 
     public function shouldTryFallback(): bool
     {
-        return ResolutionStatus::NOT_ON_PACKAGIST === $this->status
-            || ResolutionStatus::FAILURE === $this->status;
+        return VcsResolutionStatus::NOT_FOUND === $this->status
+            || VcsResolutionStatus::FAILURE === $this->status;
     }
 }

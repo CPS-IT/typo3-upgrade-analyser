@@ -12,10 +12,11 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 
-enum ResolutionStatus: string
+enum VcsResolutionStatus: string
 {
     case RESOLVED_COMPATIBLE = 'resolved_compatible';
     case RESOLVED_NO_MATCH = 'resolved_no_match';
-    case NOT_ON_PACKAGIST = 'not_on_packagist';
+    /** Package not found in the queried source registry — caller must hand off to Tier 2. */
+    case NOT_FOUND = 'not_found';
     case FAILURE = 'failure';
 }

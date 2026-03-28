@@ -13,9 +13,10 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistVersionResolver;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ResolutionStatus;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionResult;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Stub;
@@ -41,9 +42,6 @@ class PackagistVersionResolverTest extends TestCase
     // Helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * Build a Process stub that simulates a successful process with given output.
-     */
     private function makeSuccessProcess(string $stdout, string $stderr = ''): Process&Stub
     {
         $process = $this->createStub(Process::class);
@@ -55,9 +53,6 @@ class PackagistVersionResolverTest extends TestCase
         return $process;
     }
 
-    /**
-     * Build a Process stub that simulates a failed process.
-     */
     private function makeFailProcess(string $stderr = '', string $stdout = ''): Process&Stub
     {
         $process = $this->createStub(Process::class);
@@ -69,9 +64,6 @@ class PackagistVersionResolverTest extends TestCase
         return $process;
     }
 
-    /**
-     * Build a Process stub that throws ProcessTimedOutException from run().
-     */
     private function makeTimedOutProcess(): Process&Stub
     {
         $process = $this->createStub(Process::class);
@@ -83,11 +75,24 @@ class PackagistVersionResolverTest extends TestCase
     }
 
     /**
-     * Composer version check response (successful, version 2.8.9).
+     * @param list<string>          $versions
+     * @param array<string, string> $requires
      */
-    private function composerVersionOutput(): string
+    private function composerShowJson(array $versions, array $requires = []): string
     {
-        return 'Composer version 2.8.9 2024-11-01 09:34:21 UTC';
+        return json_encode([
+            'name' => self::PACKAGE,
+            'versions' => $versions,
+            'requires' => $requires,
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    private function makeComposerEnvironment(bool $versionSufficient = true): ComposerEnvironment&Stub
+    {
+        $env = $this->createStub(ComposerEnvironment::class);
+        $env->method('isVersionSufficient')->willReturn($versionSufficient);
+
+        return $env;
     }
 
     /**
@@ -95,8 +100,11 @@ class PackagistVersionResolverTest extends TestCase
      *
      * @param list<Process> $processQueue
      */
-    private function makeResolver(array $processQueue, ?ComposerConstraintCheckerInterface $checker = null): PackagistVersionResolver
-    {
+    private function makeResolver(
+        array $processQueue,
+        ?ComposerConstraintCheckerInterface $checker = null,
+        bool $composerVersionSufficient = true,
+    ): PackagistVersionResolver {
         $queue = $processQueue;
         $factory = function (array $command) use (&$queue): Process {
             $process = array_shift($queue);
@@ -108,24 +116,10 @@ class PackagistVersionResolverTest extends TestCase
         return new PackagistVersionResolver(
             new NullLogger(),
             $checker ?? $this->createStub(ComposerConstraintCheckerInterface::class),
+            $this->makeComposerEnvironment($composerVersionSufficient),
             30,
             $factory,
         );
-    }
-
-    /**
-     * Encode a standard composer show response.
-     *
-     * @param list<string>          $versions
-     * @param array<string, string> $requires
-     */
-    private function composerShowJson(array $versions, array $requires = []): string
-    {
-        return json_encode([
-            'name' => self::PACKAGE,
-            'versions' => $versions,
-            'requires' => $requires,
-        ], JSON_THROW_ON_ERROR);
     }
 
     // -----------------------------------------------------------------------
@@ -139,20 +133,18 @@ class PackagistVersionResolverTest extends TestCase
         $checker->method('isConstraintCompatible')->willReturn(true);
 
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeSuccessProcess($this->composerShowJson(['2.0.0', '1.0.0'], ['typo3/cms-core' => '^13.4'])),
         ], $checker);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame('2.0.0', $result->latestCompatibleVersion);
         self::assertFalse($result->shouldTryFallback());
     }
 
-    public function testResolvedCompatibleBinarySearchFindsOlderVersion(): void
+    public function testResolvedCompatibleLinearScanFindsOlderVersion(): void
     {
-        // Latest (2.0.0) incompatible; 1.5.0 compatible.
         $versions = ['2.0.0', '1.5.0', '1.0.0'];
 
         $checker = $this->createMock(ComposerConstraintCheckerInterface::class);
@@ -163,14 +155,13 @@ class PackagistVersionResolverTest extends TestCase
             ->willReturnOnConsecutiveCalls(false, true);
 
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeSuccessProcess($this->composerShowJson($versions, ['typo3/cms-core' => '^14.0'])),
             $this->makeSuccessProcess($this->composerShowJson(['1.5.0'], ['typo3/cms-core' => '^13.4'])),
         ], $checker);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame('1.5.0', $result->latestCompatibleVersion);
     }
 
@@ -181,54 +172,80 @@ class PackagistVersionResolverTest extends TestCase
         $checker->method('isConstraintCompatible')->willReturn(false);
 
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^12.4'])),
         ], $checker);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::RESOLVED_NO_MATCH, $result->status);
+        self::assertSame(VcsResolutionStatus::RESOLVED_NO_MATCH, $result->status);
         self::assertNull($result->latestCompatibleVersion);
         self::assertFalse($result->shouldTryFallback());
     }
 
-    public function testNotOnPackagistFromStderrNotFound(): void
+    public function testResolvedNoMatchWhenVersionsListIsEmpty(): void
     {
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
+            $this->makeSuccessProcess($this->composerShowJson([])),
+        ]);
+
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
+
+        self::assertSame(VcsResolutionStatus::RESOLVED_NO_MATCH, $result->status);
+        self::assertNull($result->latestCompatibleVersion);
+        self::assertFalse($result->shouldTryFallback());
+    }
+
+    public function testResolvedNoMatchWhenAllVersionedSubprocessesFail(): void
+    {
+        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
+        $checker->method('findTypo3Requirements')->willReturn(['^12.4']);
+        $checker->method('isConstraintCompatible')->willReturn(false);
+
+        $resolver = $this->makeResolver([
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0', '0.9.0'], ['typo3/cms-core' => '^12.4'])),
+            $this->makeFailProcess('network error'),
+        ], $checker);
+
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
+
+        self::assertSame(VcsResolutionStatus::RESOLVED_NO_MATCH, $result->status);
+        self::assertNull($result->latestCompatibleVersion);
+    }
+
+    public function testNotFoundFromStderrNotFound(): void
+    {
+        $resolver = $this->makeResolver([
             $this->makeFailProcess('Package vendor/my-extension not found'),
         ]);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::NOT_ON_PACKAGIST, $result->status);
+        self::assertSame(VcsResolutionStatus::NOT_FOUND, $result->status);
         self::assertNull($result->latestCompatibleVersion);
         self::assertTrue($result->shouldTryFallback());
     }
 
-    public function testNotOnPackagistFromStderrCouldNotFindPackage(): void
+    public function testNotFoundFromStderrCouldNotFindPackage(): void
     {
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeFailProcess('Could not find package vendor/my-extension'),
         ]);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::NOT_ON_PACKAGIST, $result->status);
+        self::assertSame(VcsResolutionStatus::NOT_FOUND, $result->status);
         self::assertTrue($result->shouldTryFallback());
     }
 
     public function testFailureOnNonZeroExitWithoutNotFoundMessage(): void
     {
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeFailProcess('Authentication required'),
         ]);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::FAILURE, $result->status);
+        self::assertSame(VcsResolutionStatus::FAILURE, $result->status);
         self::assertNull($result->latestCompatibleVersion);
         self::assertTrue($result->shouldTryFallback());
     }
@@ -236,131 +253,58 @@ class PackagistVersionResolverTest extends TestCase
     public function testFailureOnProcessTimeout(): void
     {
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeTimedOutProcess(),
         ]);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::FAILURE, $result->status);
+        self::assertSame(VcsResolutionStatus::FAILURE, $result->status);
         self::assertTrue($result->shouldTryFallback());
     }
 
     public function testFailureOnMalformedJson(): void
     {
         $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
             $this->makeSuccessProcess('not valid json {{{'),
         ]);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::FAILURE, $result->status);
+        self::assertSame(VcsResolutionStatus::FAILURE, $result->status);
         self::assertTrue($result->shouldTryFallback());
     }
 
-    public function testFailureWhenComposerVersionBelowMinimum(): void
+    public function testFailureWhenComposerEnvironmentReportsInsufficientVersion(): void
     {
-        $resolver = $this->makeResolver([
-            $this->makeSuccessProcess('Composer version 2.0.14 2021-05-21 17:03:37'),
-        ]);
+        $resolver = $this->makeResolver([], null, false);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        self::assertSame(ResolutionStatus::FAILURE, $result->status);
+        self::assertSame(VcsResolutionStatus::FAILURE, $result->status);
         self::assertTrue($result->shouldTryFallback());
     }
 
-    public function testComposerVersionCheckIsCached(): void
+    public function testShouldTryFallbackReturnsTrueForNotFound(): void
     {
-        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
-        $checker->method('findTypo3Requirements')->willReturn([]);
-
-        $callCount = 0;
-        $factory = function (array $command) use (&$callCount): Process {
-            ++$callCount;
-            if (1 === $callCount) {
-                return $this->makeSuccessProcess($this->composerVersionOutput());
-            }
-
-            return $this->makeSuccessProcess($this->composerShowJson(['1.0.0']));
-        };
-
-        $resolver = new PackagistVersionResolver(new NullLogger(), $checker, 30, $factory);
-
-        $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
-        $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
-
-        // 1 version check + 2 show calls = 3 total
-        self::assertSame(3, $callCount);
-    }
-
-    public function testResolvedNoMatchWhenVersionsListIsEmpty(): void
-    {
-        $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
-            $this->makeSuccessProcess($this->composerShowJson([])),
-        ]);
-
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
-
-        self::assertSame(ResolutionStatus::RESOLVED_NO_MATCH, $result->status);
-        self::assertNull($result->latestCompatibleVersion);
-        self::assertFalse($result->shouldTryFallback());
-    }
-
-    public function testResolvedNoMatchWhenAllVersionedSubprocessesFail(): void
-    {
-        // Latest version (1.0.0) is incompatible; all versioned calls for older versions fail.
-        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
-        $checker->method('findTypo3Requirements')->willReturn(['^12.4']);
-        $checker->method('isConstraintCompatible')->willReturn(false);
-
-        $resolver = $this->makeResolver([
-            $this->makeSuccessProcess($this->composerVersionOutput()),
-            $this->makeSuccessProcess($this->composerShowJson(['1.0.0', '0.9.0'], ['typo3/cms-core' => '^12.4'])),
-            $this->makeFailProcess('network error'),
-        ], $checker);
-
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
-
-        self::assertSame(ResolutionStatus::RESOLVED_NO_MATCH, $result->status);
-        self::assertNull($result->latestCompatibleVersion);
-    }
-
-    public function testFailureWhenComposerVersionOutputIsUnparseable(): void
-    {
-        $resolver = $this->makeResolver([
-            $this->makeSuccessProcess('some unexpected output without version'),
-        ]);
-
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
-
-        self::assertSame(ResolutionStatus::FAILURE, $result->status);
-        self::assertTrue($result->shouldTryFallback());
-    }
-
-    public function testShouldTryFallbackReturnsTrueForNotOnPackagist(): void
-    {
-        $result = new VcsResolutionResult(ResolutionStatus::NOT_ON_PACKAGIST, self::VCS_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::NOT_FOUND, self::VCS_URL, null);
         self::assertTrue($result->shouldTryFallback());
     }
 
     public function testShouldTryFallbackReturnsTrueForFailure(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::FAILURE, self::VCS_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::FAILURE, self::VCS_URL, null);
         self::assertTrue($result->shouldTryFallback());
     }
 
     public function testShouldTryFallbackReturnsFalseForResolvedCompatible(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_COMPATIBLE, self::VCS_URL, '1.0.0');
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, self::VCS_URL, '1.0.0');
         self::assertFalse($result->shouldTryFallback());
     }
 
     public function testShouldTryFallbackReturnsFalseForResolvedNoMatch(): void
     {
-        $result = new VcsResolutionResult(ResolutionStatus::RESOLVED_NO_MATCH, self::VCS_URL, null);
+        $result = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, self::VCS_URL, null);
         self::assertFalse($result->shouldTryFallback());
     }
 }
