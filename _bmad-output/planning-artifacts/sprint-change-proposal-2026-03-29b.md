@@ -1,5 +1,7 @@
 # Sprint Change Proposal — 2026-03-29 (2)
 
+> **SUPERSEDED** by Sprint Change Proposal 2026-03-29c. GenericGitResolver cancelled; Story 2.4 absorbed into Story 2.5; tagged iterator replaced with single VcsResolverInterface injection.
+
 ## Section 1: Issue Summary
 
 **Problem statement:** Contributor commit `1c2781e` ([TASK] Refactor external sources)

@@ -181,7 +181,7 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
 
 ### Git Source Detection & Version Availability
 
-**Decision:** `composer.json`/`composer.lock` in the analyzed installation is the source of truth for extension origins. Version resolution uses a two-tier strategy: Composer CLI as primary resolver, generic git CLI as fallback. No per-provider API clients. No URL-sniffing heuristics.
+**Decision:** `composer.json`/`composer.lock` in the analyzed installation is the source of truth for extension origins. Version resolution uses Composer CLI as the sole resolver (`ComposerVersionResolver` via `VcsResolverInterface`). No per-provider API clients. No URL-sniffing heuristics. No git CLI fallback — Composer already handles all VCS types (git, SVN, Mercurial, Fossil) natively.
 
 **Tool preconditions (checked at `AnalyzeCommand` startup, before any analysis):**
 
@@ -189,7 +189,7 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
 - `git` — **hard precondition.** Same check. If unavailable: fail fast with error message `Required tool 'git' not found on PATH. Install Git (https://git-scm.com/downloads) and ensure it is available in your shell environment.` Rationale: the tool targets developers and CI pipelines where both tools are standard infrastructure.
 - `vendor/` directory present in the analyzed installation — **soft precondition.** If present: enables optional pre-filter optimization (see step 2 below). If absent: emit INFO, skip optimization, continue with full per-package resolution. Analysis is not blocked. **Stale `vendor/` caveat:** If `composer.lock` has been updated but `composer install` has not been run, the pre-filter may report packages as up-to-date that have been added or changed since the last install. No reliable detection mechanism exists — treat a present `vendor/` as "potentially stale" and document this as a known limitation of the pre-filter.
 
-`composer` is required because Tier 1 and the pre-filter depend on it; Tier 2 does not use it but is never intended to operate as a standalone resolution path.
+`composer` is required because the version resolver and the pre-filter depend on it.
 
 **Resolution chain (explicit fallback order):**
 
@@ -201,44 +201,22 @@ Caching strategy is established: `AbstractCachedAnalyzer` for analyzer results, 
    - Coverage: direct dependencies only; transitive VCS-sourced extensions not covered by this filter
    - **Known limitation:** Transitive `typo3-cms-extension` packages sourced from private VCS are not discovered by the pre-filter or Tier 1. These are the highest-risk category (private, potentially unmaintained) but require `composer.lock` `packages[]` traversal beyond direct deps — not implemented in this tier. Frequency in real TYPO3 projects is not assessed
 
-3. **Tier 1 — Composer CLI resolution** (`PackagistVersionResolver`):
-   - Command: `composer show --all --format=json vendor/package` (no `--working-dir`) — Packagist-indexed packages only (~315ms/pkg; ~400ms with Xdebug active)
-   - **Two-call strategy per package:** first call (no version) returns full version list + `requires` for the latest version. If latest is not compatible with the target TYPO3 version, use binary search on the version list with versioned calls (`composer show --all --format=json vendor/package X.Y.Z`) to find the newest compatible version (~315ms per additional call). Binary search reduces worst-case from O(N) to O(log N) — relevant for extensions like `ext-solr` (139 versions)
-   - `--working-dir` is NOT used — confirmed to add 11–13s overhead per call due to full repository initialisation on every subprocess. VCS-only packages (not on Packagist) go directly to Tier 2
-   - Batch commands (`-o`, `-liD`) are NOT used for version resolution: they lack the `requires` block needed for TYPO3 compatibility matching
-   - **When this tier is used:** package name resolves on Packagist
-   - **When this tier fails:** package not on Packagist, or network/auth failure → falls through to Tier 2
+3. **Composer CLI resolution** (`ComposerVersionResolver`):
+   - Command: `composer show --all --format=json vendor/package` (no `--working-dir`) — resolves any package Composer can see: Packagist-indexed, VCS-sourced, or private (~315ms/pkg; ~400ms with Xdebug active)
+   - **Two-call strategy per package:** first call (no version) returns full version list + `requires` for the latest version. If latest is not compatible with the target TYPO3 version, use binary search on the version list with versioned calls (`composer show --all --format=json vendor/package X.Y.Z`) to find the newest compatible version (~315ms per additional call)
+   - `--working-dir` is NOT used — confirmed to add 11–13s overhead per call
+   - Authentication: Composer uses `auth.json` and SSH agent automatically. No tool-specific tokens.
+   - **When this fails:** network error, auth failure → emit Console WARNING, record `null`, analysis continues for remaining extensions
 
-4. **Tier 2 — Generic git CLI resolution** (`GenericGitResolver`):
-   - **Trigger:** Packagist lookup returned no result (VCS-only package) or Tier 1 network/auth failure. NOT triggered by Composer being unavailable — that is a startup error
-   - Command: `git ls-remote -t --refs <url>` (the `--refs` flag suppresses peeled `^{}` entries; do NOT use `--tags` alone)
-   - Parses tag names into Composer version strings; dominant TYPO3 extension pattern is `X.Y.Z` (no `v` prefix)
-   - For `dev-*` constraints: `git ls-remote --refs <url>` (without `-t`) returns both tags and branches in one call
-   - Authentication: SSH agent for `git@host:` URLs; git credential helpers for HTTPS. No tool-specific tokens. Confirmed working for private SSH GitLab repos (~630ms/URL)
-   - **Limitation:** tag names only — no `requires` block. Fetch `composer.json` from the most recent stable tag ref to determine TYPO3 compatibility (one additional HTTP call per package). **Unverified assumption:** The HTTP cost of this fetch was not benchmarked. For 40 private extensions on a slow internal GitLab instance, 40 raw-file HTTP fetches may significantly exceed the ls-remote timings measured in the spike
-   - Performance: ~315–560ms/URL across GitHub, GitLab.com, and private self-hosted GitLab (unaffected by Xdebug)
-   - **When this tier fails:** network error, auth failure → emit Console WARNING, record `null`
+4. **No git CLI fallback tier.** The original two-tier design included `GenericGitResolver` using `git ls-remote` + `git archive --remote`. This was cancelled (Sprint Change Proposal 2026-03-29c) because `git archive --remote` is rejected by all major hosted git services (GitHub, GitLab, Bitbucket disable `git-upload-archive`). Without `composer.json` access, the resolver cannot verify TYPO3 compatibility. Since the analyzed installation was installed via Composer, all packages were resolvable at install time. Environment drift between install and analysis is the only scenario where Composer fails — a rare edge case that does not justify the complexity.
 
-5. **Failure handling:** If Tier 2 fails for a given repository, emit a Console WARNING with the URL and error. Record availability as `null` (not `false`). Analysis continues for remaining extensions.
+5. **Failure handling:** If resolution fails for a given repository, emit a Console WARNING with the URL and error. Record availability as `null` (not `false`). Analysis continues for remaining extensions.
 
-6. **Future optimization — parallel execution:** Both tiers are currently designed as serial workloads (40 × ~315ms ≈ 12.6s for Tier 1; 40 × ~560ms ≈ 22.5s for Tier 2). These are within NFR budget for serial execution. Parallel subprocess execution (e.g. `symfony/process` with concurrent pools) is a viable optimization if serial timings become a bottleneck in larger installations. Not planned for initial implementation.
+6. **Future optimization — parallel execution:** Resolution is currently serial (~315ms/package). Parallel subprocess execution (e.g. `symfony/process` with concurrent pools) is a viable optimization if serial timings become a bottleneck in larger installations. Not planned for initial implementation.
 
-**What each tier provides:**
+**Legacy installations (v11 non-Composer):** Extensions in `typo3conf/ext/` have no composer provenance. Version availability falls back to TER + key-based lookup only.
 
-| Capability                       | Tier 1 (Composer, Packagist)          | Tier 2 (git CLI)                             |
-|----------------------------------|---------------------------------------|----------------------------------------------|
-| List available versions          | Yes (rich)                            | Yes (tags only)                              |
-| Version constraint matching      | Yes (native)                          | Manual parsing                               |
-| Dependency metadata (require)    | Yes — latest and per specific version | No (requires separate `composer.json` fetch) |
-| Branch-based versions (dev-*)    | Yes                                   | Via `ls-remote --refs`                       |
-| Works without vendor/            | Yes                                   | Yes                                          |
-| Covers VCS-only private packages | No                                    | Yes                                          |
-| Authentication                   | None (Packagist is public)            | SSH agent / git credential helpers           |
-| Per-package timing               | ~315ms (warm)                         | ~560ms                                       |
-
-**Legacy installations (v11 non-Composer):** Extensions in `typo3conf/ext/` have no composer provenance. Version availability falls back to TER + key-based lookup only. Tier 2 (git CLI) may be used if a repository URL can be derived from extension metadata.
-
-**Rationale:** Targeting developers and CI pipelines makes `composer` and `git` safe hard requirements — simplifying error handling and eliminating graceful-degradation complexity. The two-tier split is not a Composer-availability fallback but a Packagist-coverage split: Tier 1 handles all Packagist-indexed extensions efficiently; Tier 2 covers VCS-only private packages that Packagist cannot resolve. See [Sprint Change Proposal 2026-03-26](sprint-change-proposal-2026-03-26.md) and [Story 2.0 spike](../../documentation/implementation/development/feature/VcsResolutionSpike.md) for empirical basis.
+**Rationale:** Targeting developers and CI pipelines makes `composer` and `git` safe hard requirements — simplifying error handling and eliminating graceful-degradation complexity. Composer CLI natively resolves all VCS types (git, SVN, Mercurial, Fossil) declared in the installation's `composer.json` repositories. See [Sprint Change Proposal 2026-03-26](sprint-change-proposal-2026-03-26.md), [Sprint Change Proposal 2026-03-29c](sprint-change-proposal-2026-03-29c.md), and [Story 2.0 spike](../../documentation/implementation/development/feature/VcsResolutionSpike.md) for empirical basis.
 
 ---
 
@@ -315,7 +293,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 2. VersionProfileRegistry + version profiles for v11–v13
 3. StreamingOutputManager pre-flight check + FileReference in Infrastructure
 4. VCS resolution research spike (Story 2.0) — validate Composer CLI and git CLI approaches
-5. ComposerSourceParser + PackagistVersionResolver + GenericGitResolver (Stories 2.1–2.3)
+5. ComposerSourceParser + ComposerVersionResolver (Stories 2.1–2.2; Story 2.3 cancelled)
 6. Integration: rename GitSource → VcsSource; wire VcsResolverInterface tagged iterator into VcsSource (VersionAvailabilityAnalyzer already source-agnostic via commit 1c2781e); update metrics/templates (Story 2.5)
 7. Remove old GitProvider subsystem (Story 2.6)
 8. `report generate` subcommand + customer template set
@@ -325,7 +303,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 - VersionProfileRegistry feeds into InstallationDiscoveryService, ExtensionDiscoveryService, and core extension exclusion logic
 - StreamingOutputManager is a dependency of TemplateRenderer and both Rector/Fractor analyzers
 - VCS resolution research spike (Story 2.0) is a serial prerequisite for all Epic 2 implementation stories
-- PackagistVersionResolver and GenericGitResolver (and future VCS resolvers) are wired into VcsSource (renamed from GitSource) via vcs_resolver tagged iterator with priority ordering; VersionAvailabilityAnalyzer is source-agnostic since commit 1c2781e
+- ComposerVersionResolver is wired into VcsSource (renamed from GitSource) via VcsResolverInterface; VersionAvailabilityAnalyzer is source-agnostic since commit 1c2781e
 - Metric rename (`git_*` → `vcs_*`) affects ReportContextBuilder and all 10 report templates
 - `report generate` subcommand requires caching to be reliable (NFR7) — reports generated from stale cache must be flagged
 
@@ -427,7 +405,7 @@ CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\MyFastAnalyzer:
 
 **`getRequiredTools()` / `hasRequiredTools()`** remain on `AnalyzerInterface` — concrete analyzers implement them directly.
 
-**Startup precondition checks (global, not per-analyzer):** `composer` and `git` availability is checked once by `AnalyzeCommand` at startup via `ToolAvailabilityChecker::assertAvailable('composer', 'git')`. The checker runs `<tool> --version`, throwing a `\RuntimeException` with the error message template defined in the preconditions section above if the binary is not found. This is not routed through `getRequiredTools()` (which is a per-analyzer concern) — it is a command-level pre-flight gate. Resolver classes (`PackagistVersionResolver`, `GenericGitResolver`) have no tool-checking responsibility. `vendor/` presence is checked separately and emits INFO only.
+**Startup precondition checks (global, not per-analyzer):** `composer` and `git` availability is checked once by `AnalyzeCommand` at startup via `ToolAvailabilityChecker::assertAvailable('composer', 'git')`. The checker runs `<tool> --version`, throwing a `\RuntimeException` with the error message template defined in the preconditions section above if the binary is not found. This is not routed through `getRequiredTools()` (which is a per-analyzer concern) — it is a command-level pre-flight gate. `ComposerVersionResolver` has no tool-checking responsibility. `vendor/` presence is checked separately and emits INFO only.
 
 **`ToolAvailabilityChecker` service** (`Infrastructure/ExternalTool/`):
 ```php
@@ -525,11 +503,10 @@ $diffFile = $diff !== null
 - `packages: array<string>` — package names associated with this URL
 
 **Resolution chain:**
-1. Pass `DeclaredRepository` to `PackagistVersionResolver` (Tier 1 — Composer CLI)
-2. On failure, pass to `GenericGitResolver` (Tier 2 — `git ls-remote`)
-3. On failure of both tiers, emit Console WARNING and record `null`
+1. Pass `DeclaredRepository` to `ComposerVersionResolver` (via `VcsResolverInterface`)
+2. On failure, emit Console WARNING and record `null`
 
-Both `PackagistVersionResolver` and `GenericGitResolver` implement `VcsResolverInterface`. The orchestrator (`VersionAvailabilityAnalyzer`) depends on `VcsResolverInterface`, not concrete classes. DI wiring uses named service arguments (not auto-wiring, as two implementations exist for the same interface).
+`ComposerVersionResolver` implements `VcsResolverInterface`. `VcsSource` depends on the interface, not the concrete class.
 
 **Warning for unresolvable sources — Console output, not logger:**
 ```
@@ -589,8 +566,7 @@ public static function riskLevelProvider(): iterable
 - `StreamingOutputManager`: 100% for pre-flight check and fallback path
 - `ComposerSourceParser`: 100% for all source URL extraction variants
 - `ToolAvailabilityChecker`: 100% — tool found, tool not found (exception with correct message), multiple tools
-- `PackagistVersionResolver`: successful resolution, failure fallthrough to Tier 2
-- `GenericGitResolver`: successful tag listing, tag-to-version parsing, network failure, SSH URL handling
+- `ComposerVersionResolver`: successful resolution, no compatible version, network failure, auth failure, Composer not installed
 - JSON output schema: at least one functional test asserting exact structure including `vcs_*` metric names
 
 ---
@@ -648,9 +624,8 @@ src/
 │   │
 │   ├── ExternalTool/
 │   │   ├── ToolAvailabilityChecker.php        # NEW — startup precondition check for required binaries
-│   │   ├── VcsResolverInterface.php           # NEW — shared contract for Tier 1 and Tier 2 resolvers
-│   │   ├── PackagistVersionResolver.php       # NEW — Tier 1: resolves versions via Composer CLI (Packagist)
-│   │   ├── GenericGitResolver.php             # NEW — Tier 2: resolves versions via git ls-remote
+│   │   ├── VcsResolverInterface.php           # NEW — contract for VCS version resolution
+│   │   ├── ComposerVersionResolver.php        # NEW — resolves versions via Composer CLI
 │   │   ├── VcsResolutionException.php         # NEW — renamed from GitProviderException
 │   │   └── DeclaredRepository.php             # NEW — simplified VO (url + packages only)
 │   │
@@ -681,8 +656,7 @@ tests/
 │       │   └── ComposerSourceParserTest.php
 │       ├── ExternalTool/
 │       │   ├── ToolAvailabilityCheckerTest.php
-│       │   ├── PackagistVersionResolverTest.php
-│       │   └── GenericGitResolverTest.php
+│       │   └── ComposerVersionResolverTest.php
 │       └── Streaming/
 │           ├── StreamingOutputManagerTest.php
 │           ├── ContentStreamWriterTest.php
@@ -733,8 +707,7 @@ ReportGenerateCommand
 |---------------------------|----------------------------|------------------------------------|---------------------------------------------------|
 | TER API                   | `TerApiClient`             | None (public)                      | Log warning, null result                          |
 | Packagist                 | `PackagistClient`          | `auth.json` (Composer)             | Log warning, null result                          |
-| VCS repositories (Tier 1) | `PackagistVersionResolver` | None (Packagist is public)         | Network/auth failure → fall through to Tier 2     |
-| VCS repositories (Tier 2) | `GenericGitResolver`       | SSH agent / git credential helpers | Log warning, null result                          |
+| VCS repositories           | `ComposerVersionResolver`  | `auth.json` / SSH agent (Composer) | Log warning, null result                          |
 | Rector binary             | `RectorExecutor`           | None                               | Log warning, null riskScore, recommendation added |
 | Fractor binary            | `FractorExecutor`          | None                               | Log warning, null riskScore, recommendation added |
 
@@ -745,7 +718,7 @@ ReportGenerateCommand
 | FR Category                              | Primary Location                                                                                                                                  |
 |------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | FR1–FR8 Installation Discovery           | `Infrastructure/Discovery/` — `InstallationDiscoveryService`, `VersionProfileRegistry`, `ComposerSourceParser`                                    |
-| FR9–FR11, FR14–FR15 Version Availability | `Infrastructure/ExternalTool/` — `TerApiClient`, `PackagistClient`, `PackagistVersionResolver`, `GenericGitResolver` (FR12/FR13 merged into FR11) |
+| FR9–FR11, FR14–FR15 Version Availability | `Infrastructure/ExternalTool/` — `TerApiClient`, `PackagistClient`, `ComposerVersionResolver` (FR12/FR13 merged into FR11) |
 | FR16 Extension Type Strategy             | `Infrastructure/Discovery/ExtensionDiscoveryService` + `VersionProfile.coreExtensionKeys`                                                         |
 | FR17–FR21 Code Analysis                  | `Infrastructure/Analyzer/` — existing analyzers + `CachingAnalyzerDecorator`                                                                      |
 | FR22–FR26 Risk Scoring                   | `Domain/Entity/AnalysisResult` + `Infrastructure/Analyzer/`                                                                                       |
@@ -813,7 +786,7 @@ AnalyzeCommand::execute()
 
 | Previously uncovered                  | Now covered by                                                                                                                                            |
 |---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| FR11 VCS availability (all providers) | `PackagistVersionResolver` (Tier 1) + `GenericGitResolver` (Tier 2) — replaces per-provider clients; covers GitHub, GitLab, Bitbucket, Gitea, self-hosted |
+| FR11 VCS availability (all providers) | `ComposerVersionResolver` — replaces per-provider clients; covers all VCS types Composer supports (git, SVN, Mercurial, Fossil) |
 | FR32–FR35 Customer report             | `ReportGenerateCommand` + `resources/templates/customer/`                                                                                                 |
 | FR43 Streaming output                 | `StreamingOutputManager` + `FileReference`                                                                                                                |
 

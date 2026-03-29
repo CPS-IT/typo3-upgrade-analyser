@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-29 (2-3 done; VcsResolverInterface introduced)
+last_updated: 2026-03-29 (2-3 cancelled; 2-4 absorbed into 2-5; PackagistVersionResolver renamed ComposerVersionResolver; sprint-change-proposal-2026-03-29c)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -64,15 +64,16 @@ development_status:
   p2-4-fix-packagestates-v5-composer-extensions: done            # Bug #163: merged in PR #195 (2026-03-25)
 
   # Epic 2: Complete Extension Source Coverage — All VCS Providers (Composer-based)
-  # Sprint change proposal 2026-03-26: GitProvider architecture replaced by PackagistVersionResolver + GenericGitResolver
-  # Story sequence: 2-0 (spike) → 2-1 → 2-2+2-3 (parallel) → 2-4 → 2-5 (integration) → 2-6 (cleanup) → 2-7
+  # Sprint change proposal 2026-03-26: GitProvider architecture replaced by Composer-based resolution
+  # Sprint change proposal 2026-03-29c: GenericGitResolver cancelled; Story 2-4 absorbed into 2-5; PackagistVersionResolver → ComposerVersionResolver
+  # Story sequence: 2-0 (spike) → 2-1 → 2-2 → 2-5 (integration + warning) → 2-6 (cleanup) → 2-7
   #
   # KICKOFF CHECKLIST — review before writing story files (updated 2026-03-28 after sprint change proposal):
   #   F-D-03 (HIGH)  ConfigurationDiscoveryService: no VersionProfileRegistry usage — re-evaluate if touched in new story set
   #   F-D-04 (MED)   Three duplicate determineInstallationType() impls — re-evaluate; original Epic 2 classes no longer all touched
   #   F-E-01 (HIGH)  TerApiHttpClient: incomplete HTTP status handling, no retry — still applies (TER unaffected by sprint change)
   #   F-E-02 (HIGH)  TerApiClient: \Throwable catch hides parser bugs — still applies
-  #   F-E-04 (HIGH)  GitVersionParser: branch ≠ tag compatibility — reframe for GenericGitResolver (git ls-remote tag parsing)
+  #   DROPPED F-E-04: GenericGitResolver cancelled (sprint change proposal 2026-03-29c)
   #   F-E-08 (MED)   VersionCompatibilityChecker: fragile wildcard pattern parsing — still applies
   #   DROPPED F-E-03: AbstractGitProvider deleted in Story 2-6
   #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
@@ -81,9 +82,9 @@ development_status:
   2-0-vcs-resolution-mechanism-spike: done
   2-1-composer-source-parser: done
   2-2-composer-vcs-resolver: done
-  2-3-generic-git-resolver: done
-  2-4-unmatched-vcs-source-warning: backlog
-  2-5-integrate-resolvers-and-update-data-model: backlog
+  2-3-generic-git-resolver: cancelled                             # Sprint change proposal 2026-03-29c: git archive --remote non-functional
+  2-4-unmatched-vcs-source-warning: absorbed                      # Absorbed into 2-5 (sprint change proposal 2026-03-29c)
+  2-5-integrate-resolvers-and-update-data-model: backlog          # Includes warning ACs from former 2-4
   2-6-remove-git-provider-subsystem: backlog
   2-7-direct-indirect-extension-distinction: backlog             # Feature #150 (was p2-5)
   epic-2-retrospective: optional

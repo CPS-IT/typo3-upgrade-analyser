@@ -1,6 +1,6 @@
 # Story 2.3: Generic Git Resolver (Tier 2 Fallback)
 
-Status: done
+Status: cancelled (Sprint Change Proposal 2026-03-29c — git archive --remote non-functional for hosted git services; Composer CLI covers all VCS types)
 
 ## Story
 

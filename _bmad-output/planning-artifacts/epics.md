@@ -197,8 +197,8 @@ Implements: `VersionProfile`, `VersionProfileRegistry`, `VersionProfileRegistryF
 **FRs covered:** FR7, FR8
 
 ### Epic 2: Complete Extension Source Coverage — All VCS Providers
-Developer gets version availability data for extensions hosted on any VCS provider (GitHub, GitLab, Bitbucket, Codeberg, self-hosted, etc.), using Composer CLI as primary resolver and generic git CLI as fallback. Replaces per-provider API clients with provider-agnostic resolution. Unresolvable sources produce a visible warning.
-Implements: `ComposerSourceParser` (AR3), `VcsResolverInterface`, `PackagistVersionResolver`, `GenericGitResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
+Developer gets version availability data for extensions hosted on any VCS provider (GitHub, GitLab, Bitbucket, Codeberg, self-hosted, etc.), using Composer CLI as the sole resolver. Replaces per-provider API clients with provider-agnostic Composer-based resolution. Unresolvable sources produce a visible warning.
+Implements: `ComposerSourceParser` (AR3), `VcsResolverInterface`, `ComposerVersionResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
 **FRs covered:** FR11 (consolidated), FR14 (completing aggregation), FR15 (simplified)
 
 ### Epic 3: Memory-Safe Analysis for Large Installations
@@ -422,10 +422,10 @@ So that version availability is checked for all VCS providers without per-host A
 - **Then** it uses the Composer CLI approach determined by the research spike (batch command or per-package command)
 - **And** `--working-dir` points to the analyzed installation so Composer uses its `auth.json` and `repositories` configuration
 - **And** resolved versions are matched against the target TYPO3 version constraints to determine compatibility
-- **And** if resolution fails (network error, auth failure, Composer not installed), the failure is recorded per-extension and control passes to the fallback resolver (Story 2.3)
+- **And** if resolution fails (network error, auth failure, Composer not installed), the failure is recorded per-extension with a WARNING; analysis continues for other extensions
 - **And** operations use configurable timeouts (NFR2, NFR14)
 - **And** `PackagistVersionResolver` lives in `Infrastructure/ExternalTool/`
-- **And** `PackagistVersionResolver` implements `VcsResolverInterface` (defined in Story 2.3, applied via follow-up Task 5 after Story 2.3 merges)
+- **And** `ComposerVersionResolver` (renamed from `PackagistVersionResolver`) implements `VcsResolverInterface`
 - **And** unit tests cover: successful resolution, no compatible version, network failure, auth failure, Composer not installed
 - **And** PHPStan Level 8 reports zero errors
 
@@ -435,79 +435,56 @@ So that version availability is checked for all VCS providers without per-host A
 
 ---
 
-### Story 2.3: Generic Git Resolver (Tier 2 Fallback)
+### Story 2.3: ~~Generic Git Resolver (Tier 2 Fallback)~~ — CANCELLED
 
-As a developer,
-I want a fallback resolver using `git ls-remote` for VCS URLs that Composer could not resolve,
-So that extensions on hosts without Composer integration still get version availability data.
+**Status:** Cancelled (Sprint Change Proposal 2026-03-29c)
 
-**Acceptance Criteria:**
+**Rationale:** `git archive --remote` — the mechanism for reading `composer.json` from a tagged ref — is rejected by GitHub, GitLab, Bitbucket, and all major hosted git services (they disable `git-upload-archive`). Without the ability to read `composer.json`, the resolver cannot verify TYPO3 compatibility, reducing it to a tag-existence check. Composer CLI already resolves versions for all VCS types declared in `composer.json`. The fallback tier adds complexity and performance cost for an edge case (environment changed between installation and analysis). Code reverted from feature branch.
 
-- **Given** `PackagistVersionResolver` has failed for one or more VCS URLs (auth failure, Composer not installed, timeout)
-- **When** `GenericGitResolver` attempts resolution for those URLs
-- **Then** it executes `git ls-remote --tags <url>` and `git ls-remote --heads <url>` to list available refs
-- **And** tag names are parsed into version numbers and matched against the target TYPO3 version constraints
-- **And** authentication uses SSH agent (no tool-specific tokens)
-- **And** if `git ls-remote` fails (network error, auth failure, git not installed), the failure is recorded per-extension — analysis continues for other extensions
-- **And** operations use configurable timeouts (NFR2, NFR14)
-- **And** `GenericGitResolver` lives in `Infrastructure/ExternalTool/`
-- **And** `VcsResolverInterface` is created in `Infrastructure/ExternalTool/VcsResolverInterface.php` with method `resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult`
-- **And** `GenericGitResolver` implements `VcsResolverInterface`
-- **And** unit tests cover: successful resolution, no compatible tags, network failure, auth failure, git not installed
-- **And** PHPStan Level 8 reports zero errors
-
-**Transition contract:** Same as Story 2.2 — existing `GitHubClient` remains wired until Story 2.5.
+**Preserved from this story:** `VcsResolverInterface` (used by `ComposerVersionResolver` and `VcsSource`).
 
 ---
 
-### Story 2.4: Unresolvable VCS Source Warning
+### Story 2.4: ~~Unresolvable VCS Source Warning~~ — ABSORBED INTO STORY 2.5
 
-As a developer,
-I want the tool to warn me visibly when a VCS URL could not be resolved by either Composer CLI or git CLI,
-So that I know the analysis is incomplete for that source and can act on it.
+**Status:** Absorbed into Story 2.5 (Sprint Change Proposal 2026-03-29c)
 
-**Acceptance Criteria:**
-
-- **Given** an extension whose VCS URL failed resolution in both `PackagistVersionResolver` (Tier 1) and `GenericGitResolver` (Tier 2)
-- **When** the `VersionAvailabilityAnalyzer` runs
-- **Then** a Console-level WARNING is written in the format: `[WARNING] VCS source "{url}" could not be resolved. Ensure Composer authentication is configured for this URL.`
-- **And** the extension's VCS availability metric is recorded as `null` (not `false`) to distinguish "unknown" from "not available"
-- **And** the analysis continues for all other extensions and sources without interruption
-- **And** the warning appears in Console output regardless of verbosity level
-- **And** in non-interactive / CI mode (NFR18) the warning is written to stderr
-- **And** unit tests cover: successful resolution (no warning), Tier 1 failure + Tier 2 success (no warning), both tiers fail (warning emitted), multiple failures (one warning per source)
-- **And** PHPStan Level 8 reports zero errors
+**Rationale:** Core failure handling (catch, log, continue analysis) already exists in `GitSource` (commit 1c2781e). The distinctive ACs of this story — Console WARNING format, `null` vs `false` metric distinction, verbosity-independent output, stderr in CI mode — are now ACs within Story 2.5, where `VcsSource` is rebuilt from scratch. A standalone story is not warranted since the integration point (`VersionAvailabilityAnalyzer`) named in the original ACs is no longer the correct location; the warning logic belongs in `VcsSource`.
 
 ---
 
 ### Story 2.5: VCS Resolution Integration in VcsSource, Data Model Migration, and Template Updates
 
 As a developer,
-I want `GitSource` renamed to `VcsSource` and updated to iterate `VcsResolverInterface` implementations via a priority-tagged iterator,
-So that VCS availability is resolved through the existing two-tier chain (and any future resolvers) without coupling the source class to concrete implementations.
+I want `GitSource` renamed to `VcsSource` and updated to use `VcsResolverInterface`,
+So that VCS availability is resolved through Composer-based resolution, unresolvable sources produce a visible Console warning, and reports reflect the provider-agnostic data model.
 
 **Acceptance Criteria:**
 
-- **Given** Stories 2.1–2.4 are complete and tested
+- **Given** Stories 2.1 and 2.2 are complete and tested
 - **When** `GitSource` is refactored into `VcsSource`
-- **Then** `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php` is renamed to `VcsSource.php`; the class is renamed `VcsSource`; it still implements `VersionSourceInterface`
-- **And** `VcsSource` injects `iterable<VcsResolverInterface> $resolvers` via constructor (no concrete resolver class names in the constructor signature)
-- **And** `VcsSource::checkAvailability()` iterates `$resolvers` in declared priority order; for each resolver it calls `resolve()`; if the result's `shouldTryFallback()` returns `true`, it continues to the next resolver; otherwise it stops and maps the result to metrics
+- **Then** `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php` is renamed to `VcsSource.php`; the class is renamed `VcsSource`; it still implements `VersionSourceInterface`; `getName()` returns `'vcs'`
+- **And** `VcsSource` injects `VcsResolverInterface $resolver` via constructor (single instance, not iterable)
+- **And** `VcsSource::checkAvailability()` calls `$resolver->resolve()` and maps the `VcsResolutionResult` to metrics
 - **And** `VersionAvailabilityAnalyzer` is NOT modified — it already iterates `VersionSourceInterface` via tagged iterator (done in commit 1c2781e)
-- **And** `services.yaml` introduces a `vcs_resolver` tag; `PackagistVersionResolver` is tagged `{ name: vcs_resolver, priority: 100 }`; `GenericGitResolver` is tagged `{ name: vcs_resolver, priority: 50 }`; `VcsSource` injects `!tagged_iterator vcs_resolver`
-- **And** `GitSource` is removed from `services.yaml`; `VcsSource` replaces it with the `version_availability.source` tag
+- **And** `services.yaml` wires `ComposerVersionResolver` as `VcsResolverInterface`; `VcsSource` replaces `GitSource` with the `version_availability.source` tag
 - **And** `GitRepositoryAnalyzer` is removed from `VcsSource` args but not deleted
 - **And** `GitHubClient`, `GitProviderFactory`, and `GitProviderInterface` are unwired from `services.yaml` but not deleted (Story 2.6)
 - **And** analysis result metrics returned by `VcsSource` are renamed: `git_available` → `vcs_available`, `git_repository_url` → `vcs_source_url`, `git_latest_version` → `vcs_latest_version`
 - **And** `git_repository_health` metric is removed entirely
-- **And** risk scoring in `VersionAvailabilityAnalyzer` reads `vcs_available` (not `git_available`); health-weighted scoring is removed; binary VCS availability used
+- **And** when `ComposerVersionResolver` fails for an extension, `VcsSource` records the VCS availability metric as `null` (not `false`) to distinguish "unknown" from "not available"
+- **And** when resolution fails, a Console-level WARNING is written: `[WARNING] VCS source "{url}" could not be resolved. Ensure Composer authentication is configured for this URL.`
+- **And** the Console WARNING appears regardless of verbosity level
+- **And** in non-interactive / CI mode the warning is written to stderr
+- **And** risk scoring in `VersionAvailabilityAnalyzer` reads `vcs_available` (not `git_available`); health-weighted scoring is removed; binary VCS availability used; `null` VCS metric treated as "unknown" (distinct from `false` = "checked, not available")
 - **And** `ReportContextBuilder` extracts `vcs_*` keys instead of `git_*`
 - **And** HTML templates: "Git" status card → "VCS"; "Repository Health" removed; "Latest Compatible Version" retained; column header "Git" → "VCS"
 - **And** JSON output under `analyzers.version-availability` uses the new `vcs_*` field names (breaking schema change — documented)
-- **And** all existing functional and integration tests are updated to use the new metric names
+- **And** all existing functional and integration tests are updated to the new metric names
+- **And** unit tests cover: successful resolution (no warning), resolution failure (warning emitted, metric is `null`), multiple failures (one warning per source)
 - **And** PHPStan Level 8 reports zero errors
 
-**Note:** This is the integration gate. `VersionAvailabilityAnalyzer` was made source-agnostic in commit 1c2781e. `VcsSource` is the remaining integration point. Old Git provider classes are unwired here and deleted in Story 2.6. Future VCS resolvers (SVN, Mercurial, Fossil) can be added by implementing `VcsResolverInterface` and tagging `{ name: vcs_resolver, priority: N }` — no change to `VcsSource` required.
+**Note:** This story absorbs Story 2.4 (Unresolvable VCS Source Warning). `VersionAvailabilityAnalyzer` was made source-agnostic in commit 1c2781e. `VcsSource` is the remaining integration point. Old Git provider classes are unwired here and deleted in Story 2.6. If a second `VcsResolverInterface` implementation is needed in the future, `VcsSource` can be changed to accept `iterable<VcsResolverInterface>` with minimal effort.
 
 ---
 
