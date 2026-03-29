@@ -61,7 +61,15 @@ so that extensions on hosts without Packagist integration still get version avai
 
    Note: No `ComposerEnvironment` dependency — `GenericGitResolver` uses git, not Composer.
 
-10. Unit tests cover all return status variants (see Dev Notes for test patterns). PHPStan Level 8 reports zero errors.
+10. A `VcsResolverInterface` is created in `src/Infrastructure/ExternalTool/VcsResolverInterface.php` with a single method:
+    ```php
+    resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult
+    ```
+    The interface carries no other methods and has no dependency on any framework type.
+
+11. `GenericGitResolver` declares `implements VcsResolverInterface`.
+
+12. Unit tests cover all return status variants (see Dev Notes for test patterns). PHPStan Level 8 reports zero errors.
 
 **Transition contract:** `GenericGitResolver` is built standalone. `VersionAvailabilityAnalyzer` is NOT updated until Story 2.5. No entry in `config/services.yaml` for this story.
 
@@ -70,6 +78,10 @@ so that extensions on hosts without Packagist integration still get version avai
 **Kickoff finding F-E-04 (HIGH):** `GitVersionParser` incorrectly uses the main-branch `composer.json` compatibility as a proxy for all stable tags — wrong, because different tags have different `composer.json` constraints. `GenericGitResolver` MUST use the most recent stable TAG's `composer.json`, not the main branch. This story resolves F-E-04.
 
 ## Tasks / Subtasks
+
+- [x] Task 0: Create `VcsResolverInterface` (AC: 10–11)
+  - [x] Create `src/Infrastructure/ExternalTool/VcsResolverInterface.php`
+  - [x] Add `implements VcsResolverInterface` to `GenericGitResolver`
 
 - [x] Task 1: Implement `GenericGitResolver` (AC: 1–9)
   - [x] Create `src/Infrastructure/ExternalTool/GenericGitResolver.php`
@@ -97,6 +109,13 @@ so that extensions on hosts without Packagist integration still get version avai
   - [x] Run `composer sca:php` — zero errors
   - [x] Run `composer lint:php` — zero violations
   - [x] Run `composer test` — all tests green
+
+- Review Follow-ups (AI) — addressing code review 2026-03-29:
+  - [x] [AI-Review] Fix #3 (HIGH): v-prefixed tags stripped to normalized version, then used verbatim in `git archive` ref — bug: `refs/tags/2.3.4` used instead of `refs/tags/v2.3.4`. Store both original tag name and normalized version string; pass original tag to `fetchComposerJson`.
+  - [x] [AI-Review] Fix #4 (HIGH): `fetchComposerJson` uses non-injectable `createArchiveProcess` — unit tests rely on real git failing in CI rather than injecting stubs. Add `?\Closure $archiveProcessFactory` constructor param; update tests to inject archive process stubs.
+  - [x] [AI-Review] Fix #1 (MED): `$packageName` silently ignored — include in WARNING log messages in `runLsRemote` and related warnings.
+  - [x] [AI-Review] Fix #2 (MED): `git ls-remote` missing `-q` flag — `From <url>` line may appear in stdout on some git versions. Explicit suppression is better than accidentally working filters.
+  - [x] [AI-Review] Fix #5 (LOW): Test comment at line 149 factually wrong — "findTypo3Requirements never called" but it IS called with `[]` when fetchComposerJson returns null.
 
 ## Dev Notes
 
@@ -307,12 +326,25 @@ claude-sonnet-4-6
 - 11 unit tests pass covering all specified variants: RESOLVED_COMPATIBLE (3 cases), RESOLVED_NO_MATCH (3 cases), FAILURE (3 cases), tag-parsing variants, pre-release-only output.
 - PHPStan Level 8: zero errors. CS-Fixer: clean after one auto-fix (`sprintf` → `\sprintf` preference). Full test suite: 1752 tests, no failures.
 
+**Review follow-up (2026-03-29):**
+- Fixed #3 (HIGH): `parseTagsFromOutput` now returns `list<array{version: string, tag: string}>`. Original tag name (e.g. `v2.3.4`) is passed to `fetchComposerJson`; normalized version (e.g. `2.3.4`) is stored in the result. `testVPrefixedTagUsesOriginalTagNameForGitArchive` verifies correct archive ref construction.
+- Fixed #4 (HIGH): Added `?\Closure $archiveProcessFactory` constructor param. All test scenarios now inject deterministic process stubs — no reliance on real git environment in unit tests.
+- Fixed #1 (MED): `$packageName` now included in all WARNING/DEBUG log messages in `runLsRemote`.
+- Fixed #2 (MED): Added `-q` to `git ls-remote` command to suppress `From <url>` informational output.
+- Fixed #5 (LOW): Corrected misleading test comment — `findTypo3Requirements` IS called with `[]` when archive returns null.
+- Deferred #6 (no interface), #7 (RESOLVED_NO_MATCH conflation), #8 (shouldTryFallback design), #9 (hierarchical tags), #10 (malformed JSON = compatible): spec decisions or Story 2.5 scope.
+- Finding #11 (readonly class): reviewer assumed PHP 8.1 minimum; project actually requires PHP ^8.3. Finding premise is wrong; making class readonly is valid but out of scope for this story.
+- 12 tests pass (added `testVPrefixedTagUsesOriginalTagNameForGitArchive`). PHPStan Level 8: zero errors. Full test suite: 1753 tests, no failures.
+
 ### File List
 
-- `src/Infrastructure/ExternalTool/GenericGitResolver.php` (new)
+- `src/Infrastructure/ExternalTool/VcsResolverInterface.php` (new)
+- `src/Infrastructure/ExternalTool/GenericGitResolver.php` (new, implements VcsResolverInterface)
 - `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php` (new)
 
 ## Change Log
 
 - 2026-03-28: Story created (bmad-create-story)
 - 2026-03-28: Implementation complete — GenericGitResolver and unit tests added; PHPStan/CS/tests all green (claude-sonnet-4-6)
+- 2026-03-29: Addressed code review findings — 5 items resolved: #3 v-prefix bug fix, #4 archive testability, #1 dead $packageName, #2 -q flag, #5 wrong comment (claude-sonnet-4-6)
+- 2026-03-29: Added VcsResolverInterface (sprint change proposal, Task 0) — GenericGitResolver now implements VcsResolverInterface; PHPStan Level 8 clean, 1753 tests pass (claude-sonnet-4-6)

@@ -111,7 +111,7 @@ Technical requirements from Architecture that impact implementation:
 - AR1: `VersionProfileRegistry` — explicit per-version profiles (v11–v14) centralizing discovery paths, core extension lists, and composer.json override keys; required before v11 bug fix and v13/v14 support claims
 - AR2: `StreamingOutputManager` — pre-flight writability check at command startup; file-based storage for large content fields (diff, code_before, code_after, error output); deterministic file naming via sha256 hash (never random or time-based); null return on write failure (not exception); Infrastructure-only concern — Domain holds `string|null`, never `FileReference`
 - AR3: `ComposerSourceParser` — extracts VCS URLs from `composer.lock` `source.url` (primary) and `composer.json` `repositories[].url` (fallback); no URL-sniffing heuristics; no provider-type classification
-- AR4: Two-tier VCS resolution — `PackagistVersionResolver` (Tier 1: Composer CLI via `--working-dir`) + `GenericGitResolver` (Tier 2: `git ls-remote`); replaces per-provider API clients; auth via Composer `auth.json` / SSH agent; no tool-specific tokens
+- AR4: Two-tier VCS resolution — `VcsResolverInterface` is the shared contract for both tiers. `PackagistVersionResolver` (Tier 1: Composer CLI) + `GenericGitResolver` (Tier 2: `git ls-remote`) both implement `VcsResolverInterface`. The orchestrator (`VersionAvailabilityAnalyzer`, Story 2.5) depends on the interface, not concrete classes. Auth via Composer `auth.json` / SSH agent; no tool-specific tokens. Note: `--working-dir` is never used (11–13 s overhead per call, VcsResolutionSpike §8).
 - AR5: `CachingAnalyzerDecorator` — new analyzers implement `AnalyzerInterface` directly (never extend `AbstractCachedAnalyzer`); `autoconfigure: false` mandatory to prevent double-tagging; `AnalysisResultSerializer` handles result serialization/deserialization
 - AR6: `ReportGenerateCommand` — separate `report generate` subcommand; reads only from cache (no `AnalyzerInterface` injection); also requires `StreamingOutputManager.validateOutputDirectory()` pre-flight
 - AR7: Customer Twig templates — `resources/templates/customer/` using Twig `{% extends %}` inheritance over technical base templates; `--format=customer --branding=agency.yaml` flags
@@ -198,7 +198,7 @@ Implements: `VersionProfile`, `VersionProfileRegistry`, `VersionProfileRegistryF
 
 ### Epic 2: Complete Extension Source Coverage — All VCS Providers
 Developer gets version availability data for extensions hosted on any VCS provider (GitHub, GitLab, Bitbucket, Codeberg, self-hosted, etc.), using Composer CLI as primary resolver and generic git CLI as fallback. Replaces per-provider API clients with provider-agnostic resolution. Unresolvable sources produce a visible warning.
-Implements: `ComposerSourceParser` (AR3), `PackagistVersionResolver`, `GenericGitResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
+Implements: `ComposerSourceParser` (AR3), `VcsResolverInterface`, `PackagistVersionResolver`, `GenericGitResolver` (AR4). Transition: existing `GitHubClient` remains wired until Story 2.5 validates replacement; removed in Story 2.6.
 **FRs covered:** FR11 (consolidated), FR14 (completing aggregation), FR15 (simplified)
 
 ### Epic 3: Memory-Safe Analysis for Large Installations
@@ -425,6 +425,7 @@ So that version availability is checked for all VCS providers without per-host A
 - **And** if resolution fails (network error, auth failure, Composer not installed), the failure is recorded per-extension and control passes to the fallback resolver (Story 2.3)
 - **And** operations use configurable timeouts (NFR2, NFR14)
 - **And** `PackagistVersionResolver` lives in `Infrastructure/ExternalTool/`
+- **And** `PackagistVersionResolver` implements `VcsResolverInterface` (defined in Story 2.3, applied via follow-up Task 5 after Story 2.3 merges)
 - **And** unit tests cover: successful resolution, no compatible version, network failure, auth failure, Composer not installed
 - **And** PHPStan Level 8 reports zero errors
 
@@ -450,6 +451,8 @@ So that extensions on hosts without Composer integration still get version avail
 - **And** if `git ls-remote` fails (network error, auth failure, git not installed), the failure is recorded per-extension — analysis continues for other extensions
 - **And** operations use configurable timeouts (NFR2, NFR14)
 - **And** `GenericGitResolver` lives in `Infrastructure/ExternalTool/`
+- **And** `VcsResolverInterface` is created in `Infrastructure/ExternalTool/VcsResolverInterface.php` with method `resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult`
+- **And** `GenericGitResolver` implements `VcsResolverInterface`
 - **And** unit tests cover: successful resolution, no compatible tags, network failure, auth failure, git not installed
 - **And** PHPStan Level 8 reports zero errors
 
