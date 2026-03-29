@@ -1,6 +1,6 @@
 # Story 2.3: Generic Git Resolver (Tier 2 Fallback)
 
-Status: review
+Status: done
 
 ## Story
 
