@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-28 (2-1 done; 2-2 done; 2-3 story created)
+last_updated: 2026-03-29 (2-3 done; VcsResolverInterface introduced)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -81,7 +81,7 @@ development_status:
   2-0-vcs-resolution-mechanism-spike: done
   2-1-composer-source-parser: done
   2-2-composer-vcs-resolver: done
-  2-3-generic-git-resolver: review
+  2-3-generic-git-resolver: done
   2-4-unmatched-vcs-source-warning: backlog
   2-5-integrate-resolvers-and-update-data-model: backlog
   2-6-remove-git-provider-subsystem: backlog
