@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistVersionResolver;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
@@ -25,8 +25,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
-#[CoversClass(PackagistVersionResolver::class)]
-class PackagistVersionResolverTest extends TestCase
+#[CoversClass(ComposerVersionResolver::class)]
+class ComposerVersionResolverTest extends TestCase
 {
     private const PACKAGE = 'vendor/my-extension';
     private const VCS_URL = 'https://github.com/vendor/my-extension';
@@ -104,7 +104,7 @@ class PackagistVersionResolverTest extends TestCase
         array $processQueue,
         ?ComposerConstraintCheckerInterface $checker = null,
         bool $composerVersionSufficient = true,
-    ): PackagistVersionResolver {
+    ): ComposerVersionResolver {
         $queue = $processQueue;
         $factory = function (array $command) use (&$queue): Process {
             $process = array_shift($queue);
@@ -113,7 +113,7 @@ class PackagistVersionResolverTest extends TestCase
             return $process;
         };
 
-        return new PackagistVersionResolver(
+        return new ComposerVersionResolver(
             new NullLogger(),
             $checker ?? $this->createStub(ComposerConstraintCheckerInterface::class),
             $this->makeComposerEnvironment($composerVersionSufficient),
