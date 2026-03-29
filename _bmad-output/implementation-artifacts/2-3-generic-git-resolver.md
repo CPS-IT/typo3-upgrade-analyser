@@ -129,7 +129,7 @@ enum VcsResolutionStatus: string
 {
     case RESOLVED_COMPATIBLE = 'resolved_compatible';
     case RESOLVED_NO_MATCH   = 'resolved_no_match';
-    case NOT_FOUND           = 'not_found';   // used only by PackagistVersionResolver
+    case NOT_FOUND           = 'not_found';   // used only by ComposerVersionResolver
     case FAILURE             = 'failure';
 }
 ```
