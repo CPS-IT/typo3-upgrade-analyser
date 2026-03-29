@@ -25,7 +25,8 @@ so that version availability is checked for all VCS providers without per-host A
 9. `PackagistVersionResolver` lives in `src/Infrastructure/ExternalTool/PackagistVersionResolver.php`. **Pre-condition documented in a docblock:** this class is intended for packages that appear in a `DeclaredRepository` (i.e. VCS-sourced extensions). It may be called for any package name — a `NOT_ON_PACKAGIST` result is the expected outcome for extensions that are not Packagist-indexed.
 10. `VcsResolutionResult` is a `final readonly` value object in `src/Infrastructure/ExternalTool/VcsResolutionResult.php`. `ResolutionStatus` is a backed enum in `src/Infrastructure/ExternalTool/ResolutionStatus.php`. See Dev Notes for exact shapes.
 11. Unit tests cover all `ResolutionStatus` variants and subprocess edge cases. See Dev Notes for the required test double approach.
-12. PHPStan Level 8 reports zero errors.
+12. `PackagistVersionResolver` declares `implements VcsResolverInterface` (defined in Story 2.3).
+13. PHPStan Level 8 reports zero errors.
 
 **Transition contract:** During development, the existing `GitRepositoryAnalyzer` + `GitHubClient` remain functional and wired. `VersionAvailabilityAnalyzer` is NOT switched to the new resolver until Story 2.5. Build `PackagistVersionResolver` standalone; no integration wiring in `config/services.yaml` for this story.
 
@@ -62,10 +63,14 @@ so that version availability is checked for all VCS providers without per-host A
   - [x] Test: `FAILURE` — Composer version below 2.1
   - [x] Test: `shouldTryFallback()` returns `true` for `NOT_ON_PACKAGIST` and `FAILURE`, `false` otherwise
 
-- [x] Task 4: PHPStan and code style verification (AC: 12)
+- [x] Task 4: PHPStan and code style verification (AC: 13)
   - [x] Run `composer sca:php` — zero errors
   - [x] Run `composer lint:php` — zero violations
   - [x] Run `composer test` — all tests green
+
+- [x] Task 5: Implement `VcsResolverInterface` (AC: 12) — applied alongside Story 2.3 (same branch)
+  - [x] Add `implements VcsResolverInterface` to `PackagistVersionResolver`
+  - [x] Run `composer sca:php` and `composer test` — zero errors
 
 ## Dev Notes
 
@@ -292,6 +297,7 @@ claude-sonnet-4-6 (2026-03-28)
 - src/Infrastructure/ExternalTool/ResolutionStatus.php (new)
 - src/Infrastructure/ExternalTool/VcsResolutionResult.php (new)
 - src/Infrastructure/ExternalTool/PackagistVersionResolver.php (new)
+- src/Infrastructure/ExternalTool/VcsResolverInterface.php (added in Story 2.3, used here)
 - tests/Unit/Infrastructure/ExternalTool/ResolutionStatusTest.php (new)
 - tests/Unit/Infrastructure/ExternalTool/VcsResolutionResultTest.php (new)
 - tests/Unit/Infrastructure/ExternalTool/PackagistVersionResolverTest.php (new)
@@ -299,3 +305,4 @@ claude-sonnet-4-6 (2026-03-28)
 ## Change Log
 
 - 2026-03-28: Story implemented — ResolutionStatus enum, VcsResolutionResult VO, PackagistVersionResolver with binary search strategy, and full unit test coverage (claude-sonnet-4-6)
+- 2026-03-29: Task 5 applied — PackagistVersionResolver now implements VcsResolverInterface (sprint change proposal 2026-03-29; claude-sonnet-4-6)

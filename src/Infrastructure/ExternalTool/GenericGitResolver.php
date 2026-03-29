@@ -25,64 +25,68 @@ use Symfony\Component\Process\Process;
  *
  * No Composer dependency — relies on the git binary available in the host environment.
  */
-class GenericGitResolver
+readonly class GenericGitResolver implements VcsResolverInterface
 {
     /**
-     * @param (\Closure(list<string>): Process)|null $processFactory
+     * @param (\Closure(list<string>): Process)|null $processFactory        Factory for git ls-remote subprocess
+     * @param (\Closure(string): Process)|null       $archiveProcessFactory Factory for git archive subprocess (injectable for testing)
      */
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly ComposerConstraintCheckerInterface $constraintChecker,
-        private readonly int $timeoutSeconds = 30,
-        private readonly ?\Closure $processFactory = null,
+        private LoggerInterface $logger,
+        private ComposerConstraintCheckerInterface $constraintChecker,
+        private int $timeoutSeconds = 30,
+        private ?\Closure $processFactory = null,
+        private ?\Closure $archiveProcessFactory = null,
     ) {
     }
 
     public function resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult
     {
-        $output = $this->runLsRemote($vcsUrl);
+        $output = $this->runLsRemote($vcsUrl, $packageName);
         if (null === $output) {
             return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
         }
 
         $tags = $this->parseTagsFromOutput($output);
-        $stableTag = $this->findMostRecentStableTag($tags);
+        $stableTagPair = $this->findMostRecentStableTag($tags);
 
-        if (null === $stableTag) {
+        if (null === $stableTagPair) {
             return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
         }
 
-        $composerJson = $this->fetchComposerJson($vcsUrl, $stableTag);
+        // Use original tag name for git operations, normalized version for the result.
+        $composerJson = $this->fetchComposerJson($vcsUrl, $stableTagPair['tag']);
         $requires = $composerJson['require'] ?? null;
 
         if (!$this->isCompatible($requires, $targetVersion)) {
             return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
         }
 
-        return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $stableTag);
+        return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $stableTagPair['version']);
     }
 
     /**
-     * Runs `git ls-remote -t --refs <vcsUrl>` and returns stdout, or null on failure/timeout.
+     * Runs `git ls-remote -q -t --refs <vcsUrl>` and returns stdout, or null on failure/timeout.
+     * `-q` suppresses the "From <url>" informational line that some git versions emit to stdout.
      */
-    private function runLsRemote(string $vcsUrl): ?string
+    private function runLsRemote(string $vcsUrl, string $packageName): ?string
     {
-        $process = $this->createProcess(['git', 'ls-remote', '-t', '--refs', $vcsUrl]);
+        $process = $this->createProcess(['git', 'ls-remote', '-q', '-t', '--refs', $vcsUrl]);
         $process->setTimeout($this->timeoutSeconds);
 
         try {
             $process->run();
         } catch (ProcessTimedOutException) {
             $this->logger->warning(
-                'git ls-remote timed out for {url}',
-                ['url' => $vcsUrl],
+                'git ls-remote timed out for {package} at {url}',
+                ['package' => $packageName, 'url' => $vcsUrl],
             );
 
             return null;
         } catch (ProcessFailedException $e) {
             $this->logger->warning(
-                'git binary not available — GenericGitResolver cannot resolve {url}',
-                ['url' => $vcsUrl, 'error' => $e->getMessage()],
+                'git binary not available — GenericGitResolver cannot resolve {package} at {url}',
+                ['package' => $packageName, 'url' => $vcsUrl, 'error' => $e->getMessage()],
             );
 
             return null;
@@ -91,8 +95,8 @@ class GenericGitResolver
         if (!$process->isSuccessful()) {
             $stderr = $process->getErrorOutput();
             $this->logger->warning(
-                'git ls-remote failed for {url}: {reason}',
-                ['url' => $vcsUrl, 'reason' => $stderr],
+                'git ls-remote failed for {package} at {url}: {reason}',
+                ['package' => $packageName, 'url' => $vcsUrl, 'reason' => $stderr],
             );
 
             return null;
@@ -102,13 +106,14 @@ class GenericGitResolver
     }
 
     /**
-     * Extracts semver version strings from `git ls-remote -t --refs` output.
+     * Extracts semver version strings from `git ls-remote -q -t --refs` output.
+     * Returns pairs of original tag name (for git operations) and normalized version string (for comparisons).
      *
-     * @return list<string>
+     * @return list<array{version: string, tag: string}>
      */
     private function parseTagsFromOutput(string $output): array
     {
-        $versions = [];
+        $tags = [];
         foreach (explode("\n", $output) as $line) {
             $line = trim($line);
             if ('' === $line || !str_contains($line, 'refs/tags/')) {
@@ -117,28 +122,33 @@ class GenericGitResolver
 
             $tagName = substr($line, strrpos($line, '/') + 1);
             if (1 === preg_match('/^v?(\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?)$/', $tagName, $matches)) {
-                $versions[] = $matches[1];
+                $tags[] = ['version' => $matches[1], 'tag' => $tagName];
             }
         }
 
-        return $versions;
+        return $tags;
     }
 
     /**
-     * Returns the most recent stable tag (no pre-release suffix), or null if none exists.
+     * Returns the most recent stable tag pair (no pre-release suffix), or null if none exists.
      *
-     * @param list<string> $versions
+     * @param list<array{version: string, tag: string}> $tags
+     *
+     * @return array{version: string, tag: string}|null
      */
-    private function findMostRecentStableTag(array $versions): ?string
+    private function findMostRecentStableTag(array $tags): ?array
     {
-        /** @var list<string> $stable */
-        $stable = array_values(array_filter($versions, static fn (string $v): bool => !str_contains($v, '-')));
+        /** @var list<array{version: string, tag: string}> $stable */
+        $stable = array_values(array_filter(
+            $tags,
+            static fn (array $t): bool => !str_contains($t['version'], '-'),
+        ));
 
         if ([] === $stable) {
             return null;
         }
 
-        usort($stable, static fn (string $a, string $b): int => version_compare($b, $a));
+        usort($stable, static fn (array $a, array $b): int => version_compare($b['version'], $a['version']));
 
         return $stable[0];
     }
@@ -146,6 +156,8 @@ class GenericGitResolver
     /**
      * Fetches composer.json from the given tag via `git archive --remote | tar -xO`.
      * Returns decoded array or null on failure (caller treats null as compatible).
+     *
+     * @param string $tag Original tag name as it appears in the git repository (e.g. `v2.3.4`)
      *
      * @return array{require?: array<string, string>}|null
      */
@@ -219,6 +231,8 @@ class GenericGitResolver
 
     private function createArchiveProcess(string $cmd): Process
     {
-        return Process::fromShellCommandline($cmd);
+        return null !== $this->archiveProcessFactory
+            ? ($this->archiveProcessFactory)($cmd)
+            : Process::fromShellCommandline($cmd);
     }
 }
