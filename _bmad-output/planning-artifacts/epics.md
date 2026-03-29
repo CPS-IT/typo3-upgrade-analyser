@@ -480,29 +480,34 @@ So that I know the analysis is incomplete for that source and can act on it.
 
 ---
 
-### Story 2.5: VCS Resolution Integration, Data Model Migration, and Template Updates
+### Story 2.5: VCS Resolution Integration in VcsSource, Data Model Migration, and Template Updates
 
 As a developer,
-I want the new Composer-based VCS resolution wired into `VersionAvailabilityAnalyzer`, replacing the existing `GitRepositoryAnalyzer` delegation,
-So that all VCS sources are resolved through the new two-tier chain and reports reflect the provider-agnostic data model.
+I want `GitSource` renamed to `VcsSource` and updated to iterate `VcsResolverInterface` implementations via a priority-tagged iterator,
+So that VCS availability is resolved through the existing two-tier chain (and any future resolvers) without coupling the source class to concrete implementations.
 
 **Acceptance Criteria:**
 
 - **Given** Stories 2.1–2.4 are complete and tested
-- **When** `VersionAvailabilityAnalyzer` is updated
-- **Then** it delegates VCS resolution to `PackagistVersionResolver` → `GenericGitResolver` instead of `GitRepositoryAnalyzer`
-- **And** analysis result metrics are renamed: `git_available` → `vcs_available`, `git_repository_url` → `vcs_source_url`, `git_latest_version` → `vcs_latest_version`
-- **And** `git_repository_health` metric is removed entirely (GitHub vanity metric with no equivalent in the new approach)
-- **And** risk scoring in `VersionAvailabilityAnalyzer` replaces health-weighted git scoring with binary VCS availability scoring
-- **And** `ReportContextBuilder` extracts `vcs_available`, `vcs_source_url`, `vcs_latest_version` instead of `git_*` equivalents
-- **And** HTML templates update: "Git" status card → "VCS" status card; "Repository Health" percentage removed; "Latest Compatible Version" retained
-- **And** version availability table column header changes from "Git" to "VCS"
+- **When** `GitSource` is refactored into `VcsSource`
+- **Then** `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php` is renamed to `VcsSource.php`; the class is renamed `VcsSource`; it still implements `VersionSourceInterface`
+- **And** `VcsSource` injects `iterable<VcsResolverInterface> $resolvers` via constructor (no concrete resolver class names in the constructor signature)
+- **And** `VcsSource::checkAvailability()` iterates `$resolvers` in declared priority order; for each resolver it calls `resolve()`; if the result's `shouldTryFallback()` returns `true`, it continues to the next resolver; otherwise it stops and maps the result to metrics
+- **And** `VersionAvailabilityAnalyzer` is NOT modified — it already iterates `VersionSourceInterface` via tagged iterator (done in commit 1c2781e)
+- **And** `services.yaml` introduces a `vcs_resolver` tag; `PackagistVersionResolver` is tagged `{ name: vcs_resolver, priority: 100 }`; `GenericGitResolver` is tagged `{ name: vcs_resolver, priority: 50 }`; `VcsSource` injects `!tagged_iterator vcs_resolver`
+- **And** `GitSource` is removed from `services.yaml`; `VcsSource` replaces it with the `version_availability.source` tag
+- **And** `GitRepositoryAnalyzer` is removed from `VcsSource` args but not deleted
+- **And** `GitHubClient`, `GitProviderFactory`, and `GitProviderInterface` are unwired from `services.yaml` but not deleted (Story 2.6)
+- **And** analysis result metrics returned by `VcsSource` are renamed: `git_available` → `vcs_available`, `git_repository_url` → `vcs_source_url`, `git_latest_version` → `vcs_latest_version`
+- **And** `git_repository_health` metric is removed entirely
+- **And** risk scoring in `VersionAvailabilityAnalyzer` reads `vcs_available` (not `git_available`); health-weighted scoring is removed; binary VCS availability used
+- **And** `ReportContextBuilder` extracts `vcs_*` keys instead of `git_*`
+- **And** HTML templates: "Git" status card → "VCS"; "Repository Health" removed; "Latest Compatible Version" retained; column header "Git" → "VCS"
 - **And** JSON output under `analyzers.version-availability` uses the new `vcs_*` field names (breaking schema change — documented)
-- **And** `services.yaml` wires `PackagistVersionResolver` and `GenericGitResolver`; `GitRepositoryAnalyzer` is unwired but not deleted
 - **And** all existing functional and integration tests are updated to use the new metric names
 - **And** PHPStan Level 8 reports zero errors
 
-**Note:** This is the integration gate. The old `GitHubClient` is unwired here but not deleted — that happens in Story 2.6.
+**Note:** This is the integration gate. `VersionAvailabilityAnalyzer` was made source-agnostic in commit 1c2781e. `VcsSource` is the remaining integration point. Old Git provider classes are unwired here and deleted in Story 2.6. Future VCS resolvers (SVN, Mercurial, Fossil) can be added by implementing `VcsResolverInterface` and tagging `{ name: vcs_resolver, priority: N }` — no change to `VcsSource` required.
 
 ---
 
