@@ -101,6 +101,7 @@ class GenericGitResolverTest extends TestCase
     private function makeResolver(
         array $processQueue,
         ?ComposerConstraintCheckerInterface $checker = null,
+        ?\Closure $archiveFactory = null,
     ): GenericGitResolver {
         $queue = $processQueue;
         $factory = function (array $command) use (&$queue): Process {
@@ -115,6 +116,7 @@ class GenericGitResolverTest extends TestCase
             $checker ?? $this->createStub(ComposerConstraintCheckerInterface::class),
             30,
             $factory,
+            $archiveFactory,
         );
     }
 
@@ -128,9 +130,12 @@ class GenericGitResolverTest extends TestCase
         $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
         $checker->method('isConstraintCompatible')->willReturn(true);
 
+        $composerJsonContent = '{"require":{"typo3/cms-core":"^13.4"}}';
+        $archiveFactory = fn (string $cmd): Process => $this->makeSuccessProcess($composerJsonContent);
+
         $resolver = $this->makeResolver([
             $this->makeSuccessProcess($this->lsRemoteOutput('2.0.0', '1.0.0')),
-        ], $checker);
+        ], $checker, $archiveFactory);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
@@ -141,23 +146,19 @@ class GenericGitResolverTest extends TestCase
 
     public function testResolvedCompatibleWhenArchiveFailsTreatsAsCompatible(): void
     {
-        // ls-remote returns tags; git archive will fail (no processFactory for archive process → real process fails)
-        // We inject a real resolver without a factory for archive, but override ls-remote only.
-        // Since fetchComposerJson uses createArchiveProcess (not injected), it will run real git and fail
-        // in any test environment — null return → treated as compatible.
         $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
-        // findTypo3Requirements never called because fetchComposerJson returns null
+        // When fetchComposerJson returns null, isCompatible(null, ...) calls findTypo3Requirements([]).
+        // Stub returns [] (no TYPO3 requirement) → treated as compatible.
         $checker->method('findTypo3Requirements')->willReturn([]);
+
+        $archiveFactory = fn (string $cmd): Process => $this->makeFailProcess();
 
         $resolver = $this->makeResolver([
             $this->makeSuccessProcess($this->lsRemoteOutput('1.2.3')),
-        ], $checker);
+        ], $checker, $archiveFactory);
 
-        // git archive will fail in CI/test env (remote not accessible) → null → compatible
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
-        // Either RESOLVED_COMPATIBLE (archive failed → compatible) or RESOLVED_NO_MATCH (if no TYPO3 req).
-        // Since findTypo3Requirements returns [] → isCompatible returns true → RESOLVED_COMPATIBLE
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame('1.2.3', $result->latestCompatibleVersion);
     }
@@ -168,9 +169,12 @@ class GenericGitResolverTest extends TestCase
         // No TYPO3 requirements found → treated as compatible
         $checker->method('findTypo3Requirements')->willReturn([]);
 
+        $composerJsonContent = '{"require":{"php":"^8.3"}}';
+        $archiveFactory = fn (string $cmd): Process => $this->makeSuccessProcess($composerJsonContent);
+
         $resolver = $this->makeResolver([
             $this->makeSuccessProcess($this->lsRemoteOutput('3.1.0', '3.0.0')),
-        ], $checker);
+        ], $checker, $archiveFactory);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
@@ -188,9 +192,12 @@ class GenericGitResolverTest extends TestCase
         $checker->method('findTypo3Requirements')->willReturn(['^12.4']);
         $checker->method('isConstraintCompatible')->willReturn(false);
 
+        $composerJsonContent = '{"require":{"typo3/cms-core":"^12.4"}}';
+        $archiveFactory = fn (string $cmd): Process => $this->makeSuccessProcess($composerJsonContent);
+
         $resolver = $this->makeResolver([
             $this->makeSuccessProcess($this->lsRemoteOutput('1.0.0')),
-        ], $checker);
+        ], $checker, $archiveFactory);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
@@ -274,15 +281,47 @@ class GenericGitResolverTest extends TestCase
             'latest',        // skip
         );
 
+        $archiveFactory = fn (string $cmd): Process => $this->makeFailProcess();
+
         $resolver = $this->makeResolver([
             $this->makeSuccessProcess($output),
-        ], $checker);
+        ], $checker, $archiveFactory);
 
         // Most recent stable: 2.3.4 (stripped v) beats 1.0.0
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
 
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame('2.3.4', $result->latestCompatibleVersion);
+    }
+
+    /**
+     * Verifies that when a tag has a `v` prefix (e.g. `v2.3.4`), the git archive subprocess
+     * is invoked with the original tag name (`v2.3.4`), not the normalized version (`2.3.4`).
+     * The result's latestCompatibleVersion must still be the normalized form.
+     */
+    public function testVPrefixedTagUsesOriginalTagNameForGitArchive(): void
+    {
+        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
+        $checker->method('findTypo3Requirements')->willReturn([]);
+
+        $capturedCmd = '';
+        $archiveFactory = function (string $cmd) use (&$capturedCmd): Process {
+            $capturedCmd = $cmd;
+
+            return $this->makeFailProcess(); // archive fails → null → no TYPO3 req → compatible
+        };
+
+        $resolver = $this->makeResolver([
+            $this->makeSuccessProcess($this->lsRemoteOutput('v2.3.4')),
+        ], $checker, $archiveFactory);
+
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion);
+
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
+        // Normalized version (no v prefix) in result
+        self::assertSame('2.3.4', $result->latestCompatibleVersion);
+        // Original tag name (with v prefix) used in the git archive command
+        self::assertStringContainsString('v2.3.4', $capturedCmd);
     }
 
     public function testPreReleaseOnlyOutputYieldsNoMatch(): void

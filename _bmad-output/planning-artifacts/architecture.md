@@ -529,6 +529,8 @@ $diffFile = $diff !== null
 2. On failure, pass to `GenericGitResolver` (Tier 2 — `git ls-remote`)
 3. On failure of both tiers, emit Console WARNING and record `null`
 
+Both `PackagistVersionResolver` and `GenericGitResolver` implement `VcsResolverInterface`. The orchestrator (`VersionAvailabilityAnalyzer`) depends on `VcsResolverInterface`, not concrete classes. DI wiring uses named service arguments (not auto-wiring, as two implementations exist for the same interface).
+
 **Warning for unresolvable sources — Console output, not logger:**
 ```
 [WARNING] Could not resolve versions from "https://git.example.com/ext/foo".
@@ -646,6 +648,7 @@ src/
 │   │
 │   ├── ExternalTool/
 │   │   ├── ToolAvailabilityChecker.php        # NEW — startup precondition check for required binaries
+│   │   ├── VcsResolverInterface.php           # NEW — shared contract for Tier 1 and Tier 2 resolvers
 │   │   ├── PackagistVersionResolver.php       # NEW — Tier 1: resolves versions via Composer CLI (Packagist)
 │   │   ├── GenericGitResolver.php             # NEW — Tier 2: resolves versions via git ls-remote
 │   │   ├── VcsResolutionException.php         # NEW — renamed from GitProviderException
