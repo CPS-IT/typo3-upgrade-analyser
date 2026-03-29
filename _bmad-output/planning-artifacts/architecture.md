@@ -316,7 +316,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 3. StreamingOutputManager pre-flight check + FileReference in Infrastructure
 4. VCS resolution research spike (Story 2.0) — validate Composer CLI and git CLI approaches
 5. ComposerSourceParser + PackagistVersionResolver + GenericGitResolver (Stories 2.1–2.3)
-6. Integration: wire new resolvers into VersionAvailabilityAnalyzer, update metrics/templates (Story 2.5)
+6. Integration: rename GitSource → VcsSource; wire VcsResolverInterface tagged iterator into VcsSource (VersionAvailabilityAnalyzer already source-agnostic via commit 1c2781e); update metrics/templates (Story 2.5)
 7. Remove old GitProvider subsystem (Story 2.6)
 8. `report generate` subcommand + customer template set
 9. Exit code unit tests + `--no-interaction` env var support
@@ -325,7 +325,7 @@ No `__DIR__`-relative paths to the tool's own binaries or resources outside of `
 - VersionProfileRegistry feeds into InstallationDiscoveryService, ExtensionDiscoveryService, and core extension exclusion logic
 - StreamingOutputManager is a dependency of TemplateRenderer and both Rector/Fractor analyzers
 - VCS resolution research spike (Story 2.0) is a serial prerequisite for all Epic 2 implementation stories
-- PackagistVersionResolver and GenericGitResolver replace GitRepositoryAnalyzer in VersionAvailabilityAnalyzer
+- PackagistVersionResolver and GenericGitResolver (and future VCS resolvers) are wired into VcsSource (renamed from GitSource) via vcs_resolver tagged iterator with priority ordering; VersionAvailabilityAnalyzer is source-agnostic since commit 1c2781e
 - Metric rename (`git_*` → `vcs_*`) affects ReportContextBuilder and all 10 report templates
 - `report generate` subcommand requires caching to be reliable (NFR7) — reports generated from stale cache must be flagged
 
