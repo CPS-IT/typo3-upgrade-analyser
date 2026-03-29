@@ -29,7 +29,7 @@ use Symfony\Component\Process\Process;
  * Note: --working-dir is never used in any subprocess call. It adds 11–13 s
  * overhead per call (VcsResolutionSpike.md §8).
  */
-class PackagistVersionResolver implements VcsResolverInterface
+class ComposerVersionResolver implements VcsResolverInterface
 {
     /**
      * @param (\Closure(list<string>): Process)|null $processFactory
