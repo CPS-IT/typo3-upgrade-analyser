@@ -50,7 +50,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->packagistSource->method('getName')->willReturn('packagist');
 
         $this->gitSource = $this->createMock(VersionSourceInterface::class);
-        $this->gitSource->method('getName')->willReturn('git');
+        $this->gitSource->method('getName')->willReturn('vcs');
 
         $this->analyzer = new VersionAvailabilityAnalyzer(
             $cacheService,
@@ -90,7 +90,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         $this->gitSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['git_available' => true, 'git_repository_health' => 0.8]);
+            ->willReturn(['vcs_available' => true, 'vcs_source_url' => 'https://github.com/vendor/repo', 'vcs_latest_version' => '1.2.3']);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $this->context);
@@ -99,8 +99,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertTrue($result->getMetric('ter_available'));
         self::assertTrue($result->getMetric('packagist_available'));
-        self::assertTrue($result->getMetric('git_available'));
-        self::assertEquals(0.8, $result->getMetric('git_repository_health'));
+        self::assertTrue($result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeWithOnlyTerEnabled(): void
@@ -139,7 +138,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             'analysis' => [
                 'analyzers' => [
                     'version_availability' => [
-                        'sources' => ['github'], // Should map to 'git'
+                        'sources' => ['github'], // Should map to 'vcs'
                     ],
                 ],
             ],
@@ -148,13 +147,13 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         $this->gitSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['git_available' => true]);
+            ->willReturn(['vcs_available' => true]);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $context);
 
         // Assert
-        self::assertTrue($result->getMetric('git_available'));
+        self::assertTrue($result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeSkipsPathDistribution(): void
@@ -217,39 +216,58 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->assertEquals(1.5, $result->getRiskScore(), 'TER-only availability should yield low risk');
     }
 
-    public function testScoreWithGitOnly(): void
+    public function testScoreWithVcsOnly(): void
     {
-        // Git only enabled
-        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['git']]]]];
+        // VCS only enabled
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
         $this->gitSource->method('checkAvailability')->willReturn([
-            'git_available' => true,
-            'git_repository_health' => 1.0, // Perfect health
+            'vcs_available' => true,
+            'vcs_source_url' => 'https://github.com/vendor/repo',
+            'vcs_latest_version' => '1.2.3',
         ]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
         // Max Score = 2. Availability = 2. Ratio = 1.0. Risk should be 1.5.
-        $this->assertEquals(1.5, $result->getRiskScore(), 'Git-only availability should yield low risk');
+        $this->assertEquals(1.5, $result->getRiskScore(), 'VCS-only availability should yield low risk');
     }
 
-    public function testScoreWithPackagistAndGitPartial(): void
+    public function testScoreWithPackagistAndVcsPartial(): void
     {
-        // Packagist + Git enabled
-        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist', 'git']]]]];
+        // Packagist + VCS enabled
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist', 'vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
-        // Packagist available (3 pts), Git not available (0 pts). Total 3/5 = 0.6.
+        // Packagist available (3 pts), VCS not available (0 pts). Total 3/5 = 0.6.
         // Threshold for 2.5 is 0.44 * 5 = 2.2.
         // Threshold for 1.5 is 0.66 * 5 = 3.3.
         // So risk should be 2.5.
 
         $this->packagistSource->method('checkAvailability')->willReturn(['packagist_available' => true]);
-        $this->gitSource->method('checkAvailability')->willReturn(['git_available' => false]);
+        $this->gitSource->method('checkAvailability')->willReturn(['vcs_available' => false]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
         $this->assertEquals(2.5, $result->getRiskScore(), 'Partial availability should yield medium risk');
+    }
+
+    public function testScoreWithVcsNullExcludedFromScoring(): void
+    {
+        // VCS only enabled, vcs_available = null (unknown) → excluded from scoring → 0/0 = high risk
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
+        $context = $this->context->withConfiguration($config);
+
+        $this->gitSource->method('checkAvailability')->willReturn([
+            'vcs_available' => null,
+            'vcs_source_url' => null,
+            'vcs_latest_version' => null,
+        ]);
+
+        $result = $this->analyzer->analyze($this->extension, $context);
+
+        // vcs_available=null → maxPossibleScore stays 0 → returns 9.0 (no availability)
+        $this->assertEquals(9.0, $result->getRiskScore(), 'Unknown VCS availability should yield high risk');
     }
 }

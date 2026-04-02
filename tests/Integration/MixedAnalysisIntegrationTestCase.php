@@ -13,14 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\GitSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
@@ -132,8 +130,8 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         if ($metrics['packagist_available']) {
             $availableSources[] = 'Packagist';
         }
-        if ($metrics['git_available']) {
-            $availableSources[] = 'Git';
+        if (true === ($metrics['vcs_available'] ?? null)) {
+            $availableSources[] = 'VCS';
         }
 
         $this->assertGreaterThan(1, \count($availableSources), 'Popular extension should be available in multiple sources');
@@ -147,8 +145,8 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
             // Log available sources and recommendations for debugging
             $this->assertNotEmpty($recommendations, 'Should have recommendations when multiple sources available. Available sources: ' . implode(', ', $availableSources));
 
-            // Check for "multiple" specifically when Git + (TER or Packagist) are available
-            if ($metrics['git_available'] && ($metrics['ter_available'] || $metrics['packagist_available'])) {
+            // Check for "multiple" specifically when VCS + (TER or Packagist) are available
+            if (true === ($metrics['vcs_available'] ?? null) && ($metrics['ter_available'] || $metrics['packagist_available'])) {
                 $this->assertStringContainsString(
                     'multiple',
                     strtolower($recommendations),
@@ -175,7 +173,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         // News extension should be compatible with both TYPO3 11 and 12
         foreach ($results as $version => $result) {
             $metrics = $result->getMetrics();
-            $hasAnyAvailability = $metrics['ter_available'] || $metrics['packagist_available'] || $metrics['git_available'];
+            $hasAnyAvailability = $metrics['ter_available'] || $metrics['packagist_available'] || true === ($metrics['vcs_available'] ?? null);
 
             $this->assertTrue(
                 $hasAnyAvailability,
@@ -255,7 +253,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         $metrics = $result->getMetrics();
         $this->assertArrayHasKey('ter_available', $metrics);
         $this->assertArrayHasKey('packagist_available', $metrics);
-        $this->assertArrayHasKey('git_available', $metrics);
+        $this->assertArrayHasKey('vcs_available', $metrics);
     }
 
     /**
@@ -385,18 +383,10 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
             new RepositoryUrlHandler(),
         );
 
-        $gitHubClient = new GitHubClient(
-            $this->createHttpClientService(),
+        $vcsResolver = new ComposerVersionResolver(
             $this->createLogger(),
-            new RepositoryUrlHandler(),
-            $this->getGitHubToken(),
-        );
-
-        $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
-        $gitAnalyzer = new GitRepositoryAnalyzer(
-            $providerFactory,
-            new GitVersionParser(new ComposerConstraintChecker()),
-            $this->createLogger(),
+            new ComposerConstraintChecker(),
+            new ComposerEnvironment($this->createLogger()),
         );
 
         return new VersionAvailabilityAnalyzer(
@@ -405,7 +395,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
             [
                 new TerSource($terClient, $this->createLogger(), $this->createCacheService()),
                 new PackagistSource($packagistClient, $this->createLogger(), $this->createCacheService()),
-                new GitSource($gitAnalyzer, $this->createLogger(), $this->createCacheService()),
+                new VcsSource($vcsResolver, $this->createLogger(), $this->createCacheService()),
             ],
         );
     }
