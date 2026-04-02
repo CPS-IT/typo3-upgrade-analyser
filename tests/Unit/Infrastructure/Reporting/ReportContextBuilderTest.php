@@ -98,7 +98,7 @@ class ReportContextBuilderTest extends TestCase
         $analysisResult->method('getData')->willReturn([
             'ter_available' => true,
             'packagist_available' => false,
-            'git_available' => true,
+            'vcs_available' => true,
             'risk_score' => 3.5,
         ]);
 

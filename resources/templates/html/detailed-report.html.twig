@@ -203,12 +203,12 @@
         <h3>Availability</h3>
         <p><strong>TER:</strong> {{ statistics.availability_stats.ter_available }}</p>
         <p><strong>Packagist:</strong> {{ statistics.availability_stats.packagist_available }}</p>
-        <p><strong>Git:</strong> {{ statistics.availability_stats.git_available }}</p>
+        <p><strong>VCS:</strong> {{ statistics.availability_stats.vcs_available }}</p>
     </div>
 </div>
 
 <h2>Extensions Overview</h2>
-{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'git'] %}
+{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
 <table>
     <thead>
     <tr>
@@ -225,8 +225,8 @@
             <td><strong>{{ data.extension.key }}</strong></td>
             <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
             <td><span class="badge badge-{{ data.risk_summary.risk_level }}">{{ data.risk_summary.risk_level|upper }}</span></td>
-            <td>{% if data.version_analysis %}{% if data.version_analysis.skipped %}✖️{% elseif ('ter' in enabled_sources and data.version_analysis.ter_available) or ('packagist' in enabled_sources and data.version_analysis.packagist_available) or (('github' in enabled_sources or 'git' in enabled_sources) and data.version_analysis.git_available) %}✅{% else %}❌{% endif %}{% else %}❓{% endif %}</td>
-            <td>{{ data.version_analysis and data.version_analysis.git_latest_version ? data.version_analysis.git_latest_version : 'N/A' }}</td>
+            <td>{% if data.version_analysis %}{% if data.version_analysis.skipped %}✖️{% elseif ('ter' in enabled_sources and data.version_analysis.ter_available) or ('packagist' in enabled_sources and data.version_analysis.packagist_available) or (('github' in enabled_sources or 'vcs' in enabled_sources) and data.version_analysis.vcs_available) %}✅{% else %}❌{% endif %}{% else %}❓{% endif %}</td>
+            <td>{{ data.version_analysis and data.version_analysis.vcs_latest_version ? data.version_analysis.vcs_latest_version : 'N/A' }}</td>
         </tr>
     {% endfor %}
     </tbody>
@@ -291,9 +291,9 @@
                                         Packagist {{ data.version_analysis.packagist_available ? '✓' : '✗' }}
                                     </span>
                                 {% endif %}
-                                {% if 'github' in enabled_sources or 'git' in enabled_sources %}
-                                    <span class="availability-item {{ data.version_analysis.git_available ? 'available' : 'unavailable' }}">
-                                        Git {{ data.version_analysis.git_available ? '✓' : '✗' }}
+                                {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
+                                    <span class="availability-item {{ data.version_analysis.vcs_available ? 'available' : 'unavailable' }}">
+                                        VCS {{ data.version_analysis.vcs_available ? '✓' : '✗' }}
                                     </span>
                                 {% endif %}
                             </div>
@@ -305,16 +305,13 @@
                             {% endif %}
                         {% endif %}
 
-                        {% if ('github' in enabled_sources or 'git' in enabled_sources) and data.version_analysis.git_repository_url %}
-                            <p><strong>Git Repository:</strong>
-                                <a href="{{ data.version_analysis.git_repository_url }}" target="_blank">{{ data.version_analysis.git_repository_url }}</a>
+                        {% if ('github' in enabled_sources or 'vcs' in enabled_sources) and data.version_analysis.vcs_source_url %}
+                            <p><strong>VCS Repository:</strong>
+                                <a href="{{ data.version_analysis.vcs_source_url }}" target="_blank">{{ data.version_analysis.vcs_source_url }}</a>
                             </p>
-                            {% if data.version_analysis.git_repository_health %}
-                                <p><strong>Repository Health:</strong> {{ "%.0f"|format(data.version_analysis.git_repository_health * 100) }}%</p>
-                            {% endif %}
 
-                            {% if data.version_analysis.git_latest_version %}
-                                <p><strong>Latest Compatible Version:</strong> {{ data.version_analysis.git_latest_version }}</p>
+                            {% if data.version_analysis.vcs_latest_version %}
+                                <p><strong>Latest Compatible Version:</strong> {{ data.version_analysis.vcs_latest_version }}</p>
                             {% endif %}
                         {% endif %}
 
