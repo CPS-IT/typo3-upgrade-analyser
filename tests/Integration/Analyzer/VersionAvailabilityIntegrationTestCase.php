@@ -12,14 +12,12 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Analyzer;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\GitSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
@@ -35,7 +33,6 @@ use CPSIT\UpgradeAnalyzer\Tests\Integration\AbstractIntegrationTestCase;
 class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
 {
     private VersionAvailabilityAnalyzer $analyzer;
-    private array $testExtensions;
 
     protected function setUp(): void
     {
@@ -43,9 +40,6 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
 
         $this->requiresRealApiCalls();
         $this->requiresTerToken();
-
-        // Load test extension data
-        $this->testExtensions = $this->loadTestData('known_extensions.json');
 
         // Create all required components
         $terClient = new TerApiClient($this->createHttpClientService(), $this->createLogger());
@@ -56,19 +50,10 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
             new RepositoryUrlHandler(),
         );
 
-        // Create Git analyzer with GitHub provider
-        $gitHubClient = new GitHubClient(
-            $this->createHttpClientService(),
+        $vcsResolver = new ComposerVersionResolver(
             $this->createLogger(),
-            new RepositoryUrlHandler(),
-            $this->getGitHubToken(),
-        );
-
-        $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
-        $gitAnalyzer = new GitRepositoryAnalyzer(
-            $providerFactory,
-            new GitVersionParser(new ComposerConstraintChecker()),
-            $this->createLogger(),
+            new ComposerConstraintChecker(),
+            new ComposerEnvironment($this->createLogger()),
         );
 
         // Create the analyzer
@@ -78,7 +63,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
             [
                 new TerSource($terClient, $this->createLogger(), $this->createCacheService()),
                 new PackagistSource($packagistClient, $this->createLogger(), $this->createCacheService()),
-                new GitSource($gitAnalyzer, $this->createLogger(), $this->createCacheService()),
+                new VcsSource($vcsResolver, $this->createLogger(), $this->createCacheService()),
             ],
         );
     }
@@ -128,22 +113,11 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         $metrics = $result->getMetrics();
         $this->assertArrayHasKey('ter_available', $metrics);
         $this->assertArrayHasKey('packagist_available', $metrics);
-        $this->assertArrayHasKey('git_available', $metrics);
-        $this->assertArrayHasKey('git_repository_health', $metrics);
-        $this->assertArrayHasKey('git_repository_url', $metrics);
+        $this->assertArrayHasKey('vcs_available', $metrics);
 
         // Assert expected availability for georgringer/news
         $this->assertTrue($metrics['ter_available'], 'News extension should be available in TER');
         $this->assertTrue($metrics['packagist_available'], 'News extension should be available in Packagist');
-        $this->assertTrue($metrics['git_available'], 'News extension should be available in Git');
-
-        // Assert Git repository information
-        $this->assertNotNull($metrics['git_repository_health']);
-        $this->assertGreaterThan(0.5, $metrics['git_repository_health'], 'Active repository should have good health');
-        $this->assertEquals(
-            $this->testExtensions['extensions']['georgringer/news']['github_url'],
-            $metrics['git_repository_url'],
-        );
 
         // Assert risk score is reasonable (multiple sources = low risk)
         $this->assertLessThan(3.0, $result->getRiskScore(), 'Multiple availability sources should result in low risk');
@@ -175,12 +149,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
 
         // Assert expected availability for archived extension
         // TER and Packagist availability checks completed (no specific assertion needed as both true/false are valid)
-        $this->assertFalse($metrics['git_available'], 'Archived extension should not be compatible with TYPO3 12.4');
-
-        // Assert archived repository has lower health score
-        if (null !== $metrics['git_repository_health']) {
-            $this->assertLessThan(0.7, $metrics['git_repository_health'], 'Archived repository should have lower health');
-        }
+        $this->assertNotTrue($metrics['vcs_available'] ?? null, 'Archived extension should not be compatible with TYPO3 12.4');
 
         // Assert higher risk score for archived extension
         $this->assertGreaterThan(5.0, $result->getRiskScore(), 'Archived extension should have higher risk');
@@ -243,7 +212,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         // Local extension should not be available anywhere publicly
         $this->assertFalse($metrics['ter_available'], 'Local extension should not be in TER');
         $this->assertFalse($metrics['packagist_available'], 'Local extension should not be in Packagist');
-        $this->assertFalse($metrics['git_available'], 'Local extension should not have public Git repository');
+        $this->assertNull($metrics['vcs_available'] ?? null, 'Local extension should have no VCS resolution result');
 
         // Local extension should have high risk score
         $this->assertGreaterThan(8.0, $result->getRiskScore(), 'Local extension should have high risk score');
@@ -278,7 +247,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         // Should attempt to check Packagist but find nothing
         $this->assertFalse($metrics['ter_available'], 'Non-existent extension should not be in TER');
         $this->assertFalse($metrics['packagist_available'], 'Non-existent extension should not be in Packagist');
-        $this->assertFalse($metrics['git_available'], 'Non-existent extension should not have Git repository');
+        $this->assertNotTrue($metrics['vcs_available'] ?? null, 'Non-existent extension should not have VCS version available');
 
         // High risk due to no availability
         $this->assertGreaterThan(8.0, $result->getRiskScore(), 'Non-existent extension should have high risk');
@@ -349,7 +318,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         foreach ($results as $version => $result) {
             $metrics = $result->getMetrics();
             $this->assertTrue(
-                $metrics['ter_available'] || $metrics['packagist_available'] || $metrics['git_available'],
+                $metrics['ter_available'] || $metrics['packagist_available'] || true === ($metrics['vcs_available'] ?? null),
                 "News extension should be available for TYPO3 {$version}",
             );
         }

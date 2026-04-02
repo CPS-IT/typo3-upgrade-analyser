@@ -43,7 +43,7 @@ class ComposerVersionResolver implements VcsResolverInterface
     ) {
     }
 
-    public function resolve(string $packageName, string $vcsUrl, Version $targetVersion): VcsResolutionResult
+    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion): VcsResolutionResult
     {
         if (!$this->composerEnvironment->isVersionSufficient()) {
             return new VcsResolutionResult(VcsResolutionStatus::FAILURE, $vcsUrl, null);
@@ -100,7 +100,7 @@ class ComposerVersionResolver implements VcsResolverInterface
         return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
     }
 
-    private function handleNonZeroExit(string $packageName, string $vcsUrl, string $stderr): VcsResolutionResult
+    private function handleNonZeroExit(string $packageName, ?string $vcsUrl, string $stderr): VcsResolutionResult
     {
         if (false !== stripos($stderr, 'not found') || false !== stripos($stderr, 'Could not find package')) {
             $this->logger->debug('Package {package} not found on Packagist', ['package' => $packageName]);

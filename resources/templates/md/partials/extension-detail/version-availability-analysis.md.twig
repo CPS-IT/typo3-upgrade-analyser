@@ -11,17 +11,14 @@
   - **Latest Version:** {{ extension_data.extension.composerName ? '[' ~ version_analysis.packagist_latest_version ~ '](https://packagist.org/packages/' ~ extension_data.extension.composerName ~ ')' : version_analysis.packagist_latest_version }}
   - **Compatible with Target:** {{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}
 {% endif %}
-- **Git Repository:** {{ version_analysis.git_available ? '✅ Available' : '❌ Not Available' }}
+- **VCS Repository:** {{ version_analysis.vcs_available ? '✅ Available' : '❌ Not Available' }}
 
-### Repository Information
-{% if version_analysis.git_repository_url %}
-- **Repository URL:** {{ version_analysis.git_repository_url }}
+### VCS Repository Information
+{% if version_analysis.vcs_source_url %}
+- **Repository URL:** {{ version_analysis.vcs_source_url }}
 {% endif %}
-{% if version_analysis.git_repository_health %}
-- **Repository Health:** {{ "%.0f"|format(version_analysis.git_repository_health * 100) }}%
-{% endif %}
-{% if version_analysis.git_latest_version %}
-- **Latest Compatible Version:** {{ version_analysis.git_latest_version }}
+{% if version_analysis.vcs_latest_version %}
+- **Latest Compatible Version:** {{ version_analysis.vcs_latest_version }}
 {% endif %}
 
 ### Risk Analysis

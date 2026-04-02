@@ -1,6 +1,6 @@
 # Story 2.5: VCS Resolution Integration, Data Model Migration, and Template Updates
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -66,39 +66,39 @@ so that VCS availability is resolved through Composer-based resolution, unresolv
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Rename GitSource to VcsSource (AC: 1-4)
-  - [ ] 1.1 Rename file `GitSource.php` -> `VcsSource.php`
-  - [ ] 1.2 Change class name, update `getName()` to return `'vcs'`
-  - [ ] 1.3 Replace constructor: `VcsResolverInterface $resolver` instead of `GitRepositoryAnalyzer`
-  - [ ] 1.4 Implement `checkAvailability()` delegating to `$resolver->resolve()`
-  - [ ] 1.5 Map `VcsResolutionResult` to metrics array with null/false/true semantics
-  - [ ] 1.6 Add console warning logic for failed resolutions
-- [ ] Task 2: Update services.yaml (AC: 5-6)
-  - [ ] 2.1 Add `VcsResolverInterface` alias pointing to `ComposerVersionResolver`
-  - [ ] 2.2 Replace `GitSource` service definition with `VcsSource`
-  - [ ] 2.3 Wire `VcsResolverInterface`, `LoggerInterface`, `CacheService` as VcsSource args
-  - [ ] 2.4 Keep old Git provider service definitions intact (Story 2-6 scope)
-- [ ] Task 3: Update VersionAvailabilityAnalyzer (AC: 15-17)
-  - [ ] 3.1 Update `calculateRiskScore()`: `git_available` -> `vcs_available`, remove `git_repository_health` logic, handle `null` as skip
-  - [ ] 3.2 Update `addRecommendations()`: all `git_*` -> `vcs_*`, remove health-based logic
-  - [ ] 3.3 Update default source list and `'github'` mapping
-  - [ ] 3.4 Update cache key components
-- [ ] Task 4: Update VersionAvailabilityDataProvider (AC: 21)
-  - [ ] 4.1 Replace `git_*` metric keys with `vcs_*` in `extractData()`
-  - [ ] 4.2 Remove `git_repository_health` from output
-- [ ] Task 5: Update templates (AC: 18-20)
-  - [ ] 5.1 `version-availability-table.html.twig`: defaults, source checks, metric names, headers
-  - [ ] 5.2 `version-availability-table.md.twig`: same changes
-  - [ ] 5.3 `version-availability-analysis.html.twig` (extension detail): same changes
-  - [ ] 5.4 `version-availability-analysis.md.twig` (extension detail): same changes
-  - [ ] 5.5 Check `detailed-report.html.twig` and `main-report.md.twig` for any git_* references
-- [ ] Task 6: Update all tests (AC: 22-24)
-  - [ ] 6.1 Rename/rewrite `GitSourceTest` -> `VcsSourceTest`
-  - [ ] 6.2 Update `VersionAvailabilityAnalyzerTest`: new metric names, null handling
-  - [ ] 6.3 Update `ReportContextBuilderTest`: new metric names
-  - [ ] 6.4 Update `VersionAvailabilityIntegrationTestCase`
-  - [ ] 6.5 Update `MixedAnalysisIntegrationTestCase`
-  - [ ] 6.6 Run full suite, PHPStan, lint
+- [x] Task 1: Rename GitSource to VcsSource (AC: 1-4)
+  - [x] 1.1 Rename file `GitSource.php` -> `VcsSource.php`
+  - [x] 1.2 Change class name, update `getName()` to return `'vcs'`
+  - [x] 1.3 Replace constructor: `VcsResolverInterface $resolver` instead of `GitRepositoryAnalyzer`
+  - [x] 1.4 Implement `checkAvailability()` delegating to `$resolver->resolve()`
+  - [x] 1.5 Map `VcsResolutionResult` to metrics array with null/false/true semantics
+  - [x] 1.6 Add console warning logic for failed resolutions
+- [x] Task 2: Update services.yaml (AC: 5-6)
+  - [x] 2.1 Add `VcsResolverInterface` alias pointing to `ComposerVersionResolver`
+  - [x] 2.2 Replace `GitSource` service definition with `VcsSource`
+  - [x] 2.3 Wire `VcsResolverInterface`, `LoggerInterface`, `CacheService` as VcsSource args
+  - [x] 2.4 Keep old Git provider service definitions intact (Story 2-6 scope)
+- [x] Task 3: Update VersionAvailabilityAnalyzer (AC: 15-17)
+  - [x] 3.1 Update `calculateRiskScore()`: `git_available` -> `vcs_available`, remove `git_repository_health` logic, handle `null` as skip
+  - [x] 3.2 Update `addRecommendations()`: all `git_*` -> `vcs_*`, remove health-based logic
+  - [x] 3.3 Update default source list and `'github'` mapping
+  - [x] 3.4 Update cache key components
+- [x] Task 4: Update VersionAvailabilityDataProvider (AC: 21)
+  - [x] 4.1 Replace `git_*` metric keys with `vcs_*` in `extractData()`
+  - [x] 4.2 Remove `git_repository_health` from output
+- [x] Task 5: Update templates (AC: 18-20)
+  - [x] 5.1 `version-availability-table.html.twig`: defaults, source checks, metric names, headers
+  - [x] 5.2 `version-availability-table.md.twig`: same changes
+  - [x] 5.3 `version-availability-analysis.html.twig` (extension detail): same changes
+  - [x] 5.4 `version-availability-analysis.md.twig` (extension detail): same changes
+  - [x] 5.5 Check `detailed-report.html.twig` and `main-report.md.twig` for any git_* references
+- [x] Task 6: Update all tests (AC: 22-24)
+  - [x] 6.1 Rename/rewrite `GitSourceTest` -> `VcsSourceTest`
+  - [x] 6.2 Update `VersionAvailabilityAnalyzerTest`: new metric names, null handling
+  - [x] 6.3 Update `ReportContextBuilderTest`: new metric names
+  - [x] 6.4 Update `VersionAvailabilityIntegrationTestCase`
+  - [x] 6.5 Update `MixedAnalysisIntegrationTestCase`
+  - [x] 6.6 Run full suite, PHPStan, lint
 
 ## Dev Notes
 
@@ -238,8 +238,42 @@ From Story 2-3 (GenericGitResolver -- cancelled):
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — all issues resolved inline during implementation.
 
 ### Completion Notes List
 
+- Console warning injection implemented via Option B (LoggerInterface only); Infrastructure layer has no Symfony Console dependency.
+- Warning deduplication via `$warnedUrls` instance array in VcsSource; one log entry per URL per analyzer run.
+- Only RESOLVED_COMPATIBLE and RESOLVED_NO_MATCH results are cached; FAILURE/NOT_FOUND results are not cached to allow retry.
+- GitSource.php left in place (not deleted); only VcsSource.php is wired as active source per AC 6.
+- PHPStan fix: removed unreachable `$availabilityScore >= 1` branch after binary VCS scoring change; removed redundant `&& $anyAvailable` condition.
+- Integration tests updated to use VcsSource + ComposerVersionResolver + ComposerEnvironment; GitSource/GitRepositoryAnalyzer/GitHubClient removed from test setup.
+- 1767 unit tests pass; PHPStan Level 8: 0 errors; PHP-CS-Fixer: 0 issues.
+
 ### File List
+
+**New:**
+- `src/Infrastructure/Analyzer/VersionAvailability/Source/VcsSource.php`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailability/Source/VcsSourceTest.php`
+
+**Modified:**
+- `config/services.yaml`
+- `src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php`
+- `src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php`
+- `src/Infrastructure/Reporting/ReportContextBuilder.php`
+- `resources/templates/html/partials/main-report/version-availability-table.html.twig`
+- `resources/templates/md/partials/main-report/version-availability-table.md.twig`
+- `resources/templates/html/partials/extension-detail/version-availability-analysis.html.twig`
+- `resources/templates/md/partials/extension-detail/version-availability-analysis.md.twig`
+- `resources/templates/html/detailed-report.html.twig`
+- `resources/templates/md/detailed-report.md.twig`
+- `resources/templates/md/main-report.md.twig`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailabilityAnalyzerTest.php`
+- `tests/Unit/Infrastructure/Reporting/ReportContextBuilderTest.php`
+- `tests/Integration/Analyzer/VersionAvailabilityIntegrationTestCase.php`
+- `tests/Integration/MixedAnalysisIntegrationTestCase.php`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
