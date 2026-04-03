@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-04-03 (sprint-change-proposal-2026-04-03: story 2-5a added for VCS detection fix; 2-5 blocked pending 2-5a)
+last_updated: 2026-04-03 (story 2-5a created as ready-for-dev; 2-5 blocked pending 2-5a)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -86,7 +86,7 @@ development_status:
   2-3-generic-git-resolver: cancelled                             # Sprint change proposal 2026-03-29c: git archive --remote non-functional
   2-4-unmatched-vcs-source-warning: absorbed                      # Absorbed into 2-5 (sprint change proposal 2026-03-29c)
   2-5-integrate-resolvers-and-update-data-model: review                  # Includes warning ACs from former 2-4; blocked pending 2-5a
-  2-5a-fix-vcs-detection-non-packagist: backlog                          # Sprint change proposal 2026-04-03: RC-1 + RC-2 + RC-3 + SSH handling
+  2-5a-fix-vcs-detection-non-packagist: ready-for-dev                     # Sprint change proposal 2026-04-03: RC-1 + RC-2 + RC-3 + SSH handling
   2-6-remove-git-provider-subsystem: backlog
   2-7-direct-indirect-extension-distinction: backlog             # Feature #150 (was p2-5)
   epic-2-retrospective: optional
