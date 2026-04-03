@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\VersionAvaila
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
@@ -73,13 +74,13 @@ final class VcsSourceTest extends TestCase
 
         $this->resolver->expects(self::once())
             ->method('resolve')
-            ->with('vendor/pkg', null, $this->context->getTargetVersion())
+            ->with('vendor/pkg', null, $this->context->getTargetVersion(), null)
             ->willReturn($result);
 
         $metrics = $this->source->checkAvailability($extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => false,
+            'vcs_available' => SourceAvailability::Unavailable,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $metrics);
@@ -96,7 +97,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => null,
+            'vcs_available' => SourceAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $result);
@@ -105,7 +106,7 @@ final class VcsSourceTest extends TestCase
     #[Test]
     public function returnsCachedValueOnCacheHit(): void
     {
-        $cached = ['vcs_available' => true, 'vcs_source_url' => 'https://github.com/vendor/test-extension', 'vcs_latest_version' => '1.2.3'];
+        $cached = ['vcs_available' => SourceAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/test-extension', 'vcs_latest_version' => '1.2.3'];
 
         $this->cacheService->method('generateSimpleKey')->willReturn('cache_key');
         $this->cacheService->expects(self::once())->method('has')->with('cache_key')->willReturn(true);
@@ -133,13 +134,13 @@ final class VcsSourceTest extends TestCase
 
         $this->resolver->expects(self::once())
             ->method('resolve')
-            ->with('vendor/test-extension', 'https://github.com/vendor/test-extension', $this->context->getTargetVersion())
+            ->with('vendor/test-extension', 'https://github.com/vendor/test-extension', $this->context->getTargetVersion(), null)
             ->willReturn($resolvedResult);
 
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => true,
+            'vcs_available' => SourceAvailability::Available,
             'vcs_source_url' => 'https://github.com/vendor/test-extension',
             'vcs_latest_version' => '1.2.3',
         ], $result);
@@ -163,7 +164,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => false,
+            'vcs_available' => SourceAvailability::Unavailable,
             'vcs_source_url' => 'https://github.com/vendor/test-extension',
             'vcs_latest_version' => null,
         ], $result);
@@ -193,7 +194,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => null,
+            'vcs_available' => SourceAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $result);
@@ -218,7 +219,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => null,
+            'vcs_available' => SourceAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $result);
@@ -276,5 +277,54 @@ final class VcsSourceTest extends TestCase
         $this->logger->method('warning');
 
         $this->source->checkAvailability($this->extension, $this->context);
+    }
+
+    #[Test]
+    public function sshFailureEmitsSshSpecificWarning(): void
+    {
+        $sshExtension = new Extension('ssh_ext', 'SSH Ext', new Version('1.0.0'), 'local', 'vendor/ssh-ext');
+        $sshExtension->setRepositoryUrl('git@gitlab.example.com:vendor/ssh-ext.git');
+
+        $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::FAILURE, 'git@gitlab.example.com:vendor/ssh-ext.git', null);
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('ssh_cache_key');
+        $this->cacheService->method('has')->willReturn(false);
+
+        $this->resolver->method('resolve')->willReturn($resolvedResult);
+
+        $this->logger->expects(self::once())->method('warning')
+            ->with(
+                self::stringContains('SSH authentication may not be configured'),
+                self::callback(fn ($ctx): bool => 'vendor/ssh-ext' === $ctx['package']),
+            );
+
+        $this->source->checkAvailability($sshExtension, $this->context);
+    }
+
+    #[Test]
+    public function installationPathPassedToResolver(): void
+    {
+        $contextWithPath = new AnalysisContext(
+            new Version('11.5.0'),
+            new Version('12.4.0'),
+            [],
+            [],
+            '/var/www/typo3',
+        );
+
+        $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, 'https://github.com/vendor/test-extension', '1.5.0');
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('path_cache_key');
+        $this->cacheService->method('has')->willReturn(false);
+        $this->cacheService->expects(self::once())->method('set');
+
+        $this->resolver->expects(self::once())
+            ->method('resolve')
+            ->with('vendor/test-extension', 'https://github.com/vendor/test-extension', $contextWithPath->getTargetVersion(), '/var/www/typo3')
+            ->willReturn($resolvedResult);
+
+        $result = $this->source->checkAvailability($this->extension, $contextWithPath);
+
+        self::assertSame(SourceAvailability::Available, $result['vcs_available']);
     }
 }

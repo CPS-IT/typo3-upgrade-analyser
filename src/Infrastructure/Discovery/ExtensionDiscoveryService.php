@@ -547,6 +547,11 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             $extension->setActive(true); // Assume composer packages are active
 
+            $sourceUrl = $packageData['source']['url'] ?? null;
+            if (\is_string($sourceUrl) && '' !== $sourceUrl) {
+                $extension->setRepositoryUrl($sourceUrl);
+            }
+
             return $extension;
         } catch (\Exception $e) {
             $this->logger->warning('Failed to create extension from composer data', [

@@ -11,7 +11,7 @@
   - **Latest Version:** {{ extension_data.extension.composerName ? '[' ~ version_analysis.packagist_latest_version ~ '](https://packagist.org/packages/' ~ extension_data.extension.composerName ~ ')' : version_analysis.packagist_latest_version }}
   - **Compatible with Target:** {{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}
 {% endif %}
-- **VCS Repository:** {{ version_analysis.vcs_available is same as(true) ? '✅ Available' : (version_analysis.vcs_available is same as(false) ? '❌ Not Available' : '❓ Unknown (resolution failed)') }}
+- **VCS Repository:** {{ version_analysis.vcs_available == 'available' ? '✅ Available' : (version_analysis.vcs_available == 'unavailable' ? '❌ Not Available' : '❓ Unknown (resolution failed)') }}
 
 ### VCS Repository Information
 {% if version_analysis.vcs_source_url %}
