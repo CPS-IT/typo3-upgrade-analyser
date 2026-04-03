@@ -186,8 +186,8 @@ final class VcsSourceTest extends TestCase
 
         $this->logger->expects(self::once())->method('warning')
             ->with(
-                self::stringContains('VCS resolution failed'),
-                self::callback(fn ($ctx): bool => 'vendor/test-extension' === $ctx['package']),
+                self::stringContains('could not be resolved'),
+                self::callback(fn ($ctx): bool => 'vendor/test-extension' === $ctx['package'] && 'https://github.com/vendor/test-extension' === $ctx['url']),
             );
 
         $result = $this->source->checkAvailability($this->extension, $this->context);
@@ -225,19 +225,39 @@ final class VcsSourceTest extends TestCase
     }
 
     #[Test]
-    public function emitsWarningOnlyOnceForSamePackage(): void
+    public function emitsWarningOnlyOnceForSameUrl(): void
     {
         $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::FAILURE, null, null);
 
-        // Two extensions sharing the same composerName (e.g. different ext keys, same upstream package)
-        $extension2 = new Extension('other_ext', 'Other', new Version('1.0.0'), 'local', 'vendor/test-extension');
+        // Two extensions sharing the same repository URL
+        $extension2 = new Extension('other_ext', 'Other', new Version('1.0.0'), 'local', 'vendor/other-pkg');
+        $extension2->setRepositoryUrl('https://github.com/vendor/test-extension');
 
         $this->cacheService->method('generateSimpleKey')->willReturn('key1', 'key2');
         $this->cacheService->method('has')->willReturn(false);
         $this->resolver->method('resolve')->willReturn($resolvedResult);
 
-        // Warning must fire exactly once for the same composerName
+        // Warning must fire exactly once for the same URL
         $this->logger->expects(self::once())->method('warning');
+
+        $this->source->checkAvailability($this->extension, $this->context);
+        $this->source->checkAvailability($extension2, $this->context);
+    }
+
+    #[Test]
+    public function emitsWarningForEachDistinctUrl(): void
+    {
+        $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::FAILURE, null, null);
+
+        $extension2 = new Extension('other_ext', 'Other', new Version('1.0.0'), 'local', 'vendor/other-pkg');
+        $extension2->setRepositoryUrl('https://gitlab.example.com/vendor/other-pkg');
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('key1', 'key2');
+        $this->cacheService->method('has')->willReturn(false);
+        $this->resolver->method('resolve')->willReturn($resolvedResult);
+
+        // Warning must fire once per distinct URL
+        $this->logger->expects(self::exactly(2))->method('warning');
 
         $this->source->checkAvailability($this->extension, $this->context);
         $this->source->checkAvailability($extension2, $this->context);

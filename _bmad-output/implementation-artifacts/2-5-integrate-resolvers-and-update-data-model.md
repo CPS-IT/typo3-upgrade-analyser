@@ -12,7 +12,7 @@ so that VCS availability is resolved through Composer-based resolution, unresolv
 
 ### AC 1-4: Class Refactoring & Dependency Injection
 
-1. `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php` renamed to `VcsSource.php`; class renamed `GitSource` -> `VcsSource`
+1. New file `src/Infrastructure/Analyzer/VersionAvailability/Source/VcsSource.php` created with class `VcsSource`; `GitSource.php` retained but unwired (deleted in Story 2-6)
 2. `VcsSource` still implements `VersionSourceInterface`
 3. `getName()` returns `'vcs'` (not `'git'`)
 4. `VcsSource` injects `VcsResolverInterface $resolver` via constructor (single instance, not iterable); removes `GitRepositoryAnalyzer` dependency
@@ -35,7 +35,7 @@ so that VCS availability is resolved through Composer-based resolution, unresolv
 
 10. When resolution fails (`FAILURE` or `NOT_FOUND` status), a Console WARNING is emitted:
     ```
-    [WARNING] VCS source "{url}" could not be resolved. Ensure Composer authentication is configured for this URL.
+    [WARNING] VCS source "{url}" for package "{package}" could not be resolved. Ensure Composer authentication is configured for this URL.
     ```
 11. WARNING appears regardless of verbosity level
 12. In non-interactive / CI mode the warning is written to stderr
