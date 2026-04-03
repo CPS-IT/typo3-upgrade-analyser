@@ -75,8 +75,12 @@
                     <td>
                         {% if data.version_analysis.skipped %}
                             <span class="status-unknown" title="{{ data.version_analysis.skip_reason }}">✖️</span>
+                        {% elseif data.version_analysis.vcs_available is same as(true) %}
+                            <span class="status-available">✅</span>
+                        {% elseif data.version_analysis.vcs_available is same as(false) %}
+                            <span class="status-unavailable">❌</span>
                         {% else %}
-                            <span class="{{ data.version_analysis.vcs_available ? 'status-available' : 'status-unavailable' }}">{{ data.version_analysis.vcs_available ? '✅' : '❌' }}</span>
+                            <span class="status-unknown" title="VCS resolution failed or not attempted">❓</span>
                         {% endif %}
                     </td>
                 {% endif %}

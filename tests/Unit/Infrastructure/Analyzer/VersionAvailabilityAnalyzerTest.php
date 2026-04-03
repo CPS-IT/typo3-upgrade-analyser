@@ -34,7 +34,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     private MockObject&LoggerInterface $logger;
     private MockObject&VersionSourceInterface $terSource;
     private MockObject&VersionSourceInterface $packagistSource;
-    private MockObject&VersionSourceInterface $gitSource;
+    private MockObject&VersionSourceInterface $vcsSource;
     private Extension $extension;
     private AnalysisContext $context;
 
@@ -49,13 +49,13 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->packagistSource = $this->createMock(VersionSourceInterface::class);
         $this->packagistSource->method('getName')->willReturn('packagist');
 
-        $this->gitSource = $this->createMock(VersionSourceInterface::class);
-        $this->gitSource->method('getName')->willReturn('vcs');
+        $this->vcsSource = $this->createMock(VersionSourceInterface::class);
+        $this->vcsSource->method('getName')->willReturn('vcs');
 
         $this->analyzer = new VersionAvailabilityAnalyzer(
             $cacheService,
             $this->logger,
-            [$this->terSource, $this->packagistSource, $this->gitSource],
+            [$this->terSource, $this->packagistSource, $this->vcsSource],
         );
 
         $this->extension = new Extension(
@@ -88,7 +88,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             ->method('checkAvailability')
             ->willReturn(['packagist_available' => true]);
 
-        $this->gitSource->expects(self::once())
+        $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
             ->willReturn(['vcs_available' => true, 'vcs_source_url' => 'https://github.com/vendor/repo', 'vcs_latest_version' => '1.2.3']);
 
@@ -121,7 +121,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             ->willReturn(['ter_available' => true]);
 
         $this->packagistSource->expects(self::never())->method('checkAvailability');
-        $this->gitSource->expects(self::never())->method('checkAvailability');
+        $this->vcsSource->expects(self::never())->method('checkAvailability');
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $context);
@@ -145,7 +145,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         ];
         $context = $this->context->withConfiguration($config);
 
-        $this->gitSource->expects(self::once())
+        $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
             ->willReturn(['vcs_available' => true]);
 
@@ -171,7 +171,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // Expect no calls to sources
         $this->terSource->expects(self::never())->method('checkAvailability');
         $this->packagistSource->expects(self::never())->method('checkAvailability');
-        $this->gitSource->expects(self::never())->method('checkAvailability');
+        $this->vcsSource->expects(self::never())->method('checkAvailability');
 
         // Act
         $result = $this->analyzer->analyze($extension, $this->context);
@@ -194,7 +194,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         // These should not be called, but even if they return null/false, they shouldn't affect score
         $this->terSource->method('checkAvailability')->willReturn([]);
-        $this->gitSource->method('checkAvailability')->willReturn([]);
+        $this->vcsSource->method('checkAvailability')->willReturn([]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
@@ -222,7 +222,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
-        $this->gitSource->method('checkAvailability')->willReturn([
+        $this->vcsSource->method('checkAvailability')->willReturn([
             'vcs_available' => true,
             'vcs_source_url' => 'https://github.com/vendor/repo',
             'vcs_latest_version' => '1.2.3',
@@ -246,7 +246,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // So risk should be 2.5.
 
         $this->packagistSource->method('checkAvailability')->willReturn(['packagist_available' => true]);
-        $this->gitSource->method('checkAvailability')->willReturn(['vcs_available' => false]);
+        $this->vcsSource->method('checkAvailability')->willReturn(['vcs_available' => false]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
@@ -259,7 +259,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
-        $this->gitSource->method('checkAvailability')->willReturn([
+        $this->vcsSource->method('checkAvailability')->willReturn([
             'vcs_available' => null,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
