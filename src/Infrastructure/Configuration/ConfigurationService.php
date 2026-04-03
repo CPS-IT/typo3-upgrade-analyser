@@ -135,7 +135,11 @@ class ConfigurationService implements ConfigurationServiceInterface
     private function loadConfiguration(): void
     {
         if (!file_exists($this->configPath)) {
-            $this->logger->warning('Configuration file not found, using defaults', ['path' => $this->configPath]);
+            if (self::DEFAULT_CONFIG_PATH === $this->configPath) {
+                $this->logger->debug('Default configuration file not found, using built-in defaults', ['path' => $this->configPath]);
+            } else {
+                $this->logger->warning('Configuration file not found, using defaults', ['path' => $this->configPath]);
+            }
             $this->configuration = $this->getDefaultConfiguration();
 
             return;

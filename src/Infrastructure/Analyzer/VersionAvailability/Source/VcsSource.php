@@ -59,7 +59,13 @@ class VcsSource implements VersionSourceInterface
         ]);
 
         if ($this->cacheService->has($cacheKey)) {
-            return $this->cacheService->get($cacheKey) ?? $defaultResponse;
+            $cached = $this->cacheService->get($cacheKey) ?? $defaultResponse;
+            // Rehydrate string back to enum — CacheService serializes enums to their string value via json_encode.
+            if (isset($cached['vcs_available']) && \is_string($cached['vcs_available'])) {
+                $cached['vcs_available'] = VcsAvailability::tryFrom($cached['vcs_available']) ?? VcsAvailability::Unknown;
+            }
+
+            return $cached;
         }
 
         $result = $this->resolver->resolve(

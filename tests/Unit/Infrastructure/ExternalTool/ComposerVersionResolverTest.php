@@ -336,7 +336,8 @@ class ComposerVersionResolverTest extends TestCase
 
         $resolver = $this->makeResolver([
             $this->makeFailProcess('Package vendor/my-extension not found'),       // primary NOT_FOUND
-            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // version-specific 1.0.0
         ], $checker);
 
         $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, sys_get_temp_dir());
@@ -377,8 +378,9 @@ class ComposerVersionResolverTest extends TestCase
 
         // primary NOT_FOUND, HTTPS url -> fallback attempted without SSH check
         $resolver = $this->makeResolver([
-            $this->makeFailProcess('Package vendor/my-extension not found'),
-            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])),
+            $this->makeFailProcess('Package vendor/my-extension not found'),       // primary
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // version-specific 2.0.0
         ], $checker);
 
         $result = $resolver->resolve(self::PACKAGE, 'https://github.com/vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
@@ -387,23 +389,21 @@ class ComposerVersionResolverTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
-    // SSH connectivity check tests (AC-5)
+    // SSH-hosted packages (AC-5 revised)
     // -----------------------------------------------------------------------
 
-    public function testUnreachableSshHostSkipsFallback(): void
+    public function testFallbackRunsForSshHostedPackages(): void
     {
-        // Queue: primary NOT_FOUND, ssh check exit 255 (unreachable)
-        // No fallback composer process should be consumed
-        $sshProcess = $this->createStub(Process::class);
-        $sshProcess->method('run')->willReturn(255);
-        $sshProcess->method('isSuccessful')->willReturn(false);
-        $sshProcess->method('getExitCode')->willReturn(255);
-        $sshProcess->method('getOutput')->willReturn('');
-        $sshProcess->method('getErrorOutput')->willReturn('ssh: connect to host gitlab.example.com port 22: Connection refused');
+        // composer show --working-dir reads local vendor/lock data — no SSH needed.
+        // The fallback should run regardless of whether the VCS URL uses SSH.
+        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
+        $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
+        $checker->method('isConstraintCompatible')->willReturn(true);
 
         $queue = [
             $this->makeFailProcess('Package vendor/my-extension not found'), // primary
-            $sshProcess, // ssh -T check
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // version-specific 1.0.0
         ];
 
         $factory = function (array $command) use (&$queue): Process {
@@ -415,7 +415,7 @@ class ComposerVersionResolverTest extends TestCase
 
         $resolver = new ComposerVersionResolver(
             new NullLogger(),
-            $this->createStub(ComposerConstraintCheckerInterface::class),
+            $checker,
             $this->makeComposerEnvironment(),
             30,
             $factory,
@@ -423,36 +423,24 @@ class ComposerVersionResolverTest extends TestCase
 
         $result = $resolver->resolve(self::PACKAGE, 'git@gitlab.example.com:vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
 
-        // Queue must be fully consumed (no extra processes)
         self::assertEmpty($queue, 'Not all expected processes were consumed');
-        self::assertSame(VcsResolutionStatus::NOT_FOUND, $result->status);
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
     }
 
-    public function testSshHostCheckIsCachedPerHost(): void
+    public function testFallbackRunsOncePerPackageForSshHostedPackages(): void
     {
-        // Two packages on the same SSH host -> SSH check runs only once
+        // Two packages on the same SSH host each need exactly one fallback call (no SSH check).
         $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
         $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
         $checker->method('isConstraintCompatible')->willReturn(true);
 
-        $sshProcess = $this->createStub(Process::class);
-        $sshProcess->method('run')->willReturn(0);
-        $sshProcess->method('isSuccessful')->willReturn(true);
-        $sshProcess->method('getExitCode')->willReturn(1); // git hosts typically return 1 for "hi!"
-        $sshProcess->method('getOutput')->willReturn('Hi vendor!');
-        $sshProcess->method('getErrorOutput')->willReturn('');
-
         $queue = [
-            // pkg1 primary NOT_FOUND
-            $this->makeFailProcess('Package vendor/pkg1 not found'),
-            // ssh -T check for github.com (cached after this)
-            $sshProcess,
-            // pkg1 fallback
-            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])),
-            // pkg2 primary NOT_FOUND
-            $this->makeFailProcess('Package vendor/pkg2 not found'),
-            // pkg2 fallback (no extra ssh check)
-            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])),
+            $this->makeFailProcess('Package vendor/pkg1 not found'), // pkg1 primary
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg1 fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg1 version-specific
+            $this->makeFailProcess('Package vendor/pkg2 not found'), // pkg2 primary
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg2 fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg2 version-specific
         ];
 
         $factory = function (array $command) use (&$queue): Process {
