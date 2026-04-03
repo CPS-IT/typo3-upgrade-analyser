@@ -23,7 +23,7 @@ use Psr\Log\LoggerInterface;
 class VcsSource implements VersionSourceInterface
 {
     /** @var array<string, true> */
-    private array $warnedPackages = [];
+    private array $warnedUrls = [];
 
     public function __construct(
         private readonly VcsResolverInterface $resolver,
@@ -74,7 +74,7 @@ class VcsSource implements VersionSourceInterface
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => null,
             ]),
-            VcsResolutionStatus::NOT_FOUND, VcsResolutionStatus::FAILURE => $this->handleFailure($composerName, $defaultResponse),
+            VcsResolutionStatus::NOT_FOUND, VcsResolutionStatus::FAILURE => $this->handleFailure($composerName, $repositoryUrl, $defaultResponse),
         };
     }
 
@@ -95,13 +95,14 @@ class VcsSource implements VersionSourceInterface
      *
      * @return array<string, mixed>
      */
-    private function handleFailure(string $composerName, array $defaultResponse): array
+    private function handleFailure(string $composerName, ?string $repositoryUrl, array $defaultResponse): array
     {
-        if (!isset($this->warnedPackages[$composerName])) {
-            $this->warnedPackages[$composerName] = true;
+        $dedupKey = $repositoryUrl ?? $composerName;
+        if (!isset($this->warnedUrls[$dedupKey])) {
+            $this->warnedUrls[$dedupKey] = true;
             $this->logger->warning(
-                'VCS resolution failed for package "{package}". Ensure Composer authentication is configured.',
-                ['package' => $composerName],
+                'VCS source "{url}" for package "{package}" could not be resolved. Ensure Composer authentication is configured for this URL.',
+                ['url' => $repositoryUrl ?? 'unknown', 'package' => $composerName],
             );
         }
 

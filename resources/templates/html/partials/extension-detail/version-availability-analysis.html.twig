@@ -44,11 +44,15 @@
                 {% endif %}
                 {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
                     <div class="status-card">
-                        <div class="status-icon {{ version_analysis.vcs_available ? 'available' : 'unavailable' }}">
-                            {{ version_analysis.vcs_available ? '✅' : '❌' }}
-                        </div>
+                        {% if version_analysis.vcs_available is same as(true) %}
+                            <div class="status-icon available">✅</div>
+                        {% elseif version_analysis.vcs_available is same as(false) %}
+                            <div class="status-icon unavailable">❌</div>
+                        {% else %}
+                            <div class="status-icon unknown">❓</div>
+                        {% endif %}
                         <strong>VCS Repository</strong><br>
-                        <small>Source Code</small>
+                        <small>{{ version_analysis.vcs_available is null ? 'Resolution failed' : 'Source Code' }}</small>
                     </div>
                 {% endif %}
             </div>

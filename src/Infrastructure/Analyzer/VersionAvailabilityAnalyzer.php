@@ -115,9 +115,10 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             $components['distribution_type'] = $extension->getDistribution()->getType();
         }
 
-        // Include configured sources in cache key
+        // Include normalized sources in cache key (github → vcs)
         $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
-        $components['sources'] = implode(',', $configuredSources);
+        $normalizedSources = array_map(static fn ($s) => 'github' === $s ? 'vcs' : $s, $configuredSources);
+        $components['sources'] = implode(',', $normalizedSources);
 
         return $components;
     }
