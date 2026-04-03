@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
@@ -117,7 +118,7 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
         // Include normalized sources in cache key (github → vcs)
         $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
-        $normalizedSources = array_map(static fn ($s) => 'github' === $s ? 'vcs' : $s, $configuredSources);
+        $normalizedSources = array_map(static fn ($s): mixed => 'github' === $s ? 'vcs' : $s, $configuredSources);
         $components['sources'] = implode(',', $normalizedSources);
 
         return $components;
@@ -164,12 +165,12 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             }
         }
 
-        // VCS availability: binary (true=2pts, false=0pts, null=unknown/skip)
+        // VCS availability: enum (Available=2pts, Unavailable=0pts, Unknown=skip)
         if (\in_array('vcs', $enabledSources, true)) {
-            $vcsAvailable = $metrics['vcs_available'] ?? null;
-            if (null !== $vcsAvailable) {
+            $vcsAvailable = $metrics['vcs_available'] ?? SourceAvailability::Unknown;
+            if ($vcsAvailable instanceof SourceAvailability && SourceAvailability::Unknown !== $vcsAvailable) {
                 $maxPossibleScore += 2;
-                if (true === $vcsAvailable) {
+                if (SourceAvailability::Available === $vcsAvailable) {
                     $availabilityScore += 2;
                 }
             }
@@ -213,7 +214,8 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         $vcsAvailable = $result->getMetric('vcs_available');
         $vcsUrl = $result->getMetric('vcs_source_url');
 
-        $anyAvailable = $terAvailable || $packagistAvailable || true === $vcsAvailable;
+        $vcsIsAvailable = $vcsAvailable instanceof SourceAvailability && SourceAvailability::Available === $vcsAvailable;
+        $anyAvailable = $terAvailable || $packagistAvailable || $vcsIsAvailable;
 
         // No availability anywhere
         if (!$anyAvailable) {
@@ -223,7 +225,7 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         }
 
         // VCS-specific recommendations (only VCS source available)
-        if (true === $vcsAvailable && !$terAvailable && !$packagistAvailable) {
+        if ($vcsIsAvailable && !$terAvailable && !$packagistAvailable) {
             $result->addRecommendation('Extension is only available via VCS repository. Consider repository maintenance status before upgrade.');
 
             if ($vcsUrl) {
@@ -232,18 +234,18 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         }
 
         // Mixed availability recommendations
-        if (true === $vcsAvailable && ($terAvailable || $packagistAvailable)) {
+        if ($vcsIsAvailable && ($terAvailable || $packagistAvailable)) {
             $result->addRecommendation('Extension is available in multiple sources. Consider using most stable source for production.');
         }
 
-        if ($terAvailable && $packagistAvailable && true !== $vcsAvailable) {
+        if ($terAvailable && $packagistAvailable && !$vcsIsAvailable) {
             $result->addRecommendation('Extension is available in multiple sources (TER and Packagist). Consider using Composer for better dependency management.');
         }
 
         // Standard TER/Packagist recommendations
-        if (!$terAvailable && $packagistAvailable && true !== $vcsAvailable) {
+        if (!$terAvailable && $packagistAvailable && !$vcsIsAvailable) {
             $result->addRecommendation('Extension is only available via Composer/Packagist. Ensure Composer mode is used.');
-        } elseif ($terAvailable && !$packagistAvailable && true !== $vcsAvailable && $extension->hasComposerName()) {
+        } elseif ($terAvailable && !$packagistAvailable && !$vcsIsAvailable && $extension->hasComposerName()) {
             $result->addRecommendation('Extension is only available in TER. Consider migrating to Composer if needed.');
         }
 

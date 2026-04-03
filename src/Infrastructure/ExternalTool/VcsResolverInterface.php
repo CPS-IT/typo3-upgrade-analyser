@@ -19,5 +19,5 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
  */
 interface VcsResolverInterface
 {
-    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion): VcsResolutionResult;
+    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion, ?string $installationPath = null): VcsResolutionResult;
 }

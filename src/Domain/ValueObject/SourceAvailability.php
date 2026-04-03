@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 Upgrade Analyzer.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License or any later version.
+ */
+
+namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
+
+/**
+ * Represents the availability status of an extension in a VCS source.
+ *
+ * Using a string-backed enum instead of null/true/false allows Twig templates
+ * to compare directly against string values and enables PHPStan Level 8
+ * exhaustiveness checks.
+ */
+enum SourceAvailability: string
+{
+    case Available = 'available';
+    case Unavailable = 'unavailable';
+    case Unknown = 'unknown';
+}

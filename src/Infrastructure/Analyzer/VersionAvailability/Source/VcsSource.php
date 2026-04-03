@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Sour
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
@@ -40,7 +41,7 @@ class VcsSource implements VersionSourceInterface
     public function checkAvailability(Extension $extension, AnalysisContext $context): array
     {
         $defaultResponse = [
-            'vcs_available' => null,
+            'vcs_available' => SourceAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ];
@@ -61,16 +62,21 @@ class VcsSource implements VersionSourceInterface
             return $this->cacheService->get($cacheKey) ?? $defaultResponse;
         }
 
-        $result = $this->resolver->resolve($composerName, $repositoryUrl, $context->getTargetVersion());
+        $result = $this->resolver->resolve(
+            $composerName,
+            $repositoryUrl,
+            $context->getTargetVersion(),
+            $context->getInstallationPath(),
+        );
 
         return match ($result->status) {
             VcsResolutionStatus::RESOLVED_COMPATIBLE => $this->cacheAndReturn($cacheKey, [
-                'vcs_available' => true,
+                'vcs_available' => SourceAvailability::Available,
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => $result->latestCompatibleVersion,
             ]),
             VcsResolutionStatus::RESOLVED_NO_MATCH => $this->cacheAndReturn($cacheKey, [
-                'vcs_available' => false,
+                'vcs_available' => SourceAvailability::Unavailable,
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => null,
             ]),
@@ -100,12 +106,29 @@ class VcsSource implements VersionSourceInterface
         $dedupKey = $repositoryUrl ?? $composerName;
         if (!isset($this->warnedUrls[$dedupKey])) {
             $this->warnedUrls[$dedupKey] = true;
-            $this->logger->warning(
-                'VCS source "{url}" for package "{package}" could not be resolved. Ensure Composer authentication is configured for this URL.',
-                ['url' => $repositoryUrl ?? 'unknown', 'package' => $composerName],
-            );
+
+            if ($this->isSshUrl($repositoryUrl)) {
+                $this->logger->warning(
+                    'VCS source "{url}" for package "{package}" could not be resolved. SSH authentication may not be configured for this host.',
+                    ['url' => $repositoryUrl ?? 'unknown', 'package' => $composerName],
+                );
+            } else {
+                $this->logger->warning(
+                    'VCS source "{url}" for package "{package}" could not be resolved. Ensure Composer authentication is configured for this URL.',
+                    ['url' => $repositoryUrl ?? 'unknown', 'package' => $composerName],
+                );
+            }
         }
 
         return $defaultResponse;
+    }
+
+    private function isSshUrl(?string $url): bool
+    {
+        if (null === $url) {
+            return false;
+        }
+
+        return str_starts_with($url, 'ssh://') || (bool) preg_match('/^git@[^:]+:/', $url);
     }
 }
