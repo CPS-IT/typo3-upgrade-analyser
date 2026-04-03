@@ -488,6 +488,34 @@ So that VCS availability is resolved through Composer-based resolution, unresolv
 
 ---
 
+### Story 2.5a: Fix VCS Detection for Non-Packagist Packages
+
+As a developer analyzing a TYPO3 installation,
+I want VCS detection to work for packages sourced from private/non-Packagist repositories,
+So that extensions installed via VCS entries in `composer.json` are correctly identified as available, including those on private GitLab/GitHub instances accessed via SSH.
+
+**Acceptance Criteria:**
+
+- **Given** Story 2.5 is complete on its feature branch
+- **When** the analyzer processes an extension whose package is not on Packagist but is declared as a VCS repository in the project's `composer.json`
+- **Then** `ExtensionDiscoveryService::createExtensionFromComposerData()` reads `source.url` from the package data and calls `$extension->setRepositoryUrl()` to populate the Extension entity
+- **And** `ComposerVersionResolver::resolve()` uses `$vcsUrl` as a signal: when the primary `composer show --all` returns NOT_FOUND and an installation path is available, the resolver retries with `composer show --working-dir=$installationPath --format=json $packageName`
+- **And** the `--working-dir` fallback is only attempted when primary resolution returns NOT_FOUND (no overhead for Packagist-available packages)
+- **And** for SSH-based VCS repositories (`git@host:...`), when SSH authentication is not available, the resolver degrades gracefully: returns `vcs_available: null` with a WARNING naming the host and pointing to user guide documentation
+- **And** an optional early SSH connectivity check (`ssh -T -o ConnectTimeout=5 <host>`) is performed once per unique SSH host, cached for the analysis run; if the host is unreachable, `--working-dir` is skipped for all packages on that host with a single per-host WARNING
+- **And** HTTPS-based VCS packages resolve without any SSH dependency
+- **And** unit tests cover: `--working-dir` fallback path, `source.url` population in discovery, SSH auth failure degradation, per-host connectivity caching
+- **And** integration test covers end-to-end VCS detection for a non-Packagist package fixture
+- **And** all existing tests pass (no regression)
+- **And** PHPStan Level 8 reports zero errors; `composer lint:php` passes
+- **And** user guide documents SSH authentication prerequisites (local dev, CI deploy keys, troubleshooting)
+
+**Note:** Sprint Change Proposal 2026-04-03. Fixes RC-1 (resolver ignores `$vcsUrl`), RC-2 (`repositoryUrl` never populated), RC-3 (no fallback). The `--working-dir` overhead (~11-13s per non-Packagist package, documented in Spike 2-0) is acceptable for correctness; optimization via batch resolution or parallelization can be explored later.
+
+**Design decision:** Installation path passed to resolver via `AnalysisContext` (option b from proposal). `AnalysisContext` already carries installation metadata.
+
+---
+
 ### Story 2.6: Legacy Git Provider Cleanup
 
 As a developer,
