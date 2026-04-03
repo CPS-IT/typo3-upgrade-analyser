@@ -30,16 +30,12 @@ use Symfony\Component\Process\Process;
  *   1. Primary: `composer show --all --format=json $package` (Packagist)
  *   2. Fallback (when primary returns NOT_FOUND and installationPath is set):
  *      `composer show --working-dir=$installationPath --format=json $package`
+ *      Reads from local vendor/lock — no VCS network access required.
  *      installationPath is validated via realpath()+is_dir() before use.
- *   3. SSH hosts extracted from VCS URLs are validated against RFC 952/1123
- *      before any SSH connectivity check.
  */
 class ComposerVersionResolver implements VcsResolverInterface
 {
     private const MAX_LINEAR_SCAN_VERSIONS = 50;
-
-    /** @var array<string, bool> SSH host reachability cache (per analysis run) */
-    private array $sshHostStatus = [];
 
     /**
      * @param (\Closure(list<string>): Process)|null $processFactory
@@ -61,12 +57,19 @@ class ComposerVersionResolver implements VcsResolverInterface
 
         $primaryResult = $this->runComposerShow(['composer', 'show', '--all', '--format=json', $packageName], $packageName, $vcsUrl, $targetVersion);
 
+        $this->logger->info('VCS primary resolution for {package}: status={status}', [
+            'package' => $packageName,
+            'status' => $primaryResult->status->name,
+        ]);
+
         if (!$primaryResult->shouldTryFallback()) {
             return $primaryResult;
         }
 
         // Fallback: --working-dir for non-Packagist packages (RC-1 fix)
         if (null === $installationPath) {
+            $this->logger->info('VCS fallback skipped for {package}: no installationPath provided.', ['package' => $packageName]);
+
             return $primaryResult;
         }
 
@@ -81,14 +84,27 @@ class ComposerVersionResolver implements VcsResolverInterface
             return $primaryResult;
         }
 
-        // SSH connectivity check (AC-5): skip SSH hosts known to be unreachable
-        if ($this->isSshUrl($vcsUrl) && !$this->isSshHostReachable($vcsUrl)) {
-            return $primaryResult;
-        }
+        // Note: no SSH check here — composer show --working-dir reads local vendor/lock data only,
+        // no VCS network access is required regardless of the VCS URL scheme.
 
-        $fallbackCmd = ['composer', 'show', '--working-dir=' . $resolvedPath, '--format=json', $packageName];
+        // Use --all to discover all tagged versions available via the VCS repository.
+        // fetchVersionRequires will also use --working-dir so per-version deps are resolved locally.
+        $fallbackCmd = ['composer', 'show', '--working-dir=' . $resolvedPath, '--all', '--format=json', $packageName];
 
-        return $this->runComposerShow($fallbackCmd, $packageName, $vcsUrl, $targetVersion);
+        $this->logger->info('VCS fallback: running composer show --working-dir={path} for {package}', [
+            'path' => $resolvedPath,
+            'package' => $packageName,
+        ]);
+
+        $fallbackResult = $this->runComposerShow($fallbackCmd, $packageName, $vcsUrl, $targetVersion, $resolvedPath);
+
+        $this->logger->info('VCS fallback resolution for {package}: status={status}, version={version}', [
+            'package' => $packageName,
+            'status' => $fallbackResult->status->name,
+            'version' => $fallbackResult->latestCompatibleVersion ?? 'none',
+        ]);
+
+        return $fallbackResult;
     }
 
     /**
@@ -96,7 +112,7 @@ class ComposerVersionResolver implements VcsResolverInterface
      *
      * @param list<string> $command
      */
-    private function runComposerShow(array $command, string $packageName, ?string $vcsUrl, Version $targetVersion): VcsResolutionResult
+    private function runComposerShow(array $command, string $packageName, ?string $vcsUrl, Version $targetVersion, ?string $workingDir = null): VcsResolutionResult
     {
         $process = $this->createProcess($command);
         $process->setTimeout($this->timeoutSeconds);
@@ -132,16 +148,22 @@ class ComposerVersionResolver implements VcsResolverInterface
             return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_NO_MATCH, $vcsUrl, null);
         }
 
-        // Check the latest version first (single-call fast path).
-        $latestVersion = $versions[0];
-        if ($this->isCompatible($latestRequires, $targetVersion)) {
-            return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $latestVersion);
+        if (null === $workingDir) {
+            // Primary (Packagist): top-level requires = latest available version's deps. Fast path first.
+            $latestVersion = $versions[0];
+            if ($this->isCompatible($latestRequires, $targetVersion)) {
+                return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $latestVersion);
+            }
+            // Linear scan for newer compatible version (newest-to-oldest, start after index 0).
+            // Binary search is available in git history on feature/2-2-composer-vcs-resolver for future
+            // opt-in once real-world data confirms the monotone-compatibility precondition holds.
+            $found = $this->linearScan($packageName, $versions, $targetVersion, 1, null);
+        } else {
+            // Fallback (--working-dir): top-level requires reflects the INSTALLED version, not the
+            // latest available. Skip the fast path and use per-version queries for all versions.
+            $found = $this->linearScan($packageName, $versions, $targetVersion, 0, $workingDir);
         }
 
-        // Linear scan for newest compatible version (newest-to-oldest, start after index 0).
-        // Binary search is available in git history on feature/2-2-composer-vcs-resolver for future
-        // opt-in once real-world data confirms the monotone-compatibility precondition holds.
-        $found = $this->linearScan($packageName, $versions, $targetVersion, 1);
         if (null !== $found) {
             return new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, $vcsUrl, $found);
         }
@@ -177,6 +199,7 @@ class ComposerVersionResolver implements VcsResolverInterface
         array $versions,
         Version $targetVersion,
         int $startIndex,
+        ?string $workingDir = null,
     ): ?string {
         $count = \count($versions);
         $scanned = 0;
@@ -188,7 +211,7 @@ class ComposerVersionResolver implements VcsResolverInterface
                 );
                 break;
             }
-            $requires = $this->fetchVersionRequires($packageName, $versions[$i]);
+            $requires = $this->fetchVersionRequires($packageName, $versions[$i], $workingDir);
             if (null !== $requires && $this->isCompatible($requires, $targetVersion)) {
                 return $versions[$i];
             }
@@ -200,12 +223,16 @@ class ComposerVersionResolver implements VcsResolverInterface
 
     /**
      * Fetch requires for a specific version. Returns null on subprocess failure.
+     * When workingDir is set, queries the local installation instead of Packagist.
      *
      * @return array<string, string>|null
      */
-    private function fetchVersionRequires(string $packageName, string $version): ?array
+    private function fetchVersionRequires(string $packageName, string $version, ?string $workingDir = null): ?array
     {
-        $process = $this->createProcess(['composer', 'show', '--all', '--format=json', $packageName, $version]);
+        $command = null !== $workingDir
+            ? ['composer', 'show', '--working-dir=' . $workingDir, '--all', '--format=json', $packageName, $version]
+            : ['composer', 'show', '--all', '--format=json', $packageName, $version];
+        $process = $this->createProcess($command);
         $process->setTimeout($this->timeoutSeconds);
 
         try {
@@ -246,105 +273,6 @@ class ComposerVersionResolver implements VcsResolverInterface
         }
 
         return false;
-    }
-
-    /**
-     * Returns true when the URL looks like an SSH git URL (git@host:... or ssh://...).
-     */
-    private function isSshUrl(?string $url): bool
-    {
-        if (null === $url) {
-            return false;
-        }
-
-        return str_starts_with($url, 'ssh://') || (bool) preg_match('/^git@[^:]+:/', $url);
-    }
-
-    /**
-     * Extract the hostname from an SSH URL.
-     *
-     * Supports:
-     *   git@github.com:vendor/repo.git  -> github.com
-     *   ssh://git@github.com/vendor/repo.git -> github.com
-     */
-    private function extractSshHost(string $url): ?string
-    {
-        if (str_starts_with($url, 'ssh://')) {
-            $parsed = parse_url($url);
-
-            return $parsed['host'] ?? null;
-        }
-
-        // git@host:path pattern
-        if (preg_match('/^git@([^:]+):/', $url, $m)) {
-            return $m[1];
-        }
-
-        return null;
-    }
-
-    /**
-     * Validate a hostname against RFC 952/1123 pattern.
-     * Rejects empty strings, leading/trailing hyphens, and any non-alphanumeric/hyphen/dot characters.
-     */
-    private function isValidHostname(string $host): bool
-    {
-        return (bool) preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$/', $host);
-    }
-
-    /**
-     * Check whether an SSH host is reachable. Caches result per host.
-     * Host is validated against RFC 952/1123 before any subprocess call.
-     */
-    private function isSshHostReachable(?string $vcsUrl): bool
-    {
-        if (null === $vcsUrl) {
-            return true;
-        }
-
-        $host = $this->extractSshHost($vcsUrl);
-        if (null === $host) {
-            return true;
-        }
-
-        // CP-2: reject hostnames that fail RFC 952/1123 validation
-        if (!$this->isValidHostname($host)) {
-            $this->logger->warning(
-                'SSH hostname "{host}" extracted from VCS URL failed RFC 952/1123 validation — treating as unreachable.',
-                ['host' => $host, 'url' => $vcsUrl],
-            );
-
-            return false;
-        }
-
-        if (\array_key_exists($host, $this->sshHostStatus)) {
-            return $this->sshHostStatus[$host];
-        }
-
-        $process = $this->createProcess(['ssh', '-T', '-o', 'ConnectTimeout=5', $host]);
-        $process->setTimeout(10);
-
-        try {
-            $process->run();
-            // ssh -T exits non-zero on success too (e.g. exit 1 for "Hi user!"), so we check
-            // for a complete process run rather than $isSuccessful. A truly unreachable host
-            // produces a timeout exception or very specific exit codes (255).
-            $exitCode = $process->getExitCode();
-            $reachable = 255 !== $exitCode;
-        } catch (\Throwable) {
-            $reachable = false;
-        }
-
-        if (!$reachable) {
-            $this->logger->warning(
-                'SSH host "{host}" is unreachable. Skipping --working-dir fallback for all packages on this host.',
-                ['host' => $host],
-            );
-        }
-
-        $this->sshHostStatus[$host] = $reachable;
-
-        return $reachable;
     }
 
     /**

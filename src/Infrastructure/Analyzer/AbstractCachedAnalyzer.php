@@ -143,7 +143,7 @@ abstract class AbstractCachedAnalyzer implements AnalyzerInterface
     protected function isCacheEnabled(AnalysisContext $context): bool
     {
         // Check if result cache is explicitly disabled
-        $cacheConfig = $context->getConfigurationValue('resultCache', []);
+        $cacheConfig = $context->getConfigurationValue('analysis.resultCache', []);
 
         if (\is_array($cacheConfig)) {
             return $cacheConfig['enabled'] ?? true;
@@ -157,7 +157,7 @@ abstract class AbstractCachedAnalyzer implements AnalyzerInterface
      */
     protected function getCacheTtl(AnalysisContext $context): int
     {
-        $cacheConfig = $context->getConfigurationValue('resultCache', []);
+        $cacheConfig = $context->getConfigurationValue('analysis.resultCache', []);
 
         if (\is_array($cacheConfig)) {
             return $cacheConfig['ttl'] ?? self::DEFAULT_CACHE_TTL;
