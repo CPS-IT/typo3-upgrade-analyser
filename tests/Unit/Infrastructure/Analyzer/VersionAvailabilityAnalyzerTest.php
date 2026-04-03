@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
@@ -91,7 +91,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['vcs_available' => SourceAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/repo', 'vcs_latest_version' => '1.2.3']);
+            ->willReturn(['vcs_available' => VcsAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/repo', 'vcs_latest_version' => '1.2.3']);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $this->context);
@@ -100,7 +100,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertTrue($result->getMetric('ter_available'));
         self::assertTrue($result->getMetric('packagist_available'));
-        self::assertSame(SourceAvailability::Available, $result->getMetric('vcs_available'));
+        self::assertSame(VcsAvailability::Available, $result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeWithOnlyTerEnabled(): void
@@ -148,13 +148,13 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['vcs_available' => SourceAvailability::Available]);
+            ->willReturn(['vcs_available' => VcsAvailability::Available]);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $context);
 
         // Assert
-        self::assertSame(SourceAvailability::Available, $result->getMetric('vcs_available'));
+        self::assertSame(VcsAvailability::Available, $result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeSkipsPathDistribution(): void
@@ -224,7 +224,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $context = $this->context->withConfiguration($config);
 
         $this->vcsSource->method('checkAvailability')->willReturn([
-            'vcs_available' => SourceAvailability::Available,
+            'vcs_available' => VcsAvailability::Available,
             'vcs_source_url' => 'https://github.com/vendor/repo',
             'vcs_latest_version' => '1.2.3',
         ]);
@@ -247,7 +247,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // So risk should be 2.5.
 
         $this->packagistSource->method('checkAvailability')->willReturn(['packagist_available' => true]);
-        $this->vcsSource->method('checkAvailability')->willReturn(['vcs_available' => SourceAvailability::Unavailable]);
+        $this->vcsSource->method('checkAvailability')->willReturn(['vcs_available' => VcsAvailability::Unavailable]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
@@ -261,7 +261,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $context = $this->context->withConfiguration($config);
 
         $this->vcsSource->method('checkAvailability')->willReturn([
-            'vcs_available' => SourceAvailability::Unknown,
+            'vcs_available' => VcsAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ]);

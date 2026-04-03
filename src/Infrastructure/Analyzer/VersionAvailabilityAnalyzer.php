@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
@@ -167,10 +167,10 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
         // VCS availability: enum (Available=2pts, Unavailable=0pts, Unknown=skip)
         if (\in_array('vcs', $enabledSources, true)) {
-            $vcsAvailable = $metrics['vcs_available'] ?? SourceAvailability::Unknown;
-            if ($vcsAvailable instanceof SourceAvailability && SourceAvailability::Unknown !== $vcsAvailable) {
+            $vcsAvailable = $metrics['vcs_available'] ?? VcsAvailability::Unknown;
+            if ($vcsAvailable instanceof VcsAvailability && VcsAvailability::Unknown !== $vcsAvailable) {
                 $maxPossibleScore += 2;
-                if (SourceAvailability::Available === $vcsAvailable) {
+                if (VcsAvailability::Available === $vcsAvailable) {
                     $availabilityScore += 2;
                 }
             }
@@ -214,7 +214,7 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         $vcsAvailable = $result->getMetric('vcs_available');
         $vcsUrl = $result->getMetric('vcs_source_url');
 
-        $vcsIsAvailable = $vcsAvailable instanceof SourceAvailability && SourceAvailability::Available === $vcsAvailable;
+        $vcsIsAvailable = $vcsAvailable instanceof VcsAvailability && VcsAvailability::Available === $vcsAvailable;
         $anyAvailable = $terAvailable || $packagistAvailable || $vcsIsAvailable;
 
         // No availability anywhere

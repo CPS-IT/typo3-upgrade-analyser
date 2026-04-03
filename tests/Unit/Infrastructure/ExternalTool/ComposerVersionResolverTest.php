@@ -323,7 +323,7 @@ class ComposerVersionResolverTest extends TestCase
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])),
         ], $checker);
 
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, '/var/www/typo3');
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, sys_get_temp_dir());
 
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
     }
@@ -339,7 +339,7 @@ class ComposerVersionResolverTest extends TestCase
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback
         ], $checker);
 
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, '/var/www/typo3');
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, sys_get_temp_dir());
 
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
         self::assertSame('1.0.0', $result->latestCompatibleVersion);
@@ -364,7 +364,7 @@ class ComposerVersionResolverTest extends TestCase
             $this->makeFailProcess('Could not find package vendor/my-extension'), // fallback also NOT_FOUND
         ]);
 
-        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, '/var/www/typo3');
+        $result = $resolver->resolve(self::PACKAGE, self::VCS_URL, $this->targetVersion, sys_get_temp_dir());
 
         self::assertSame(VcsResolutionStatus::NOT_FOUND, $result->status);
     }
@@ -381,7 +381,7 @@ class ComposerVersionResolverTest extends TestCase
             $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])),
         ], $checker);
 
-        $result = $resolver->resolve(self::PACKAGE, 'https://github.com/vendor/ext.git', $this->targetVersion, '/var/www/typo3');
+        $result = $resolver->resolve(self::PACKAGE, 'https://github.com/vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
 
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
     }
@@ -421,7 +421,7 @@ class ComposerVersionResolverTest extends TestCase
             $factory,
         );
 
-        $result = $resolver->resolve(self::PACKAGE, 'git@gitlab.example.com:vendor/ext.git', $this->targetVersion, '/var/www/typo3');
+        $result = $resolver->resolve(self::PACKAGE, 'git@gitlab.example.com:vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
 
         // Queue must be fully consumed (no extra processes)
         self::assertEmpty($queue, 'Not all expected processes were consumed');
@@ -464,8 +464,8 @@ class ComposerVersionResolverTest extends TestCase
 
         $resolver = new ComposerVersionResolver(new NullLogger(), $checker, $this->makeComposerEnvironment(), 30, $factory);
 
-        $result1 = $resolver->resolve('vendor/pkg1', 'git@github.com:vendor/pkg1.git', $this->targetVersion, '/var/www/typo3');
-        $result2 = $resolver->resolve('vendor/pkg2', 'git@github.com:vendor/pkg2.git', $this->targetVersion, '/var/www/typo3');
+        $result1 = $resolver->resolve('vendor/pkg1', 'git@github.com:vendor/pkg1.git', $this->targetVersion, sys_get_temp_dir());
+        $result2 = $resolver->resolve('vendor/pkg2', 'git@github.com:vendor/pkg2.git', $this->targetVersion, sys_get_temp_dir());
 
         self::assertEmpty($queue, 'Not all expected processes were consumed');
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result1->status);

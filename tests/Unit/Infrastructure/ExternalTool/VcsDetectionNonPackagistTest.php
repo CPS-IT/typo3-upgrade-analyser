@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
@@ -113,21 +113,21 @@ final class VcsDetectionNonPackagistTest extends TestCase
             new Version('13.4.0'),
             [],
             [],
-            '/var/www/typo3',
+            sys_get_temp_dir(),
         );
 
         $metrics = $source->checkAvailability($extension, $context);
 
         // Previously returned Unknown — now resolves to Available
-        self::assertSame(SourceAvailability::Available, $metrics['vcs_available']);
+        self::assertSame(VcsAvailability::Available, $metrics['vcs_available']);
         self::assertSame('2.1.0', $metrics['vcs_latest_version']);
         self::assertEmpty($queue, 'Both processes (primary + fallback) should have been consumed');
     }
 
     #[Test]
-    public function nonPackagistPackageWithoutInstallationPathReturnsUnknown(): void
+    public function nonPackagistPackageWithoutInstallationPathReturnsUnavailable(): void
     {
-        // When installationPath is not set (old behaviour / partial context), result is Unknown
+        // When installationPath is not set, primary NOT_FOUND → no fallback → Unavailable (CP-7).
         $queue = [
             $this->makeNotFoundProcess(), // primary: not on Packagist, no fallback
         ];
@@ -150,12 +150,12 @@ final class VcsDetectionNonPackagistTest extends TestCase
         $extension = new Extension('private_ext', 'Private Ext', new Version('2.0.0'), 'composer', 'vendor/private-ext');
         $extension->setRepositoryUrl('https://gitlab.example.com/vendor/private-ext.git');
 
-        // No installationPath → old behaviour
+        // No installationPath → NOT_FOUND from primary → Unavailable (definitive answer)
         $context = new AnalysisContext(new Version('12.4.0'), new Version('13.4.0'));
 
         $metrics = $source->checkAvailability($extension, $context);
 
-        self::assertSame(SourceAvailability::Unknown, $metrics['vcs_available']);
+        self::assertSame(VcsAvailability::Unavailable, $metrics['vcs_available']);
         self::assertEmpty($queue, 'Only one primary process should have been consumed');
     }
 
@@ -188,7 +188,7 @@ final class VcsDetectionNonPackagistTest extends TestCase
             'vendor/private-ext',
             'https://gitlab.example.com/vendor/private-ext.git',
             new Version('13.4.0'),
-            '/var/www/typo3',
+            sys_get_temp_dir(),
         );
 
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
