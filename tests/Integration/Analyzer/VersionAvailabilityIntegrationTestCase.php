@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration\Analyzer;
 
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
@@ -149,7 +150,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
 
         // Assert expected availability for archived extension
         // TER and Packagist availability checks completed (no specific assertion needed as both true/false are valid)
-        $this->assertNotTrue($metrics['vcs_available'] ?? null, 'Archived extension should not be compatible with TYPO3 12.4');
+        $this->assertNotSame(SourceAvailability::Available, $metrics['vcs_available'] ?? null, 'Archived extension should not be compatible with TYPO3 12.4');
 
         // Assert higher risk score for archived extension
         $this->assertGreaterThan(5.0, $result->getRiskScore(), 'Archived extension should have higher risk');
@@ -212,7 +213,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         // Local extension should not be available anywhere publicly
         $this->assertFalse($metrics['ter_available'], 'Local extension should not be in TER');
         $this->assertFalse($metrics['packagist_available'], 'Local extension should not be in Packagist');
-        $this->assertNull($metrics['vcs_available'] ?? null, 'Local extension should have no VCS resolution result');
+        $this->assertSame(SourceAvailability::Unknown, $metrics['vcs_available'] ?? null, 'Local extension should have unknown VCS availability (no composer name)');
 
         // Local extension should have high risk score
         $this->assertGreaterThan(8.0, $result->getRiskScore(), 'Local extension should have high risk score');
@@ -247,7 +248,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         // Should attempt to check Packagist but find nothing
         $this->assertFalse($metrics['ter_available'], 'Non-existent extension should not be in TER');
         $this->assertFalse($metrics['packagist_available'], 'Non-existent extension should not be in Packagist');
-        $this->assertNotTrue($metrics['vcs_available'] ?? null, 'Non-existent extension should not have VCS version available');
+        $this->assertNotSame(SourceAvailability::Available, $metrics['vcs_available'] ?? null, 'Non-existent extension should not have VCS version available');
 
         // High risk due to no availability
         $this->assertGreaterThan(8.0, $result->getRiskScore(), 'Non-existent extension should have high risk');
@@ -318,7 +319,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
         foreach ($results as $version => $result) {
             $metrics = $result->getMetrics();
             $this->assertTrue(
-                $metrics['ter_available'] || $metrics['packagist_available'] || true === ($metrics['vcs_available'] ?? null),
+                $metrics['ter_available'] || $metrics['packagist_available'] || SourceAvailability::Available === ($metrics['vcs_available'] ?? null),
                 "News extension should be available for TYPO3 {$version}",
             );
         }
