@@ -16,7 +16,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Contract\AnalysisReportDataProviderInterface;
 
 /**
@@ -214,11 +213,11 @@ readonly class ReportContextBuilder
                 if ($versionAnalysis['packagist_available']) {
                     ++$availabilityStats['packagist_available'];
                 }
-                $vcsAvailable = $versionAnalysis['vcs_available'] ?? SourceAvailability::Unknown->value;
-                if (SourceAvailability::Available->value === $vcsAvailable) {
+                $vcsAvailable = $versionAnalysis['vcs_available'] ?? 'unknown';
+                if ('available' === $vcsAvailable) {
                     ++$availabilityStats['vcs_available'];
                 }
-                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && SourceAvailability::Available->value !== $vcsAvailable) {
+                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && 'available' !== $vcsAvailable) {
                     ++$availabilityStats['no_availability'];
                 }
             }

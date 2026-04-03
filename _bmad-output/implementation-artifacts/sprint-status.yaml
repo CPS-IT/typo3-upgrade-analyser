@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-04-03 (2-5a complete, moved to review)
+last_updated: 2026-04-03 (2-5a rework complete, moved back to review)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system

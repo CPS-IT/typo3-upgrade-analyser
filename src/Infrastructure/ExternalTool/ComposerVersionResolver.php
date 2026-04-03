@@ -26,11 +26,18 @@ use Symfony\Component\Process\Process;
  * NOT_FOUND result is the expected outcome for extensions that are not
  * Packagist-indexed.
  *
- * Note: --working-dir is never used in any subprocess call. It adds 11–13 s
- * overhead per call (VcsResolutionSpike.md §8).
+ * Resolution strategy:
+ *   1. Primary: `composer show --all --format=json $package` (Packagist)
+ *   2. Fallback (when primary returns NOT_FOUND and installationPath is set):
+ *      `composer show --working-dir=$installationPath --format=json $package`
+ *      installationPath is validated via realpath()+is_dir() before use.
+ *   3. SSH hosts extracted from VCS URLs are validated against RFC 952/1123
+ *      before any SSH connectivity check.
  */
 class ComposerVersionResolver implements VcsResolverInterface
 {
+    private const MAX_LINEAR_SCAN_VERSIONS = 50;
+
     /** @var array<string, bool> SSH host reachability cache (per analysis run) */
     private array $sshHostStatus = [];
 
@@ -63,12 +70,23 @@ class ComposerVersionResolver implements VcsResolverInterface
             return $primaryResult;
         }
 
+        // CP-3: validate installationPath before passing to subprocess (realpath + is_dir)
+        $resolvedPath = realpath($installationPath);
+        if (false === $resolvedPath || !is_dir($resolvedPath)) {
+            $this->logger->warning(
+                'installationPath "{path}" does not exist or is not a directory — skipping --working-dir fallback.',
+                ['path' => $installationPath],
+            );
+
+            return $primaryResult;
+        }
+
         // SSH connectivity check (AC-5): skip SSH hosts known to be unreachable
         if ($this->isSshUrl($vcsUrl) && !$this->isSshHostReachable($vcsUrl)) {
             return $primaryResult;
         }
 
-        $fallbackCmd = ['composer', 'show', '--working-dir=' . $installationPath, '--format=json', $packageName];
+        $fallbackCmd = ['composer', 'show', '--working-dir=' . $resolvedPath, '--format=json', $packageName];
 
         return $this->runComposerShow($fallbackCmd, $packageName, $vcsUrl, $targetVersion);
     }
@@ -149,6 +167,8 @@ class ComposerVersionResolver implements VcsResolverInterface
 
     /**
      * Linear scan from startIndex to end, newest-to-oldest.
+     * Capped at MAX_LINEAR_SCAN_VERSIONS to prevent unbounded subprocess spawning
+     * for packages with very large version histories.
      *
      * @param list<string> $versions
      */
@@ -159,11 +179,20 @@ class ComposerVersionResolver implements VcsResolverInterface
         int $startIndex,
     ): ?string {
         $count = \count($versions);
+        $scanned = 0;
         for ($i = $startIndex; $i < $count; ++$i) {
+            if ($scanned >= self::MAX_LINEAR_SCAN_VERSIONS) {
+                $this->logger->warning(
+                    'Linear version scan for package {package} stopped at {limit} versions — result may be incomplete.',
+                    ['package' => $packageName, 'limit' => self::MAX_LINEAR_SCAN_VERSIONS],
+                );
+                break;
+            }
             $requires = $this->fetchVersionRequires($packageName, $versions[$i]);
             if (null !== $requires && $this->isCompatible($requires, $targetVersion)) {
                 return $versions[$i];
             }
+            ++$scanned;
         }
 
         return null;
@@ -255,7 +284,17 @@ class ComposerVersionResolver implements VcsResolverInterface
     }
 
     /**
+     * Validate a hostname against RFC 952/1123 pattern.
+     * Rejects empty strings, leading/trailing hyphens, and any non-alphanumeric/hyphen/dot characters.
+     */
+    private function isValidHostname(string $host): bool
+    {
+        return (bool) preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$/', $host);
+    }
+
+    /**
      * Check whether an SSH host is reachable. Caches result per host.
+     * Host is validated against RFC 952/1123 before any subprocess call.
      */
     private function isSshHostReachable(?string $vcsUrl): bool
     {
@@ -266,6 +305,16 @@ class ComposerVersionResolver implements VcsResolverInterface
         $host = $this->extractSshHost($vcsUrl);
         if (null === $host) {
             return true;
+        }
+
+        // CP-2: reject hostnames that fail RFC 952/1123 validation
+        if (!$this->isValidHostname($host)) {
+            $this->logger->warning(
+                'SSH hostname "{host}" extracted from VCS URL failed RFC 952/1123 validation — treating as unreachable.',
+                ['host' => $host, 'url' => $vcsUrl],
+            );
+
+            return false;
         }
 
         if (\array_key_exists($host, $this->sshHostStatus)) {

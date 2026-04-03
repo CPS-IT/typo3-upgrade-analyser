@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Sour
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
@@ -41,7 +41,7 @@ class VcsSource implements VersionSourceInterface
     public function checkAvailability(Extension $extension, AnalysisContext $context): array
     {
         $defaultResponse = [
-            'vcs_available' => SourceAvailability::Unknown,
+            'vcs_available' => VcsAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ];
@@ -71,16 +71,17 @@ class VcsSource implements VersionSourceInterface
 
         return match ($result->status) {
             VcsResolutionStatus::RESOLVED_COMPATIBLE => $this->cacheAndReturn($cacheKey, [
-                'vcs_available' => SourceAvailability::Available,
+                'vcs_available' => VcsAvailability::Available,
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => $result->latestCompatibleVersion,
             ]),
             VcsResolutionStatus::RESOLVED_NO_MATCH => $this->cacheAndReturn($cacheKey, [
-                'vcs_available' => SourceAvailability::Unavailable,
+                'vcs_available' => VcsAvailability::Unavailable,
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => null,
             ]),
-            VcsResolutionStatus::NOT_FOUND, VcsResolutionStatus::FAILURE => $this->handleFailure($composerName, $repositoryUrl, $defaultResponse),
+            VcsResolutionStatus::NOT_FOUND => $this->handleNotFound($composerName, $repositoryUrl),
+            VcsResolutionStatus::FAILURE => $this->handleFailure($composerName, $repositoryUrl, $defaultResponse),
         };
     }
 
@@ -97,6 +98,29 @@ class VcsSource implements VersionSourceInterface
     }
 
     /**
+     * NOT_FOUND: Composer returned a definitive "package not found" answer.
+     * Maps to Unavailable, not Unknown — the system asked and got a clear answer.
+     *
+     * @return array<string, mixed>
+     */
+    private function handleNotFound(string $composerName, ?string $repositoryUrl): array
+    {
+        $this->logger->debug(
+            'VCS package "{package}" not found via Composer (primary + fallback).',
+            ['package' => $composerName, 'url' => $repositoryUrl],
+        );
+
+        return [
+            'vcs_available' => VcsAvailability::Unavailable,
+            'vcs_source_url' => $repositoryUrl,
+            'vcs_latest_version' => null,
+        ];
+    }
+
+    /**
+     * FAILURE: Composer crashed, timed out, or encountered an auth/network error.
+     * Maps to Unknown — the system could not determine the status.
+     *
      * @param array<string, mixed> $defaultResponse
      *
      * @return array<string, mixed>

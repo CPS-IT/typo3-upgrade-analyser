@@ -326,7 +326,7 @@ All 22 working VCS detections are packages also on Packagist — VCS detection c
 
 ### Agent Model Used
 
-claude-sonnet-4-6
+claude-sonnet-4-6 (initial), claude-opus-4-6 (rework)
 
 ### Debug Log References
 
@@ -345,9 +345,27 @@ No blocking issues encountered.
 - Task 8: 1803 unit tests pass, PHPStan Level 8 0 errors, php-cs-fixer 0 issues. End-to-end test in `VcsDetectionNonPackagistTest` confirms RC-1+RC-2+RC-3 chain resolves previously-Unknown packages.
 - Note: AC-1.4 (update `AnalyzeCommand` call sites) — `AnalyzeCommand` constructs `AnalysisContext` without explicit `installationPath`; it defaults to null. The installation path is available in the command but would require a story-scope decision to wire it through. Deferring to avoid scope creep; the fallback simply won't trigger in production until a follow-up story passes the installation path.
 
+**Rework 2026-04-03 (adversarial review findings CP-1 through CP-10, CP-12):**
+- CP-1: Fixed template bug — `detailed-report.html.twig` and `detailed-report.md.twig` used `is same as(true)` for string-valued `vcs_available`; replaced with `== 'available'` across all affected templates.
+- CP-2: SSH hostname validation — `isSshHostReachable()` now validates extracted host against RFC 952/1123 before any subprocess call. Invalid hostnames log a warning and are treated as unreachable.
+- CP-3: `installationPath` sanitization — `resolve()` applies `realpath()` + `is_dir()` before using the path in `--working-dir`. Invalid paths are logged and fallback is skipped. Test fixtures updated to use `sys_get_temp_dir()` (a real existing directory).
+- CP-4: Renamed `SourceAvailability` → `VcsAvailability` throughout codebase. `SourceAvailability.php` deleted; `VcsAvailability.php` created. Test file renamed accordingly. All PHP imports and type hints updated.
+- CP-5: User-facing templates updated: "VCS Repository", "VCS ✓", "VCS ✗", "VCS ?" → "Git Repository", "Git ✓", "Git ✗", "Git ?". Internal code naming unchanged.
+- CP-6: No action — `git` config value retained as-is.
+- CP-7: `VcsSource` splits NOT_FOUND and FAILURE handling: `handleNotFound()` returns `VcsAvailability::Unavailable` + logs debug; `handleFailure()` returns `VcsAvailability::Unknown` + logs warning. Test assertions updated.
+- CP-8: `ReportContextBuilder` no longer imports `VcsAvailability` enum — uses literal strings `'available'`/`'unknown'` for comparisons against already-serialized template data.
+- CP-9: New integration test `WorkingDirFallbackIntegrationTest` exercises full chain VcsSource → ComposerVersionResolver → `--working-dir` fallback using a local path fixture. Gated by `TYPO3_ANALYZER_SKIP_COMPOSER_TESTS` env var.
+- CP-10: `linearScan()` capped at `MAX_LINEAR_SCAN_VERSIONS = 50`. Warning logged when cap is reached.
+- CP-11: Deferred to Story 2-6 — `github → vcs` mapping retained for now.
+- CP-12: Architecture document updated — AR4 now describes single-tier resolution with `--working-dir` fallback, input sanitization, and `VcsAvailability` mapping.
+- Merged `main` into feature branch before rework (scoring docs, composer.lock updates).
+
 ### File List
 
 **New (PHP):**
+- `src/Domain/ValueObject/VcsAvailability.php` (renamed from SourceAvailability.php)
+
+**Deleted (PHP):**
 - `src/Domain/ValueObject/SourceAvailability.php`
 
 **Modified (PHP):**
@@ -355,22 +373,27 @@ No blocking issues encountered.
 - `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
 - `src/Infrastructure/ExternalTool/VcsResolverInterface.php`
 - `src/Infrastructure/ExternalTool/ComposerVersionResolver.php`
-- `src/Infrastructure/ExternalTool/GenericGitResolver.php`
 - `src/Infrastructure/Analyzer/VersionAvailability/Source/VcsSource.php`
 - `src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php`
 - `src/Infrastructure/Reporting/ReportContextBuilder.php`
 - `src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php`
 
 **Modified (Templates):**
+- `resources/templates/html/detailed-report.html.twig`
+- `resources/templates/md/detailed-report.md.twig`
 - `resources/templates/html/partials/main-report/version-availability-table.html.twig`
 - `resources/templates/md/partials/main-report/version-availability-table.md.twig`
 - `resources/templates/html/partials/extension-detail/version-availability-analysis.html.twig`
 - `resources/templates/md/partials/extension-detail/version-availability-analysis.md.twig`
 
 **New (Tests):**
-- `tests/Unit/Domain/ValueObject/SourceAvailabilityTest.php`
+- `tests/Unit/Domain/ValueObject/VcsAvailabilityTest.php` (renamed from SourceAvailabilityTest.php)
 - `tests/Unit/Domain/ValueObject/AnalysisContextTest.php`
 - `tests/Unit/Infrastructure/ExternalTool/VcsDetectionNonPackagistTest.php`
+- `tests/Integration/ExternalTool/WorkingDirFallbackIntegrationTest.php`
+
+**Deleted (Tests):**
+- `tests/Unit/Domain/ValueObject/SourceAvailabilityTest.php`
 
 **Modified (Tests):**
 - `tests/Unit/Infrastructure/ExternalTool/ComposerVersionResolverTest.php`
@@ -379,9 +402,11 @@ No blocking issues encountered.
 - `tests/Unit/Infrastructure/Analyzer/VersionAvailabilityAnalyzerTest.php`
 - `tests/Integration/Analyzer/VersionAvailabilityIntegrationTestCase.php`
 
-**Modified (Sprint):**
+**Modified (Planning):**
+- `_bmad-output/planning-artifacts/architecture.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ## Change Log
 
 - 2026-04-03: Implemented story 2-5a — VCS detection for non-Packagist packages. Added SourceAvailability enum, installationPath to AnalysisContext, source.url bridging in ExtensionDiscoveryService, --working-dir fallback in ComposerVersionResolver, SSH pre-check with host caching, SourceAvailability migration across all consumers and templates.
+- 2026-04-03 (rework): Addressed adversarial review findings CP-1 through CP-10, CP-12 — template bug fix (CP-1), SSH hostname sanitization (CP-2), installationPath validation (CP-3), SourceAvailability→VcsAvailability rename (CP-4), VCS→Git in templates (CP-5), NOT_FOUND→Unavailable mapping (CP-7), enum consistency in reporting (CP-8), integration test (CP-9), linear scan cap (CP-10), architecture doc update (CP-12). Merged main into feature branch.

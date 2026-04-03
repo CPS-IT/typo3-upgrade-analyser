@@ -12,39 +12,39 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Domain\ValueObject;
 
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(SourceAvailability::class)]
-final class SourceAvailabilityTest extends TestCase
+#[CoversClass(VcsAvailability::class)]
+final class VcsAvailabilityTest extends TestCase
 {
     #[Test]
     public function availableHasCorrectBackingValue(): void
     {
-        self::assertSame('available', SourceAvailability::Available->value);
+        self::assertSame('available', VcsAvailability::Available->value);
     }
 
     #[Test]
     public function unavailableHasCorrectBackingValue(): void
     {
-        self::assertSame('unavailable', SourceAvailability::Unavailable->value);
+        self::assertSame('unavailable', VcsAvailability::Unavailable->value);
     }
 
     #[Test]
     public function unknownHasCorrectBackingValue(): void
     {
-        self::assertSame('unknown', SourceAvailability::Unknown->value);
+        self::assertSame('unknown', VcsAvailability::Unknown->value);
     }
 
     #[Test]
     public function allCasesAreEnumerable(): void
     {
-        $cases = SourceAvailability::cases();
+        $cases = VcsAvailability::cases();
         self::assertCount(3, $cases);
 
-        $values = array_map(static fn (SourceAvailability $c): string => $c->value, $cases);
+        $values = array_map(static fn (VcsAvailability $c): string => $c->value, $cases);
         self::assertContains('available', $values);
         self::assertContains('unavailable', $values);
         self::assertContains('unknown', $values);

@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\VersionAvaila
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
@@ -80,7 +80,7 @@ final class VcsSourceTest extends TestCase
         $metrics = $this->source->checkAvailability($extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Unavailable,
+            'vcs_available' => VcsAvailability::Unavailable,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $metrics);
@@ -97,7 +97,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Unknown,
+            'vcs_available' => VcsAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $result);
@@ -106,7 +106,7 @@ final class VcsSourceTest extends TestCase
     #[Test]
     public function returnsCachedValueOnCacheHit(): void
     {
-        $cached = ['vcs_available' => SourceAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/test-extension', 'vcs_latest_version' => '1.2.3'];
+        $cached = ['vcs_available' => VcsAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/test-extension', 'vcs_latest_version' => '1.2.3'];
 
         $this->cacheService->method('generateSimpleKey')->willReturn('cache_key');
         $this->cacheService->expects(self::once())->method('has')->with('cache_key')->willReturn(true);
@@ -140,7 +140,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Available,
+            'vcs_available' => VcsAvailability::Available,
             'vcs_source_url' => 'https://github.com/vendor/test-extension',
             'vcs_latest_version' => '1.2.3',
         ], $result);
@@ -164,7 +164,7 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Unavailable,
+            'vcs_available' => VcsAvailability::Unavailable,
             'vcs_source_url' => 'https://github.com/vendor/test-extension',
             'vcs_latest_version' => null,
         ], $result);
@@ -194,15 +194,17 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Unknown,
+            'vcs_available' => VcsAvailability::Unknown,
             'vcs_source_url' => null,
             'vcs_latest_version' => null,
         ], $result);
     }
 
     #[Test]
-    public function returnsNullMetricsAndLogsWarningOnNotFound(): void
+    public function returnsUnavailableAndLogsDebugOnNotFound(): void
     {
+        // CP-7: NOT_FOUND is a definitive answer → Unavailable (not Unknown).
+        // Source URL is propagated; no warning logged (only debug).
         $resolvedResult = new VcsResolutionResult(
             VcsResolutionStatus::NOT_FOUND,
             'https://github.com/vendor/test-extension',
@@ -214,13 +216,14 @@ final class VcsSourceTest extends TestCase
 
         $this->resolver->method('resolve')->willReturn($resolvedResult);
 
-        $this->logger->expects(self::once())->method('warning');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::once())->method('debug');
 
         $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame([
-            'vcs_available' => SourceAvailability::Unknown,
-            'vcs_source_url' => null,
+            'vcs_available' => VcsAvailability::Unavailable,
+            'vcs_source_url' => 'https://github.com/vendor/test-extension',
             'vcs_latest_version' => null,
         ], $result);
     }
@@ -325,6 +328,6 @@ final class VcsSourceTest extends TestCase
 
         $result = $this->source->checkAvailability($this->extension, $contextWithPath);
 
-        self::assertSame(SourceAvailability::Available, $result['vcs_available']);
+        self::assertSame(VcsAvailability::Available, $result['vcs_available']);
     }
 }

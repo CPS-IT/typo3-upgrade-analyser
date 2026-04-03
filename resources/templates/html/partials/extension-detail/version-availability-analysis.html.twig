@@ -51,7 +51,7 @@
                         {% else %}
                             <div class="status-icon unknown">❓</div>
                         {% endif %}
-                        <strong>VCS Repository</strong><br>
+                        <strong>Git Repository</strong><br>
                         <small>{{ version_analysis.vcs_available == 'unknown' ? 'Resolution failed' : 'Source Code' }}</small>
                     </div>
                 {% endif %}
@@ -67,7 +67,7 @@
         {% endif %}
 
         {% if ('github' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
-            <h3>VCS Repository Information</h3>
+            <h3>Git Repository Information</h3>
             <div class="info-card">
                 {% if version_analysis.vcs_source_url %}
                     <p><strong>Repository URL:</strong> <a href="{{ version_analysis.vcs_source_url }}" target="_blank">{{ version_analysis.vcs_source_url }}</a></p>

@@ -1,5 +1,5 @@
 <h3>Version Availability Analysis</h3>
-<p>This analyzer checks if extensions are available in TYPO3 Extension Repository (TER), Packagist, and VCS repositories for the target TYPO3 version.</p>
+<p>This analyzer checks if extensions are available in TYPO3 Extension Repository (TER), Packagist, and Git repositories for the target TYPO3 version.</p>
 
 {% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
 
@@ -16,7 +16,7 @@
             <th>Latest</th>
             <th></th>
         {% endif %}
-        {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}<th>VCS</th>{% endif %}
+        {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}<th>Git</th>{% endif %}
         <th>Risk Level</th>
         {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}<th>Latest Version</th>{% endif %}
     </tr>
@@ -80,7 +80,7 @@
                         {% elseif data.version_analysis.vcs_available == 'unavailable' %}
                             <span class="status-unavailable">❌</span>
                         {% else %}
-                            <span class="status-unknown" title="VCS resolution failed or not attempted">❓</span>
+                            <span class="status-unknown" title="Git resolution failed or not attempted">❓</span>
                         {% endif %}
                     </td>
                 {% endif %}
