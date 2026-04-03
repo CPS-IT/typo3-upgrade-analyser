@@ -293,7 +293,7 @@ Code review:    Run code review (not yet done — may surface additional items)
                  |
 Re-verify:      Full test suite + manual verification
                  |
-Merge 2-5:      PR to develop
+Merge 2-5:      PR to main (currently in draft mode, review requested)
                  |
 Story 2-6:      Legacy Git Provider Cleanup (absorbs F2)
 ```

@@ -14,7 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider;
 
 use CPSIT\UpgradeAnalyzer\Domain\Contract\ResultInterface;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
-use CPSIT\UpgradeAnalyzer\Domain\ValueObject\SourceAvailability;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Contract\AnalysisReportDataProviderInterface;
 
 class VersionAvailabilityDataProvider implements AnalysisReportDataProviderInterface
@@ -75,9 +75,9 @@ class VersionAvailabilityDataProvider implements AnalysisReportDataProviderInter
             'packagist_latest_version' => $packagistLatestVersion,
             'packagist_latest_compatible' => $result->getMetric('packagist_latest_compatible'),
             'has_newer_packagist_version' => $hasNewerPackagistVersion,
-            'vcs_available' => ($result->getMetric('vcs_available') instanceof SourceAvailability)
+            'vcs_available' => ($result->getMetric('vcs_available') instanceof VcsAvailability)
                 ? $result->getMetric('vcs_available')->value
-                : SourceAvailability::Unknown->value,
+                : VcsAvailability::Unknown->value,
             'vcs_source_url' => $result->getMetric('vcs_source_url'),
             'vcs_latest_version' => $result->getMetric('vcs_latest_version'),
             'risk_score' => $result->getRiskScore(),
