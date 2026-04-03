@@ -60,7 +60,7 @@ class AbstractCachedAnalyzerTest extends TestCase
     public function testAnalyzeWithCacheDisabled(): void
     {
         // Set cache disabled in context
-        $contextData = ['resultCache' => ['enabled' => false]];
+        $contextData = ['analysis' => ['resultCache' => ['enabled' => false]]];
         $context = new AnalysisContext(
             new Version('11.5.0'),
             new Version('12.4.0'),
@@ -301,7 +301,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['enabled' => true]],
+            ['analysis' => ['resultCache' => ['enabled' => true]]],
         );
         $this->assertTrue($this->analyzer->isCacheEnabledPublic($contextEnabled));
 
@@ -309,7 +309,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['enabled' => false]],
+            ['analysis' => ['resultCache' => ['enabled' => false]]],
         );
         $this->assertFalse($this->analyzer->isCacheEnabledPublic($contextDisabled));
     }
@@ -325,7 +325,7 @@ class AbstractCachedAnalyzerTest extends TestCase
             new Version('11.5.0'),
             new Version('12.4.0'),
             [],
-            ['resultCache' => ['ttl' => 7200]],
+            ['analysis' => ['resultCache' => ['ttl' => 7200]]],
         );
         $this->assertEquals(7200, $this->analyzer->getCacheTtlPublic($customContext));
     }

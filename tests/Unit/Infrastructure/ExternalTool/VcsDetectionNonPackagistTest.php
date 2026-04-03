@@ -73,9 +73,15 @@ final class VcsDetectionNonPackagistTest extends TestCase
             'requires' => ['typo3/cms-core' => '^13.0'],
         ];
 
+        $versionData = [
+            'name' => 'vendor/private-ext',
+            'versions' => ['2.1.0'],
+            'requires' => ['typo3/cms-core' => '^13.0'],
+        ];
         $queue = [
             $this->makeNotFoundProcess(),                             // primary: not on Packagist
-            $this->makeSuccessProcess($compatiblePackageData),        // fallback: found via --working-dir
+            $this->makeSuccessProcess($compatiblePackageData),        // fallback: --all returns version list
+            $this->makeSuccessProcess($versionData),                  // version-specific: 2.1.0 requires
         ];
 
         $factory = function (array $command) use (&$queue): Process {
@@ -171,8 +177,9 @@ final class VcsDetectionNonPackagistTest extends TestCase
         ];
 
         $queue = [
-            $this->makeNotFoundProcess(),
-            $this->makeSuccessProcess($compatiblePackageData),
+            $this->makeNotFoundProcess(),                          // primary: not on Packagist
+            $this->makeSuccessProcess($compatiblePackageData),     // fallback: --all returns versions
+            $this->makeSuccessProcess($compatiblePackageData),     // version-specific: 1.5.0 requires
         ];
 
         $factory = function (array $command) use (&$queue): Process {

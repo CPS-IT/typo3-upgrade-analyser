@@ -40,7 +40,7 @@ readonly class TemplateRenderer
     public function renderMainReport(array $context, string $format): array
     {
         return match ($format) {
-            'markdown' => [
+            'markdown', 'md' => [
                 'content' => $this->twig->render('md/main-report.md.twig', $context),
                 'filename' => 'analysis-report.md',
             ],
