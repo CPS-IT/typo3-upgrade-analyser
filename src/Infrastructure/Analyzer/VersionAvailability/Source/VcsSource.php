@@ -26,6 +26,9 @@ class VcsSource implements VersionSourceInterface
     /** @var array<string, true> */
     private array $warnedUrls = [];
 
+    /** @var array<string, true> Per-run cache of SSH hosts that already received a warning. */
+    private array $warnedSshHosts = [];
+
     public function __construct(
         private readonly VcsResolverInterface $resolver,
         private readonly LoggerInterface $logger,
@@ -56,6 +59,7 @@ class VcsSource implements VersionSourceInterface
 
         $cacheKey = $this->cacheService->generateSimpleKey('vcs_availability', $extension->getKey(), [
             'target_version' => $context->getTargetVersion()->toString(),
+            'installation_path' => $context->getInstallationPath() ?? '',
         ]);
 
         if ($this->cacheService->has($cacheKey)) {
@@ -86,8 +90,9 @@ class VcsSource implements VersionSourceInterface
                 'vcs_source_url' => $result->sourceUrl,
                 'vcs_latest_version' => null,
             ]),
-            VcsResolutionStatus::NOT_FOUND => $this->handleNotFound($composerName, $repositoryUrl),
+            VcsResolutionStatus::NOT_FOUND => $this->cacheAndReturn($cacheKey, $this->handleNotFound($composerName, $repositoryUrl)),
             VcsResolutionStatus::FAILURE => $this->handleFailure($composerName, $repositoryUrl, $defaultResponse),
+            VcsResolutionStatus::SSH_UNREACHABLE => $this->handleSshUnreachable($composerName, $repositoryUrl, $defaultResponse),
         };
     }
 
@@ -153,6 +158,30 @@ class VcsSource implements VersionSourceInterface
         return $defaultResponse;
     }
 
+    /**
+     * SSH_UNREACHABLE: the resolver's SSH pre-check determined the host is not reachable.
+     * Emits a single WARNING per host (not per package). Maps to Unknown.
+     *
+     * @param array<string, mixed> $defaultResponse
+     *
+     * @return array<string, mixed>
+     */
+    private function handleSshUnreachable(string $composerName, ?string $repositoryUrl, array $defaultResponse): array
+    {
+        $host = $this->extractSshHost($repositoryUrl);
+        $dedupKey = null !== $host ? 'ssh_host:' . $host : ($repositoryUrl ?? $composerName);
+
+        if (!isset($this->warnedSshHosts[$dedupKey])) {
+            $this->warnedSshHosts[$dedupKey] = true;
+            $this->logger->warning(
+                'SSH host "{host}" is not reachable. All packages on this host will be reported as unknown availability.',
+                ['host' => $host ?? ($repositoryUrl ?? 'unknown'), 'package' => $composerName],
+            );
+        }
+
+        return $defaultResponse;
+    }
+
     private function isSshUrl(?string $url): bool
     {
         if (null === $url) {
@@ -160,5 +189,24 @@ class VcsSource implements VersionSourceInterface
         }
 
         return str_starts_with($url, 'ssh://') || (bool) preg_match('/^git@[^:]+:/', $url);
+    }
+
+    private function extractSshHost(?string $url): ?string
+    {
+        if (null === $url) {
+            return null;
+        }
+
+        if (str_starts_with($url, 'ssh://')) {
+            $parsed = parse_url($url);
+
+            return $parsed['host'] ?? null;
+        }
+
+        if (preg_match('/^git@([^:]+):/', $url, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 }

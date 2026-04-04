@@ -389,26 +389,45 @@ class ComposerVersionResolverTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
-    // SSH-hosted packages (AC-5 revised)
+    // SSH-hosted packages (AC-5)
     // -----------------------------------------------------------------------
 
-    public function testFallbackRunsForSshHostedPackages(): void
+    private function makeSshReachableProcess(): Process&Stub
     {
-        // composer show --working-dir reads local vendor/lock data — no SSH needed.
-        // The fallback should run regardless of whether the VCS URL uses SSH.
+        // GitHub/GitLab return exit code 1 ("Hi user!") — that counts as reachable.
+        $process = $this->createStub(Process::class);
+        $process->method('run')->willReturn(1);
+        $process->method('getExitCode')->willReturn(1);
+
+        return $process;
+    }
+
+    private function makeSshUnreachableProcess(): Process&Stub
+    {
+        // Exit code 255 = connection refused / network unreachable.
+        $process = $this->createStub(Process::class);
+        $process->method('run')->willReturn(255);
+        $process->method('getExitCode')->willReturn(255);
+
+        return $process;
+    }
+
+    public function testFallbackRunsForSshHostedPackagesWhenHostReachable(): void
+    {
         $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
         $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
         $checker->method('isConstraintCompatible')->willReturn(true);
 
         $queue = [
-            $this->makeFailProcess('Package vendor/my-extension not found'), // primary
+            $this->makeFailProcess('Package vendor/my-extension not found'), // primary NOT_FOUND
+            $this->makeSshReachableProcess(),                                 // ssh -T git@gitlab.example.com
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback --all
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // version-specific 1.0.0
         ];
 
         $factory = function (array $command) use (&$queue): Process {
             $process = array_shift($queue);
-            $this->assertNotNull($process, 'Unexpected process request');
+            $this->assertNotNull($process, 'Unexpected process request for command: ' . implode(' ', $command));
 
             return $process;
         };
@@ -427,25 +446,48 @@ class ComposerVersionResolverTest extends TestCase
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
     }
 
-    public function testFallbackRunsOncePerPackageForSshHostedPackages(): void
+    public function testSshUnreachableHostSkipsFallback(): void
     {
-        // Two packages on the same SSH host each need exactly one fallback call (no SSH check).
+        $queue = [
+            $this->makeFailProcess('Package vendor/my-extension not found'), // primary NOT_FOUND
+            $this->makeSshUnreachableProcess(),                               // ssh -T git@github.com (exit 255)
+        ];
+
+        $factory = function (array $command) use (&$queue): Process {
+            $process = array_shift($queue);
+            $this->assertNotNull($process, 'Unexpected process request');
+
+            return $process;
+        };
+
+        $resolver = new ComposerVersionResolver(new NullLogger(), $this->createStub(ComposerConstraintCheckerInterface::class), $this->makeComposerEnvironment(), 30, $factory);
+
+        $result = $resolver->resolve(self::PACKAGE, 'git@github.com:vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
+
+        self::assertEmpty($queue, 'Not all expected processes were consumed');
+        self::assertSame(VcsResolutionStatus::SSH_UNREACHABLE, $result->status);
+    }
+
+    public function testSshCheckCachedPerHostAcrossPackages(): void
+    {
+        // Two packages on the same SSH host: SSH check fires only once (cached after first).
         $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
         $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
         $checker->method('isConstraintCompatible')->willReturn(true);
 
         $queue = [
             $this->makeFailProcess('Package vendor/pkg1 not found'), // pkg1 primary
+            $this->makeSshReachableProcess(),                         // ssh -T git@github.com (once only)
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg1 fallback --all
             $this->makeSuccessProcess($this->composerShowJson(['1.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg1 version-specific
-            $this->makeFailProcess('Package vendor/pkg2 not found'), // pkg2 primary
+            $this->makeFailProcess('Package vendor/pkg2 not found'), // pkg2 primary (no SSH check — cached)
             $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg2 fallback --all
             $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // pkg2 version-specific
         ];
 
         $factory = function (array $command) use (&$queue): Process {
             $process = array_shift($queue);
-            $this->assertNotNull($process, 'Process queue exhausted unexpectedly for command: ' . implode(' ', $command));
+            $this->assertNotNull($process, 'Process queue exhausted unexpectedly for: ' . implode(' ', $command));
 
             return $process;
         };
@@ -458,5 +500,23 @@ class ComposerVersionResolverTest extends TestCase
         self::assertEmpty($queue, 'Not all expected processes were consumed');
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result1->status);
         self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result2->status);
+    }
+
+    public function testHttpsUrlBypassesSshCheck(): void
+    {
+        $checker = $this->createStub(ComposerConstraintCheckerInterface::class);
+        $checker->method('findTypo3Requirements')->willReturn(['^13.4']);
+        $checker->method('isConstraintCompatible')->willReturn(true);
+
+        // No SSH process in queue — proves SSH check never called for HTTPS URL.
+        $resolver = $this->makeResolver([
+            $this->makeFailProcess('Package vendor/my-extension not found'),       // primary
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // fallback --all
+            $this->makeSuccessProcess($this->composerShowJson(['2.0.0'], ['typo3/cms-core' => '^13.4'])), // version-specific 2.0.0
+        ], $checker);
+
+        $result = $resolver->resolve(self::PACKAGE, 'https://github.com/vendor/ext.git', $this->targetVersion, sys_get_temp_dir());
+
+        self::assertSame(VcsResolutionStatus::RESOLVED_COMPATIBLE, $result->status);
     }
 }

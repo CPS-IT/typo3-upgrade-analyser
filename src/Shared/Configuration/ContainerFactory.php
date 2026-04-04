@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Shared\Configuration;
 use CPSIT\UpgradeAnalyzer\Shared\Utility\ProjectRootResolver;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Monolog\Processor\PsrLogMessageProcessor;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -63,6 +64,7 @@ class ContainerFactory
         $container->register(Logger::class)
             ->setArguments(['typo3-upgrade-analyzer'])
             ->addMethodCall('pushHandler', [new StreamHandler($logDir . '/typo3-upgrade-analyzer.log', Logger::INFO)])
+            ->addMethodCall('pushProcessor', [new PsrLogMessageProcessor()])
             ->setPublic(true);
 
         $container->setAlias(LoggerInterface::class, Logger::class)
