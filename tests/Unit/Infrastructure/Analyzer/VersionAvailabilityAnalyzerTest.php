@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Extension\ExtensionDistribution;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
@@ -34,7 +35,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
     private MockObject&LoggerInterface $logger;
     private MockObject&VersionSourceInterface $terSource;
     private MockObject&VersionSourceInterface $packagistSource;
-    private MockObject&VersionSourceInterface $gitSource;
+    private MockObject&VersionSourceInterface $vcsSource;
     private Extension $extension;
     private AnalysisContext $context;
 
@@ -49,13 +50,13 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->packagistSource = $this->createMock(VersionSourceInterface::class);
         $this->packagistSource->method('getName')->willReturn('packagist');
 
-        $this->gitSource = $this->createMock(VersionSourceInterface::class);
-        $this->gitSource->method('getName')->willReturn('git');
+        $this->vcsSource = $this->createMock(VersionSourceInterface::class);
+        $this->vcsSource->method('getName')->willReturn('vcs');
 
         $this->analyzer = new VersionAvailabilityAnalyzer(
             $cacheService,
             $this->logger,
-            [$this->terSource, $this->packagistSource, $this->gitSource],
+            [$this->terSource, $this->packagistSource, $this->vcsSource],
         );
 
         $this->extension = new Extension(
@@ -88,9 +89,9 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             ->method('checkAvailability')
             ->willReturn(['packagist_available' => true]);
 
-        $this->gitSource->expects(self::once())
+        $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['git_available' => true, 'git_repository_health' => 0.8]);
+            ->willReturn(['vcs_available' => VcsAvailability::Available, 'vcs_source_url' => 'https://github.com/vendor/repo', 'vcs_latest_version' => '1.2.3']);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $this->context);
@@ -99,8 +100,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertTrue($result->isSuccessful());
         self::assertTrue($result->getMetric('ter_available'));
         self::assertTrue($result->getMetric('packagist_available'));
-        self::assertTrue($result->getMetric('git_available'));
-        self::assertEquals(0.8, $result->getMetric('git_repository_health'));
+        self::assertSame(VcsAvailability::Available, $result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeWithOnlyTerEnabled(): void
@@ -122,7 +122,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             ->willReturn(['ter_available' => true]);
 
         $this->packagistSource->expects(self::never())->method('checkAvailability');
-        $this->gitSource->expects(self::never())->method('checkAvailability');
+        $this->vcsSource->expects(self::never())->method('checkAvailability');
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $context);
@@ -139,22 +139,22 @@ class VersionAvailabilityAnalyzerTest extends TestCase
             'analysis' => [
                 'analyzers' => [
                     'version_availability' => [
-                        'sources' => ['github'], // Should map to 'git'
+                        'sources' => ['github'], // Should map to 'vcs'
                     ],
                 ],
             ],
         ];
         $context = $this->context->withConfiguration($config);
 
-        $this->gitSource->expects(self::once())
+        $this->vcsSource->expects(self::once())
             ->method('checkAvailability')
-            ->willReturn(['git_available' => true]);
+            ->willReturn(['vcs_available' => VcsAvailability::Available]);
 
         // Act
         $result = $this->analyzer->analyze($this->extension, $context);
 
         // Assert
-        self::assertTrue($result->getMetric('git_available'));
+        self::assertSame(VcsAvailability::Available, $result->getMetric('vcs_available'));
     }
 
     public function testAnalyzeSkipsPathDistribution(): void
@@ -172,7 +172,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // Expect no calls to sources
         $this->terSource->expects(self::never())->method('checkAvailability');
         $this->packagistSource->expects(self::never())->method('checkAvailability');
-        $this->gitSource->expects(self::never())->method('checkAvailability');
+        $this->vcsSource->expects(self::never())->method('checkAvailability');
 
         // Act
         $result = $this->analyzer->analyze($extension, $this->context);
@@ -195,7 +195,7 @@ class VersionAvailabilityAnalyzerTest extends TestCase
 
         // These should not be called, but even if they return null/false, they shouldn't affect score
         $this->terSource->method('checkAvailability')->willReturn([]);
-        $this->gitSource->method('checkAvailability')->willReturn([]);
+        $this->vcsSource->method('checkAvailability')->willReturn([]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
@@ -217,39 +217,58 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         $this->assertEquals(1.5, $result->getRiskScore(), 'TER-only availability should yield low risk');
     }
 
-    public function testScoreWithGitOnly(): void
+    public function testScoreWithVcsOnly(): void
     {
-        // Git only enabled
-        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['git']]]]];
+        // VCS only enabled
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
-        $this->gitSource->method('checkAvailability')->willReturn([
-            'git_available' => true,
-            'git_repository_health' => 1.0, // Perfect health
+        $this->vcsSource->method('checkAvailability')->willReturn([
+            'vcs_available' => VcsAvailability::Available,
+            'vcs_source_url' => 'https://github.com/vendor/repo',
+            'vcs_latest_version' => '1.2.3',
         ]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
         // Max Score = 2. Availability = 2. Ratio = 1.0. Risk should be 1.5.
-        $this->assertEquals(1.5, $result->getRiskScore(), 'Git-only availability should yield low risk');
+        $this->assertEquals(1.5, $result->getRiskScore(), 'VCS-only availability should yield low risk');
     }
 
-    public function testScoreWithPackagistAndGitPartial(): void
+    public function testScoreWithPackagistAndVcsPartial(): void
     {
-        // Packagist + Git enabled
-        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist', 'git']]]]];
+        // Packagist + VCS enabled
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist', 'vcs']]]]];
         $context = $this->context->withConfiguration($config);
 
-        // Packagist available (3 pts), Git not available (0 pts). Total 3/5 = 0.6.
+        // Packagist available (3 pts), VCS not available (0 pts). Total 3/5 = 0.6.
         // Threshold for 2.5 is 0.44 * 5 = 2.2.
         // Threshold for 1.5 is 0.66 * 5 = 3.3.
         // So risk should be 2.5.
 
         $this->packagistSource->method('checkAvailability')->willReturn(['packagist_available' => true]);
-        $this->gitSource->method('checkAvailability')->willReturn(['git_available' => false]);
+        $this->vcsSource->method('checkAvailability')->willReturn(['vcs_available' => VcsAvailability::Unavailable]);
 
         $result = $this->analyzer->analyze($this->extension, $context);
 
         $this->assertEquals(2.5, $result->getRiskScore(), 'Partial availability should yield medium risk');
+    }
+
+    public function testScoreWithVcsNullExcludedFromScoring(): void
+    {
+        // VCS only enabled, vcs_available = null (unknown) → excluded from scoring → 0/0 = high risk
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['vcs']]]]];
+        $context = $this->context->withConfiguration($config);
+
+        $this->vcsSource->method('checkAvailability')->willReturn([
+            'vcs_available' => VcsAvailability::Unknown,
+            'vcs_source_url' => null,
+            'vcs_latest_version' => null,
+        ]);
+
+        $result = $this->analyzer->analyze($this->extension, $context);
+
+        // vcs_available=Unknown → maxPossibleScore stays 0 → returns 9.0 (no availability)
+        $this->assertEquals(9.0, $result->getRiskScore(), 'Unknown VCS availability should yield high risk');
     }
 }

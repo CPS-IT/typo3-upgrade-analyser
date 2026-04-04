@@ -46,6 +46,12 @@ readonly class TerApiHttpClient
 
     /**
      * Get versions data from TER API.
+     *
+     * Known issue (as of 2026-04): The TER API returns `"typo3_versions": []` for all extension
+     * versions, making compatibility checks always return false. Tracked in:
+     *   https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/650
+     *   https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/653
+     * TER source checks are effectively non-functional until this is resolved upstream.
      */
     public function getVersionsData(string $extensionKey): ?array
     {

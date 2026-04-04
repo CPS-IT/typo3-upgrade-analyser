@@ -1292,4 +1292,94 @@ final class ExtensionDiscoveryServiceTest extends TestCase
                 );
             });
     }
+
+    public function testSourceUrlPopulatesRepositoryUrl(): void
+    {
+        $packages = [
+            [
+                'name' => 'vendor/private-extension',
+                'type' => 'typo3-cms-extension',
+                'version' => '1.0.0',
+                'source' => [
+                    'type' => 'git',
+                    'url' => 'git@gitlab.example.com:vendor/private-extension.git',
+                    'reference' => 'abc123',
+                ],
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+        $this->assertTrue($result->isSuccessful());
+
+        $extensions = $result->getExtensions();
+        $found = null;
+        foreach ($extensions as $ext) {
+            if ('private_extension' === $ext->getKey() || 'vendor/private-extension' === $ext->getComposerName()) {
+                $found = $ext;
+                break;
+            }
+        }
+
+        $this->assertNotNull($found, 'Extension should be discovered');
+        $this->assertSame('git@gitlab.example.com:vendor/private-extension.git', $found->getRepositoryUrl());
+    }
+
+    public function testMissingSourceKeyLeavesRepositoryUrlNull(): void
+    {
+        $packages = [
+            [
+                'name' => 'vendor/public-extension',
+                'type' => 'typo3-cms-extension',
+                'version' => '2.0.0',
+                'dist' => [
+                    'type' => 'zip',
+                    'url' => 'https://packagist.example.com/vendor/public-extension-2.0.0.zip',
+                ],
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+        $this->assertTrue($result->isSuccessful());
+
+        $extensions = $result->getExtensions();
+        $this->assertNotEmpty($extensions);
+        foreach ($extensions as $ext) {
+            if ('vendor/public-extension' === $ext->getComposerName()) {
+                $this->assertNull($ext->getRepositoryUrl());
+                break;
+            }
+        }
+    }
+
+    public function testEmptySourceUrlLeavesRepositoryUrlNull(): void
+    {
+        $packages = [
+            [
+                'name' => 'vendor/empty-source',
+                'type' => 'typo3-cms-extension',
+                'version' => '1.0.0',
+                'source' => [
+                    'type' => 'git',
+                    'url' => '',
+                ],
+            ],
+        ];
+
+        $this->createComposerInstalledFile($packages);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+        $this->assertTrue($result->isSuccessful());
+
+        $extensions = $result->getExtensions();
+        foreach ($extensions as $ext) {
+            if ('vendor/empty-source' === $ext->getComposerName()) {
+                $this->assertNull($ext->getRepositoryUrl());
+                break;
+            }
+        }
+    }
 }

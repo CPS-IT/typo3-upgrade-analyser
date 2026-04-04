@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
@@ -71,11 +72,11 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         }
 
         // Get configured sources (default to all if not specified)
-        $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'git']);
+        $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
 
-        // Normalize configured sources (map github -> git)
+        // Normalize configured sources (map github -> vcs)
         $enabledSources = array_map(static function ($source) {
-            return 'github' === $source ? 'git' : $source;
+            return 'github' === $source ? 'vcs' : $source;
         }, $configuredSources);
 
         foreach ($this->sources as $source) {
@@ -115,9 +116,10 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             $components['distribution_type'] = $extension->getDistribution()->getType();
         }
 
-        // Include configured sources in cache key
-        $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'git']);
-        $components['sources'] = implode(',', $configuredSources);
+        // Include normalized sources in cache key (github → vcs)
+        $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
+        $normalizedSources = array_map(static fn ($s): mixed => 'github' === $s ? 'vcs' : $s, $configuredSources);
+        $components['sources'] = implode(',', $normalizedSources);
 
         return $components;
     }
@@ -137,8 +139,6 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
     {
         $terAvailable = $metrics['ter_available'] ?? false;
         $packagistAvailable = $metrics['packagist_available'] ?? false;
-        $gitAvailable = $metrics['git_available'] ?? false;
-        $gitHealth = $metrics['git_repository_health'] ?? null;
 
         // System extensions are low risk (maintained by TYPO3 core team)
         if ($extension->isSystemExtension()) {
@@ -165,12 +165,18 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             }
         }
 
-        // Git availability weighted by repository health
-        if (\in_array('git', $enabledSources, true)) {
-            $maxPossibleScore += 2;
-            if ($gitAvailable) {
-                $gitWeight = $gitHealth ? (2 * $gitHealth) : 1;
-                $availabilityScore += $gitWeight;
+        // VCS availability: enum (Available=2pts, Unavailable=0pts, Unknown=skip)
+        if (\in_array('vcs', $enabledSources, true)) {
+            $vcsAvailable = $metrics['vcs_available'] ?? VcsAvailability::Unknown;
+            // Normalize string → enum in case the value was deserialized from a higher-level cache.
+            if (\is_string($vcsAvailable)) {
+                $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
+            }
+            if ($vcsAvailable instanceof VcsAvailability && VcsAvailability::Unknown !== $vcsAvailable) {
+                $maxPossibleScore += 2;
+                if (VcsAvailability::Available === $vcsAvailable) {
+                    $availabilityScore += 2;
+                }
             }
         }
 
@@ -201,11 +207,6 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             return 5.0;
         }
 
-        // Very low availability
-        if ($availabilityScore >= 1) {
-            return 7.0;
-        }
-
         // No availability
         return 9.0;
     }
@@ -214,53 +215,51 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
     {
         $terAvailable = $result->getMetric('ter_available');
         $packagistAvailable = $result->getMetric('packagist_available');
-        $gitAvailable = $result->getMetric('git_available');
-        $gitHealth = $result->getMetric('git_repository_health');
-        $gitUrl = $result->getMetric('git_repository_url');
+        $vcsAvailable = $result->getMetric('vcs_available');
+        $vcsUrl = $result->getMetric('vcs_source_url');
+
+        // Normalize string → enum in case the value was deserialized from a higher-level cache.
+        if (\is_string($vcsAvailable)) {
+            $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
+        }
+
+        $vcsIsAvailable = $vcsAvailable instanceof VcsAvailability && VcsAvailability::Available === $vcsAvailable;
+        $anyAvailable = $terAvailable || $packagistAvailable || $vcsIsAvailable;
 
         // No availability anywhere
-        if (!$terAvailable && !$packagistAvailable && !$gitAvailable) {
+        if (!$anyAvailable) {
             $result->addRecommendation('Extension not available in any known repository. Consider finding alternative or contact the author.');
 
             return;
         }
 
-        // Git-specific recommendations
-        if ($gitAvailable && !$terAvailable && !$packagistAvailable) {
-            if ($gitHealth && $gitHealth > 0.7) {
-                $result->addRecommendation('Extension is only available via Git repository. Repository appears well-maintained.');
-            } else {
-                $result->addRecommendation('Extension is only available via Git repository. Consider repository maintenance status before upgrade.');
-            }
+        // VCS-specific recommendations (only VCS source available)
+        if ($vcsIsAvailable && !$terAvailable && !$packagistAvailable) {
+            $result->addRecommendation('Extension is only available via VCS repository. Consider repository maintenance status before upgrade.');
 
-            if ($gitUrl) {
-                $result->addRecommendation("Git repository: {$gitUrl}");
+            if ($vcsUrl) {
+                $result->addRecommendation("VCS repository: {$vcsUrl}");
             }
         }
 
         // Mixed availability recommendations
-        if ($gitAvailable && ($terAvailable || $packagistAvailable)) {
+        if ($vcsIsAvailable && ($terAvailable || $packagistAvailable)) {
             $result->addRecommendation('Extension is available in multiple sources. Consider using most stable source for production.');
         }
 
-        if ($terAvailable && $packagistAvailable && !$gitAvailable) {
+        if ($terAvailable && $packagistAvailable && !$vcsIsAvailable) {
             $result->addRecommendation('Extension is available in multiple sources (TER and Packagist). Consider using Composer for better dependency management.');
         }
 
         // Standard TER/Packagist recommendations
-        if (!$terAvailable && $packagistAvailable && !$gitAvailable) {
+        if (!$terAvailable && $packagistAvailable && !$vcsIsAvailable) {
             $result->addRecommendation('Extension is only available via Composer/Packagist. Ensure Composer mode is used.');
-        } elseif ($terAvailable && !$packagistAvailable && !$gitAvailable && $extension->hasComposerName()) {
+        } elseif ($terAvailable && !$packagistAvailable && !$vcsIsAvailable && $extension->hasComposerName()) {
             $result->addRecommendation('Extension is only available in TER. Consider migrating to Composer if needed.');
         }
 
-        // Git repository health warnings
-        if ($gitAvailable && $gitHealth && $gitHealth < 0.3) {
-            $result->addRecommendation('Git repository shows signs of poor maintenance. Consider alternative sources or extensions.');
-        }
-
-        // Local extension with alternatives
-        if ($extension->isLocalExtension() && ($terAvailable || $packagistAvailable || $gitAvailable)) {
+        // Local extension with alternatives (at this point $anyAvailable is always true — early return above handles false)
+        if ($extension->isLocalExtension()) {
             $result->addRecommendation('Local extension has public alternatives available. Consider using official version.');
         }
     }

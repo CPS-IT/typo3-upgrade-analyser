@@ -19,7 +19,7 @@ final readonly class VcsResolutionResult
 {
     public function __construct(
         public VcsResolutionStatus $status,
-        public string $sourceUrl,
+        public ?string $sourceUrl,
         public ?string $latestCompatibleVersion,
     ) {
     }

@@ -197,7 +197,7 @@ readonly class ReportContextBuilder
         $availabilityStats = [
             'ter_available' => 0,
             'packagist_available' => 0,
-            'git_available' => 0,
+            'vcs_available' => 0,
             'no_availability' => 0,
         ];
 
@@ -213,10 +213,11 @@ readonly class ReportContextBuilder
                 if ($versionAnalysis['packagist_available']) {
                     ++$availabilityStats['packagist_available'];
                 }
-                if ($versionAnalysis['git_available']) {
-                    ++$availabilityStats['git_available'];
+                $vcsAvailable = $versionAnalysis['vcs_available'] ?? 'unknown';
+                if ('available' === $vcsAvailable) {
+                    ++$availabilityStats['vcs_available'];
                 }
-                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && !$versionAnalysis['git_available']) {
+                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && 'available' !== $vcsAvailable) {
                     ++$availabilityStats['no_availability'];
                 }
             }
