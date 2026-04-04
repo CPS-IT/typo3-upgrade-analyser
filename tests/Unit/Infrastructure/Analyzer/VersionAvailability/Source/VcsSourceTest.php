@@ -213,6 +213,7 @@ final class VcsSourceTest extends TestCase
 
         $this->cacheService->method('generateSimpleKey')->willReturn('cache_key');
         $this->cacheService->method('has')->willReturn(false);
+        $this->cacheService->expects(self::once())->method('set');
 
         $this->resolver->method('resolve')->willReturn($resolvedResult);
 
@@ -329,5 +330,53 @@ final class VcsSourceTest extends TestCase
         $result = $this->source->checkAvailability($this->extension, $contextWithPath);
 
         self::assertSame(VcsAvailability::Available, $result['vcs_available']);
+    }
+
+    #[Test]
+    public function returnsSshUnreachableAsUnknownWithHostLevelWarning(): void
+    {
+        $sshExtension = new Extension('ssh_ext', 'SSH Ext', new Version('1.0.0'), 'local', 'vendor/ssh-ext');
+        $sshExtension->setRepositoryUrl('git@github.com:vendor/ssh-ext.git');
+
+        $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::SSH_UNREACHABLE, 'git@github.com:vendor/ssh-ext.git', null);
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('ssh_cache_key');
+        $this->cacheService->method('has')->willReturn(false);
+        $this->cacheService->expects(self::never())->method('set');
+
+        $this->resolver->method('resolve')->willReturn($resolvedResult);
+
+        $this->logger->expects(self::once())->method('warning')
+            ->with(
+                self::stringContains('not reachable'),
+                self::callback(fn ($ctx): bool => 'github.com' === $ctx['host']),
+            );
+
+        $result = $this->source->checkAvailability($sshExtension, $this->context);
+
+        self::assertSame(VcsAvailability::Unknown, $result['vcs_available']);
+    }
+
+    #[Test]
+    public function sshHostWarningEmittedOnlyOncePerHost(): void
+    {
+        // Two packages on the same SSH host → one host-level warning, not two.
+        $ext1 = new Extension('pkg1', 'Pkg1', new Version('1.0.0'), 'local', 'vendor/pkg1');
+        $ext1->setRepositoryUrl('git@github.com:vendor/pkg1.git');
+
+        $ext2 = new Extension('pkg2', 'Pkg2', new Version('1.0.0'), 'local', 'vendor/pkg2');
+        $ext2->setRepositoryUrl('git@github.com:vendor/pkg2.git');
+
+        $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::SSH_UNREACHABLE, null, null);
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('key1', 'key2');
+        $this->cacheService->method('has')->willReturn(false);
+        $this->resolver->method('resolve')->willReturn($resolvedResult);
+
+        // One warning for the host (not per package).
+        $this->logger->expects(self::once())->method('warning');
+
+        $this->source->checkAvailability($ext1, $this->context);
+        $this->source->checkAvailability($ext2, $this->context);
     }
 }

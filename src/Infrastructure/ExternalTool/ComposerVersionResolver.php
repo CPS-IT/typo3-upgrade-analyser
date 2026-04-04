@@ -29,13 +29,18 @@ use Symfony\Component\Process\Process;
  * Resolution strategy:
  *   1. Primary: `composer show --all --format=json $package` (Packagist)
  *   2. Fallback (when primary returns NOT_FOUND and installationPath is set):
- *      `composer show --working-dir=$installationPath --format=json $package`
+ *      For SSH-based VCS URLs: SSH connectivity pre-check (`ssh -T -o ConnectTimeout=5 <host>`)
+ *      is performed once per host. If unreachable, fallback is skipped and SSH_UNREACHABLE is returned.
+ *      Otherwise: `composer show --working-dir=$installationPath --format=json $package`.
  *      Reads from local vendor/lock — no VCS network access required.
  *      installationPath is validated via realpath()+is_dir() before use.
  */
 class ComposerVersionResolver implements VcsResolverInterface
 {
     private const MAX_LINEAR_SCAN_VERSIONS = 50;
+
+    /** @var array<string, bool> Per-run SSH host reachability cache (true=reachable, false=unreachable). */
+    private array $sshHostStatus = [];
 
     /**
      * @param (\Closure(list<string>): Process)|null $processFactory
@@ -84,8 +89,21 @@ class ComposerVersionResolver implements VcsResolverInterface
             return $primaryResult;
         }
 
-        // Note: no SSH check here — composer show --working-dir reads local vendor/lock data only,
-        // no VCS network access is required regardless of the VCS URL scheme.
+        // AC-5: SSH connectivity pre-check for SSH-based VCS URLs.
+        // Even though --working-dir reads local data, an unreachable SSH host may indicate
+        // that the network (and thus any network-backed local path) is unavailable.
+        // One `ssh -T` probe per host per analysis run avoids repeated 11-13s timeouts.
+        if ($this->isSshUrl($vcsUrl)) {
+            $host = $this->extractSshHost((string) $vcsUrl);
+            if (null !== $host && !$this->isSshHostReachable($host)) {
+                $this->logger->warning(
+                    'SSH host "{host}" is not reachable (ConnectTimeout=5). Skipping --working-dir fallback for package {package}.',
+                    ['host' => $host, 'package' => $packageName],
+                );
+
+                return new VcsResolutionResult(VcsResolutionStatus::SSH_UNREACHABLE, $vcsUrl, null);
+            }
+        }
 
         // Use --all to discover all tagged versions available via the VCS repository.
         // fetchVersionRequires will also use --working-dir so per-version deps are resolved locally.
@@ -212,10 +230,13 @@ class ComposerVersionResolver implements VcsResolverInterface
                 break;
             }
             $requires = $this->fetchVersionRequires($packageName, $versions[$i], $workingDir);
-            if (null !== $requires && $this->isCompatible($requires, $targetVersion)) {
-                return $versions[$i];
+            if (null === $requires) {
+                continue;
             }
             ++$scanned;
+            if ($this->isCompatible($requires, $targetVersion)) {
+                return $versions[$i];
+            }
         }
 
         return null;
@@ -273,6 +294,88 @@ class ComposerVersionResolver implements VcsResolverInterface
         }
 
         return false;
+    }
+
+    private function isSshUrl(?string $url): bool
+    {
+        if (null === $url) {
+            return false;
+        }
+
+        return str_starts_with($url, 'ssh://') || (bool) preg_match('/^git@[^:]+:/', $url);
+    }
+
+    /**
+     * Extract hostname from SSH VCS URL.
+     * Supports `git@host:path.git` and `ssh://git@host/path.git`.
+     * Returns null for unrecognized formats or invalid hostnames.
+     */
+    /**
+     * Returns a probe target string suitable for passing directly to `ssh -T`.
+     * For `git@host:path` URLs this is `git@host`; for `ssh://user@host/path` it is `user@host`
+     * (falling back to bare `host` when no user is present in the URL).
+     * The hostname portion is validated against RFC 952/1123 before any subprocess call.
+     */
+    private function extractSshHost(string $url): ?string
+    {
+        if (str_starts_with($url, 'ssh://')) {
+            $parsed = parse_url($url);
+            $host = $parsed['host'] ?? null;
+            $userPrefix = isset($parsed['user']) ? $parsed['user'] . '@' : '';
+        } elseif (preg_match('/^git@([^:]+):/', $url, $matches)) {
+            $host = $matches[1];
+            $userPrefix = 'git@';
+        } else {
+            return null;
+        }
+
+        if (null === $host || '' === $host) {
+            return null;
+        }
+
+        // CP-2: validate hostname against RFC 952/1123 before any subprocess call.
+        if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/', $host)) {
+            $this->logger->warning('Extracted SSH host "{host}" is not a valid hostname — skipping SSH check.', ['host' => $host]);
+
+            return null;
+        }
+
+        return $userPrefix . $host;
+    }
+
+    /**
+     * Probe SSH connectivity to a host. Exit code 255 = unreachable; anything else = reachable.
+     * Result is cached per host for the duration of this resolver instance.
+     */
+    private function isSshHostReachable(string $host): bool
+    {
+        if (isset($this->sshHostStatus[$host])) {
+            return $this->sshHostStatus[$host];
+        }
+
+        $process = $this->createProcess(['ssh', '-T', '-o', 'ConnectTimeout=5', $host]);
+        $process->setTimeout(10);
+
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException) {
+            $this->logger->debug('SSH connectivity check timed out for host {host}', ['host' => $host]);
+            $this->sshHostStatus[$host] = false;
+
+            return false;
+        }
+
+        // Exit code 255 = connection refused / network unreachable.
+        // Exit code 0 or 1 = host responded (e.g. GitHub returns 1 with "Hi user!").
+        $reachable = 255 !== $process->getExitCode();
+        $this->sshHostStatus[$host] = $reachable;
+
+        $this->logger->debug(
+            'SSH connectivity check for host {host}: {result} (exit={code})',
+            ['host' => $host, 'result' => $reachable ? 'reachable' : 'unreachable', 'code' => $process->getExitCode()],
+        );
+
+        return $reachable;
     }
 
     /**
