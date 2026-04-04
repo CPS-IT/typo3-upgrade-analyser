@@ -19,4 +19,6 @@ enum VcsResolutionStatus: string
     /** Package not found in the queried source registry — caller must hand off to Tier 2. */
     case NOT_FOUND = 'not_found';
     case FAILURE = 'failure';
+    /** SSH host unreachable — fallback skipped, availability unknown. */
+    case SSH_UNREACHABLE = 'ssh_unreachable';
 }

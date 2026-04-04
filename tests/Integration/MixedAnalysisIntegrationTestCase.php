@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
@@ -130,7 +131,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         if ($metrics['packagist_available']) {
             $availableSources[] = 'Packagist';
         }
-        if (true === ($metrics['vcs_available'] ?? null)) {
+        if (VcsAvailability::Available === ($metrics['vcs_available'] ?? null)) {
             $availableSources[] = 'VCS';
         }
 
@@ -146,7 +147,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
             $this->assertNotEmpty($recommendations, 'Should have recommendations when multiple sources available. Available sources: ' . implode(', ', $availableSources));
 
             // Check for "multiple" specifically when VCS + (TER or Packagist) are available
-            if (true === ($metrics['vcs_available'] ?? null) && ($metrics['ter_available'] || $metrics['packagist_available'])) {
+            if (VcsAvailability::Available === ($metrics['vcs_available'] ?? null) && ($metrics['ter_available'] || $metrics['packagist_available'])) {
                 $this->assertStringContainsString(
                     'multiple',
                     strtolower($recommendations),
@@ -173,7 +174,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
         // News extension should be compatible with both TYPO3 11 and 12
         foreach ($results as $version => $result) {
             $metrics = $result->getMetrics();
-            $hasAnyAvailability = $metrics['ter_available'] || $metrics['packagist_available'] || true === ($metrics['vcs_available'] ?? null);
+            $hasAnyAvailability = $metrics['ter_available'] || $metrics['packagist_available'] || VcsAvailability::Available === ($metrics['vcs_available'] ?? null);
 
             $this->assertTrue(
                 $hasAnyAvailability,

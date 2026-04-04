@@ -168,6 +168,10 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         // VCS availability: enum (Available=2pts, Unavailable=0pts, Unknown=skip)
         if (\in_array('vcs', $enabledSources, true)) {
             $vcsAvailable = $metrics['vcs_available'] ?? VcsAvailability::Unknown;
+            // Normalize string → enum in case the value was deserialized from a higher-level cache.
+            if (\is_string($vcsAvailable)) {
+                $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
+            }
             if ($vcsAvailable instanceof VcsAvailability && VcsAvailability::Unknown !== $vcsAvailable) {
                 $maxPossibleScore += 2;
                 if (VcsAvailability::Available === $vcsAvailable) {
@@ -213,6 +217,11 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         $packagistAvailable = $result->getMetric('packagist_available');
         $vcsAvailable = $result->getMetric('vcs_available');
         $vcsUrl = $result->getMetric('vcs_source_url');
+
+        // Normalize string → enum in case the value was deserialized from a higher-level cache.
+        if (\is_string($vcsAvailable)) {
+            $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
+        }
 
         $vcsIsAvailable = $vcsAvailable instanceof VcsAvailability && VcsAvailability::Available === $vcsAvailable;
         $anyAvailable = $terAvailable || $packagistAvailable || $vcsIsAvailable;
