@@ -250,7 +250,7 @@
                     <p><strong>Type:</strong> {{ data.extension.isSystemExtension ? 'System' : (data.extension.isLocalExtension ? 'Local' : 'Third-party') }}</p>
                     <p><strong>Active:</strong> {{ data.extension.isActive ? 'Yes' : 'No' }}</p>
                     {% if data.version_analysis %}
-                        <p><strong>Distribution:</strong> {{ data.version_analysis.distribution_type == 'path' ? '🏠 Local Path' : (data.version_analysis.distribution_type is null ? '⛲️ Source' : data.version_analysis.distribution_type|capitalize) }}</p>
+                        <p><strong>Distribution:</strong> {{ data.version_analysis.distribution_type == 'path' ? '🏠 Local Path' : ((data.version_analysis.distribution_type is null or data.version_analysis.repository_url) ? '⛲️ Source' : data.version_analysis.distribution_type|capitalize) }}</p>
                     {% endif %}
                     {% if data.extension.hasComposerName %}
                         <p><strong>Composer:</strong> <code>{{ data.extension.composerName }}</code></p>

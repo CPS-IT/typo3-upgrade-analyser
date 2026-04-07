@@ -19,10 +19,10 @@
             <div class="status-grid">
                 <div class="status-card">
                     <div class="status-icon">
-                        {{ version_analysis.distribution_type == 'path' ? '🏠' : (version_analysis.distribution_type is null ? '⛲️' : '📦') }}
+                        {{ version_analysis.distribution_type == 'path' ? '🏠' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? '⛲️' : '📦') }}
                     </div>
                     <strong>Distribution</strong><br>
-                    <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : (version_analysis.distribution_type is null ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
+                    <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
                 </div>
                 {% if 'ter' in enabled_sources %}
                     <div class="status-card">
