@@ -59,7 +59,7 @@ class VcsSource implements VersionSourceInterface
 
         $cacheKey = $this->cacheService->generateSimpleKey('vcs_availability', $extension->getKey(), [
             'target_version' => $context->getTargetVersion()->toString(),
-            'installation_path' => $context->getInstallationPath() ?? '',
+            'installed_version' => $extension->getVersion()->toString(),
         ]);
 
         if ($this->cacheService->has($cacheKey)) {
@@ -76,7 +76,7 @@ class VcsSource implements VersionSourceInterface
             $composerName,
             $repositoryUrl,
             $context->getTargetVersion(),
-            $context->getInstallationPath(),
+            $extension->getVersion(),
         );
 
         return match ($result->status) {

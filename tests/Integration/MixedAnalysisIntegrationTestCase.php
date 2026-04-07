@@ -18,8 +18,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\Pac
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver;
+use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionResolver;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandler;
@@ -384,10 +383,9 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
             new RepositoryUrlHandler(),
         );
 
-        $vcsResolver = new ComposerVersionResolver(
+        $vcsResolver = new GitVersionResolver(
             $this->createLogger(),
             new ComposerConstraintChecker(),
-            new ComposerEnvironment($this->createLogger()),
         );
 
         return new VersionAvailabilityAnalyzer(
