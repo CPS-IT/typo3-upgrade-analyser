@@ -15,6 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Reporting;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\AnalysisResult;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Installation;
+use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorFinding;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\FractorDataProvider;
@@ -98,7 +99,7 @@ class ReportContextBuilderTest extends TestCase
         $analysisResult->method('getData')->willReturn([
             'ter_available' => true,
             'packagist_available' => false,
-            'vcs_available' => 'available',
+            'vcs_available' => VcsAvailability::Available->value,
             'risk_score' => 3.5,
         ]);
 

@@ -31,34 +31,28 @@ final class AnalysisContextTest extends TestCase
     }
 
     #[Test]
-    public function installationPathIsNullByDefault(): void
+    public function existingPropertiesAreAccessible(): void
     {
-        $context = new AnalysisContext($this->current, $this->target);
-        self::assertNull($context->getInstallationPath());
-    }
-
-    #[Test]
-    public function installationPathCanBeSetViaConstructor(): void
-    {
-        $context = new AnalysisContext($this->current, $this->target, [], [], '/var/www/typo3');
-        self::assertSame('/var/www/typo3', $context->getInstallationPath());
-    }
-
-    #[Test]
-    public function installationPathCanBeNull(): void
-    {
-        $context = new AnalysisContext($this->current, $this->target, [], [], null);
-        self::assertNull($context->getInstallationPath());
-    }
-
-    #[Test]
-    public function existingPropertiesUnaffected(): void
-    {
-        $context = new AnalysisContext($this->current, $this->target, ['8.1'], ['key' => 'val'], '/path');
+        $context = new AnalysisContext($this->current, $this->target, ['8.1'], ['key' => 'val']);
         self::assertSame($this->current, $context->getCurrentVersion());
         self::assertSame($this->target, $context->getTargetVersion());
         self::assertSame(['8.1'], $context->getPhpVersions());
         self::assertSame(['key' => 'val'], $context->getConfiguration());
-        self::assertSame('/path', $context->getInstallationPath());
+    }
+
+    #[Test]
+    public function withConfigurationMergesValues(): void
+    {
+        $context = new AnalysisContext($this->current, $this->target, [], ['a' => 1]);
+        $updated = $context->withConfiguration(['b' => 2]);
+        self::assertSame(['a' => 1, 'b' => 2], $updated->getConfiguration());
+    }
+
+    #[Test]
+    public function withPhpVersionsReplacesVersions(): void
+    {
+        $context = new AnalysisContext($this->current, $this->target);
+        $updated = $context->withPhpVersions(['8.2']);
+        self::assertSame(['8.2'], $updated->getPhpVersions());
     }
 }

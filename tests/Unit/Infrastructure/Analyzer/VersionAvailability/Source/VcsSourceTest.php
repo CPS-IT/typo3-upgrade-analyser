@@ -125,6 +125,29 @@ final class VcsSourceTest extends TestCase
     }
 
     #[Test]
+    public function rehydratesStringEnumValueFromCache(): void
+    {
+        // Simulate cache returning string values (as from json_encode serialization).
+        $cached = [
+            'vcs_available' => 'available',
+            'vcs_source_url' => 'https://github.com/vendor/test-extension',
+            'vcs_latest_version' => '1.2.3',
+        ];
+
+        $this->cacheService->method('generateSimpleKey')->willReturn('cache_key');
+        $this->cacheService->expects(self::once())->method('has')->with('cache_key')->willReturn(true);
+        $this->cacheService->expects(self::once())->method('get')->with('cache_key')->willReturn($cached);
+
+        $this->resolver->expects(self::never())->method('resolve');
+
+        $result = $this->source->checkAvailability($this->extension, $this->context);
+
+        self::assertSame(VcsAvailability::Available, $result['vcs_available']);
+        self::assertSame('https://github.com/vendor/test-extension', $result['vcs_source_url']);
+        self::assertSame('1.2.3', $result['vcs_latest_version']);
+    }
+
+    #[Test]
     public function returnsCompatibleMetricsOnResolvedCompatible(): void
     {
         $resolvedResult = new VcsResolutionResult(

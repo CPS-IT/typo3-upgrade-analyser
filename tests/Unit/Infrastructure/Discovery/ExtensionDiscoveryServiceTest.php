@@ -1347,12 +1347,15 @@ final class ExtensionDiscoveryServiceTest extends TestCase
 
         $extensions = $result->getExtensions();
         $this->assertNotEmpty($extensions);
+        $found = false;
         foreach ($extensions as $ext) {
             if ('vendor/public-extension' === $ext->getComposerName()) {
                 $this->assertNull($ext->getRepositoryUrl());
+                $found = true;
                 break;
             }
         }
+        self::assertTrue($found, 'Target extension not discovered');
     }
 
     public function testEmptySourceUrlLeavesRepositoryUrlNull(): void
@@ -1375,11 +1378,14 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         $this->assertTrue($result->isSuccessful());
 
         $extensions = $result->getExtensions();
+        $found = false;
         foreach ($extensions as $ext) {
             if ('vendor/empty-source' === $ext->getComposerName()) {
                 $this->assertNull($ext->getRepositoryUrl());
+                $found = true;
                 break;
             }
         }
+        self::assertTrue($found, 'Target extension not discovered');
     }
 }

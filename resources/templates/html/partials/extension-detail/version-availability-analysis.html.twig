@@ -19,10 +19,10 @@
             <div class="status-grid">
                 <div class="status-card">
                     <div class="status-icon">
-                        {{ version_analysis.distribution_type == 'path' ? '🏠' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? '⛲️' : '📦') }}
+                        {{ version_analysis.distribution_type == 'path' ? '🏠' : (version_analysis.distribution_type is null ? '⛲️' : '📦') }}
                     </div>
                     <strong>Distribution</strong><br>
-                    <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
+                    <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : (version_analysis.distribution_type is null ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
                 </div>
                 {% if 'ter' in enabled_sources %}
                     <div class="status-card">
@@ -70,7 +70,13 @@
             <h3>Git Repository Information</h3>
             <div class="info-card">
                 {% if version_analysis.vcs_source_url %}
-                    <p><strong>Repository URL:</strong> <a href="{{ version_analysis.vcs_source_url }}" target="_blank">{{ version_analysis.vcs_source_url }}</a></p>
+                    <p><strong>Repository URL:</strong>
+                        {% if version_analysis.vcs_source_url starts with 'http' %}
+                            <a href="{{ version_analysis.vcs_source_url }}" target="_blank">{{ version_analysis.vcs_source_url }}</a>
+                        {% else %}
+                            <code>{{ version_analysis.vcs_source_url }}</code>
+                        {% endif %}
+                    </p>
                 {% endif %}
                 {% if version_analysis.vcs_latest_version %}
                     <p><strong>Latest Compatible Version:</strong> {{ version_analysis.vcs_latest_version }}</p>

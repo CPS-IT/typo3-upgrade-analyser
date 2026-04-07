@@ -76,9 +76,18 @@ class VersionAvailabilityDataProvider implements AnalysisReportDataProviderInter
             'packagist_latest_version' => $packagistLatestVersion,
             'packagist_latest_compatible' => $result->getMetric('packagist_latest_compatible'),
             'has_newer_packagist_version' => $hasNewerPackagistVersion,
-            'vcs_available' => ($result->getMetric('vcs_available') instanceof VcsAvailability)
-                ? $result->getMetric('vcs_available')->value
-                : VcsAvailability::Unknown->value,
+            'vcs_available' => (static function (mixed $vcsMetric): string {
+                if ($vcsMetric instanceof VcsAvailability) {
+                    return $vcsMetric->value;
+                }
+                if (\is_string($vcsMetric)) {
+                    $parsed = VcsAvailability::tryFrom($vcsMetric);
+
+                    return null !== $parsed ? $parsed->value : VcsAvailability::Unknown->value;
+                }
+
+                return VcsAvailability::Unknown->value;
+            })($result->getMetric('vcs_available')),
             'vcs_source_url' => $result->getMetric('vcs_source_url'),
             'vcs_latest_version' => $result->getMetric('vcs_latest_version'),
             'risk_score' => $result->getRiskScore(),

@@ -84,7 +84,7 @@ class VersionAvailabilityIntegrationTestCase extends AbstractIntegrationTestCase
     public function testAnalyzerHasRequiredTools(): void
     {
         $this->assertTrue($this->analyzer->hasRequiredTools());
-        $this->assertEquals(['curl'], $this->analyzer->getRequiredTools());
+        $this->assertEquals(['curl', 'git'], $this->analyzer->getRequiredTools());
     }
 
     /**

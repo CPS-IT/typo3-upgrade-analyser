@@ -102,12 +102,19 @@
 {% endif %}
 
 {% if data.version_analysis %}
+{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
 **Version Availability Analysis:**
+{% if 'ter' in enabled_sources %}
 - **TER (TYPO3 Extension Repository):** {{ data.version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
+{% endif %}
+{% if 'packagist' in enabled_sources %}
 - **Packagist (Composer):** {{ data.version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
+{% endif %}
+{% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
 - **Git Repository:** {{ data.version_analysis.vcs_available == 'available' ? '✅ Available' : (data.version_analysis.vcs_available == 'unavailable' ? '❌ Not Available' : '❓ Unknown (resolution failed)') }}
+{% endif %}
 
-{% if data.version_analysis.vcs_source_url %}
+{% if ('github' in enabled_sources or 'vcs' in enabled_sources) and data.version_analysis.vcs_source_url %}
 **Git Repository Details:**
 - **URL:** {{ data.version_analysis.vcs_source_url }}
 {% if data.version_analysis.vcs_latest_version %}
@@ -143,7 +150,7 @@
 {% if data.risk_summary.risk_level == level %}
 - **{{ data.extension.key }}**: Risk Score {{ "%.1f"|format(data.risk_summary.overall_risk) }}
   {% if data.version_analysis %}
-  - Availability: {{ data.version_analysis.ter_available ? 'TER' : '' }}{{ data.version_analysis.packagist_available ? ' Packagist' : '' }}{{ data.version_analysis.vcs_available == 'available' ? ' Git' : '' }}{{ not data.version_analysis.ter_available and not data.version_analysis.packagist_available and data.version_analysis.vcs_available != 'available' ? 'None' : '' }}
+  - Availability: {{ data.version_analysis.ter_available ? 'TER' : '' }}{{ data.version_analysis.packagist_available ? ' Packagist' : '' }}{{ data.version_analysis.vcs_available == 'available' ? ' Git' : '' }}{{ not data.version_analysis.ter_available and not data.version_analysis.packagist_available and data.version_analysis.vcs_available == 'unavailable' ? 'None' : (not data.version_analysis.ter_available and not data.version_analysis.packagist_available and data.version_analysis.vcs_available == 'unknown' ? 'Unknown' : '') }}
   {% endif %}
 {% endif %}
 {% endfor %}

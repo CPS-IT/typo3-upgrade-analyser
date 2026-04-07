@@ -22,7 +22,6 @@ readonly class AnalysisContext
         private Version $targetVersion,
         private array $phpVersions = [],
         private array $configuration = [],
-        private ?string $installationPath = null,
     ) {
     }
 
@@ -44,11 +43,6 @@ readonly class AnalysisContext
     public function getConfiguration(): array
     {
         return $this->configuration;
-    }
-
-    public function getInstallationPath(): ?string
-    {
-        return $this->installationPath;
     }
 
     public function getConfigurationValue(string $key, mixed $default = null): mixed
@@ -81,7 +75,6 @@ readonly class AnalysisContext
             $this->targetVersion,
             $this->phpVersions,
             array_merge($this->configuration, $configuration),
-            $this->installationPath,
         );
     }
 
@@ -92,7 +85,6 @@ readonly class AnalysisContext
             $this->targetVersion,
             $phpVersions,
             $this->configuration,
-            $this->installationPath,
         );
     }
 }

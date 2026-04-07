@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Exception\RuntimeException;
 use Symfony\Component\Process\Process;
 
 /**
@@ -136,10 +137,14 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
             return false;
         }
 
-        $process = new Process(['git', '--version']);
-        $process->run();
+        try {
+            $process = new Process(['git', '--version']);
+            $process->run();
 
-        return $process->isSuccessful();
+            return $process->isSuccessful();
+        } catch (RuntimeException) {
+            return false;
+        }
     }
 
     private function calculateRiskScore(array $metrics, Extension $extension, array $enabledSources): float
@@ -174,12 +179,8 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
         // VCS availability: enum (Available=2pts, Unavailable=0pts, Unknown=skip)
         if (\in_array('vcs', $enabledSources, true)) {
-            $vcsAvailable = $metrics['vcs_available'] ?? VcsAvailability::Unknown;
-            // Normalize string → enum in case the value was deserialized from a higher-level cache.
-            if (\is_string($vcsAvailable)) {
-                $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
-            }
-            if ($vcsAvailable instanceof VcsAvailability && VcsAvailability::Unknown !== $vcsAvailable) {
+            $vcsAvailable = $this->normalizeVcsAvailability($metrics['vcs_available'] ?? VcsAvailability::Unknown);
+            if (VcsAvailability::Unknown !== $vcsAvailable) {
                 $maxPossibleScore += 2;
                 if (VcsAvailability::Available === $vcsAvailable) {
                     $availabilityScore += 2;
@@ -222,19 +223,23 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
     {
         $terAvailable = $result->getMetric('ter_available');
         $packagistAvailable = $result->getMetric('packagist_available');
-        $vcsAvailable = $result->getMetric('vcs_available');
+        $vcsAvailable = $this->normalizeVcsAvailability($result->getMetric('vcs_available'));
         $vcsUrl = $result->getMetric('vcs_source_url');
 
-        // Normalize string → enum in case the value was deserialized from a higher-level cache.
-        if (\is_string($vcsAvailable)) {
-            $vcsAvailable = VcsAvailability::tryFrom($vcsAvailable) ?? VcsAvailability::Unknown;
-        }
-
-        $vcsIsAvailable = $vcsAvailable instanceof VcsAvailability && VcsAvailability::Available === $vcsAvailable;
+        $vcsIsAvailable = VcsAvailability::Available === $vcsAvailable;
         $anyAvailable = $terAvailable || $packagistAvailable || $vcsIsAvailable;
 
         // No availability anywhere
         if (!$anyAvailable) {
+            if (VcsAvailability::Unknown === $vcsAvailable && !$terAvailable && !$packagistAvailable) {
+                $result->addRecommendation(
+                    'VCS availability could not be verified (network/auth failure). '
+                    . 'TER and Packagist also report unavailable. Manual check recommended.',
+                );
+
+                return;
+            }
+
             $result->addRecommendation('Extension not available in any known repository. Consider finding alternative or contact the author.');
 
             return;
@@ -269,5 +274,18 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         if ($extension->isLocalExtension()) {
             $result->addRecommendation('Local extension has public alternatives available. Consider using official version.');
         }
+    }
+
+    private function normalizeVcsAvailability(mixed $value): VcsAvailability
+    {
+        if ($value instanceof VcsAvailability) {
+            return $value;
+        }
+
+        if (\is_string($value)) {
+            return VcsAvailability::tryFrom($value) ?? VcsAvailability::Unknown;
+        }
+
+        return VcsAvailability::Unknown;
     }
 }
