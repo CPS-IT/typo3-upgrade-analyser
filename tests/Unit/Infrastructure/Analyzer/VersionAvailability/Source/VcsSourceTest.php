@@ -74,7 +74,12 @@ final class VcsSourceTest extends TestCase
 
         $this->resolver->expects(self::once())
             ->method('resolve')
-            ->with('vendor/pkg', null, $this->context->getTargetVersion(), null)
+            ->with(
+                'vendor/pkg',
+                null,
+                $this->context->getTargetVersion(),
+                self::callback(static fn (Version $v): bool => '1.0.0' === $v->toString()),
+            )
             ->willReturn($result);
 
         $metrics = $this->source->checkAvailability($extension, $this->context);
@@ -134,7 +139,12 @@ final class VcsSourceTest extends TestCase
 
         $this->resolver->expects(self::once())
             ->method('resolve')
-            ->with('vendor/test-extension', 'https://github.com/vendor/test-extension', $this->context->getTargetVersion(), null)
+            ->with(
+                'vendor/test-extension',
+                'https://github.com/vendor/test-extension',
+                $this->context->getTargetVersion(),
+                self::callback(static fn (Version $v): bool => '1.0.0' === $v->toString()),
+            )
             ->willReturn($resolvedResult);
 
         $result = $this->source->checkAvailability($this->extension, $this->context);
@@ -306,28 +316,26 @@ final class VcsSourceTest extends TestCase
     }
 
     #[Test]
-    public function installationPathPassedToResolver(): void
+    public function installedVersionPassedToResolver(): void
     {
-        $contextWithPath = new AnalysisContext(
-            new Version('11.5.0'),
-            new Version('12.4.0'),
-            [],
-            [],
-            '/var/www/typo3',
-        );
-
         $resolvedResult = new VcsResolutionResult(VcsResolutionStatus::RESOLVED_COMPATIBLE, 'https://github.com/vendor/test-extension', '1.5.0');
 
-        $this->cacheService->method('generateSimpleKey')->willReturn('path_cache_key');
+        $this->cacheService->method('generateSimpleKey')->willReturn('version_cache_key');
         $this->cacheService->method('has')->willReturn(false);
         $this->cacheService->expects(self::once())->method('set');
 
+        // Extension version is Version('1.0.0') — must be forwarded as installedVersion.
         $this->resolver->expects(self::once())
             ->method('resolve')
-            ->with('vendor/test-extension', 'https://github.com/vendor/test-extension', $contextWithPath->getTargetVersion(), '/var/www/typo3')
+            ->with(
+                'vendor/test-extension',
+                'https://github.com/vendor/test-extension',
+                $this->context->getTargetVersion(),
+                self::callback(static fn (Version $v): bool => '1.0.0' === $v->toString()),
+            )
             ->willReturn($resolvedResult);
 
-        $result = $this->source->checkAvailability($this->extension, $contextWithPath);
+        $result = $this->source->checkAvailability($this->extension, $this->context);
 
         self::assertSame(VcsAvailability::Available, $result['vcs_available']);
     }

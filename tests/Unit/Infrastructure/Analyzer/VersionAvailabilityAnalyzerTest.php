@@ -78,6 +78,11 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertEquals('version_availability', $this->analyzer->getName());
     }
 
+    public function testGetRequiredToolsReturnsCurlAndGit(): void
+    {
+        self::assertSame(['curl', 'git'], $this->analyzer->getRequiredTools());
+    }
+
     public function testAnalyzeWithAllSourcesEnabled(): void
     {
         // Arrange

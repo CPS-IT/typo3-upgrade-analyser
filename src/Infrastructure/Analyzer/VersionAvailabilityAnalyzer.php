@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\VcsAvailability;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Process;
 
 /**
  * Analyzer that checks version availability across different repositories.
@@ -126,13 +127,19 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
     public function getRequiredTools(): array
     {
-        return ['curl']; // Required for HTTP API calls
+        return ['curl', 'git'];
     }
 
     public function hasRequiredTools(): bool
     {
-        // Check if curl is available
-        return \function_exists('curl_init');
+        if (!\function_exists('curl_init')) {
+            return false;
+        }
+
+        $process = new Process(['git', '--version']);
+        $process->run();
+
+        return $process->isSuccessful();
     }
 
     private function calculateRiskScore(array $metrics, Extension $extension, array $enabledSources): float

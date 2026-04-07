@@ -15,9 +15,13 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 
 /**
- * Shared contract for VCS version resolvers (Tier 1: Packagist, Tier 2: generic git).
+ * Shared contract for VCS version resolvers.
  */
 interface VcsResolverInterface
 {
-    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion, ?string $installationPath = null): VcsResolutionResult;
+    /**
+     * @param Version|null $installedVersion Lower-bound filter: only versions strictly newer than this are checked.
+     *                                       If null, the newest 50 versions are scanned.
+     */
+    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion, ?Version $installedVersion = null): VcsResolutionResult;
 }

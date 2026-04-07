@@ -40,7 +40,7 @@ readonly class GenericGitResolver implements VcsResolverInterface
     ) {
     }
 
-    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion, ?string $installationPath = null): VcsResolutionResult
+    public function resolve(string $packageName, ?string $vcsUrl, Version $targetVersion, ?Version $installedVersion = null): VcsResolutionResult
     {
         if (null === $vcsUrl) {
             return new VcsResolutionResult(VcsResolutionStatus::NOT_FOUND, null, null);

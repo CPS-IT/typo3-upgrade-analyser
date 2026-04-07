@@ -86,18 +86,13 @@ services:
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService'
     tags: ['version_availability.source']
 
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment:
-    arguments:
-      - '@logger'
-
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver:
+  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionResolver:
     arguments:
       - '@logger'
       - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerEnvironment'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolverInterface:
-    alias: CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\ComposerVersionResolver
+    alias: CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionResolver
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\VcsSource:
     arguments:

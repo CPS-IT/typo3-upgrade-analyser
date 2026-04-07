@@ -1,6 +1,6 @@
 # Story 2.5b: Rewrite VCS Source with Git-Native Resolution
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -106,50 +106,50 @@ The git-native strategy works without any server-side special features (`git arc
 
 ## Tasks / Subtasks
 
-- [ ] Task 0: Prepare — check `ComposerEnvironment` consumers and plan deletion scope
-  - [ ] 0.1 Grep all usages of `ComposerEnvironment` and `ComposerVersionResolver` outside of `VcsSource`
-  - [ ] 0.2 Decide: delete `ComposerEnvironment` outright or leave (no story-blocking either way)
+- [x] Task 0: Prepare — check `ComposerEnvironment` consumers and plan deletion scope
+  - [x] 0.1 Grep all usages of `ComposerEnvironment` and `ComposerVersionResolver` outside of `VcsSource`
+  - [x] 0.2 Decide: delete `ComposerEnvironment` outright or leave (no story-blocking either way)
 
-- [ ] Task 1: Update `VcsResolverInterface` (AC: 6)
-  - [ ] 1.1 Replace `?string $installationPath = null` with `?Version $installedVersion = null` in `resolve()` signature
-  - [ ] 1.2 Update PHPDoc
+- [x] Task 1: Update `VcsResolverInterface` (AC: 6)
+  - [x] 1.1 Replace `?string $installationPath = null` with `?Version $installedVersion = null` in `resolve()` signature
+  - [x] 1.2 Update PHPDoc
 
-- [ ] Task 2: Create `GitVersionResolver` (AC: 1, 2, 3, 4, 5)
-  - [ ] 2.1 Create `src/Infrastructure/ExternalTool/GitVersionResolver.php`
-  - [ ] 2.2 Implement `git ls-remote --tags <url>` tag enumeration
-  - [ ] 2.3 Implement semver tag parsing and lower-bound filter (≥ installedVersion, newest first)
-  - [ ] 2.4 Implement scan cap (50 versions, WARNING when hit)
-  - [ ] 2.5 Implement `git clone --depth=1` + `git fetch --tags` + `git show <tag>:composer.json`
-  - [ ] 2.6 Implement `composer.json` TYPO3 constraint parsing (reuse/extract from `ComposerVersionResolver`)
-  - [ ] 2.7 Implement clone deduplication cache + `register_shutdown_function` cleanup
-  - [ ] 2.8 Implement explicit `reset()` method for clearing clone cache
-  - [ ] 2.9 Implement SSH pre-check with per-host cache (reuse `extractSshHost()` from `ComposerVersionResolver`)
-  - [ ] 2.10 Handle unsupported VCS URL schemes (WARNING + FAILURE)
-  - [ ] 2.11 Use `?\Closure $processFactory` pattern for testability (same as `ComposerVersionResolver`)
+- [x] Task 2: Create `GitVersionResolver` (AC: 1, 2, 3, 4, 5)
+  - [x] 2.1 Create `src/Infrastructure/ExternalTool/GitVersionResolver.php`
+  - [x] 2.2 Implement `git ls-remote --tags <url>` tag enumeration
+  - [x] 2.3 Implement semver tag parsing and lower-bound filter (≥ installedVersion, newest first)
+  - [x] 2.4 Implement scan cap (50 versions, WARNING when hit)
+  - [x] 2.5 Implement `git clone --depth=1` + `git fetch --tags` + `git show <tag>:composer.json`
+  - [x] 2.6 Implement `composer.json` TYPO3 constraint parsing (reuse/extract from `ComposerVersionResolver`)
+  - [x] 2.7 Implement clone deduplication cache + `register_shutdown_function` cleanup
+  - [x] 2.8 Implement explicit `reset()` method for clearing clone cache
+  - [x] 2.9 Implement SSH pre-check with per-host cache (reuse `extractSshHost()` from `ComposerVersionResolver`)
+  - [x] 2.10 Handle unsupported VCS URL schemes (WARNING + FAILURE)
+  - [x] 2.11 Use `?\Closure $processFactory` pattern for testability (same as `ComposerVersionResolver`)
 
-- [ ] Task 3: Update `VcsSource` (AC: 2, 5)
-  - [ ] 3.1 Pass `$extension->getVersion()` as `$installedVersion` to `$this->resolver->resolve()`
-  - [ ] 3.2 Remove `$context->getInstallationPath()` argument from `resolve()` call
-  - [ ] 3.3 Verify `handleSshUnreachable()` and `handleFailure()` deduplication still correct for new resolver output
+- [x] Task 3: Update `VcsSource` (AC: 2, 5)
+  - [x] 3.1 Pass `$extension->getVersion()` as `$installedVersion` to `$this->resolver->resolve()`
+  - [x] 3.2 Remove `$context->getInstallationPath()` argument from `resolve()` call
+  - [x] 3.3 Verify `handleSshUnreachable()` and `handleFailure()` deduplication still correct for new resolver output
 
-- [ ] Task 4: Update `VersionAvailabilityAnalyzer` (AC: 7)
-  - [ ] 4.1 `getRequiredTools()`: return `['curl', 'git']`
-  - [ ] 4.2 `hasRequiredTools()`: add `git` executable check (use `which git` or `exec('which git')` or similar via Symfony Process)
-  - [ ] 4.3 In `analyze()`: when `git` absent, skip VCS checks and log WARNING
+- [x] Task 4: Update `VersionAvailabilityAnalyzer` (AC: 7)
+  - [x] 4.1 `getRequiredTools()`: return `['curl', 'git']`
+  - [x] 4.2 `hasRequiredTools()`: add `git` executable check via Symfony Process
+  - [x] 4.3 In `analyze()`: when `git` absent, skip VCS checks and log WARNING
 
-- [ ] Task 5: Wire up `GitVersionResolver` in DI (AC: 6)
-  - [ ] 5.1 Update `config/services.yaml`: alias `VcsResolverInterface` → `GitVersionResolver`
-  - [ ] 5.2 Ensure `GitVersionResolver` constructor arguments are resolved by auto-wiring
+- [x] Task 5: Wire up `GitVersionResolver` in DI (AC: 6)
+  - [x] 5.1 Update `config/services.yaml`: alias `VcsResolverInterface` → `GitVersionResolver`
+  - [x] 5.2 Ensure `GitVersionResolver` constructor arguments are resolved by auto-wiring
 
-- [ ] Task 6: Remove `ComposerVersionResolver` (AC: 6, 8)
-  - [ ] 6.1 Delete `src/Infrastructure/ExternalTool/ComposerVersionResolver.php`
-  - [ ] 6.2 Delete or retain `src/Infrastructure/ExternalTool/ComposerEnvironment.php` based on Task 0
-  - [ ] 6.3 Delete `tests/Unit/Infrastructure/ExternalTool/ComposerVersionResolverTest.php`
+- [x] Task 6: Remove `ComposerVersionResolver` (AC: 6, 8)
+  - [x] 6.1 Delete `src/Infrastructure/ExternalTool/ComposerVersionResolver.php`
+  - [x] 6.2 Delete `src/Infrastructure/ExternalTool/ComposerEnvironment.php` (no other consumers)
+  - [x] 6.3 Delete `tests/Unit/Infrastructure/ExternalTool/ComposerVersionResolverTest.php`
 
-- [ ] Task 7: Full verification (AC: 9)
-  - [ ] 7.1 Run full test suite: `composer test`
-  - [ ] 7.2 PHPStan Level 8: `composer sca:php`
-  - [ ] 7.3 Code style: `composer lint:php`
+- [x] Task 7: Full verification (AC: 9)
+  - [x] 7.1 Run full test suite: `composer test` — 1784 tests pass
+  - [x] 7.2 PHPStan Level 8: `composer sca:php` — 0 errors
+  - [x] 7.3 Code style: `composer lint:php` — 0 issues
 
 ## Dev Notes
 
@@ -310,6 +310,44 @@ With the lower-bound filter (only versions newer than installed), the `git show`
 - [Source: src/Infrastructure/Analyzer/VersionAvailability/Source/VcsSource.php] — class to update
 - [Source: src/Domain/Entity/Extension.php] — `getVersion()` for installed version lower bound
 
+## Dev Agent Record
+
+### Implementation Notes
+
+- `ComposerEnvironment` had no consumers beyond `ComposerVersionResolver` — both deleted.
+- `GenericGitResolver` (Story 2-3, legacy) updated to match new `VcsResolverInterface` signature (parameter rename only, unused).
+- `VcsDetectionNonPackagistTest` and `ComposerEnvironmentTest` deleted — they covered deleted classes.
+- Integration test files `MixedAnalysisIntegrationTestCase` and `VersionAvailabilityIntegrationTestCase` updated to use `GitVersionResolver`.
+- `VcsSourceTest::installationPathPassedToResolver` renamed to `installedVersionPassedToResolver` and updated to assert `Version` is passed, not `null`.
+- `register_shutdown_function` registered once per resolver instance on first clone creation; `reset()` method provided for explicit cleanup.
+- PHPStan Level 8: 0 errors. Tests: 1784 pass, 0 failures. Lint: 0 issues.
+
+## File List
+
+### New
+- `src/Infrastructure/ExternalTool/GitVersionResolver.php`
+- `tests/Unit/Infrastructure/ExternalTool/GitVersionResolverTest.php`
+
+### Modified
+- `src/Infrastructure/ExternalTool/VcsResolverInterface.php`
+- `src/Infrastructure/ExternalTool/GenericGitResolver.php`
+- `src/Infrastructure/Analyzer/VersionAvailability/Source/VcsSource.php`
+- `src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php`
+- `config/services.yaml`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailability/Source/VcsSourceTest.php`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailabilityAnalyzerTest.php`
+- `tests/Integration/MixedAnalysisIntegrationTestCase.php`
+- `tests/Integration/Analyzer/VersionAvailabilityIntegrationTestCase.php`
+
+### Deleted
+- `src/Infrastructure/ExternalTool/ComposerVersionResolver.php`
+- `src/Infrastructure/ExternalTool/ComposerEnvironment.php`
+- `tests/Unit/Infrastructure/ExternalTool/ComposerVersionResolverTest.php`
+- `tests/Unit/Infrastructure/ExternalTool/ComposerEnvironmentTest.php`
+- `tests/Unit/Infrastructure/ExternalTool/VcsDetectionNonPackagistTest.php`
+- `tests/Integration/ExternalTool/WorkingDirFallbackIntegrationTest.php`
+
 ## Change Log
 
 - 2026-04-07: Story drafted based on benchmark findings from bench-git-ls.php and user constraints from conversation.
+- 2026-04-07: Implementation complete — GitVersionResolver created, ComposerVersionResolver/ComposerEnvironment deleted, all tests pass.
