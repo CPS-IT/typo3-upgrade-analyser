@@ -4,7 +4,7 @@
 {% set version_analysis = extension_data.version_analysis %}
 
 ### Availability Status
-- **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : (version_analysis.distribution_type is null ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
+- **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
 - **TYPO3 Extension Repository (TER):** {{ version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
 - **Packagist (Composer):** {{ version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
 {% if version_analysis.packagist_latest_version %}
