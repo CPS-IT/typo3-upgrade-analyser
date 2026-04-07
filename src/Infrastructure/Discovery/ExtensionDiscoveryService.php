@@ -547,9 +547,14 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             $extension->setActive(true); // Assume composer packages are active
 
-            $sourceUrl = $packageData['source']['url'] ?? null;
-            if (\is_string($sourceUrl) && '' !== $sourceUrl) {
-                $extension->setRepositoryUrl($sourceUrl);
+            // Only mark as VCS-sourced when the package has no dist entry.
+            // Packagist packages always carry a dist (zip from api.github.com/etc.);
+            // packages installed directly from a git repository have dist=null.
+            if (null === ($packageData['dist'] ?? null)) {
+                $sourceUrl = $packageData['source']['url'] ?? null;
+                if (\is_string($sourceUrl) && '' !== $sourceUrl) {
+                    $extension->setRepositoryUrl($sourceUrl);
+                }
             }
 
             return $extension;
