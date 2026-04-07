@@ -71,8 +71,11 @@ class GitVersionResolver implements VcsResolverInterface
         // SSH pre-check: one probe per host before any git operation.
         if ($this->isSshUrl($vcsUrl)) {
             $host = $this->extractSshHost($vcsUrl);
-            if (null !== $host && !$this->isSshHostReachable($host)) {
-                return new VcsResolutionResult(VcsResolutionStatus::SSH_UNREACHABLE, $vcsUrl, null);
+            if (null !== $host) {
+                $probeTarget = $this->buildSshProbeTarget($vcsUrl, $host);
+                if (!$this->isSshHostReachable($host, $probeTarget)) {
+                    return new VcsResolutionResult(VcsResolutionStatus::SSH_UNREACHABLE, $vcsUrl, null);
+                }
             }
         }
 
@@ -196,9 +199,9 @@ class GitVersionResolver implements VcsResolverInterface
         // Sort newest-first using version_compare.
         uasort($tags, static fn (string $a, string $b): int => version_compare($b, $a));
 
-        if (null === $installedVersion && \count($tags) > self::MAX_SCAN_VERSIONS) {
+        if (\count($tags) > self::MAX_SCAN_VERSIONS) {
             $this->logger->warning(
-                'Version scan for package {package} capped at {limit} versions — installed version unknown.',
+                'Version scan for package {package} capped at {limit} versions.',
                 ['package' => $packageName, 'limit' => self::MAX_SCAN_VERSIONS],
             );
             $tags = \array_slice($tags, 0, self::MAX_SCAN_VERSIONS, true);
@@ -212,11 +215,17 @@ class GitVersionResolver implements VcsResolverInterface
      */
     private function getOrCreateClone(string $packageName, string $vcsUrl): ?string
     {
-        if (isset($this->cloneCache[$vcsUrl])) {
-            return $this->cloneCache[$vcsUrl];
+        $normalizedUrl = preg_replace('/\.git$/', '', $vcsUrl) ?? $vcsUrl;
+
+        if (isset($this->cloneCache[$normalizedUrl])) {
+            return $this->cloneCache[$normalizedUrl];
         }
 
-        $tmpDir = sys_get_temp_dir() . '/typo3-analyzer-git-' . substr(md5($vcsUrl), 0, 8) . '-' . getmypid();
+        $tmpDir = sys_get_temp_dir() . '/typo3-analyzer-git-' . substr(md5($normalizedUrl), 0, 8) . '-' . getmypid();
+
+        if (is_dir($tmpDir)) {
+            $this->removeDirectory($tmpDir);
+        }
 
         // Step 3: clone
         $cloneProcess = $this->createProcess(['git', 'clone', '--depth=1', '--quiet', $vcsUrl, $tmpDir]);
@@ -262,14 +271,13 @@ class GitVersionResolver implements VcsResolverInterface
             return null;
         }
 
-        $this->cloneCache[$vcsUrl] = $tmpDir;
+        $this->cloneCache[$normalizedUrl] = $tmpDir;
 
         // Register shutdown cleanup once (covers all clones).
         if (!$this->shutdownRegistered) {
             $this->shutdownRegistered = true;
-            $cache = &$this->cloneCache;
-            register_shutdown_function(function () use (&$cache): void {
-                foreach ($cache as $dir) {
+            register_shutdown_function(function (): void {
+                foreach ($this->cloneCache as $dir) {
                     $this->removeDirectory($dir);
                 }
             });
@@ -339,7 +347,7 @@ class GitVersionResolver implements VcsResolverInterface
     }
 
     /**
-     * Returns a probe target suitable for `ssh -T` (e.g. `git@github.com` or `user@host`).
+     * Returns just the hostname (without user prefix) for use as a cache key.
      * Returns null when the hostname fails RFC 952/1123 validation.
      */
     private function extractSshHost(string $url): ?string
@@ -347,10 +355,8 @@ class GitVersionResolver implements VcsResolverInterface
         if (str_starts_with($url, 'ssh://')) {
             $parsed = parse_url($url);
             $host = $parsed['host'] ?? null;
-            $userPrefix = isset($parsed['user']) ? $parsed['user'] . '@' : '';
         } elseif (preg_match('/^git@([^:]+):/', $url, $matches)) {
             $host = $matches[1];
-            $userPrefix = 'git@';
         } else {
             return null;
         }
@@ -365,20 +371,36 @@ class GitVersionResolver implements VcsResolverInterface
             return null;
         }
 
-        return $userPrefix . $host;
+        return $host;
+    }
+
+    /**
+     * Build the full SSH connection string (user@host) used for the probe command.
+     */
+    private function buildSshProbeTarget(string $url, string $hostname): string
+    {
+        if (str_starts_with($url, 'ssh://')) {
+            $parsed = parse_url($url);
+            $userPrefix = isset($parsed['user']) ? $parsed['user'] . '@' : '';
+        } else {
+            // git@host: form
+            $userPrefix = 'git@';
+        }
+
+        return $userPrefix . $hostname;
     }
 
     /**
      * Probe SSH connectivity. Exit code 255 = unreachable; 0 or 1 = reachable.
-     * Result cached per host for the lifetime of this resolver instance.
+     * Cache key is the bare hostname; probe uses the full user@host connection string.
      */
-    private function isSshHostReachable(string $host): bool
+    private function isSshHostReachable(string $host, string $probeTarget): bool
     {
         if (isset($this->sshHostStatus[$host])) {
             return $this->sshHostStatus[$host];
         }
 
-        $process = $this->createProcess(['ssh', '-T', '-o', 'ConnectTimeout=5', $host]);
+        $process = $this->createProcess(['ssh', '-T', '-o', 'ConnectTimeout=5', $probeTarget]);
         $process->setTimeout(10);
 
         try {
@@ -390,12 +412,13 @@ class GitVersionResolver implements VcsResolverInterface
             return false;
         }
 
-        $reachable = 255 !== $process->getExitCode();
+        $exitCode = $process->getExitCode();
+        $reachable = null !== $exitCode && 255 !== $exitCode;
         $this->sshHostStatus[$host] = $reachable;
 
         $this->logger->debug(
             'SSH connectivity check for host {host}: {result} (exit={code})',
-            ['host' => $host, 'result' => $reachable ? 'reachable' : 'unreachable', 'code' => $process->getExitCode()],
+            ['host' => $host, 'result' => $reachable ? 'reachable' : 'unreachable', 'code' => $exitCode],
         );
 
         return $reachable;

@@ -109,15 +109,15 @@ class VcsSource implements VersionSourceInterface
     }
 
     /**
-     * NOT_FOUND: Composer returned a definitive "package not found" answer.
-     * Maps to Unavailable, not Unknown — the system asked and got a clear answer.
+     * NOT_FOUND: No VCS URL was provided for this package.
+     * Maps to Unavailable, not Unknown — without a repository URL there is nothing to resolve.
      *
      * @return array<string, mixed>
      */
     private function handleNotFound(string $composerName, ?string $repositoryUrl): array
     {
         $this->logger->debug(
-            'VCS package "{package}" not found via Composer (primary + fallback).',
+            'VCS package "{package}" has no repository URL — cannot resolve via git.',
             ['package' => $composerName, 'url' => $repositoryUrl],
         );
 

@@ -217,7 +217,7 @@ readonly class ReportContextBuilder
                 if ('available' === $vcsAvailable) {
                     ++$availabilityStats['vcs_available'];
                 }
-                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && 'available' !== $vcsAvailable) {
+                if (!$versionAnalysis['ter_available'] && !$versionAnalysis['packagist_available'] && 'unavailable' === $vcsAvailable) {
                     ++$availabilityStats['no_availability'];
                 }
             }

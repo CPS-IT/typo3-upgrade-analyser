@@ -515,9 +515,11 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
         // https://host/path/repo.git or https://user@host/path/repo.git
         $parsed = parse_url($url);
         $host = strtolower($parsed['host'] ?? '');
-        $path = strtolower($parsed['path'] ?? '');
+        $path = ltrim(strtolower($parsed['path'] ?? ''), '/');
 
-        return $host . rtrim(preg_replace('/\.git$/', '', $path) ?? $path, '/');
+        $normalizedPath = rtrim(preg_replace('/\.git$/', '', $path) ?? $path, '/');
+
+        return '' !== $normalizedPath ? $host . '/' . $normalizedPath : $host;
     }
 
     private function createExtensionFromPackageData(string $packageKey, array $packageData, string $installationPath, array $paths): ?Extension

@@ -2,23 +2,32 @@
 
 {% if extension_data.version_analysis %}
 {% set version_analysis = extension_data.version_analysis %}
+{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
 
 ### Availability Status
-- **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : ((version_analysis.distribution_type is null or version_analysis.repository_url) ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
+- **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : (version_analysis.distribution_type is null ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
+{% if 'ter' in enabled_sources %}
 - **TYPO3 Extension Repository (TER):** {{ version_analysis.ter_available ? '✅ Available' : '❌ Not Available' }}
+{% endif %}
+{% if 'packagist' in enabled_sources %}
 - **Packagist (Composer):** {{ version_analysis.packagist_available ? '✅ Available' : '❌ Not Available' }}
 {% if version_analysis.packagist_latest_version %}
   - **Latest Version:** {{ extension_data.extension.composerName ? '[' ~ version_analysis.packagist_latest_version ~ '](https://packagist.org/packages/' ~ extension_data.extension.composerName ~ ')' : version_analysis.packagist_latest_version }}
   - **Compatible with Target:** {{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}
 {% endif %}
+{% endif %}
+{% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
 - **Git Repository:** {{ version_analysis.vcs_available == 'available' ? '✅ Available' : (version_analysis.vcs_available == 'unavailable' ? '❌ Not Available' : '❓ Unknown (resolution failed)') }}
+{% endif %}
 
+{% if ('github' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
 ### Git Repository Information
 {% if version_analysis.vcs_source_url %}
 - **Repository URL:** {{ version_analysis.vcs_source_url }}
 {% endif %}
 {% if version_analysis.vcs_latest_version %}
 - **Latest Compatible Version:** {{ version_analysis.vcs_latest_version }}
+{% endif %}
 {% endif %}
 
 ### Risk Analysis

@@ -27,7 +27,7 @@
             <td>
                 {% if data.version_analysis and data.version_analysis.distribution_type == 'path' %}
                     <span title="Local extension">🏠</span>
-                {% elseif data.version_analysis and (data.version_analysis.distribution_type is null or data.version_analysis.repository_url) %}
+                {% elseif data.version_analysis and data.version_analysis.distribution_type is null %}
                     <span title="From Source">⛲️</span>
                 {% endif %}
             </td>
