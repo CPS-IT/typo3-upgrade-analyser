@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Application;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
+use CPSIT\UpgradeAnalyzer\Application\Command\ClearCacheCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
@@ -36,6 +37,7 @@ class AnalyzerApplication extends Application
         /** @var array<Command> $commands */
         $commands = [
             $this->container->get(AnalyzeCommand::class),
+            $this->container->get(ClearCacheCommand::class),
             $this->container->get(InitConfigCommand::class),
             $this->container->get(ListAnalyzersCommand::class),
             $this->container->get(ListExtensionsCommand::class),
