@@ -407,6 +407,11 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 return [];
             }
 
+            // Build a set of normalized VCS URLs declared in composer.json repositories.
+            // Packages whose source.url normalizes to one of these are installed from a
+            // VCS source (even when Composer fetched a zip dist for them, e.g. GitHub).
+            $declaredVcsUrls = $this->loadDeclaredVcsUrls($installationPath);
+
             $extensions = [];
 
             foreach ($installedContent['packages'] as $packageData) {
@@ -421,9 +426,21 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 }
 
                 $extension = $this->createExtensionFromComposerData($packageData, $installationPath);
-                if (null !== $extension) {
-                    $extensions[] = $extension;
+                if (null === $extension) {
+                    continue;
                 }
+
+                // Mark as VCS-sourced if the package's source URL matches a declared repository.
+                $sourceUrl = $packageData['source']['url'] ?? null;
+                if (\is_string($sourceUrl) && '' !== $sourceUrl) {
+                    $isVcsDeclared = isset($declaredVcsUrls[$this->normalizeVcsUrl($sourceUrl)]);
+                    $hasNoDist = null === ($packageData['dist'] ?? null);
+                    if ($isVcsDeclared || $hasNoDist) {
+                        $extension->setRepositoryUrl($sourceUrl);
+                    }
+                }
+
+                $extensions[] = $extension;
             }
 
             return $extensions;
@@ -432,6 +449,75 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             return [];
         }
+    }
+
+    /**
+     * Parse composer.json repositories section and return a normalized-URL-keyed set
+     * of all VCS-type repository URLs.
+     *
+     * @return array<string, true>
+     */
+    private function loadDeclaredVcsUrls(string $installationPath): array
+    {
+        $composerJsonPath = $installationPath . '/composer.json';
+        if (!is_file($composerJsonPath)) {
+            return [];
+        }
+
+        $content = @file_get_contents($composerJsonPath);
+        if (false === $content) {
+            return [];
+        }
+
+        try {
+            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return [];
+        }
+
+        if (!\is_array($data)) {
+            return [];
+        }
+
+        $repositories = $data['repositories'] ?? [];
+        if (!\is_array($repositories)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($repositories as $repo) {
+            if (!\is_array($repo)) {
+                continue;
+            }
+            if (($repo['type'] ?? '') !== 'vcs') {
+                continue;
+            }
+            $url = $repo['url'] ?? null;
+            if (\is_string($url) && '' !== $url) {
+                $normalized[$this->normalizeVcsUrl($url)] = true;
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize a VCS URL to a canonical host/path string for comparison.
+     * Handles SSH (git@host:path) and HTTPS forms; strips trailing .git.
+     */
+    private function normalizeVcsUrl(string $url): string
+    {
+        // git@host:path/repo.git → host/path/repo
+        if (preg_match('/^[^@]+@([^:]+):(.+?)(?:\.git)?$/', $url, $m)) {
+            return strtolower(rtrim($m[1] . '/' . $m[2], '/'));
+        }
+
+        // https://host/path/repo.git or https://user@host/path/repo.git
+        $parsed = parse_url($url);
+        $host = strtolower($parsed['host'] ?? '');
+        $path = strtolower($parsed['path'] ?? '');
+
+        return $host . rtrim(preg_replace('/\.git$/', '', $path) ?? $path, '/');
     }
 
     private function createExtensionFromPackageData(string $packageKey, array $packageData, string $installationPath, array $paths): ?Extension
@@ -547,15 +633,8 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
             $extension->setActive(true); // Assume composer packages are active
 
-            // Only mark as VCS-sourced when the package has no dist entry.
-            // Packagist packages always carry a dist (zip from api.github.com/etc.);
-            // packages installed directly from a git repository have dist=null.
-            if (null === ($packageData['dist'] ?? null)) {
-                $sourceUrl = $packageData['source']['url'] ?? null;
-                if (\is_string($sourceUrl) && '' !== $sourceUrl) {
-                    $extension->setRepositoryUrl($sourceUrl);
-                }
-            }
+            // repositoryUrl is set by the caller (discoverFromComposerInstalled) after
+            // matching the package's source URL against composer.json VCS repositories.
 
             return $extension;
         } catch (\Exception $e) {
