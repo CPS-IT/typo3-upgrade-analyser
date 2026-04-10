@@ -81,8 +81,8 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         // Normalize configured sources: 'git' is the user-facing alias for the internal 'vcs' source name.
         // 'github' is not a supported value and is silently dropped.
         $enabledSources = array_values(array_filter(
-            array_map(static fn (string $s) => 'git' === $s ? 'vcs' : $s, $configuredSources),
-            static fn (string $s) => 'github' !== $s,
+            array_map(static fn (string $s): string => 'git' === $s ? 'vcs' : $s, $configuredSources),
+            static fn (string $s): bool => 'github' !== $s,
         ));
 
         foreach ($this->sources as $source) {
