@@ -137,29 +137,29 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         self::assertFalse($result->hasMetric('packagist_available'));
     }
 
-    public function testAnalyzeWithGithubMapping(): void
+    public function testAnalyzeDropsGithubSource(): void
     {
-        // Arrange
+        // 'github' is not a supported source value and must be silently dropped.
+        // No source should be invoked when the only configured source is 'github'.
         $config = [
             'analysis' => [
                 'analyzers' => [
                     'version_availability' => [
-                        'sources' => ['github'], // Should map to 'vcs'
+                        'sources' => ['github'],
                     ],
                 ],
             ],
         ];
         $context = $this->context->withConfiguration($config);
 
-        $this->vcsSource->expects(self::once())
-            ->method('checkAvailability')
-            ->willReturn(['vcs_available' => VcsAvailability::Available]);
+        $this->terSource->expects(self::never())->method('checkAvailability');
+        $this->packagistSource->expects(self::never())->method('checkAvailability');
+        $this->vcsSource->expects(self::never())->method('checkAvailability');
 
-        // Act
+        // Act — should complete without invoking any source
         $result = $this->analyzer->analyze($this->extension, $context);
 
-        // Assert
-        self::assertSame(VcsAvailability::Available, $result->getMetric('vcs_available'));
+        self::assertTrue($result->isSuccessful());
     }
 
     public function testAnalyzeSkipsPathDistribution(): void
