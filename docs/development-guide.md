@@ -26,23 +26,26 @@ cp .env.example .env.local
 ## Running the Application
 
 ```bash
-# Analyze a TYPO3 installation
-./bin/typo3-analyzer analyze /path/to/typo3
-
-# Analyze for specific target version
-./bin/typo3-analyzer analyze /path/to/typo3 --target-version=13.0
-
-# Generate configuration file
+# Generate configuration file (edit installationPath before running analyze)
 ./bin/typo3-analyzer init-config
 
-# Validate TYPO3 installation
-./bin/typo3-analyzer validate /path/to/typo3
+# Analyze using the default configuration file (typo3-analyzer.yaml)
+./bin/typo3-analyzer analyze
+
+# Analyze using a custom configuration file
+./bin/typo3-analyzer analyze --config=/path/to/config.yaml
+
+# Run specific analyzers only
+./bin/typo3-analyzer analyze --analyzers=version_availability
 
 # List available analyzers
 ./bin/typo3-analyzer list-analyzers
 
 # List discovered extensions
 ./bin/typo3-analyzer list-extensions --config=config.yaml
+
+# Clear cached analysis results
+./bin/typo3-analyzer cache-clear
 ```
 
 ## Testing

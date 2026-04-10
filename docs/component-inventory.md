@@ -8,6 +8,7 @@
 | `init-config` | `InitConfigCommand` | Generate YAML configuration files |
 | `list-analyzers` | `ListAnalyzersCommand` | Display registered analyzers with status |
 | `list-extensions` | `ListExtensionsCommand` | Display discovered extensions |
+| `cache-clear` | `ClearCacheCommand` | Clear all cached analysis results |
 
 ## Analyzers
 
@@ -41,6 +42,13 @@
 | `GitHubClient` | GitHub REST API v3 | Repository info, releases, contributors |
 | `GitProviderFactory` | — | Creates appropriate Git provider by URL |
 | `VersionCompatibilityChecker` | — | Validates TYPO3 version constraints |
+
+## VCS Version Resolvers
+
+| Class | Interface | Purpose |
+|---|---|---|
+| `GitVersionResolver` | `VcsResolverInterface` | Resolves VCS-sourced package versions via git (ls-remote + clone + tag inspection). Primary resolver for private/git packages. Requires `git` CLI. |
+| `GenericGitResolver` | `VcsResolverInterface` | Fallback resolver for generic git URLs |
 
 ## Path Resolution Strategies
 

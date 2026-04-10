@@ -87,7 +87,9 @@ Repository: [CPS-IT/typo3-upgrade-analyser](https://github.com/CPS-IT/typo3-upgr
 
 ```bash
 composer install
-./bin/typo3-analyzer analyze /path/to/typo3
+./bin/typo3-analyzer init-config
+# Edit typo3-analyzer.yaml: set analysis.installationPath
+./bin/typo3-analyzer analyze
 ./bin/typo3-analyzer list-analyzers
 ```
 

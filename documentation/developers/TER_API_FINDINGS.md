@@ -188,14 +188,44 @@ $result = new AnalysisResult($extension, [
 ]);
 ```
 
+## Known TER API Bugs
+
+The following bugs in the TER API affect the reliability of the `ter` source in version availability analysis. Both are tracked upstream:
+
+### Bug #650 — `typo3_versions` omits non-LTS major versions
+
+- **Issue**: [extensions.typo3.org/ter #650](https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/650)
+- **Symptom**: The `typo3_versions` field only includes TYPO3 LTS versions. Non-LTS major versions (e.g. TYPO3 14, which is not yet LTS) are absent even when `dependencies.typo3` explicitly covers them.
+- **Example**: `news:14.0.1` returns `"typo3_versions": [13]` despite `dependencies.typo3: "13.4.20 - 14.4.99"`.
+- **Root cause**: TER stores only LTS major versions in the `typo3_versions` column.
+- **Impact**: Upgrade analysis targeting TYPO3 v14 or any future non-LTS major version will incorrectly report TER-sourced extensions as incompatible when relying on `typo3_versions`.
+
+### Bug #653 — `typo3_versions` is empty for all extension versions
+
+- **Issue**: [extensions.typo3.org/ter #653](https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/653)
+- **Symptom**: As of 2026-04-03, `typo3_versions` is empty (`[]`) for all extension versions returned by the `/extension/*` endpoints. This is a regression beyond #650.
+- **Example**: `GET /api/v1/extension/warming` returns `"typo3_versions": []` for `current_version`.
+- **Impact**: The `ter` source is currently unreliable for any version compatibility decision. Results must be treated as potentially absent.
+
+### Recommended mitigations
+
+- Enable `packagist` and `git` sources alongside or instead of `ter` to compensate:
+  ```yaml
+  analysis:
+    analyzers:
+      version_availability:
+        sources: [ter, packagist, git]
+  ```
+- The analyzer already treats each source independently — a missing or incorrect TER result does not block Packagist or git results.
+- Monitor upstream issues for resolution before treating TER results as authoritative for TYPO3 v14+.
+
 ## Conclusion
 
-**The TER API is valuable for both legacy AND modern TYPO3 extension analysis.** TER actively maintains extensions supporting TYPO3 v11, v12, and v13. The Upgrade Analyzer can rely on TER as a primary source for extension compatibility, while using Packagist and Git repositories as complementary sources.
+The TER API is structurally sound and provides useful historical data for extensions up to TYPO3 v13, but is currently affected by two active bugs (#650, #653) that make `typo3_versions` unreliable. Use `packagist` and `git` as the primary sources for compatibility checks against TYPO3 v14 and above.
 
 **Key Technical Requirements:**
 - Handle **integer TYPO3 versions** (not strings) in version compatibility logic
 - Parse **array response structure** with data in `response[0]`
 - Use **'number' field** for version numbers (not 'version')
 - Implement proper error handling for archived/legacy extensions
-
-The TER remains an active part of the TYPO3 ecosystem alongside Composer-based extension management, providing comprehensive coverage for upgrade analysis scenarios.
+- Do not treat absent or empty `typo3_versions` as a definitive "not compatible" — check `dependencies` as a fallback where possible

@@ -23,6 +23,7 @@ This guide provides comprehensive installation instructions for the TYPO3 Upgrad
   - `ext-libxml` (for XML processing)
 
 - **Composer 2.0** or higher
+- **Git** (CLI `git` binary in PATH) — required for the version availability analyzer's git source checks
 - **Memory**: 512MB minimum, 2GB recommended for large installations
 - **Storage**: 100MB minimum, 1GB recommended for cache and reports
 
@@ -184,76 +185,46 @@ composer install --no-dev --no-interaction --optimize-autoloader
    ./bin/typo3-analyzer init-config
    ```
 
-2. **Edit Configuration** (`config/configuration.yaml`):
+2. **Edit Configuration** (`typo3-analyzer.yaml`):
    ```yaml
-   installation:
-     path: '/path/to/your/typo3/installation'
+   analysis:
+     installationPath: '/path/to/your/typo3/installation'
+     targetVersion: '13.4'
+     analyzers:
+       version_availability:
+         enabled: true
+         sources: [ter, packagist, git]
+       typo3_rector:
+         enabled: true
+       fractor:
+         enabled: true
 
-   target_version: '13.0'
-
-   output:
-     directory: 'var/analysis-results'
-     formats: ['html', 'markdown']
-
-   analyzers:
-     version_availability:
-       enabled: true
-       check_ter: true
-       check_packagist: true
-       check_git: true
-
-     typo3_rector:
-       enabled: true
-       timeout: 300
-
-     fractor:
-       enabled: true
-       timeout: 300
-
-     lines_of_code:
-       enabled: true
+   reporting:
+     formats: [markdown]
+     output_directory: var/reports/
    ```
 
-### Environment-Specific Configuration
+### CI Configuration Example
 
-#### Development Configuration
-
-```yaml
-# config/development.yaml
-debug: true
-cache:
-  enabled: false
-logging:
-  level: debug
-  output: 'var/logs/debug.log'
-```
-
-#### Production Configuration
+To disable git-based checks in CI environments where SSH access is unavailable:
 
 ```yaml
-# config/production.yaml
-debug: false
-cache:
-  enabled: true
-  ttl: 3600
-logging:
-  level: info
-  output: 'var/logs/analyzer.log'
-```
+# ci-config.yaml
+analysis:
+  installationPath: '/path/to/typo3'
+  targetVersion: '13.4'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist]   # git omitted — no SSH in CI
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
 
-#### CI Configuration
-
-```yaml
-# config/ci.yaml
-output:
-  directory: 'build/analysis-results'
-  formats: ['html', 'json']
-analyzers:
-  # Disable network-dependent analyzers in CI
-  version_availability:
-    check_git: false
-timeout:
-  global: 600
+reporting:
+  formats: [html, json]
+  output_directory: build/analysis-results/
 ```
 
 ### Directory Structure Setup
@@ -294,6 +265,9 @@ project-root/
 
 # Initialize configuration (interactive)
 ./bin/typo3-analyzer init-config --interactive
+
+# Initialize configuration to a custom path
+./bin/typo3-analyzer init-config --output=/custom/path/config.yaml
 ```
 
 ### Test Installation with Sample Data
@@ -434,28 +408,26 @@ When reporting issues, include:
 3. **Configuration** (sanitized):
    ```bash
    # Remove sensitive information
-   cat config/configuration.yaml | grep -v password
+   cat typo3-analyzer.yaml | grep -v token
    ```
 
 ### Performance Optimization
 
 #### For Large Installations
 
+Disable slow analyzers for an initial run, then enable them incrementally:
+
 ```yaml
-# config/configuration.yaml
-cache:
-  enabled: true
-  ttl: 7200  # 2 hours
-
-performance:
-  parallel_processing: true
-  max_concurrent_requests: 5
-  timeout: 600
-
-analyzers:
-  # Disable heavy analyzers for initial runs
-  typo3_rector:
-    enabled: false  # Enable after initial analysis
+# typo3-analyzer.yaml
+analysis:
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist]   # Omit git for faster initial run
+    typo3_rector:
+      enabled: false
+    fractor:
+      enabled: false
 ```
 
 #### Memory Optimization
