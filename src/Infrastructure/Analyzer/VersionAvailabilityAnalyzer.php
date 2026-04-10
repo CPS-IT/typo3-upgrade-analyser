@@ -74,12 +74,16 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         }
 
         // Get configured sources (default to all if not specified)
-        $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
+        $rawSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
+        /** @var list<string> $configuredSources */
+        $configuredSources = \is_array($rawSources) ? array_filter($rawSources, 'is_string') : ['ter', 'packagist', 'vcs'];
 
-        // Normalize configured sources (map github -> vcs)
-        $enabledSources = array_map(static function ($source) {
-            return 'github' === $source ? 'vcs' : $source;
-        }, $configuredSources);
+        // Normalize configured sources: 'git' is the user-facing alias for the internal 'vcs' source name.
+        // 'github' is not a supported value and is silently dropped.
+        $enabledSources = array_values(array_filter(
+            array_map(static fn (string $s) => 'git' === $s ? 'vcs' : $s, $configuredSources),
+            static fn (string $s) => 'github' !== $s,
+        ));
 
         foreach ($this->sources as $source) {
             if (\in_array($source->getName(), $enabledSources, true)) {
@@ -120,7 +124,7 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
 
         // Include normalized sources in cache key (github → vcs)
         $configuredSources = $context->getConfigurationValue('analysis.analyzers.version_availability.sources', ['ter', 'packagist', 'vcs']);
-        $normalizedSources = array_map(static fn ($s): mixed => 'github' === $s ? 'vcs' : $s, $configuredSources);
+        $normalizedSources = array_map(static fn ($s): mixed => 'git' === $s ? 'vcs' : $s, $configuredSources);
         $components['sources'] = implode(',', $normalizedSources);
 
         return $components;
