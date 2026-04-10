@@ -119,14 +119,14 @@ typo3-upgrade-analyser/
 # Install dependencies
 composer install
 
-# Run the analyzer
-./bin/typo3-analyzer analyze /path/to/typo3
-
-# Run with specific target version
-./bin/typo3-analyzer analyze /path/to/typo3 --target-version=13.0
-
-# Generate configuration file
+# Generate configuration file (set installationPath inside before running analyze)
 ./bin/typo3-analyzer init-config
+
+# Run the analyzer using the generated configuration
+./bin/typo3-analyzer analyze
+
+# Run with a custom configuration file
+./bin/typo3-analyzer analyze --config=/path/to/config.yaml
 
 # List available analyzers
 ./bin/typo3-analyzer list-analyzers

@@ -58,7 +58,7 @@ Creates a new configuration file with sensible defaults.
 ./bin/typo3-analyzer init-config --interactive
 
 # Create configuration in custom location
-./bin/typo3-analyzer init-config --path=/custom/path/config.yaml
+./bin/typo3-analyzer init-config --output=/custom/path/config.yaml
 ```
 
 **Options:**
@@ -111,105 +111,69 @@ Shows all extensions discovered in the TYPO3 installation.
 **Options:**
 - `--config=PATH`: Custom configuration file
 
+#### `cache-clear` - Clear Cached Results
+
+Removes all cached analysis results. Run this when you want to force a fresh analysis, for example after updating extensions or changing the target version.
+
+```bash
+./bin/typo3-analyzer cache-clear
+```
+
 ## Configuration
 
 ### Configuration File Structure
 
-The main configuration file (`config/configuration.yaml`) uses this structure:
+The default configuration file is `typo3-analyzer.yaml` in the project root. Run `init-config` to generate it. Set `analysis.installationPath` before running `analyze`.
 
 ```yaml
-# Installation settings
-installation:
-  path: '/path/to/your/typo3/installation'
-  type: 'composer'  # or 'classic'
-
-# Target version for upgrade analysis
-target_version: '13.0'
-
-# Output configuration
-output:
-  directory: 'var/analysis-results'
-  formats: ['html', 'markdown']
-  clean_before_run: false
-
-# Global timeouts and limits
-limits:
-  global_timeout: 3600        # Global timeout in seconds
-  memory_limit: '2G'          # Memory limit for analysis
-  max_extensions: 500         # Maximum extensions to analyze
-
-# Caching configuration
-cache:
-  enabled: true
-  ttl: 3600                   # Time to live in seconds
-  directory: 'var/cache'
-
-# Logging configuration
-logging:
-  level: 'info'               # debug, info, warning, error
-  output: 'var/logs/analyzer.log'
-  rotate: true
-  max_files: 7
-
-# Analyzer-specific configuration
-analyzers:
-  version_availability:
+analysis:
+  installationPath: '/path/to/your/typo3/installation'
+  targetVersion: '13.4'
+  resultCache:
     enabled: true
-    check_ter: true
-    check_packagist: true
-    check_git: true
-    git_timeout: 30
+    ttl: 3600
+  phpVersions:
+    - '8.3'
+    - '8.4'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, git]
+      timeout: 30
+    static_analysis:
+      enabled: true
+      tools:
+        phpstan:
+          level: 6
+          config: null
+    deprecation_scanner:
+      enabled: true
+    tca_migration:
+      enabled: true
+    code_quality:
+      enabled: true
+      complexity_threshold: 10
+      loc_threshold: 1000
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
 
-  typo3_rector:
-    enabled: true
-    timeout: 300
-    rules: []                 # Specific rules to run (empty = all)
-    skip_rules: []            # Rules to skip
+reporting:
+  formats: [markdown]
+  output_directory: var/reports/
+  includeCharts: false
 
+externalTools:
+  rector:
+    binary: vendor/bin/rector
+    config: null
   fractor:
-    enabled: true
-    timeout: 300
-    config_template: 'default'
-
-  lines_of_code:
-    enabled: true
-    include_comments: true
-    include_blank_lines: false
-
-# External API configuration
-external_apis:
-  github:
-    token: null               # GitHub API token (optional)
-    rate_limit_delay: 1       # Delay between requests
-
-  ter:
-    base_url: 'https://extensions.typo3.org'
-    timeout: 30
-
-  packagist:
-    base_url: 'https://packagist.org'
-    timeout: 30
-```
-
-### Environment-Specific Configuration
-
-#### Development Configuration
-
-```yaml
-# config/development.yaml
-debug: true
-cache:
-  enabled: false
-logging:
-  level: debug
-analyzers:
-  # Enable all analyzers for comprehensive testing
-  typo3_rector:
-    enabled: true
-  fractor:
-    enabled: true
-output:
-  formats: ['html', 'markdown', 'json']
+    binary: vendor/bin/fractor
+    config: null
+  typoscript_lint:
+    binary: vendor/bin/typoscript-lint
+    config: typoscript-lint.yml
 ```
 
 ### Configuration Templates
@@ -217,48 +181,43 @@ output:
 #### Minimal Template
 
 ```yaml
-# Minimal configuration for quick analysis
-installation:
-  path: '/path/to/typo3'
-target_version: '13.0'
-analyzers:
-  version_availability:
-    enabled: true
-    check_ter: true
-    check_packagist: false
-    check_git: false
-  lines_of_code:
-    enabled: true
+# Minimal configuration — version availability only
+analysis:
+  installationPath: '/path/to/typo3'
+  targetVersion: '13.4'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist]
+    typo3_rector:
+      enabled: false
+    fractor:
+      enabled: false
+reporting:
+  formats: [markdown]
+  output_directory: var/reports/
 ```
 
 #### Comprehensive Template
 
 ```yaml
 # Comprehensive analysis configuration
-installation:
-  path: '/path/to/typo3'
-target_version: '13.0'
-output:
-  formats: ['html', 'markdown', 'json']
-analyzers:
-  version_availability:
-    enabled: true
-    check_ter: true
-    check_packagist: true
-    check_git: true
-  typo3_rector:
-    enabled: true
-    timeout: 600
-  fractor:
-    enabled: true
-    timeout: 300
-  lines_of_code:
-    enabled: true
-cache:
-  enabled: true
-  ttl: 3600
-logging:
-  level: info
+analysis:
+  installationPath: '/path/to/typo3'
+  targetVersion: '13.4'
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, git]
+      timeout: 60
+    typo3_rector:
+      enabled: true
+    fractor:
+      enabled: true
+reporting:
+  formats: [html, markdown, json]
+  output_directory: var/reports/
+  includeCharts: false
 ```
 
 ## Analyzers
@@ -276,14 +235,12 @@ Checks extension compatibility across different repositories.
 
 **Configuration**:
 ```yaml
-analyzers:
-  version_availability:
-    enabled: true
-    check_ter: true           # Check TER repository
-    check_packagist: true     # Check Packagist
-    check_git: true           # Check Git repositories
-    git_timeout: 30           # Timeout for Git operations
-    cache_results: true       # Cache API results
+analysis:
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist, git]   # Sources to check
+      timeout: 30                       # Timeout for external operations (seconds)
 ```
 
 **Output**:
@@ -291,6 +248,13 @@ analyzers:
 - Compatible version information
 - Risk scoring based on availability
 - Recommendations for upgrade path
+
+> **Known TER API limitations (active bugs)**
+>
+> - [#650](https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/650): `typo3_versions` only includes LTS major versions. Extensions compatible with a non-LTS TYPO3 release (e.g. v14) will appear incompatible in TER results even if their `dependencies` field covers it.
+> - [#653](https://git.typo3.org/services/t3o-sites/extensions.typo3.org/ter/-/issues/653): As of 2026-04-03, `typo3_versions` is empty for all extension versions returned by the TER API — a regression beyond #650.
+>
+> Include `packagist` and `git` in `sources` to compensate. TER results alone are not reliable for TYPO3 v14+ targets until these bugs are resolved upstream.
 
 ### TYPO3 Rector Analyzer (`typo3_rector`)
 
@@ -306,13 +270,10 @@ Uses TYPO3 Rector to analyze code for deprecated API usage and required migratio
 
 **Configuration**:
 ```yaml
-analyzers:
-  typo3_rector:
-    enabled: true
-    timeout: 300              # Analysis timeout
-    rules: []                 # Specific rules (empty = all)
-    skip_rules: []            # Rules to exclude
-    target_version: '13.0'    # Target TYPO3 version
+analysis:
+  analyzers:
+    typo3_rector:
+      enabled: true
 ```
 
 **Output**:
@@ -335,13 +296,10 @@ Analyzes TypoScript for modernization opportunities.
 
 **Configuration**:
 ```yaml
-analyzers:
-  fractor:
-    enabled: true
-    timeout: 300
-    config_template: 'default'  # Configuration template
-    include_patterns: ['*.typoscript', '*.ts']
-    exclude_patterns: ['*/_processed_/*']
+analysis:
+  analyzers:
+    fractor:
+      enabled: true
 ```
 
 **Output**:
@@ -364,13 +322,12 @@ Analyzes codebase size and complexity metrics.
 
 **Configuration**:
 ```yaml
-analyzers:
-  lines_of_code:
-    enabled: true
-    include_comments: true      # Count comment lines
-    include_blank_lines: false  # Count blank lines
-    file_patterns: ['*.php', '*.js', '*.ts', '*.css']
-    exclude_patterns: ['*/vendor/*', '*/node_modules/*']
+analysis:
+  analyzers:
+    code_quality:
+      enabled: true
+      complexity_threshold: 10
+      loc_threshold: 1000
 ```
 
 **Output**:
@@ -520,32 +477,19 @@ class CustomSecurityAnalyzer implements AnalyzerInterface
 
 ### Performance Optimization
 
-For large installations:
+For large installations, disable slow analyzers for an initial run and enable them incrementally:
 
 ```yaml
 # config/performance-optimized.yaml
-limits:
-  global_timeout: 7200        # 2 hours
-  memory_limit: '8G'          # 8GB memory
-  max_extensions: 1000        # Analyze up to 1000 extensions
-  max_concurrent_requests: 10 # Parallel API requests
-
-cache:
-  enabled: true
-  ttl: 86400                  # 24 hours
-
-analyzers:
-  # Prioritize fast analyzers
-  lines_of_code:
-    enabled: true
-  version_availability:
-    enabled: true
-    check_git: false          # Skip slower Git checks initially
-  # Disable heavy analyzers for initial run
-  typo3_rector:
-    enabled: false
-  fractor:
-    enabled: false
+analysis:
+  analyzers:
+    version_availability:
+      enabled: true
+      sources: [ter, packagist]   # Omit git for faster initial run
+    typo3_rector:
+      enabled: false
+    fractor:
+      enabled: false
 ```
 
 ## Best Practices
