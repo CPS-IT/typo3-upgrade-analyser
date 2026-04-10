@@ -2,7 +2,7 @@
 
 {% if extension_data.version_analysis %}
 {% set version_analysis = extension_data.version_analysis %}
-{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
+{% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'git'] %}
 
 ### Availability Status
 - **Distribution Type:** {{ version_analysis.distribution_type == 'path' ? '🏠 Local Path' : (version_analysis.distribution_type is null ? '⛲️ Source' : version_analysis.distribution_type|capitalize) }}
@@ -16,11 +16,11 @@
   - **Compatible with Target:** {{ version_analysis.packagist_latest_compatible ? '✅ Yes' : '❌ No' }}
 {% endif %}
 {% endif %}
-{% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
+{% if 'git' in enabled_sources or 'vcs' in enabled_sources %}
 - **Git Repository:** {{ version_analysis.vcs_available == 'available' ? '✅ Available' : (version_analysis.vcs_available == 'unavailable' ? '❌ Not Available' : '❓ Unknown (resolution failed)') }}
 {% endif %}
 
-{% if ('github' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
+{% if ('git' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
 ### Git Repository Information
 {% if version_analysis.vcs_source_url %}
 - **Repository URL:** {{ version_analysis.vcs_source_url }}

@@ -1,7 +1,7 @@
 <div class="section" id="version-availability-analysis">
     <h2>Version Availability Analysis</h2>
 
-    {% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'vcs'] %}
+    {% set enabled_sources = configuration.analysis.analyzers.version_availability.sources ?? ['ter', 'packagist', 'git'] %}
 
     {% if extension_data.version_analysis %}
         {% set version_analysis = extension_data.version_analysis %}
@@ -42,7 +42,7 @@
                         <small>Composer Repository</small>
                     </div>
                 {% endif %}
-                {% if 'github' in enabled_sources or 'vcs' in enabled_sources %}
+                {% if 'git' in enabled_sources or 'vcs' in enabled_sources %}
                     <div class="status-card">
                         {% if version_analysis.vcs_available == 'available' %}
                             <div class="status-icon available">✅</div>
@@ -66,7 +66,7 @@
             </div>
         {% endif %}
 
-        {% if ('github' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
+        {% if ('git' in enabled_sources or 'vcs' in enabled_sources) and (version_analysis.vcs_source_url or version_analysis.vcs_latest_version) %}
             <h3>Git Repository Information</h3>
             <div class="info-card">
                 {% if version_analysis.vcs_source_url %}
