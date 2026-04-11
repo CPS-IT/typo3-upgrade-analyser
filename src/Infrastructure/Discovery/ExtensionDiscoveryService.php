@@ -29,11 +29,11 @@ use Psr\Log\LoggerInterface;
 readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly ConfigurationService $configService,
-        private readonly CacheService $cacheService,
-        private readonly PathResolutionServiceInterface $pathResolutionService,
-        private readonly VersionProfileRegistry $versionProfileRegistry,
+        private LoggerInterface $logger,
+        private ConfigurationService $configService,
+        private CacheService $cacheService,
+        private PathResolutionServiceInterface $pathResolutionService,
+        private VersionProfileRegistry $versionProfileRegistry,
     ) {
     }
 

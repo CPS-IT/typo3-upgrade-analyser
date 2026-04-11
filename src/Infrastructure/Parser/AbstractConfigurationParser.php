@@ -220,7 +220,7 @@ abstract class AbstractConfigurationParser implements ConfigurationParserInterfa
             }
 
             // Check if it's a package name
-            if (false !== strpos($dependency, '/')) {
+            if (str_contains($dependency, '/')) {
                 // This would need actual package detection logic
                 // For now, assume package dependencies are met
                 continue;
