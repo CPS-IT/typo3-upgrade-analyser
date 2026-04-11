@@ -74,7 +74,7 @@ class ListAnalyzersCommand extends Command
 
         $io->note([
             'Use the --analyzers option with the analyze command to run specific analyzers.',
-            'Example: ./bin/typo3-analyzer analyze --analyzers=version_availability,lines_of_code',
+            'Example: vendor/bin/typo3-analyzer analyze --analyzers=version_availability,lines_of_code',
         ]);
 
         return Command::SUCCESS;
