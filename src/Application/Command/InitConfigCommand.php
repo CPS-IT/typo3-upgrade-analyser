@@ -77,7 +77,7 @@ class InitConfigCommand extends Command
 
         $yamlContent = Yaml::dump($config, 4, 2);
 
-        if (false === file_put_contents($outputFile, $yamlContent)) {
+        if (false === @file_put_contents($outputFile, $yamlContent)) {
             $io->error(\sprintf('Failed to write configuration to: %s', $outputFile));
 
             return Command::FAILURE;

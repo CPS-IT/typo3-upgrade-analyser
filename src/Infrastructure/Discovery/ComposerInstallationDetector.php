@@ -155,7 +155,7 @@ final readonly class ComposerInstallationDetector implements DetectionStrategyIn
             return null;
         }
 
-        $json = file_get_contents($composerJsonPath);
+        $json = @file_get_contents($composerJsonPath);
         if (false === $json) {
             $this->logger->warning('Failed to read composer.json', ['path' => $composerJsonPath]);
 

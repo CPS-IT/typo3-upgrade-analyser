@@ -109,6 +109,7 @@ class AnalyzeCommandTest extends TestCase
     {
         // Create a temporary directory with TYPO3 indicators
         $tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
+        $summaryReportPath = $tempDir . '/analysis-summary.md';
         mkdir($tempDir);
         mkdir($tempDir . '/typo3conf');
         touch($tempDir . '/typo3conf/LocalConfiguration.php');
@@ -134,7 +135,7 @@ class AnalyzeCommandTest extends TestCase
             $this->configurationService->expects(self::any())
                 ->method('get')
                 ->willReturnMap([
-                    ['reporting.output_directory', 'var/reports/', 'var/reports/'],
+                    ['reporting.output_directory', 'var/reports/', $tempDir],
                     ['reporting.formats', ['markdown'], ['markdown']],
                 ]);
 
@@ -159,6 +160,9 @@ class AnalyzeCommandTest extends TestCase
             self::assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
             self::assertStringContainsString('Analysis completed successfully', $this->commandTester->getDisplay());
         } finally {
+            if (file_exists($summaryReportPath)) {
+                unlink($summaryReportPath);
+            }
             unlink($tempConfig);
             unlink($tempDir . '/typo3conf/LocalConfiguration.php');
             rmdir($tempDir . '/typo3conf');

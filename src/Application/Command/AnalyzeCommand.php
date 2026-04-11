@@ -427,7 +427,15 @@ class AnalyzeCommand extends Command
         mixed $extensionResult,
         array $analysisResults,
     ): void {
-        $reportPath = $outputDir . '/analysis-summary.md';
+        $normalizedOutputDir = '' !== rtrim($outputDir, '/') ? rtrim($outputDir, '/') : '.';
+
+        if (!is_dir($normalizedOutputDir) && !@mkdir($normalizedOutputDir, 0o755, true) && !is_dir($normalizedOutputDir)) {
+            $this->logger->warning('Failed to create summary report directory', ['path' => $normalizedOutputDir]);
+
+            return;
+        }
+
+        $reportPath = $normalizedOutputDir . '/analysis-summary.md';
 
         $content = "# TYPO3 Upgrade Analysis Report\n\n";
         $content .= 'Generated on: ' . date('Y-m-d H:i:s') . "\n\n";
@@ -450,6 +458,8 @@ class AnalyzeCommand extends Command
             }
         }
 
-        file_put_contents($reportPath, $content);
+        if (false === @file_put_contents($reportPath, $content)) {
+            $this->logger->warning('Failed to write summary report', ['path' => $reportPath]);
+        }
     }
 }
