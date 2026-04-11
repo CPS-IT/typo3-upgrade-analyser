@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ComposerVersionStrategy;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(ComposerVersionStrategy::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class ComposerVersionStrategyTest extends TestCase
 {
     private MockObject $logger;

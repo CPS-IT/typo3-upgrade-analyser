@@ -23,12 +23,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(GitRepositoryAnalyzer::class)]
+#[AllowMockObjectsWithoutExpectations]
 class GitRepositoryAnalyzerTest extends TestCase
 {
     private GitRepositoryAnalyzer $analyzer;

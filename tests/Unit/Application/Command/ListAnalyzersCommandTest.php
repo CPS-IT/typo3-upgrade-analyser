@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\ListAnalyzersCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +23,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(ListAnalyzersCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 class ListAnalyzersCommandTest extends TestCase
 {
     private ListAnalyzersCommand $command;

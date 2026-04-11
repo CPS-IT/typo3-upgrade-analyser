@@ -24,6 +24,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -31,6 +32,7 @@ use Psr\Log\NullLogger;
  * Integration tests for LinesOfCodeAnalyzer with PathResolutionService.
  * Tests the complete integration including real file system operations.
  */
+#[AllowMockObjectsWithoutExpectations]
 final class LinesOfCodeAnalyzerIntegrationTest extends TestCase
 {
     private LinesOfCodeAnalyzer $analyzer;

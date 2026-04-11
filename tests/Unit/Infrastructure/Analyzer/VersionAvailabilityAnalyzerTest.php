@@ -20,6 +20,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\VersionSourceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use Psr\Log\LoggerInterface;
  * Test case for the VersionAvailabilityAnalyzer.
  */
 #[CoversClass(VersionAvailabilityAnalyzer::class)]
+#[AllowMockObjectsWithoutExpectations]
 class VersionAvailabilityAnalyzerTest extends TestCase
 {
     private VersionAvailabilityAnalyzer $analyzer;

@@ -13,10 +13,12 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Cache;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 final class CacheServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;

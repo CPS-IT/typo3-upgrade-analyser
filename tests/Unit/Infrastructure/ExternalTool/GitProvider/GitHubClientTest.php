@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(GitHubClient::class)]
+#[AllowMockObjectsWithoutExpectations]
 class GitHubClientTest extends TestCase
 {
     private GitHubClient $client;

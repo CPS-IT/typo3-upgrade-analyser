@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -23,6 +24,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(InitConfigCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 class InitConfigCommandTest extends TestCase
 {
     private InitConfigCommand $command;

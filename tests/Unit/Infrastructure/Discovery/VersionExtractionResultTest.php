@@ -15,10 +15,12 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Discovery;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionExtractionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\VersionStrategyInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(VersionExtractionResult::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class VersionExtractionResultTest extends TestCase
 {
     private Version $testVersion;

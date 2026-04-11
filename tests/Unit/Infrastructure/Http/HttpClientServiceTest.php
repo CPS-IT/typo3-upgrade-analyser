@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Http;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(HttpClientService::class)]
+#[AllowMockObjectsWithoutExpectations]
 class HttpClientServiceTest extends TestCase
 {
     private HttpClientService $subject;

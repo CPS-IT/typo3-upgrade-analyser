@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AbstractCachedAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(AbstractCachedAnalyzer::class)]
+#[AllowMockObjectsWithoutExpectations]
 class AbstractCachedAnalyzerTest extends TestCase
 {
     private MockObject&CacheService $cacheService;

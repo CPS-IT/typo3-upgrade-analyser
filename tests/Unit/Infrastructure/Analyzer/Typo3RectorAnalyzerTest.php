@@ -32,16 +32,15 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-/**
- * Test case for Typo3RectorAnalyzer.
- */
 #[CoversClass(Typo3RectorAnalyzer::class)]
+#[AllowMockObjectsWithoutExpectations]
 class Typo3RectorAnalyzerTest extends TestCase
 {
     private Typo3RectorAnalyzer $analyzer;

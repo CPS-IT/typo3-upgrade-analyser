@@ -16,6 +16,7 @@ use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(TerApiClient::class)]
+#[AllowMockObjectsWithoutExpectations]
 class TerApiClientTest extends TestCase
 {
     private TerApiClient $client;

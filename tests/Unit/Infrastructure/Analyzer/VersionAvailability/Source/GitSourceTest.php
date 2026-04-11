@@ -21,10 +21,12 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryInfo;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 final class GitSourceTest extends TestCase
 {
     private GitSource $source;

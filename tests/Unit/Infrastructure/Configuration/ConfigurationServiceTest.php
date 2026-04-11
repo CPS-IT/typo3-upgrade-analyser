@@ -13,11 +13,13 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Configuration;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
+#[AllowMockObjectsWithoutExpectations]
 final class ConfigurationServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;

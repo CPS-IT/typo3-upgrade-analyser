@@ -24,6 +24,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Recovery\ErrorRecoveryManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\ExtensionPathResolutionStrategy;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Strategy\PathResolutionStrategyRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Validation\PathResolutionValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -32,6 +33,7 @@ use Psr\Log\NullLogger;
  * to verify PathResolutionService integration eliminates code duplication while
  * maintaining accuracy for large extensions like news (~20k lines) and powermail (~27k lines).
  */
+#[AllowMockObjectsWithoutExpectations]
 final class LinesOfCodeValidationTest extends TestCase
 {
     private LinesOfCodeAnalyzer $analyzer;

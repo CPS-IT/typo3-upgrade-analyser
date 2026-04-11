@@ -24,8 +24,10 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\RectorDataProvider;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\Provider\VersionAvailabilityDataProvider;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use CPSIT\UpgradeAnalyzer\Shared\Utility\DiffHtmlFormatter;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 class ReportContextBuilderTest extends TestCase
 {
     private ReportContextBuilder $subject;

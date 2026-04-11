@@ -17,6 +17,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderExc
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(AbstractGitProvider::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class AbstractGitProviderTest extends TestCase
 {
     private MockObject $httpClient;

@@ -23,12 +23,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\DTO\PathResolutionResponse;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(ConfigurationDiscoveryService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class ConfigurationDiscoveryServiceTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
