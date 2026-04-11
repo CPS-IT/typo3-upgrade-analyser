@@ -35,11 +35,7 @@ class ReportFileManager
         $baseOutputPath = rtrim($baseOutputPath, '/') . '/';
         $formatOutputPath = $baseOutputPath . $format . '/';
 
-        if (!is_dir($formatOutputPath)) {
-            if (!mkdir($formatOutputPath, 0o755, true) && !is_dir($formatOutputPath)) {
-                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $formatOutputPath));
-            }
-        }
+        $this->ensureDirectoryExists($formatOutputPath);
 
         return $formatOutputPath;
     }
@@ -56,10 +52,7 @@ class ReportFileManager
         $outputPath = rtrim($outputPath, '/') . '/';
         $extensionsPath = $outputPath . 'extensions/';
 
-        if (!is_dir($extensionsPath)) {
-            /* @noinspection MkdirRaceConditionInspection */
-            mkdir($extensionsPath, 0o755, true);
-        }
+        $this->ensureDirectoryExists($extensionsPath);
 
         return $extensionsPath;
     }
@@ -77,12 +70,12 @@ class ReportFileManager
         $outputPath = rtrim($outputPath, '/') . '/';
         $filename = $outputPath . $renderedReport['filename'];
 
-        file_put_contents($filename, $renderedReport['content']);
+        $this->writeFile($filename, $renderedReport['content']);
 
         return [
             'type' => 'main_report',
             'path' => $filename,
-            'size' => filesize($filename) ?: 0,
+            'size' => $this->getFileSize($filename),
         ];
     }
 
@@ -101,13 +94,13 @@ class ReportFileManager
         foreach ($renderedReports as $renderedReport) {
             $filename = $extensionsPath . $renderedReport['filename'];
 
-            file_put_contents($filename, $renderedReport['content']);
+            $this->writeFile($filename, $renderedReport['content']);
 
             $files[] = [
                 'type' => 'extension_report',
                 'extension' => $renderedReport['extension'],
                 'path' => $filename,
-                'size' => filesize($filename) ?: 0,
+                'size' => $this->getFileSize($filename),
             ];
         }
 
@@ -162,13 +155,13 @@ class ReportFileManager
 
         foreach ($rectorDetailPages as $page) {
             $filename = $rectorPath . $page['filename'];
-            file_put_contents($filename, $page['content']);
+            $this->writeFile($filename, $page['content']);
 
             $files[] = [
                 'type' => 'rector_detail_page',
                 'extension' => $page['extension'],
                 'path' => $filename,
-                'size' => filesize($filename) ?: 0,
+                'size' => $this->getFileSize($filename),
             ];
         }
 
@@ -187,10 +180,7 @@ class ReportFileManager
         $outputPath = rtrim($outputPath, '/') . '/';
         $rectorPath = $outputPath . 'rector-findings/';
 
-        if (!is_dir($rectorPath)) {
-            /* @noinspection MkdirRaceConditionInspection */
-            mkdir($rectorPath, 0o755, true);
-        }
+        $this->ensureDirectoryExists($rectorPath);
 
         return $rectorPath;
     }
@@ -214,13 +204,13 @@ class ReportFileManager
 
         foreach ($fractorDetailPages as $page) {
             $filename = $rectorPath . $page['filename'];
-            file_put_contents($filename, $page['content']);
+            $this->writeFile($filename, $page['content']);
 
             $files[] = [
                 'type' => 'fractor_detail_page',
                 'extension' => $page['extension'],
                 'path' => $filename,
-                'size' => filesize($filename) ?: 0,
+                'size' => $this->getFileSize($filename),
             ];
         }
 
@@ -239,10 +229,7 @@ class ReportFileManager
         $outputPath = rtrim($outputPath, '/') . '/';
         $fractorPath = $outputPath . 'fractor-findings/';
 
-        if (!is_dir($fractorPath)) {
-            /* @noinspection MkdirRaceConditionInspection */
-            mkdir($fractorPath, 0o755, true);
-        }
+        $this->ensureDirectoryExists($fractorPath);
 
         return $fractorPath;
     }
@@ -269,5 +256,26 @@ class ReportFileManager
         }
 
         return array_merge($mainReportFiles, $extensionReportFiles);
+    }
+
+    private function ensureDirectoryExists(string $path): void
+    {
+        if (!is_dir($path) && !@mkdir($path, 0o755, true) && !is_dir($path)) {
+            throw new \RuntimeException(\sprintf('Directory "%s" was not created', $path));
+        }
+    }
+
+    private function writeFile(string $path, string $content): void
+    {
+        @file_put_contents($path, $content);
+    }
+
+    private function getFileSize(string $path): int
+    {
+        if (!is_file($path)) {
+            return 0;
+        }
+
+        return filesize($path) ?: 0;
     }
 }

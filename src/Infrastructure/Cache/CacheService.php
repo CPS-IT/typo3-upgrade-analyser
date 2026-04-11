@@ -41,7 +41,7 @@ readonly class CacheService
         }
 
         try {
-            $content = file_get_contents($filePath);
+            $content = @file_get_contents($filePath);
             if (false === $content) {
                 $this->logger->warning('Failed to read cache file', ['key' => $key, 'path' => $filePath]);
 
@@ -71,7 +71,7 @@ readonly class CacheService
             $filePath = $this->getCacheFilePath($key);
             $content = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
 
-            $result = file_put_contents($filePath, $content);
+            $result = @file_put_contents($filePath, $content);
 
             if (false === $result) {
                 $this->logger->error('Failed to write to cache file', ['key' => $key, 'path' => $filePath]);
@@ -197,7 +197,7 @@ readonly class CacheService
         $cacheDir = $this->getCacheDirectory();
 
         if (!is_dir($cacheDir)) {
-            if (!mkdir($cacheDir, 0o755, true)) {
+            if (!@mkdir($cacheDir, 0o755, true) && !is_dir($cacheDir)) {
                 throw new \RuntimeException(\sprintf('Failed to create cache directory: %s', $cacheDir));
             }
 

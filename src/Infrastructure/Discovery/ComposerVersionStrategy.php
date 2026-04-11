@@ -107,7 +107,7 @@ final readonly class ComposerVersionStrategy implements VersionStrategyInterface
         }
 
         try {
-            $json = file_get_contents($lockFilePath);
+            $json = @file_get_contents($lockFilePath);
             if (false === $json) {
                 $this->logger->warning('Failed to read composer.lock', ['lockFilePath' => $lockFilePath]);
 
@@ -181,7 +181,7 @@ final readonly class ComposerVersionStrategy implements VersionStrategyInterface
         }
 
         try {
-            $json = file_get_contents($jsonFilePath);
+            $json = @file_get_contents($jsonFilePath);
             if (false === $json) {
                 $this->logger->warning('Failed to read composer.json', ['jsonFilePath' => $jsonFilePath]);
 
