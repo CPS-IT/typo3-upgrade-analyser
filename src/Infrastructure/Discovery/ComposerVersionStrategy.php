@@ -27,7 +27,7 @@ use Psr\Log\LoggerInterface;
  */
 final readonly class ComposerVersionStrategy implements VersionStrategyInterface
 {
-    private const TYPO3_CORE_PACKAGES = [
+    private const array TYPO3_CORE_PACKAGES = [
         'typo3/cms-core',
         'typo3/cms',
         'typo3/minimal',

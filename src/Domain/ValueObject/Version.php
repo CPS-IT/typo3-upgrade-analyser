@@ -15,7 +15,7 @@ namespace CPSIT\UpgradeAnalyzer\Domain\ValueObject;
 /**
  * Value object representing a version number.
  */
-class Version
+class Version implements \Stringable
 {
     private int $major;
     private int $minor;

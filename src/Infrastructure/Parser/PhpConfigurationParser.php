@@ -148,13 +148,16 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         $fileName = basename($sourcePath);
 
         if ('LocalConfiguration.php' === $fileName
-            || (str_starts_with($fileName, 'LocalConfiguration') && str_ends_with($fileName, '.php'))) {
+            || (str_starts_with($fileName, 'LocalConfiguration') && str_ends_with($fileName, '.php'))
+        ) {
             $this->validateLocalConfiguration($data, $errors, $warnings);
         } elseif ('PackageStates.php' === $fileName
-                 || (str_starts_with($fileName, 'PackageStates') && str_ends_with($fileName, '.php'))) {
+            || (str_starts_with($fileName, 'PackageStates') && str_ends_with($fileName, '.php'))
+        ) {
             $this->validatePackageStates($data, $errors, $warnings);
         } elseif (str_ends_with($fileName, 'ext_localconf.php')
-                 || (str_starts_with($fileName, 'ext_localconf') && str_ends_with($fileName, '.php'))) {
+            || (str_starts_with($fileName, 'ext_localconf') && str_ends_with($fileName, '.php'))
+        ) {
             $this->validateExtensionConfiguration($data, $errors, $warnings, 'localconf');
         }
 
@@ -179,7 +182,7 @@ final class PhpConfigurationParser extends AbstractConfigurationParser
         }
 
         // Read first few lines to check for configuration patterns
-        $handle = fopen($filePath, 'r');
+        $handle = fopen($filePath, 'rb');
         if (false === $handle) {
             return false;
         }

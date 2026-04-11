@@ -483,7 +483,7 @@ final class InstallationDiscoveryServiceTest extends TestCase
         // Mock configuration discovery service to verify it's called with correct installation
         $this->configurationDiscoveryService->expects(self::once())
             ->method('discoverConfiguration')
-            ->with(self::callback(function ($arg) use ($installation): bool {
+            ->with(self::callback(static function ($arg) use ($installation): bool {
                 return $arg === $installation
                        && $arg->getPath() === $installation->getPath()
                        && $arg->getVersion()->toString() === $installation->getVersion()->toString();

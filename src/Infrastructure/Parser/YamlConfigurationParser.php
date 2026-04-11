@@ -32,8 +32,7 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         parent::__construct($logger);
 
         // Set YAML parsing flags for TYPO3 compatibility
-        $this->yamlFlags = Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE |
-                          Yaml::PARSE_DATETIME;
+        $this->yamlFlags = Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | Yaml::PARSE_DATETIME;
     }
 
     public function getFormat(): string
@@ -157,13 +156,16 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
 
         // Validate specific TYPO3 YAML file types
         if ('Services.yaml' === $fileName || 'services.yaml' === $fileName
-            || (str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml'))) {
+            || (str_starts_with($fileName, 'Services') && str_ends_with($fileName, '.yaml'))
+        ) {
             $this->validateServicesYaml($data, $errors, $warnings);
         } elseif ('site.yaml' === $fileName || str_contains($sourcePath, '/config/sites/')
-                 || (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml'))) {
+            || (str_starts_with($fileName, 'site') && str_ends_with($fileName, '.yaml'))
+        ) {
             $this->validateSiteConfiguration($data, $errors, $warnings);
         } elseif (str_contains($sourcePath, '/Resources/Private/Language/')
-                 || (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))) {
+            || (str_starts_with($fileName, 'language') && str_ends_with($fileName, '.yaml'))
+        ) {
             $this->validateLanguageFile($data, $errors, $warnings);
         }
 
@@ -200,7 +202,7 @@ final class YamlConfigurationParser extends AbstractConfigurationParser
         }
 
         // Read first few lines to check for TYPO3 patterns
-        $handle = fopen($filePath, 'r');
+        $handle = fopen($filePath, 'rb');
         if (false === $handle) {
             return false;
         }
