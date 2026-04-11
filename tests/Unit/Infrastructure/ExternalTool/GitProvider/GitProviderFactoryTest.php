@@ -15,12 +15,14 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool\GitProvid
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitAnalysisException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(GitProviderFactory::class)]
+#[AllowMockObjectsWithoutExpectations]
 class GitProviderFactoryTest extends TestCase
 {
     private GitProviderFactory $factory;

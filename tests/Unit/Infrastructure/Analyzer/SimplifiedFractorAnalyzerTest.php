@@ -24,12 +24,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\FractorAnalyzer;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 #[CoversClass(FractorAnalyzer::class)]
+#[AllowMockObjectsWithoutExpectations]
 class SimplifiedFractorAnalyzerTest extends TestCase
 {
     private FractorAnalyzer $analyzer;

@@ -20,6 +20,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInte
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(AnalyzeCommand::class)]
+#[AllowMockObjectsWithoutExpectations]
 class AnalyzeCommandTest extends TestCase
 {
     /** @var LoggerInterface&MockObject */
@@ -110,8 +112,7 @@ class AnalyzeCommandTest extends TestCase
         // Create a temporary directory with TYPO3 indicators
         $tempDir = sys_get_temp_dir() . '/typo3-analyzer-test-' . uniqid();
         $summaryReportPath = $tempDir . '/analysis-summary.md';
-        mkdir($tempDir);
-        mkdir($tempDir . '/typo3conf');
+        mkdir($tempDir . '/typo3conf', 0o777, true);
         touch($tempDir . '/typo3conf/LocalConfiguration.php');
 
         // Create a temporary config file

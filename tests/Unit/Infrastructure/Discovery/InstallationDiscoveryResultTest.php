@@ -20,11 +20,13 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\DetectionStrategyInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationIssue;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ValidationSeverity;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(InstallationDiscoveryResult::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class InstallationDiscoveryResultTest extends TestCase
 {
     private Installation $installation;

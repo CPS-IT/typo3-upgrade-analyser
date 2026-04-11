@@ -21,6 +21,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolutionStatus;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\VcsResolverInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(VcsSource::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class VcsSourceTest extends TestCase
 {
     private VcsSource $source;

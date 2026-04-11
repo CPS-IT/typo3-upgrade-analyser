@@ -14,12 +14,14 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\AbstractConfigurationParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\ParseException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(AbstractConfigurationParser::class)]
+#[AllowMockObjectsWithoutExpectations]
 class AbstractConfigurationParserTest extends TestCase
 {
     private MockObject&LoggerInterface $logger;

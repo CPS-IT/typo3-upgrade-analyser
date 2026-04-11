@@ -19,6 +19,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportContextBuilder;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\TemplateRenderer;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ use Psr\Log\LoggerInterface;
  * Note: This is a simplified test suite focusing on the service coordination.
  * Comprehensive tests for individual services should be in their own test files.
  */
+#[AllowMockObjectsWithoutExpectations]
 class ReportServiceTest extends TestCase
 {
     private ReportService $subject;

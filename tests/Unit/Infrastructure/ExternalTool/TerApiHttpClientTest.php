@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\ExternalTool;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiHttpClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(TerApiHttpClient::class)]
+#[AllowMockObjectsWithoutExpectations]
 class TerApiHttpClientTest extends TestCase
 {
     private HttpClientServiceInterface&MockObject $mockHttpClient;

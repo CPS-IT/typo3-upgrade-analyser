@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Parser;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\Exception\YamlParseException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Parser\YamlConfigurationParser;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -22,6 +23,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(YamlConfigurationParser::class)]
+#[AllowMockObjectsWithoutExpectations]
 class YamlConfigurationParserTest extends TestCase
 {
     private MockObject&LoggerInterface $logger;
