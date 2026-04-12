@@ -535,6 +535,28 @@ So that the codebase reflects the current architecture without dead code.
 
 ---
 
+### Story 2.8: Fix Packagist Latest-Compatible False Negative
+
+*(Added: Sprint Change Proposal 2026-04-12 — Issue #223)*
+
+As a developer,
+I want `packagist_latest_compatible` to correctly reflect compatibility when the chronologically latest Packagist version supports the target TYPO3 version,
+So that risk scores are not inflated for well-maintained community packages.
+
+**Acceptance Criteria:**
+
+- **Given** `PackagistClient::getLatestVersionInfo` fetches the chronologically latest version and checks it against TYPO3 constraints
+- **When** a package's latest version has a TYPO3 require constraint that covers the target version (including compound formats like `||`)
+- **Then** `packagist_latest_compatible` is `true`
+- **And** `ComposerConstraintChecker` handles compound constraints (`^`, `~`, `||`, ranges) without returning false negatives
+- **And** confirmed cases pass: `georgringer/news` v14.0.1 and `friendsoftypo3/tt-address` v10.0.0 targeting TYPO3 13.4 both return `packagist_latest_compatible: true`
+- **And** risk score for extensions with `packagist_available: true` and `packagist_latest_compatible: true` is ≤ 20
+- **And** the recommendation includes the compatible version string (e.g., "Version 14.0.1 is compatible with TYPO3 13.4")
+- **And** unit tests cover: simple `^` constraint, compound `||` constraint, constraint mismatch, missing constraint key
+- **And** PHPStan Level 8 reports zero errors
+
+---
+
 ## Epic 3: Memory-Safe Analysis for Large Installations
 
 Developer can analyze installations with 40+ extensions including large Rector/Fractor finding sets without memory exhaustion, segmentation faults, or crashes. Large content fields are written to files during rendering; Domain objects hold `string|null` only.
@@ -671,6 +693,28 @@ So that the output carries the agency's logo, colors, and contact details withou
 
 A CI pipeline can run analysis fully unattended with TTY-independent exit codes (0/1/2), non-interactive mode, and environment-variable overrides — all without ambiguity from terminal-detection logic.
 
+### Story 5.0: Include Tool Version in Reports
+
+*(Added: Sprint Change Proposal 2026-04-12 — Issue #219. Implement BEFORE Epic 3 begins.)*
+
+As a developer,
+I want every generated report to include the typo3-upgrade-analyser version used for the analysis,
+So that I can determine whether two runs are comparable and whether a report reflects the current tool.
+
+**Acceptance Criteria:**
+
+- **Given** reports currently do not include the tool version
+- **When** a report is generated in any format
+- **Then** the HTML and Markdown report headers include the tool version string
+- **And** the JSON report includes the version under top-level `"meta": { "analyzerVersion": "..." }`
+- **And** the version is read from `composer.json` `version` field or a generated `VERSION` constant
+- **And** if the version cannot be determined, the fallback value is `"unknown"` — no error thrown
+- **And** `ReportContextBuilder::buildReportContext()` receives and passes version through the context array
+- **And** unit tests cover: version present in context, fallback when source unavailable
+- **And** PHPStan Level 8 reports zero errors
+
+---
+
 ### Story 5.1: TTY-Independent Exit Codes
 
 As a CI pipeline operator,
@@ -774,6 +818,48 @@ So that a new developer can find setup, usage, and architecture information with
 - **And** a top-level `README.md` or `docs/index.md` provides a navigable entry point covering: installation, first run, configuration, adding a new analyzer, running tests
 - **And** the redundant directory is either removed or contains only a redirect note to the new location
 - **And** all internal cross-document links are verified to resolve correctly
+
+---
+
+### Story 5.7: Installation Name and Description in Configuration
+
+*(Added: Sprint Change Proposal 2026-04-12 — Issue #231)*
+
+As a developer,
+I want to assign a human-readable name and description to an analyzed installation via configuration,
+So that reports identify the project clearly in team communication and customer presentations.
+
+**Acceptance Criteria:**
+
+- **Given** installations are currently identified only by filesystem path
+- **When** I add `installation.name` and `installation.description` to the configuration file
+- **Then** the name and description appear in HTML/Markdown report headers and in the JSON `installation` block
+- **And** `installation.path` is accepted as an alias for the existing root-level `installationPath` key
+- **And** the root-level `installationPath` key continues to work for backwards compatibility — no breaking change
+- **And** when `name` and `description` are omitted, the filesystem path is used as the display name — no error
+- **And** PHPStan Level 8 reports zero errors
+
+---
+
+### Story 5.8: Configuration Schema and Validation Command
+
+*(Added: Sprint Change Proposal 2026-04-12 — Issue #230)*
+
+As a developer,
+I want to validate my configuration file against a formal schema before running analysis,
+So that I get clear error messages for typos and invalid values rather than silent mis-configuration.
+
+**Acceptance Criteria:**
+
+- **Given** the configuration format has no formal schema and cannot be validated efficiently
+- **When** I implement schema validation
+- **Then** a JSON Schema file exists at `resources/schema/typo3-analyzer-config.schema.json` covering all fields from FR38-FR40
+- **And** a `config:validate [--config=path]` command validates a YAML config file against the schema
+- **And** validation violations produce clear per-field output: field path + expected type + found value
+- **And** valid configuration produces a success message and exit code `0`
+- **And** invalid configuration produces human-readable error output and exit code `2`
+- **And** the schema is referenced in project documentation
+- **And** PHPStan Level 8 reports zero errors
 
 ---
 

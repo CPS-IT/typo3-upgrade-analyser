@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-04-10 (2-6 story created: legacy git provider cleanup)
+last_updated: 2026-04-12 (sprint change proposal: 2-6 status corrected to review; 2-8, 5-0, 5-7, 5-8 added; pre-epic-3 tasks 7+8 noted)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -66,7 +66,7 @@ development_status:
   # Epic 2: Complete Extension Source Coverage — All VCS Providers (Composer-based)
   # Sprint change proposal 2026-03-26: GitProvider architecture replaced by Composer-based resolution
   # Sprint change proposal 2026-03-29c: GenericGitResolver cancelled; Story 2-4 absorbed into 2-5; PackagistVersionResolver → ComposerVersionResolver
-  # Story sequence: 2-0 (spike) → 2-1 → 2-2 → 2-5 (integration + warning) → 2-5a (VCS detection fix) → 2-5b (git-native VCS) → 2-6 (cleanup) → 2-7
+  # Story sequence: 2-0 (spike) → 2-1 → 2-2 → 2-5 (integration + warning) → 2-5a (VCS detection fix) → 2-5b (git-native VCS) → 2-6 (cleanup) → 2-8 (Packagist fix) → 2-7
   # Sprint change proposal 2026-04-03: Story 2-5a added to fix VCS detection for non-Packagist packages (RC-1, RC-2, RC-3)
   #
   # KICKOFF CHECKLIST — review before writing story files (updated 2026-03-28 after sprint change proposal):
@@ -88,12 +88,14 @@ development_status:
   2-5-integrate-resolvers-and-update-data-model: done                  # Includes warning ACs from former 2-4; blocked pending 2-5a
   2-5a-fix-vcs-detection-non-packagist: done                            # Sprint change proposal 2026-04-03: RC-1 + RC-2 + RC-3 + SSH handling
   2-5b-rewrite-vcs-source-git-native: done                             # Replaces ComposerVersionResolver with git ls-remote+clone+show (203× speedup)
-  2-6-remove-git-provider-subsystem: ready-for-dev
+  2-6-remove-git-provider-subsystem: review                      # Sprint change proposal 2026-04-12: in review in separate branch
+  2-8-fix-packagist-latest-compatible-false-negative: backlog   # Bug #223: compound constraint handling in ComposerConstraintChecker
   2-7-direct-indirect-extension-distinction: backlog             # Feature #150 (was p2-5)
   epic-2-retrospective: optional
 
   # Pre-Epic-3: Reporting Hardening (must complete before Epic 3 streaming refactor)
-  pre-epic-3-reporting-hardening: backlog                        # F-R-01/02/03/04: Twig error wrapping, file write checks, narrow catch
+  # Sprint change proposal 2026-04-12: Task 7 (zero-findings table fix #224) and Task 8 (remove unused templates #202) added
+  pre-epic-3-reporting-hardening: backlog                        # F-R-01/02/03/04 + #224 zero-findings fix + #202 remove unused templates
 
   # Epic 3: Memory-Safe Analysis for Large Installations
   epic-3: backlog
@@ -110,13 +112,17 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Hardened CI/CD Pipeline Integration
+  # Sprint change proposal 2026-04-12: 5-0 added (tool version in reports, pulled before Epic 3); 5-7, 5-8 added
   epic-5: backlog
+  5-0-include-tool-version-in-reports: backlog                   # Feature #219 (Critical): implement BEFORE Epic 3 starts
   5-1-tty-independent-exit-codes: backlog
   5-2-non-interactive-mode-and-environment-variable-overrides: backlog
   5-3-stable-json-output-schema: backlog
   5-4-cache-clear-command: backlog
   5-5-documentation-consolidation: backlog
   5-6-exclude-local-packages-from-version-checks: backlog        # Feature #149 (was p2-6)
+  5-7-installation-name-and-description: backlog                  # Feature #231: human-readable name/description in config + reports
+  5-8-configuration-schema-and-validation-command: backlog        # Feature #230: JSON schema + config:validate command
   epic-5-retrospective: optional
 
   # Epic 6: PHPStan Static Code Quality Analysis (Phase 2 Growth)
