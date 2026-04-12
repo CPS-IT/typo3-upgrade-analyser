@@ -6,6 +6,8 @@ Status: backlog
 
 To be created — derived from quality audit findings F-R-01, F-R-02, F-R-03, F-R-04 in `_bmad-output/planning-artifacts/quality-audit-pre-epic-2.md`.
 
+**Sprint Change Proposal 2026-04-12:** Task 7 (fix zero-findings table visibility, Issue #224) and Task 8 (remove unused detailed report templates, Issue #202) added.
+
 ## Why Before Epic 3
 
 Epic 3 stories 3-2 and 3-3 directly refactor `ReportFileManager` (pre-flight output directory check) and `TemplateRenderer` (streaming integration). Doing this hardening first avoids applying fixes to code that will be restructured, and avoids the streaming refactor having to re-implement or re-apply error handling patterns.
@@ -57,6 +59,20 @@ so that a failed Twig render, a disk-full condition, or a null-pointer crash in 
   - [ ] `composer test` — all tests green
   - [ ] `composer sca:php` — zero PHPStan errors
   - [ ] `composer lint:php` — zero violations
+
+- [ ] Task 7: Fix zero-findings table visibility in Rector/Fractor templates (Issue #224)
+  - [ ] Add summary count line above each table for extensions with zero findings (Option B design decision)
+  - [ ] Remove `> 0` guard from `{% if %}` condition gating each table row (show all non-zero rows)
+  - [ ] `resources/templates/html/partials/main-report/rector-analysis-table.html.twig` (line 18)
+  - [ ] `resources/templates/html/partials/main-report/fractor-analysis-table.html.twig` (line 18)
+  - [ ] `resources/templates/md/partials/main-report/rector-analysis-table.md.twig` (line 8)
+  - [ ] `resources/templates/md/partials/main-report/fractor-analysis-table.md.twig` (line 8)
+
+- [ ] Task 8: Remove unused detailed report templates (Issue #202)
+  - [ ] Verify no service or command references `detailed-report.html.twig` or `detailed-report.md.twig`
+  - [ ] Delete `resources/templates/html/detailed-report.html.twig`
+  - [ ] Delete `resources/templates/md/detailed-report.md.twig`
+  - [ ] Close GitHub issue #202 after merge
 
 ## Dev Notes
 
