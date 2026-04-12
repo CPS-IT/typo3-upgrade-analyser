@@ -45,7 +45,9 @@ services:
     alias: CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService
 
   # Shared version constraint checker
-  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker: ~
+  CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker:
+    arguments:
+      $logger: '@logger'
 
   CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface:
     alias: CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker

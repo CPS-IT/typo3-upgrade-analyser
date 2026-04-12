@@ -18,9 +18,11 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientException;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface;
+use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintChecker;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -754,6 +756,199 @@ class PackagistClientTest extends TestCase
 
         // Assert
         self::assertNull($result);
+    }
+
+    // --- Compound constraint tests using a REAL ComposerConstraintChecker (not mocked) ---
+
+    private function buildClientWithRealConstraintChecker(): PackagistClient
+    {
+        return new PackagistClient(
+            $this->httpClient,
+            $this->logger,
+            new ComposerConstraintChecker(),
+            $this->urlHandler,
+        );
+    }
+
+    #[Test]
+    public function getLatestVersionInfoReturnsCompatibleForCompoundOrConstraintMatchingFirstBranch(): void
+    {
+        // Bug #223: georgringer/news v14.0.1 actual constraint is '^13.4.20 || ^14.0'
+        // With target '13.4' (no patch): 13.4.0 < 13.4.20 → false without fix
+        // With patch ceiling '13.4.9999': satisfies ^13.4.20 → true with fix
+        $client = $this->buildClientWithRealConstraintChecker();
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    '14.0.1' => [
+                        'name' => 'georgringer/news',
+                        'version' => '14.0.1',
+                        'require' => [
+                            'typo3/cms-core' => '^13.4.20 || ^14.0',
+                            'php' => '^8.1',
+                        ],
+                    ],
+                    '13.0.1' => [
+                        'name' => 'georgringer/news',
+                        'version' => '13.0.1',
+                        'require' => [
+                            'typo3/cms-core' => '^12.4.37 || ^13.4.15',
+                            'php' => '^8.1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $result = $client->getLatestVersionInfo('georgringer/news', new Version('13.4'));
+
+        self::assertSame('14.0.1', $result['latest_version']);
+        self::assertTrue($result['is_compatible']);
+    }
+
+    #[Test]
+    public function getLatestVersionInfoReturnsCompatibleForCompoundOrConstraintMatchingSecondBranch(): void
+    {
+        // Compound OR where target matches the second branch: ^14.4 with target 14.4
+        $client = $this->buildClientWithRealConstraintChecker();
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    'v10.0.0' => [
+                        'name' => 'friendsoftypo3/tt-address',
+                        'version' => 'v10.0.0',
+                        'require' => [
+                            'typo3/cms-core' => '^13.4 || ^14.4',
+                            'php' => '^8.1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $result = $client->getLatestVersionInfo('friendsoftypo3/tt-address', new Version('14.4'));
+
+        self::assertSame('10.0.0', $result['latest_version']);
+        self::assertTrue($result['is_compatible']);
+    }
+
+    #[Test]
+    public function getLatestVersionInfoReturnsIncompatibleWhenLatestVersionDoesNotSupportTarget(): void
+    {
+        // Latest version has compound OR but neither branch covers target
+        $client = $this->buildClientWithRealConstraintChecker();
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    'v10.0.0' => [
+                        'name' => 'vendor/package',
+                        'version' => 'v10.0.0',
+                        'require' => [
+                            'typo3/cms-core' => '^14.0 || ^15.0',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $result = $client->getLatestVersionInfo('vendor/package', new Version('13.4'));
+
+        self::assertSame('10.0.0', $result['latest_version']);
+        self::assertFalse($result['is_compatible']);
+    }
+
+    #[Test]
+    public function getLatestVersionInfoExcludesBranchAliasesBeforeVersionSelection(): void
+    {
+        // Branch aliases (keys containing 'dev') must be excluded; highest stable version selected
+        $client = $this->buildClientWithRealConstraintChecker();
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    'v14.0.1' => [
+                        'name' => 'vendor/package',
+                        'version' => 'v14.0.1',
+                        'require' => ['typo3/cms-core' => '^13.4 || ^14.4'],
+                    ],
+                    'dev-main' => [
+                        'name' => 'vendor/package',
+                        'version' => 'dev-main',
+                        'require' => ['typo3/cms-core' => '^13.4 || ^14.4'],
+                        'extra' => ['branch-alias' => ['dev-main' => '14.x-dev']],
+                    ],
+                    '9999999-dev' => [
+                        'name' => 'vendor/package',
+                        'version' => '9999999-dev',
+                        'require' => ['typo3/cms-core' => '^13.4 || ^14.4'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $result = $client->getLatestVersionInfo('vendor/package', new Version('13.4'));
+
+        // Stable version v14.0.1 should be selected, not the dev alias
+        self::assertSame('14.0.1', $result['latest_version']);
+        self::assertTrue($result['is_compatible']);
+    }
+
+    #[Test]
+    public function getLatestVersionInfoExcludesPreReleaseVersionsBeforeVersionSelection(): void
+    {
+        // Pre-release versions must be excluded; highest stable version selected
+        $client = $this->buildClientWithRealConstraintChecker();
+
+        $responseData = [
+            'package' => [
+                'versions' => [
+                    'v14.0.1' => [
+                        'name' => 'vendor/package',
+                        'version' => 'v14.0.1',
+                        'require' => ['typo3/cms-core' => '^13.4 || ^14.4'],
+                    ],
+                    'v15.0.0-alpha1' => [
+                        'name' => 'vendor/package',
+                        'version' => 'v15.0.0-alpha1',
+                        'require' => ['typo3/cms-core' => '^14.4'],
+                    ],
+                    'v15.0.0-beta2' => [
+                        'name' => 'vendor/package',
+                        'version' => 'v15.0.0-beta2',
+                        'require' => ['typo3/cms-core' => '^14.4'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->response->method('getStatusCode')->willReturn(200);
+        $this->response->method('toArray')->willReturn($responseData);
+        $this->httpClient->method('get')->willReturn($this->response);
+
+        $result = $client->getLatestVersionInfo('vendor/package', new Version('13.4'));
+
+        // v14.0.1 should be selected, not the alpha/beta pre-releases
+        self::assertSame('14.0.1', $result['latest_version']);
+        self::assertTrue($result['is_compatible']);
     }
 
     public function testGetLatestVersionWithHttpClientException(): void

@@ -52,7 +52,7 @@ class VersionTest extends TestCase
         self::assertEquals(4, $version->getMinor());
         self::assertEquals(0, $version->getPatch());
         self::assertNull($version->getSuffix());
-        self::assertEquals('12.4.0', $version->toString());
+        self::assertEquals('12.4', $version->toString());
     }
 
     public function testConstructorWithComposerConstraints(): void
@@ -196,5 +196,55 @@ class VersionTest extends TestCase
         self::assertEquals($version1->getMinor(), $version2->getMinor());
         self::assertEquals($version1->getPatch(), $version2->getPatch());
         self::assertTrue($version1->isEqual($version2));
+    }
+
+    public function testHasPatchReturnsFalseForTwoComponentVersion(): void
+    {
+        $version = new Version('13.4');
+
+        self::assertFalse($version->hasPatch());
+        self::assertEquals(0, $version->getPatch());
+    }
+
+    public function testHasPatchReturnsTrueForThreeComponentVersion(): void
+    {
+        $version = new Version('13.4.0');
+
+        self::assertTrue($version->hasPatch());
+        self::assertEquals(0, $version->getPatch());
+    }
+
+    public function testHasPatchReturnsTrueForNonZeroPatch(): void
+    {
+        $version = new Version('13.4.20');
+
+        self::assertTrue($version->hasPatch());
+        self::assertEquals(20, $version->getPatch());
+    }
+
+    public function testToStringPreservesTwoComponentForm(): void
+    {
+        // Ensures round-trips via toString() keep hasPatch() correct.
+        $original = new Version('13.4');
+        self::assertEquals('13.4', $original->toString());
+
+        $roundTripped = new Version($original->toString());
+        self::assertFalse($roundTripped->hasPatch());
+    }
+
+    public function testToStringPreservesThreeComponentForm(): void
+    {
+        $version = new Version('13.4.0');
+        self::assertEquals('13.4.0', $version->toString());
+
+        $roundTripped = new Version($version->toString());
+        self::assertTrue($roundTripped->hasPatch());
+    }
+
+    public function testTrailingGarbageThrowsInvalidArgumentException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new Version('13.4abc');
     }
 }
