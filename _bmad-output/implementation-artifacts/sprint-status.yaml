@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-04-12 (sprint change proposal: 2-6 status corrected to review; 2-8, 5-0, 5-7, 5-8 added; pre-epic-3 tasks 7+8 noted; 2-7 story created)
+last_updated: 2026-04-12 (epic-2 retrospective completed; epic-2 marked done; epic resequencing flagged)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -79,7 +79,7 @@ development_status:
   #   DROPPED F-E-03: AbstractGitProvider deleted in Story 2-6
   #   DROPPED F-E-05: GitHubClient deleted in Story 2-6
   #   Decision per finding: bundle into existing story or add pre-epic story.
-  epic-2: in-progress
+  epic-2: done
   2-0-vcs-resolution-mechanism-spike: done
   2-1-composer-source-parser: done
   2-2-composer-vcs-resolver: done
@@ -91,7 +91,7 @@ development_status:
   2-6-remove-git-provider-subsystem: done                      # Sprint change proposal 2026-04-12: in review in separate branch
   2-8-fix-packagist-latest-compatible-false-negative: done   # Bug #223: compound constraint handling in ComposerConstraintChecker
   2-7-direct-indirect-extension-distinction: done              # Feature #150 (was p2-5)
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   # Pre-Epic-3: Reporting Hardening (must complete before Epic 3 streaming refactor)
   # Sprint change proposal 2026-04-12: Task 7 (zero-findings table fix #224) and Task 8 (remove unused templates #202) added
