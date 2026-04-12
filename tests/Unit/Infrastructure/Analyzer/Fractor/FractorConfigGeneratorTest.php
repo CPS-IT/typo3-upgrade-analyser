@@ -64,7 +64,7 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
-        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')
+        $this->ruleRegistry->method('getSetsForVersionUpgrade')
             ->willReturn(['/path/to/typo3-13.php']);
 
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
@@ -132,7 +132,7 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
-        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
+        $this->ruleRegistry->method('getSetsForVersionUpgrade')->willReturn([]);
 
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
         $configContent = file_get_contents($configPath);
@@ -155,7 +155,7 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
-        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
+        $this->ruleRegistry->method('getSetsForVersionUpgrade')->willReturn([]);
 
         // Pass custom options
         $options = [
@@ -184,7 +184,7 @@ class FractorConfigGeneratorTest extends TestCase
             [],
         );
 
-        $this->ruleRegistry->expects(self::any())->method('getSetsForVersionUpgrade')->willReturn([]);
+        $this->ruleRegistry->method('getSetsForVersionUpgrade')->willReturn([]);
 
         $configPath = $this->generator->generateConfig($extension, $context, '/test/extension/path');
         $configContent = file_get_contents($configPath);
