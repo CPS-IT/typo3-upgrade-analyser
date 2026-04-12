@@ -1,6 +1,6 @@
 # Story 2.7: Direct/Indirect Extension Distinction
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -65,30 +65,30 @@ so that I can focus upgrade effort on packages I explicitly own and recognize th
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend `Extension` entity (AC: 1)
-  - [ ] 1.1 Add `private bool $isDirect = true` with getter and setter
-  - [ ] 1.2 Update `toArray()` and `jsonSerialize()` to include `'is_direct'`
+- [x] Task 1: Extend `Extension` entity (AC: 1)
+  - [x] 1.1 Add `private bool $isDirect = true` with getter and setter
+  - [x] 1.2 Update `toArray()` and `jsonSerialize()` to include `'is_direct'`
 
-- [ ] Task 2: Populate in discovery (AC: 2)
-  - [ ] 2.1 Add `loadDirectPackageNames(string $installationPath): array` private method — reads `composer.json` `require` + `require-dev`, returns lowercase-keyed set
-  - [ ] 2.2 Call it once at the top of `discoverFromComposerInstalled()`, before the package loop
-  - [ ] 2.3 After `createExtensionFromComposerData()`, call `$extension->setDirect(isset($directPackages[strtolower($packageData['name'] ?? '')]))`
+- [x] Task 2: Populate in discovery (AC: 2)
+  - [x] 2.1 Add `loadDirectPackageNames(string $installationPath): array` private method — reads `composer.json` `require` + `require-dev`, returns lowercase-keyed set
+  - [x] 2.2 Call it once at the top of `discoverFromComposerInstalled()`, before the package loop
+  - [x] 2.3 After `createExtensionFromComposerData()`, call `$extension->setDirect(isset($directPackages[strtolower($packageData['name'] ?? '')]))`
 
-- [ ] Task 3: Thread through reporting (AC: 3)
-  - [ ] 3.1 Add `'is_direct'` to `VersionAvailabilityDataProvider` output
-  - [ ] 3.2 HTML: add `(transitive)` label in `version-availability-table.html.twig`
-  - [ ] 3.3 HTML: add dependency type line in `extension-detail/version-availability-analysis.html.twig`
-  - [ ] 3.4 Markdown: add `Direct` column to `md/partials/main-report/version-availability-table.md.twig`
+- [x] Task 3: Thread through reporting (AC: 3)
+  - [x] 3.1 Add `'is_direct'` to `VersionAvailabilityDataProvider` output
+  - [x] 3.2 HTML: add `(transitive)` label in `version-availability-table.html.twig`
+  - [x] 3.3 HTML: add dependency type line in `extension-detail/version-availability-analysis.html.twig`
+  - [x] 3.4 Markdown: add `Direct` column to `md/partials/main-report/version-availability-table.md.twig`
 
-- [ ] Task 4: Add recommendation note (AC: 4)
-  - [ ] 4.1 Append transitive note in `VersionAvailabilityAnalyzer::addRecommendations()` when `!$extension->isDirect()`
+- [x] Task 4: Add recommendation note (AC: 4)
+  - [x] 4.1 Append transitive note in `VersionAvailabilityAnalyzer::addRecommendations()` when `!$extension->isDirect()`
 
-- [ ] Task 5: Tests and quality checks (AC: 6)
-  - [ ] 5.1 Unit tests for `Extension` entity changes
-  - [ ] 5.2 Unit tests for `ExtensionDiscoveryService` (direct, transitive, require-dev, absent composer.json)
-  - [ ] 5.3 Unit test for transitive recommendation note in `VersionAvailabilityAnalyzerTest`
-  - [ ] 5.4 `composer test` — all pass
-  - [ ] 5.5 `composer sca:php` — 0 errors; `composer lint:php` — 0 issues
+- [x] Task 5: Tests and quality checks (AC: 6)
+  - [x] 5.1 Unit tests for `Extension` entity changes
+  - [x] 5.2 Unit tests for `ExtensionDiscoveryService` (direct, transitive, require-dev, absent composer.json)
+  - [x] 5.3 Unit test for transitive recommendation note in `VersionAvailabilityAnalyzerTest`
+  - [x] 5.4 `composer test` — all pass
+  - [x] 5.5 `composer sca:php` — 0 errors; `composer lint:php` — 0 issues
 
 ## Dev Notes
 
@@ -223,4 +223,35 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Added `private bool $isDirect = true` to `Extension` entity with getter/setter; `toArray()` and `jsonSerialize()` both include `is_direct`.
+- Added `loadComposerJsonData()` to `ExtensionDiscoveryService`; reads and decodes `composer.json` once per invocation, logs error and throws `\JsonException` on malformed JSON (caught at call site — discovery continues). Extracted `extractDeclaredVcsUrls()` and `extractDirectPackageNames()` from the old duplicate methods.
+- `ExtensionDiscoveryResult::fromArray()` now restores `isDirect` flag from cached array (bug fix: cache deserialization previously reset all transitive extensions to direct).
+- `VersionAvailabilityDataProvider` exposes `is_direct` adjacent to `distribution_type`.
+- HTML main-report table: `(transitive)` inline label rendered via CSS class when `is_direct` is false; inline style replaced with `.extension-table-link` class; `.text-muted` added to stylesheet.
+- HTML detail page: "Dependency type: Direct/Transitive" status card inserted after Distribution card.
+- Markdown table: `Direct` column added (✅ / ↳); else-branch uses `data.extension.isDirect()` instead of hardcoded ✅.
+- `VersionAvailabilityAnalyzer::addRecommendations()` appends transitive advisory note after existing recommendations.
+- Test fixtures moved to `tests/Fixtures/DirectIndirect/` (four scenarios); `ExtensionDiscoveryServiceTest` uses static fixtures with `#[DataProvider]`.
+- All 1713 tests pass; PHPStan Level 8: 0 errors; `composer lint:php`: 0 issues.
+
 ### File List
+
+- `src/Domain/Entity/Extension.php`
+- `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
+- `src/Infrastructure/Discovery/ExtensionDiscoveryResult.php`
+- `src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php`
+- `src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php`
+- `resources/templates/html/partials/main-report/version-availability-table.html.twig`
+- `resources/templates/html/partials/extension-detail/version-availability-analysis.html.twig`
+- `resources/templates/html/partials/shared/styles.html.twig`
+- `resources/templates/md/partials/main-report/version-availability-table.md.twig`
+- `tests/Fixtures/DirectIndirect/` (new fixture directory, 4 scenarios)
+- `tests/Unit/Domain/Entity/ExtensionTest.php`
+- `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php`
+- `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryResultTest.php`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailabilityAnalyzerTest.php`
+
+### Change Log
+
+- 2026-04-12: Implemented Story 2.7 — direct/indirect extension distinction.
+- 2026-04-12: Code review fixes — cache deserialization bug, CSS cleanup, MD template, composer.json parse refactor.

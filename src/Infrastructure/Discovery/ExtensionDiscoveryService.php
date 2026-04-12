@@ -407,10 +407,15 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 return [];
             }
 
-            // Build a set of normalized VCS URLs declared in composer.json repositories.
-            // Packages whose source.url normalizes to one of these are installed from a
-            // VCS source (even when Composer fetched a zip dist for them, e.g. GitHub).
-            $declaredVcsUrls = $this->loadDeclaredVcsUrls($installationPath);
+            // Parse composer.json once and extract both VCS URLs and direct package names.
+            // Malformed JSON is logged but does not abort extension discovery.
+            try {
+                $composerJsonData = $this->loadComposerJsonData($installationPath);
+            } catch (\JsonException) {
+                $composerJsonData = [];
+            }
+            $declaredVcsUrls = $this->extractDeclaredVcsUrls($composerJsonData);
+            $directPackages = $this->extractDirectPackageNames($composerJsonData);
 
             $extensions = [];
 
@@ -428,6 +433,12 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
                 $extension = $this->createExtensionFromComposerData($packageData, $installationPath);
                 if (null === $extension) {
                     continue;
+                }
+
+                // Mark as transitive if not in the direct-require lookup set.
+                $packageName = strtolower($packageData['name'] ?? '');
+                if ('' !== $packageName && [] !== $directPackages && !isset($directPackages[$packageName])) {
+                    $extension->setDirect(false);
                 }
 
                 // Mark as VCS-sourced if the package's source URL matches a declared repository.
@@ -452,12 +463,15 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
     }
 
     /**
-     * Parse composer.json repositories section and return a normalized-URL-keyed set
-     * of all VCS-type repository URLs.
+     * Read and decode composer.json from the installation root.
+     * Returns an empty array if the file is absent or unreadable.
+     * Logs an error and throws on malformed JSON.
      *
-     * @return array<string, true>
+     * @throws \JsonException When composer.json contains invalid JSON
+     *
+     * @return array<string, mixed>
      */
-    private function loadDeclaredVcsUrls(string $installationPath): array
+    private function loadComposerJsonData(string $installationPath): array
     {
         $composerJsonPath = $installationPath . '/composer.json';
         if (!is_file($composerJsonPath)) {
@@ -471,15 +485,31 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
 
         try {
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            return [];
+        } catch (\JsonException $e) {
+            $this->logger->error('Malformed composer.json', [
+                'path' => $composerJsonPath,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
         }
 
         if (!\is_array($data)) {
             return [];
         }
 
-        $repositories = $data['repositories'] ?? [];
+        return $data;
+    }
+
+    /**
+     * Extract normalized VCS repository URLs from decoded composer.json data.
+     *
+     * @param array<string, mixed> $composerJsonData Decoded composer.json content
+     *
+     * @return array<string, true>
+     */
+    private function extractDeclaredVcsUrls(array $composerJsonData): array
+    {
+        $repositories = $composerJsonData['repositories'] ?? [];
         if (!\is_array($repositories)) {
             return [];
         }
@@ -499,6 +529,29 @@ readonly class ExtensionDiscoveryService implements ExtensionDiscoveryServiceInt
         }
 
         return $normalized;
+    }
+
+    /**
+     * Extract directly required package names from decoded composer.json data.
+     * Returns a lowercase-keyed lookup set of require + require-dev entries.
+     *
+     * @param array<string, mixed> $composerJsonData Decoded composer.json content
+     *
+     * @return array<string, true>
+     */
+    private function extractDirectPackageNames(array $composerJsonData): array
+    {
+        $names = [];
+        foreach (array_merge(
+            array_keys($composerJsonData['require'] ?? []),
+            array_keys($composerJsonData['require-dev'] ?? []),
+        ) as $name) {
+            if (\is_string($name)) {
+                $names[strtolower($name)] = true;
+            }
+        }
+
+        return $names;
     }
 
     /**

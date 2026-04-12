@@ -24,6 +24,11 @@
                     <strong>Distribution</strong><br>
                     <small>{{ version_analysis.distribution_type == 'path' ? 'Local Path' : (version_analysis.distribution_type is null ? 'Source' : version_analysis.distribution_type|capitalize) }}</small>
                 </div>
+                <div class="status-card">
+                    <div class="status-icon">{{ version_analysis.is_direct ? '🔗' : '↳' }}</div>
+                    <strong>Dependency type</strong><br>
+                    <small>{{ version_analysis.is_direct ? 'Direct' : 'Transitive' }}</small>
+                </div>
                 {% if 'ter' in enabled_sources %}
                     <div class="status-card">
                         <div class="status-icon {{ version_analysis.ter_available ? 'available' : 'unavailable' }}">

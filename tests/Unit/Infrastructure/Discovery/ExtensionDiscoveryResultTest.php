@@ -508,7 +508,22 @@ final class ExtensionDiscoveryResultTest extends TestCase
             $this->assertSame($origExt->getType(), $deserExt->getType());
             $this->assertSame($origExt->getComposerName(), $deserExt->getComposerName());
             $this->assertSame($origExt->isActive(), $deserExt->isActive());
+            $this->assertSame($origExt->isDirect(), $deserExt->isDirect());
         }
+    }
+
+    public function testFromArrayPreservesIsDirectFlag(): void
+    {
+        $directExt = new Extension('direct_ext', 'Direct', Version::fromString('1.0.0'), 'composer', 'vendor/direct');
+        $transitiveExt = new Extension('transitive_ext', 'Transitive', Version::fromString('2.0.0'), 'composer', 'vendor/transitive');
+        $transitiveExt->setDirect(false);
+
+        $original = ExtensionDiscoveryResult::success([$directExt, $transitiveExt], ['composer installed.json']);
+        $deserialized = ExtensionDiscoveryResult::fromArray($original->toArray());
+
+        $extensions = $deserialized->getExtensions();
+        self::assertTrue($extensions[0]->isDirect(), 'Direct extension must remain direct after deserialization');
+        self::assertFalse($extensions[1]->isDirect(), 'Transitive extension must remain transitive after deserialization');
     }
 
     public function testReadonlyBehavior(): void

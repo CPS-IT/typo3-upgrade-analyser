@@ -31,7 +31,7 @@
                     <span title="From Source">⛲️</span>
                 {% endif %}
             </td>
-            <td><strong><a href="extensions/{{ data.extension.key }}.html#version-availability-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
+            <td><strong><a class="extension-table-link" href="extensions/{{ data.extension.key }}.html#version-availability-analysis">{{ data.extension.key }}</a></strong>{% if data.version_analysis and not data.version_analysis.is_direct %} <small class="text-muted">(transitive)</small>{% endif %}</td>
             <td>{{ data.extension.version ? data.extension.version.toString() : 'N/A' }}</td>
             {% if data.version_analysis %}
                 {% if 'ter' in enabled_sources %}

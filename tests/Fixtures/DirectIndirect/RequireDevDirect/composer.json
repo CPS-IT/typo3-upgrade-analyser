@@ -1,0 +1,7 @@
+{
+    "name": "test/project",
+    "type": "project",
+    "require-dev": {
+        "vendor/dev-ext": "^1.0"
+    }
+}

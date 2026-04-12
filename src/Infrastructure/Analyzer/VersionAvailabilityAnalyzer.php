@@ -278,6 +278,13 @@ class VersionAvailabilityAnalyzer extends AbstractCachedAnalyzer
         if ($extension->isLocalExtension()) {
             $result->addRecommendation('Local extension has public alternatives available. Consider using official version.');
         }
+
+        // Transitive dependency note
+        if (!$extension->isDirect()) {
+            $result->addRecommendation(
+                'This extension is a transitive dependency. Its upgrade is the responsibility of the declaring package\'s maintainer, not this project.',
+            );
+        }
     }
 
     private function normalizeVcsAvailability(mixed $value): VcsAvailability

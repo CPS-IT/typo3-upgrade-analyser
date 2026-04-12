@@ -1,0 +1,14 @@
+{
+    "packages": [
+        {
+            "name": "vendor/some-ext",
+            "type": "typo3-cms-extension",
+            "version": "1.0.0",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "some_ext"
+                }
+            }
+        }
+    ]
+}
