@@ -176,7 +176,7 @@ final class ComposerVersionStrategyTest extends TestCase
         $version = $this->strategy->extractVersion($this->testDir);
 
         self::assertInstanceOf(Version::class, $version);
-        self::assertSame('12.4.0', $version->toString());
+        self::assertSame('12.4', $version->toString());
     }
 
     public function testExtractVersionFromComposerLockWithInvalidDevVersion(): void
@@ -507,7 +507,7 @@ final class ComposerVersionStrategyTest extends TestCase
             'standard version' => ['12.4.8', '12.4.8'],
             'version with v prefix' => ['v12.4.8', '12.4.8'],
             'version with suffix' => ['12.4.8-alpha1', '12.4.8-alpha1'],
-            'dev version with number' => ['dev-12.4', '12.4.0'],
+            'dev version with number' => ['dev-12.4', '12.4'],
             'dev version with patch' => ['dev-12.4.0', '12.4.0'],
             'dev version non-numeric' => ['dev-main', null],
             'dev version branch' => ['dev-feature-branch', null],

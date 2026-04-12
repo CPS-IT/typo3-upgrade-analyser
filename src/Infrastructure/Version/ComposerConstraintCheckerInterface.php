@@ -21,6 +21,14 @@ interface ComposerConstraintCheckerInterface
 {
     /**
      * Check if a Composer constraint is compatible with target TYPO3 version.
+     *
+     * When $targetVersion->hasPatch() is false (e.g. constructed from "13.4"), the check
+     * is performed against the ceiling of the minor series (13.4.9999). This allows
+     * constraints like "^13.4.20" to be correctly treated as compatible with an
+     * upgrade target of "13.4" (meaning the entire 13.4.x series).
+     *
+     * When $targetVersion->hasPatch() is true (e.g. constructed from "13.4.0"), the check
+     * is performed against that exact version. "^13.4.20" would return false for "13.4.0".
      */
     public function isConstraintCompatible(string $constraint, Version $targetVersion): bool;
 

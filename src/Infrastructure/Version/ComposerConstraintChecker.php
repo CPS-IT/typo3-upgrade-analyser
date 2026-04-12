@@ -15,6 +15,8 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Version;
 use Composer\Semver\Constraint\Constraint;
 use Composer\Semver\VersionParser;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Unified service for checking Composer version constraints against TYPO3 versions.
@@ -23,7 +25,7 @@ readonly class ComposerConstraintChecker implements ComposerConstraintCheckerInt
 {
     private VersionParser $versionParser;
 
-    public function __construct()
+    public function __construct(private readonly LoggerInterface $logger = new NullLogger())
     {
         $this->versionParser = new VersionParser();
     }
@@ -34,12 +36,18 @@ readonly class ComposerConstraintChecker implements ComposerConstraintCheckerInt
             // Parse the constraint using Composer's parser
             $parsedConstraint = $this->versionParser->parseConstraints($constraint);
 
-            // Create normalized version string for target version
-            $targetVersionString = $targetVersion->toString();
-
-            // If target version doesn't have patch version, add .0
-            if (1 === substr_count($targetVersionString, '.')) {
-                $targetVersionString .= '.0';
+            // When the target has no explicit patch (e.g. "13.4"), check against the
+            // ceiling of the minor series (13.4.9999) so that constraints like
+            // "^13.4.20" are recognised as compatible with the 13.4.x upgrade target.
+            // This is a heuristic: any constraint with an upper patch bound below 9999
+            // (e.g. ">=13.4.0,<13.4.100") would produce a false negative, but such
+            // tight upper patch bounds do not appear in real-world TYPO3 constraints.
+            // Note: dev-branch Version objects (major=999, minor=999, hasPatch=false)
+            // would resolve to 999.999.9999 — they are not valid constraint check targets.
+            if (!$targetVersion->hasPatch()) {
+                $targetVersionString = \sprintf('%d.%d.9999', $targetVersion->getMajor(), $targetVersion->getMinor());
+            } else {
+                $targetVersionString = $targetVersion->toString();
             }
 
             // Normalize the version for comparison
@@ -50,8 +58,15 @@ readonly class ComposerConstraintChecker implements ComposerConstraintCheckerInt
                 new Constraint('=', $normalizedVersion),
             );
         } catch (\Exception $e) {
-            // If parsing fails, fall back to simple major version matching
-            return str_contains($constraint, (string) $targetVersion->getMajor());
+            // Parsing failed — the constraint is malformed or empty.
+            // Return false as a safe conservative default.
+            $this->logger->warning('ComposerConstraintChecker: failed to parse constraint', [
+                'constraint' => $constraint,
+                'target' => $targetVersion->toString(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 
