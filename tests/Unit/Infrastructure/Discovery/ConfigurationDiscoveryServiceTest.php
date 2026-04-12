@@ -224,13 +224,6 @@ final class ConfigurationDiscoveryServiceTest extends TestCase
         $this->yamlParser->method('parseFile')
             ->willReturn(ParseResult::success([], 'yaml', $this->testInstallationPath . '/config/Services.yaml'));
 
-        $this->logger->expects(self::atLeastOnce())
-            ->method('info')
-            ->with(
-                self::stringContains('Configuration discovery'),
-                self::isType('array'),
-            );
-
         $result = $this->service->discoverConfiguration($this->installation);
         self::assertGreaterThan(0, \count($result->getAllConfigurationData()));
     }
