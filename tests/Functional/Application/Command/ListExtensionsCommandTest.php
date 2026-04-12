@@ -10,7 +10,7 @@ declare(strict_types=1);
  * of the License or any later version.
  */
 
-namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
+namespace CPSIT\UpgradeAnalyzer\Tests\Functional\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\ListExtensionsCommand;
 use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
@@ -25,12 +25,14 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\ExtensionDiscoveryServiceInte
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryResult;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
+#[Group('functional')]
 #[AllowMockObjectsWithoutExpectations]
 final class ListExtensionsCommandTest extends TestCase
 {
