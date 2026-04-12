@@ -1,0 +1,4 @@
+plugin.tx_testextension.settings.pageTitle = Test Extension
+
+<INCLUDE_TYPOSCRIPT: source="FILE:EXT:test_extension/Configuration/TypoScript/constants.typoscript">
+<INCLUDE_TYPOSCRIPT: source="DIR:EXT:test_extension/Configuration/TypoScript/" extensions="typoscript">
