@@ -1,6 +1,6 @@
 # Story 2.8: Fix Packagist Latest-Compatible False Negative
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -81,42 +81,42 @@ These should be covered by unit tests that use representative constraint strings
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Reproduce and diagnose the root cause
-  - [ ] 1.1 Write a minimal test or script that calls `ComposerConstraintChecker::isConstraintCompatible`
+- [x] Task 1: Reproduce and diagnose the root cause
+  - [x] 1.1 Write a minimal test or script that calls `ComposerConstraintChecker::isConstraintCompatible`
         with `'^13.4 || ^14.4'` and `Version(13.4)` and observe the result
-  - [ ] 1.2 If the constraint checker itself is correct, trace the failure into
+  - [x] 1.2 If the constraint checker itself is correct, trace the failure into
         `PackagistClient::getLatestVersionInfo` — add debug logging or a direct unit test with
         a fixture Packagist response payload containing compound constraints
-  - [ ] 1.3 Identify the exact line(s) causing the false negative
+  - [x] 1.3 Identify the exact line(s) causing the false negative
 
-- [ ] Task 2: Fix `ComposerConstraintChecker` (if root cause is here)
-  - [ ] 2.1 Update `isConstraintCompatible` to handle all compound operators correctly
-  - [ ] 2.2 Tighten the exception fallback — `str_contains($constraint, major)` is fragile and
+- [x] Task 2: Fix `ComposerConstraintChecker` (if root cause is here)
+  - [x] 2.1 Update `isConstraintCompatible` to handle all compound operators correctly
+  - [x] 2.2 Tighten the exception fallback — `str_contains($constraint, major)` is fragile and
         must not be relied upon for compound constraints; only use it as a last resort when
         Composer Semver itself is unavailable
 
-- [ ] Task 3: Fix `PackagistClient::getLatestVersionInfo` (if root cause is here)
-  - [ ] 3.1 Verify that `version_compare`-based sorting correctly picks the highest stable version
-  - [ ] 3.2 Verify that the version key used to look up `$data['package']['versions'][$latestVersion]`
+- [x] Task 3: Fix `PackagistClient::getLatestVersionInfo` (if root cause is here)
+  - [x] 3.1 Verify that `version_compare`-based sorting correctly picks the highest stable version
+  - [x] 3.2 Verify that the version key used to look up `$data['package']['versions'][$latestVersion]`
         matches exactly (with or without `v` prefix) — ltrim is used for sorting but the original
         key is used for lookup; confirm no mismatch
-  - [ ] 3.3 Fix any identified mismatch
+  - [x] 3.3 Fix any identified mismatch
 
-- [ ] Task 4: Write `ComposerConstraintCheckerTest`
-  - [ ] 4.1 Create `tests/Unit/Infrastructure/Version/ComposerConstraintCheckerTest.php`
-  - [ ] 4.2 Add `isConstraintCompatible` data provider covering all AC-2 cases
-  - [ ] 4.3 Add test for exception fallback behaviour
+- [x] Task 4: Write `ComposerConstraintCheckerTest`
+  - [x] 4.1 Create `tests/Unit/Infrastructure/Version/ComposerConstraintCheckerTest.php`
+  - [x] 4.2 Add `isConstraintCompatible` data provider covering all AC-2 cases
+  - [x] 4.3 Add test for exception fallback behaviour
 
-- [ ] Task 5: Update `PackagistClientTest` for compound constraints
-  - [ ] 5.1 Add or update `getLatestVersionInfo` test(s) that pass a fixture Packagist response
+- [x] Task 5: Update `PackagistClientTest` for compound constraints
+  - [x] 5.1 Add or update `getLatestVersionInfo` test(s) that pass a fixture Packagist response
         with a compound constraint and assert `is_compatible: true`
-  - [ ] 5.2 Ensure `ComposerConstraintChecker` is NOT mocked in these tests (use real instance
+  - [x] 5.2 Ensure `ComposerConstraintChecker` is NOT mocked in these tests (use real instance
         to catch parsing bugs)
 
-- [ ] Task 6: Full verification
-  - [ ] 6.1 `composer test` — all tests pass
-  - [ ] 6.2 `composer sca:php` — 0 PHPStan Level 8 errors
-  - [ ] 6.3 `composer lint:php` — 0 style issues
+- [x] Task 6: Full verification
+  - [x] 6.1 `composer test` — all tests pass
+  - [x] 6.2 `composer sca:php` — 0 PHPStan Level 8 errors
+  - [x] 6.3 `composer lint:php` — 0 style issues
 
 ## Dev Notes
 
@@ -231,6 +231,43 @@ return `['latest_version' => '14.0.1', 'is_compatible' => true]`.
 - `tests/Unit/Infrastructure/ExternalTool/PackagistClientTest.php` — existing tests (mock `ComposerConstraintCheckerInterface`)
 - GitHub Issue #223
 
+## File List
+
+- `src/Domain/ValueObject/Version.php` — modified: added `$hasPatch` flag and `hasPatch(): bool` method to track whether patch was explicitly specified in input
+- `src/Infrastructure/Version/ComposerConstraintChecker.php` — modified: uses `major.minor.9999` as ceiling version when target has no explicit patch; exception fallback tightened to return `false`
+- `tests/Unit/Infrastructure/Version/ComposerConstraintCheckerTest.php` — created: comprehensive tests covering all AC-2 true/false cases, exception fallback, empty constraint, and confirmed bug-case methods
+- `tests/Unit/Infrastructure/ExternalTool/PackagistClientTest.php` — modified: added 5 compound-constraint integration tests using real `ComposerConstraintChecker`
+
+## Dev Agent Record
+
+### Completion Notes
+
+**Root cause (Task 1):** `georgringer/news` v14.0.1 has the Packagist constraint
+`^13.4.20 || ^14.0` (NOT `^13.4 || ^14.4` as assumed in the story context). When the user
+specifies target `13.4`, `Version` defaults patch to 0, producing `13.4.0.0`. Semver correctly
+returns false for `^13.4.20` against `13.4.0.0` because `13.4.0 < 13.4.20`. The bug is a
+semantic mismatch: the tool checks a specific patch (`13.4.0`) when the user means the entire
+13.4.x minor series.
+
+**Fix (Task 2):** Added `hasPatch(): bool` to `Version` to track whether a patch was explicitly
+given in the input string. In `ComposerConstraintChecker::isConstraintCompatible`, when the target
+has no explicit patch (e.g. `'13.4'`), the check uses the ceiling `major.minor.9999` instead of
+`major.minor.0`. This means `^13.4.20` is correctly treated as compatible with the 13.4.x upgrade
+target. Exception fallback also tightened to return `false` instead of fragile `str_contains`.
+
+**Version selection verified (Task 3):** `getLatestVersionInfo` correctly picks the highest stable
+semver version key, excludes dev/alpha/beta/rc/snapshot, and lookup uses the original key.
+
+**AC-4 verified (no change needed):** `VersionAvailabilityAnalyzer` uses `packagist_available`
+(not `packagist_latest_compatible`) for risk scoring. With `packagist_available: true`, the
+risk score is 1.5 (high availability band). `VersionAvailabilityDataProvider` already surfaces
+`packagist_latest_version` and `packagist_latest_compatible` in report data.
+
+**Tests added:** 15 new tests in `ComposerConstraintCheckerTest.php` (including confirmed real-world
+cases with actual `^13.4.20 || ^14.0` constraint); 5 integration tests added to
+`PackagistClientTest.php` using real `ComposerConstraintChecker` (not mocked).
+
 ## Change Log
 
 - 2026-04-12: Story created from Sprint Change Proposal 2026-04-12 (Issue #223).
+- 2026-04-12: Root cause identified (^13.4.20 || ^14.0 fails against 13.4.0); fix: Version.hasPatch() + ceiling patch in isConstraintCompatible; tests updated with real-world constraints.
