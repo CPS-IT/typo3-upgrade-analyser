@@ -1,0 +1,14 @@
+{
+    "packages": [
+        {
+            "name": "vendor/dev-ext",
+            "type": "typo3-cms-extension",
+            "version": "1.0.0",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "dev_ext"
+                }
+            }
+        }
+    ]
+}

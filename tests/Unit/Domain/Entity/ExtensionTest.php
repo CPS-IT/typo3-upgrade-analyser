@@ -394,4 +394,48 @@ class ExtensionTest extends TestCase
 
         self::assertFalse($this->extension->hasEmconfFile());
     }
+
+    public function testIsDirectDefaultsToTrue(): void
+    {
+        $extension = new Extension('test_ext', 'Test', new Version('1.0.0'));
+
+        self::assertTrue($extension->isDirect());
+    }
+
+    public function testSetDirectChangesValue(): void
+    {
+        self::assertTrue($this->extension->isDirect());
+
+        $this->extension->setDirect(false);
+
+        self::assertFalse($this->extension->isDirect());
+
+        $this->extension->setDirect(true);
+
+        self::assertTrue($this->extension->isDirect());
+    }
+
+    public function testToArrayIncludesIsDirect(): void
+    {
+        $array = $this->extension->toArray();
+
+        self::assertArrayHasKey('is_direct', $array);
+        self::assertTrue($array['is_direct']);
+
+        $this->extension->setDirect(false);
+
+        self::assertFalse($this->extension->toArray()['is_direct']);
+    }
+
+    public function testJsonSerializeIncludesIsDirect(): void
+    {
+        $data = $this->extension->jsonSerialize();
+
+        self::assertArrayHasKey('is_direct', $data);
+        self::assertTrue($data['is_direct']);
+
+        $this->extension->setDirect(false);
+
+        self::assertFalse($this->extension->jsonSerialize()['is_direct']);
+    }
 }

@@ -1,0 +1,24 @@
+{
+    "packages": [
+        {
+            "name": "vendor/ext-a",
+            "type": "typo3-cms-extension",
+            "version": "1.2.0",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "ext_a"
+                }
+            }
+        },
+        {
+            "name": "vendor/ext-b",
+            "type": "typo3-cms-extension",
+            "version": "2.0.0",
+            "extra": {
+                "typo3/cms": {
+                    "extension-key": "ext_b"
+                }
+            }
+        }
+    ]
+}

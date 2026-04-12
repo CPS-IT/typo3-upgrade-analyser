@@ -337,6 +337,9 @@ final readonly class ExtensionDiscoveryResult implements SerializableInterface
                 );
                 $extension->setActive($extensionData['is_active']);
                 $extension->setEmConfiguration($extensionData['em_configuration'] ?? []);
+                if (isset($extensionData['is_direct'])) {
+                    $extension->setDirect((bool) $extensionData['is_direct']);
+                }
                 if (isset($extensionData['repository_url']) && \is_string($extensionData['repository_url']) && '' !== $extensionData['repository_url']) {
                     $extension->setRepositoryUrl($extensionData['repository_url']);
                 }

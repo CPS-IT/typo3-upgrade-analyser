@@ -24,6 +24,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\InstallationTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\Enum\PathTypeEnum;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Path\PathResolutionServiceInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -1389,5 +1390,96 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             }
         }
         self::assertTrue($found, 'Target extension not discovered');
+    }
+
+    /**
+     * Copy files from a DirectIndirect fixture into the expected tempDir structure.
+     * composer.json → $tempDir/composer.json
+     * installed.json → $tempDir/vendor/composer/installed.json.
+     */
+    private function loadDirectIndirectFixture(string $name): void
+    {
+        $fixtureDir = \dirname(__DIR__, 3) . '/Fixtures/DirectIndirect/' . $name;
+
+        $installedDir = $this->tempDir . '/vendor/composer';
+        if (!is_dir($installedDir)) {
+            mkdir($installedDir, 0o755, true);
+        }
+        copy($fixtureDir . '/installed.json', $installedDir . '/installed.json');
+
+        $composerJson = $fixtureDir . '/composer.json';
+        if (is_file($composerJson)) {
+            copy($composerJson, $this->tempDir . '/composer.json');
+        }
+    }
+
+    /**
+     * @return array<string, array{fixture: string, expectedDirect: list<string>, expectedTransitive: list<string>}>
+     */
+    public static function directIndirectFixtureProvider(): array
+    {
+        return [
+            'require entry is marked direct, unlisted entry is transitive' => [
+                'fixture' => 'DirectAndTransitive',
+                'expectedDirect' => ['ext_a'],
+                'expectedTransitive' => ['ext_b'],
+            ],
+            'require-dev entry is marked direct' => [
+                'fixture' => 'RequireDevDirect',
+                'expectedDirect' => ['dev_ext'],
+                'expectedTransitive' => [],
+            ],
+            'absent composer.json defaults all extensions to direct' => [
+                'fixture' => 'AbsentComposerJson',
+                'expectedDirect' => ['some_ext'],
+                'expectedTransitive' => [],
+            ],
+        ];
+    }
+
+    /**
+     * @param list<string> $expectedDirect
+     * @param list<string> $expectedTransitive
+     */
+    #[DataProvider('directIndirectFixtureProvider')]
+    public function testDirectIndirectClassificationFromFixture(
+        string $fixture,
+        array $expectedDirect,
+        array $expectedTransitive,
+    ): void {
+        $this->loadDirectIndirectFixture($fixture);
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        self::assertTrue($result->isSuccessful());
+
+        $byKey = [];
+        foreach ($result->getExtensions() as $ext) {
+            $byKey[$ext->getKey()] = $ext;
+        }
+
+        foreach ($expectedDirect as $key) {
+            self::assertTrue($byKey[$key]->isDirect(), "'{$key}' must be classified as direct");
+        }
+        foreach ($expectedTransitive as $key) {
+            self::assertFalse($byKey[$key]->isDirect(), "'{$key}' must be classified as transitive");
+        }
+    }
+
+    public function testMalformedComposerJsonLogsErrorAndDefaultsAllExtensionsToDirect(): void
+    {
+        $this->loadDirectIndirectFixture('MalformedComposerJson');
+
+        $this->logger->expects(self::atLeastOnce())
+            ->method('error')
+            ->with('Malformed composer.json', self::callback(
+                static fn (array $context): bool => isset($context['path']) && isset($context['error']),
+            ));
+
+        $result = $this->service->discoverExtensions($this->tempDir);
+
+        self::assertTrue($result->isSuccessful());
+        self::assertCount(1, $result->getExtensions());
+        self::assertTrue($result->getExtensions()[0]->isDirect(), 'Malformed composer.json must default extensions to direct');
     }
 }

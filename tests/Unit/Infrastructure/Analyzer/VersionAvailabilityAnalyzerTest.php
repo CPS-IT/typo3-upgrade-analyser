@@ -278,4 +278,56 @@ class VersionAvailabilityAnalyzerTest extends TestCase
         // vcs_available=Unknown → maxPossibleScore stays 0 → returns 9.0 (no availability)
         $this->assertEquals(9.0, $result->getRiskScore(), 'Unknown VCS availability should yield high risk');
     }
+
+    public function testTransitiveExtensionGetsAdvisoryNote(): void
+    {
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist']]]]];
+        $context = $this->context->withConfiguration($config);
+
+        $this->packagistSource->method('checkAvailability')->willReturn([
+            'packagist_available' => true,
+            'packagist_latest_version' => '2.0.0',
+            'packagist_latest_compatible' => true,
+        ]);
+
+        $transitiveExtension = new Extension(
+            'transitive_ext',
+            'Transitive Extension',
+            new Version('1.0.0'),
+            'local',
+            'vendor/transitive-ext',
+        );
+        $transitiveExtension->setDirect(false);
+
+        $result = $this->analyzer->analyze($transitiveExtension, $context);
+
+        $recommendations = $result->getRecommendations();
+        $found = false;
+        foreach ($recommendations as $rec) {
+            if (str_contains($rec, 'transitive dependency')) {
+                $found = true;
+                break;
+            }
+        }
+        self::assertTrue($found, 'Transitive extension must receive the advisory note in recommendations');
+    }
+
+    public function testDirectExtensionDoesNotGetTransitiveNote(): void
+    {
+        $config = ['analysis' => ['analyzers' => ['version_availability' => ['sources' => ['packagist']]]]];
+        $context = $this->context->withConfiguration($config);
+
+        $this->packagistSource->method('checkAvailability')->willReturn([
+            'packagist_available' => true,
+            'packagist_latest_version' => '2.0.0',
+            'packagist_latest_compatible' => true,
+        ]);
+
+        // $this->extension has isDirect = true by default
+        $result = $this->analyzer->analyze($this->extension, $context);
+
+        foreach ($result->getRecommendations() as $rec) {
+            self::assertStringNotContainsString('transitive dependency', $rec);
+        }
+    }
 }

@@ -29,6 +29,7 @@ class Extension implements \JsonSerializable
     private array $conflicts = [];
     private ?ExtensionMetadata $metadata = null;
     private bool $isActive = false;
+    private bool $isDirect = true;
 
     /**
      * @param list<ExtensionAuthor> $authors
@@ -239,6 +240,16 @@ class Extension implements \JsonSerializable
         $this->isActive = $active;
     }
 
+    public function isDirect(): bool
+    {
+        return $this->isDirect;
+    }
+
+    public function setDirect(bool $isDirect): void
+    {
+        $this->isDirect = $isDirect;
+    }
+
     public function hasComposerManifest(): bool
     {
         return $this->hasComposerName();
@@ -264,6 +275,7 @@ class Extension implements \JsonSerializable
             'em_configuration' => $this->emConfiguration,
             'metadata' => $this->metadata?->toArray(),
             'is_active' => $this->isActive,
+            'is_direct' => $this->isDirect,
             'distribution' => $this->distribution?->toArray(),
             'authors' => array_map(static fn (ExtensionAuthor $a): array => $a->toArray(), $this->authors),
         ];
@@ -278,6 +290,7 @@ class Extension implements \JsonSerializable
             'type' => $this->type,
             'composer_name' => $this->composerName,
             'is_active' => $this->isActive,
+            'is_direct' => $this->isDirect,
             'dependencies_count' => \count($this->dependencies),
             'files_count' => \count($this->files),
             'has_repository_url' => $this->hasRepositoryUrl(),
