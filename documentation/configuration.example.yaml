@@ -3,6 +3,7 @@ analysis:
   targetVersion: '13.4'
   resultCache:
     enabled: true
+    ttl: 3600
   phpVersions:
     - '8.3'
     - '8.4'
@@ -11,6 +12,8 @@ analysis:
       enabled: true
       sources: [ter, packagist, git]
       timeout: 30
+    lines_of_code:
+      enabled: true
     static_analysis:
       enabled: true
       tools: { phpstan: { level: 6, config: null } }
@@ -26,8 +29,18 @@ analysis:
       enabled: true
     fractor:
       enabled: true
+      typoscript:
+        indent_size: 4
+        indent_character: space
+        add_closing_global: true
+        include_empty_line_breaks: true
+        indent_conditions: true
+      xml:
+        indent_size: 4
+        indent_character: space
 reporting:
   formats:
+    - html
     - markdown
   output_directory: var/reports/
   includeCharts: false
