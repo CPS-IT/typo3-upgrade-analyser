@@ -1,60 +1,226 @@
-# Story 2-7: Distinguish Direct and Indirect Extension Dependencies (Issue #150)
+# Story 2.7: Direct/Indirect Extension Distinction
 
-Status: backlog
-
-## GitHub Issue
-
-[#150 — Feature: List direct and indirect extensions](https://github.com/CPS-IT/typo3-upgrade-analyser/issues/150)
-
-## Placement
-
-Epic 2 (Complete Extension Source Coverage), Story 2-7. Placed after Story 2-6 (GitProvider cleanup). Natural companion to Story 2-1 (ComposerSourceParser) — the direct/indirect data is a side effect of reading `composer.json` require keys alongside `composer.lock`.
+Status: ready-for-dev
 
 ## Story
 
 As a developer analyzing a TYPO3 Composer installation,
-I want the report to distinguish between directly required extensions (in `composer.json`) and transitively required extensions (only in `composer.lock`),
-so that I can focus upgrade effort on packages I own and understand that transitive packages will be handled by their direct parent.
+I want the report to distinguish between directly required extensions (declared in `composer.json`) and transitive extensions (only resolved in `composer.lock`),
+so that I can focus upgrade effort on packages I explicitly own and recognize that transitive packages will be handled by their direct parent's maintainer.
 
-## Problem
+## Context
 
-Currently, the tool checks all packages from `composer.lock` equally. This produces false urgency for transitive dependencies like `linawolf/list-type-migration`: if the declaring extension ships a compatible version, the transitive package requires no manual action. Surfacing this distinction prevents noise in the upgrade report.
+**Issue:** [#150 — Feature: List direct and indirect extensions](https://github.com/CPS-IT/typo3-upgrade-analyser/issues/150)
+
+**Reported problem:** The tool currently checks all packages from `vendor/composer/installed.json` equally. This produces false urgency for transitive dependencies — e.g. `linawolf/list-type-migration` is not in the project's `composer.json` but is required by a third-party extension. If that third-party extension releases a compatible version, the project owner does not need to act on `linawolf/list-type-migration` at all.
+
+**Scope:** Composer-managed installations only. Legacy (non-Composer) installations have no transitive mechanism — all extensions default to `isDirect = true`. A full dependency tree is **out of scope** for this story; the direct/indirect boolean flag is sufficient.
 
 ## Acceptance Criteria
 
-1. Each extension in the analysis result has an `isDirect` boolean property:
-   - `true` if the package is listed in `composer.json` `require` or `require-dev`
-   - `false` if it is only present in `composer.lock` (transitive dependency)
-2. The HTML and JSON reports show a visual or data distinction between direct and indirect extensions.
-3. Indirect extensions that have a compatible version available via their direct parent do not generate a HIGH risk warning in the report (they may still appear as informational).
-4. A dependency tree is not required in this story — the direct/indirect flag is sufficient.
-5. Legacy installations (without `composer.json`) treat all discovered extensions as "direct" (no distinction possible).
-6. PHPStan Level 8 zero errors, all tests green.
+### AC-1: `Extension` entity carries `isDirect` flag
+
+1. `Extension` gains `private bool $isDirect = true`
+2. `setDirect(bool $isDirect): void` setter added
+3. `isDirect(): bool` getter added
+4. `toArray()` includes `'is_direct' => $this->isDirect`
+5. `jsonSerialize()` includes `'is_direct' => $this->isDirect`
+6. Default is `true` — preserves correct behavior for all non-Composer discovery paths and legacy installs
+
+### AC-2: Discovery marks transitive extensions
+
+7. `ExtensionDiscoveryService::discoverFromComposerInstalled()` reads the root `composer.json` `require` AND `require-dev` keys once per call, before the package loop
+8. Keys are normalized to lowercase; the result is a `array<string, true>` lookup set
+9. For each extension: if the package's `name` is NOT present in the lookup set, `$extension->setDirect(false)` is called
+10. The lookup set is built once and reused; no repeated file reads inside the loop
+11. If `composer.json` is absent or its JSON is malformed, the lookup set is empty and all extensions keep the default `isDirect = true` — no exception thrown, no logged warning (absence is normal for edge cases)
+
+### AC-3: Report context exposes the flag
+
+12. `VersionAvailabilityDataProvider` includes `'is_direct' => $extension->isDirect()` in its data array (alongside `distribution_type` at line ~72)
+13. HTML main-report version-availability table: transitive rows get a subtle `(transitive)` inline label after the extension key — no separate column, no layout change
+14. HTML per-extension detail page: "Dependency type: Direct" or "Dependency type: Transitive" in the version-availability overview section
+15. Markdown version-availability table: add a `Direct` column after the extension key (`✅` = direct, `↳` = transitive)
+16. JSON report: `"is_direct": true|false` is included at the same level as `"distribution_type"` in the analyzer data
+
+### AC-4: Recommendation note for transitive extensions
+
+17. `VersionAvailabilityAnalyzer::addRecommendations()` appends a note when `!$extension->isDirect()`:
+    `"This extension is a transitive dependency. Its upgrade is the responsibility of the declaring package's maintainer, not this project."`
+18. The note is appended after existing availability-based recommendations — it does not suppress any existing recommendation
+
+### AC-5: Risk scores unchanged
+
+19. `calculateRiskScore()` is not modified — availability-based scoring applies equally to direct and transitive extensions. Risk score adjustments based on dependency depth are out of scope.
+
+### AC-6: Test coverage
+
+20. Unit test: `Extension` — `isDirect()` defaults `true`; `setDirect(false)` changes it; `toArray()` and `jsonSerialize()` include the correct value
+21. Unit test: `ExtensionDiscoveryService` — given `composer.json` with `"require": {"vendor/ext-a": "^1.0"}` and `installed.json` containing both `vendor/ext-a` and `vendor/ext-b` (both `type: typo3-cms-extension`): `ext-a` gets `isDirect = true`, `ext-b` gets `isDirect = false`
+22. Unit test: `ExtensionDiscoveryService` — package in `require-dev` only → still marked `isDirect = true`
+23. Unit test: `ExtensionDiscoveryService` — absent `composer.json` → all extensions default `isDirect = true`, no exception
+24. Unit test: `VersionAvailabilityAnalyzer::addRecommendations()` — transitive extension gets the note; direct extension does not
+25. All existing tests pass (no regression)
+26. PHPStan Level 8: 0 errors; `composer lint:php`: 0 issues
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `isDirect` property to `Extension` entity
-  - [ ] Add `isDirect: bool` to the `Extension` class with appropriate getter/setter
-  - [ ] Default: `true` for legacy installations
+- [ ] Task 1: Extend `Extension` entity (AC: 1)
+  - [ ] 1.1 Add `private bool $isDirect = true` with getter and setter
+  - [ ] 1.2 Update `toArray()` and `jsonSerialize()` to include `'is_direct'`
 
-- [ ] Task 2: Populate `isDirect` during extension discovery
-  - [ ] In `ExtensionDiscoveryService` or `ComposerSourceParser`, read `composer.json` `require` + `require-dev` keys
-  - [ ] For each discovered extension, set `isDirect = true` if its Composer name appears in either require section
+- [ ] Task 2: Populate in discovery (AC: 2)
+  - [ ] 2.1 Add `loadDirectPackageNames(string $installationPath): array` private method — reads `composer.json` `require` + `require-dev`, returns lowercase-keyed set
+  - [ ] 2.2 Call it once at the top of `discoverFromComposerInstalled()`, before the package loop
+  - [ ] 2.3 After `createExtensionFromComposerData()`, call `$extension->setDirect(isset($directPackages[strtolower($packageData['name'] ?? '')]))`
 
-- [ ] Task 3: Update version availability analysis
-  - [ ] In `VersionAvailabilityAnalyzer` (or report context builder), skip HIGH risk warning for indirect extensions that have an available parent-compatible version
-  - [ ] Indirect extensions with no clear parent path still get full analysis
+- [ ] Task 3: Thread through reporting (AC: 3)
+  - [ ] 3.1 Add `'is_direct'` to `VersionAvailabilityDataProvider` output
+  - [ ] 3.2 HTML: add `(transitive)` label in `version-availability-table.html.twig`
+  - [ ] 3.3 HTML: add dependency type line in `extension-detail/version-availability-analysis.html.twig`
+  - [ ] 3.4 Markdown: add `Direct` column to `md/partials/main-report/version-availability-table.md.twig`
 
-- [ ] Task 4: Update report templates
-  - [ ] Add "Direct / Indirect" column or badge to HTML report extension table
-  - [ ] Add `is_direct` field to JSON report output
+- [ ] Task 4: Add recommendation note (AC: 4)
+  - [ ] 4.1 Append transitive note in `VersionAvailabilityAnalyzer::addRecommendations()` when `!$extension->isDirect()`
 
-- [ ] Task 5: Tests and quality gate
-  - [ ] Unit tests for direct/indirect detection logic
-  - [ ] Integration test: fixture with known direct and transitive packages
-  - [ ] `composer test` green, `composer static-analysis` zero errors
+- [ ] Task 5: Tests and quality checks (AC: 6)
+  - [ ] 5.1 Unit tests for `Extension` entity changes
+  - [ ] 5.2 Unit tests for `ExtensionDiscoveryService` (direct, transitive, require-dev, absent composer.json)
+  - [ ] 5.3 Unit test for transitive recommendation note in `VersionAvailabilityAnalyzerTest`
+  - [ ] 5.4 `composer test` — all pass
+  - [ ] 5.5 `composer sca:php` — 0 errors; `composer lint:php` — 0 issues
 
-## Notes
+## Dev Notes
 
-Out of scope: full dependency tree visualization. That can be a follow-on story.
-Scope decision to be made at Epic 2 kickoff: include as 2.5 or defer.
+### New private method: `loadDirectPackageNames`
+
+Pattern follows the existing `loadDeclaredVcsUrls()` at `src/Infrastructure/Discovery/ExtensionDiscoveryService.php:460`. Keep them separate — different concerns.
+
+```php
+private function loadDirectPackageNames(string $installationPath): array
+{
+    $composerJsonPath = $installationPath . '/composer.json';
+    if (!is_file($composerJsonPath)) {
+        return [];
+    }
+    $content = @file_get_contents($composerJsonPath);
+    if (false === $content) {
+        return [];
+    }
+    try {
+        $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+        return [];
+    }
+    if (!\is_array($data)) {
+        return [];
+    }
+    $names = [];
+    foreach (array_merge(
+        array_keys($data['require'] ?? []),
+        array_keys($data['require-dev'] ?? [])
+    ) as $name) {
+        if (\is_string($name)) {
+            $names[strtolower($name)] = true;
+        }
+    }
+    return $names;
+}
+```
+
+Usage in `discoverFromComposerInstalled()` — add before the package loop:
+
+```php
+$directPackages = $this->loadDirectPackageNames($installationPath);
+```
+
+Then after `createExtensionFromComposerData()`:
+
+```php
+$packageName = strtolower($packageData['name'] ?? '');
+if ($packageName !== '' && [] !== $directPackages && !isset($directPackages[$packageName])) {
+    $extension->setDirect(false);
+}
+```
+
+The `[] !== $directPackages` guard preserves the "all direct" default when `composer.json` is absent.
+
+### Discovery path: legacy installs
+
+`discoverFromPackageStates()` creates extensions with no composer name. All remain `isDirect = true`. No changes needed.
+
+### Template: HTML main-report table
+
+Avoid adding a column — the table is already wide. Inline label approach:
+
+```twig
+{{ extension.key }}{% if not data.version_analysis.is_direct %} <small class="text-muted">(transitive)</small>{% endif %}
+```
+
+Exact template variable path: check what `data.version_analysis` keys look like in the Twig context — `is_direct` will be added to `VersionAvailabilityDataProvider`'s output array, which feeds into this partial.
+
+### Template: Markdown table
+
+The existing MD table header row in `version-availability-table.md.twig` currently starts with `|` then distribution icon. Add `Direct` column after extension key:
+
+Current column order (roughly): icon | key | version | TER | Packagist | latest | newer | latest-compat | VCS | risk | VCS-latest
+Add: after key → `Direct` (`✅` or `↳`)
+
+### VersionAvailabilityDataProvider location
+
+File: `src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php`
+The `distribution_type` is extracted at line ~72 from `$result->getExtension()->getDistribution()?->getType()`.
+Add adjacent: `'is_direct' => $result->getExtension()->isDirect()`
+
+### Testing patterns
+
+- PHPUnit ^12.5 attributes: `#[CoversClass]`, `#[Test]`, `#[DataProvider]`
+- No `test` prefix on method names; method names describe expected behavior
+- `self::assertTrue()` / `self::assertFalse()` / `self::assertEquals()` — never `$this->`
+- For `ExtensionDiscoveryService` tests: use a temporary directory with a small fixture `composer.json` and `installed.json`, or mock the file reads via a process factory pattern — check how existing `ExtensionDiscoveryServiceTest` is structured before choosing approach
+
+### Files to touch
+
+**Modify (PHP):**
+- `src/Domain/Entity/Extension.php`
+- `src/Infrastructure/Discovery/ExtensionDiscoveryService.php`
+- `src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php`
+- `src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php`
+
+**Modify (Templates):**
+- `resources/templates/html/partials/main-report/version-availability-table.html.twig`
+- `resources/templates/html/partials/extension-detail/version-availability-analysis.html.twig`
+- `resources/templates/md/partials/main-report/version-availability-table.md.twig`
+
+**Modify (Tests):**
+- `tests/Unit/Domain/Entity/ExtensionTest.php` (create if absent)
+- `tests/Unit/Infrastructure/Discovery/ExtensionDiscoveryServiceTest.php`
+- `tests/Unit/Infrastructure/Analyzer/VersionAvailabilityAnalyzerTest.php`
+
+### Out of scope
+
+- Full dependency tree (follow-on story if requested)
+- Risk score reduction for transitive deps (separate decision, deferred)
+- Filtering or grouping report sections by dependency type (deferred)
+- `excludePattern`/`includePattern` config option (mentioned in issue comments as alternative — not chosen)
+
+### References
+
+- [Source: src/Domain/Entity/Extension.php] — entity to extend; no `isDirect` exists today
+- [Source: src/Infrastructure/Discovery/ExtensionDiscoveryService.php:387–452] — `discoverFromComposerInstalled()` where marking logic goes
+- [Source: src/Infrastructure/Discovery/ExtensionDiscoveryService.php:460–502] — `loadDeclaredVcsUrls()` pattern to follow for new helper
+- [Source: src/Infrastructure/Analyzer/VersionAvailabilityAnalyzer.php:226–258] — `addRecommendations()` to extend
+- [Source: src/Infrastructure/Reporting/Provider/VersionAvailabilityDataProvider.php:72] — `distribution_type` extraction pattern
+- [Issue: https://github.com/CPS-IT/typo3-upgrade-analyser/issues/150]
+
+## Dev Agent Record
+
+### Agent Model Used
+
+claude-sonnet-4-6
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List
