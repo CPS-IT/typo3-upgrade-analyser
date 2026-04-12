@@ -225,34 +225,6 @@ services:
 
   PhpParser\ParserFactory: ~
 
-  # Git Provider Factory and implementations
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory:
-    arguments:
-      - [
-          '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient'
-        ]
-      - '@logger'
-
-  # Git Provider Implementations with shared services
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient:
-    arguments:
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface'
-      - '@logger'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Repository\RepositoryUrlHandlerInterface'
-
-  # Git Repository Analyzer
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer:
-    arguments:
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser'
-      - '@logger'
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient'
-
-  # Git Version Parser
-  CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser:
-    arguments:
-      - '@CPSIT\UpgradeAnalyzer\Infrastructure\Version\ComposerConstraintCheckerInterface'
-
   # Configuration Parsers
   CPSIT\UpgradeAnalyzer\Infrastructure\Parser\:
     resource: '../src/Infrastructure/Parser/*'

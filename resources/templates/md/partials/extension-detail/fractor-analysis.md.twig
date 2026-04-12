@@ -21,6 +21,8 @@
 {% if count > 0 %}
 - **{{ severity|upper }}:** {{ count }} findings
 {% endif %}
+{% endfor %}
+{% endif %}
 
 ### Affected Files
 {% if fractor_analysis.file_paths and fractor_analysis.file_paths is not empty %}

@@ -17,9 +17,6 @@ use CPSIT\UpgradeAnalyzer\Domain\Entity\Extension;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\AnalysisContext;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Cache\CacheService;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryHealth;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryMetadata;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitTag;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientServiceInterface;
 use PHPUnit\Framework\TestCase;
@@ -388,41 +385,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
             currentVersion: new Version($currentVersion),
             targetVersion: new Version($targetVersion),
         );
-    }
-
-    /**
-     * Assert that git repository health metrics are reasonable.
-     */
-    protected function assertGitRepositoryHealthValid(GitRepositoryHealth $health): void
-    {
-        $this->assertGreaterThanOrEqual(0, $health->getStarCount());
-        $this->assertGreaterThanOrEqual(0, $health->getForkCount());
-        $this->assertGreaterThanOrEqual(0, $health->getOpenIssuesCount());
-        $this->assertGreaterThanOrEqual(0, $health->getClosedIssuesCount());
-        $this->assertGreaterThanOrEqual(0, $health->getContributorCount());
-    }
-
-    /**
-     * Assert that git repository metadata is valid.
-     */
-    protected function assertGitRepositoryMetadataValid(GitRepositoryMetadata $metadata): void
-    {
-        $this->assertNotEmpty($metadata->getName());
-        // Description is string, archived and fork status are boolean by design
-        $this->assertGreaterThanOrEqual(0, $metadata->getStarCount());
-        $this->assertGreaterThanOrEqual(0, $metadata->getForkCount());
-        $this->assertNotEmpty($metadata->getDefaultBranch());
-    }
-
-    /**
-     * Assert that git tags collection is valid.
-     */
-    protected function assertGitTagsValid(array $tags): void
-    {
-        foreach ($tags as $tag) {
-            $this->assertInstanceOf(GitTag::class, $tag);
-            $this->assertNotEmpty($tag->getName());
-        }
     }
 
     /**
