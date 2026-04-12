@@ -1,6 +1,6 @@
 # Story P2-1: Code Quality Audit — Discovery, ExternalTool, Reporting
 
-Status: review
+Status: done
 
 ## GitHub Issue
 

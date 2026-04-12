@@ -1,6 +1,6 @@
 # Story 2.5a: Fix VCS Detection for Non-Packagist Packages
 
-Status: review
+Status: done
 
 ## Story
 

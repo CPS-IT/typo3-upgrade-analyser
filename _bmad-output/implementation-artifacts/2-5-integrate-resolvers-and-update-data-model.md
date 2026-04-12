@@ -1,6 +1,6 @@
 # Story 2.5: VCS Resolution Integration, Data Model Migration, and Template Updates
 
-Status: review
+Status: done
 
 ## Story
 

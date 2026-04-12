@@ -1,6 +1,6 @@
 # Story P2-4: Fix Extension State Detection for Composer Projects (Issue #163)
 
-Status: review
+Status: done
 
 ## GitHub Issue
 

@@ -1,6 +1,6 @@
 # Story 2.5b: Rewrite VCS Source with Git-Native Resolution
 
-Status: review
+Status: done
 
 ## Story
 
