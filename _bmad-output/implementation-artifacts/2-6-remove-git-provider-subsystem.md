@@ -1,6 +1,6 @@
 # Story 2.6: Legacy Git Provider Cleanup
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -87,57 +87,57 @@ alongside `VcsSource`. This story deletes all of it.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Grep all deleted class FQCNs in surviving source before touching anything
-  - [ ] 1.1 Run: `grep -rn "GitProvider\|GitRepositoryAnalyzer\|GitRepositoryHealth\|GitRepositoryInfo\|GitRepositoryMetadata\|GitTag\|GitVersionParser\|GitAnalysisException\|GenericGitResolver\|GitSource" src/ --include="*.php" -l`
-  - [ ] 1.2 Confirm hits are only the files being deleted (not in VcsSource, PackagistClient, etc.)
-  - [ ] 1.3 Confirm `RepositoryUrlHandler` is NOT in the hit list (it is used by PackagistClient — keep it)
-  - [ ] 1.4 Confirm `GitVersionResolver.php` is NOT in the hit list (it is the new resolver from 2-5b — keep it)
+- [x] Task 1: Grep all deleted class FQCNs in surviving source before touching anything
+  - [x] 1.1 Run: `grep -rn "GitProvider\|GitRepositoryAnalyzer\|GitRepositoryHealth\|GitRepositoryInfo\|GitRepositoryMetadata\|GitTag\|GitVersionParser\|GitAnalysisException\|GenericGitResolver\|GitSource" src/ --include="*.php" -l`
+  - [x] 1.2 Confirm hits are only the files being deleted (not in VcsSource, PackagistClient, etc.)
+  - [x] 1.3 Confirm `RepositoryUrlHandler` is NOT in the hit list (it is used by PackagistClient — keep it)
+  - [x] 1.4 Confirm `GitVersionResolver.php` is NOT in the hit list (it is the new resolver from 2-5b — keep it)
 
-- [ ] Task 2: Delete GitProvider subsystem (AC-1)
-  - [ ] 2.1 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderInterface.php`
-  - [ ] 2.2 Delete `src/Infrastructure/ExternalTool/GitProvider/AbstractGitProvider.php`
-  - [ ] 2.3 Delete `src/Infrastructure/ExternalTool/GitProvider/GitHubClient.php`
-  - [ ] 2.4 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderFactory.php`
-  - [ ] 2.5 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderException.php`
-  - [ ] 2.6 Remove now-empty `src/Infrastructure/ExternalTool/GitProvider/` directory
+- [x] Task 2: Delete GitProvider subsystem (AC-1)
+  - [x] 2.1 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderInterface.php`
+  - [x] 2.2 Delete `src/Infrastructure/ExternalTool/GitProvider/AbstractGitProvider.php`
+  - [x] 2.3 Delete `src/Infrastructure/ExternalTool/GitProvider/GitHubClient.php`
+  - [x] 2.4 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderFactory.php`
+  - [x] 2.5 Delete `src/Infrastructure/ExternalTool/GitProvider/GitProviderException.php`
+  - [x] 2.6 Remove now-empty `src/Infrastructure/ExternalTool/GitProvider/` directory
 
-- [ ] Task 3: Delete orphaned ExternalTool classes (AC-2)
-  - [ ] 3.1 Delete `src/Infrastructure/ExternalTool/GenericGitResolver.php`
-  - [ ] 3.2 Delete `src/Infrastructure/ExternalTool/GitRepositoryAnalyzer.php`
-  - [ ] 3.3 Delete `src/Infrastructure/ExternalTool/GitRepositoryHealth.php`
-  - [ ] 3.4 Delete `src/Infrastructure/ExternalTool/GitRepositoryInfo.php`
-  - [ ] 3.5 Delete `src/Infrastructure/ExternalTool/GitRepositoryMetadata.php`
-  - [ ] 3.6 Delete `src/Infrastructure/ExternalTool/GitTag.php`
-  - [ ] 3.7 Delete `src/Infrastructure/ExternalTool/GitVersionParser.php`
-  - [ ] 3.8 Delete `src/Infrastructure/ExternalTool/GitAnalysisException.php`
+- [x] Task 3: Delete orphaned ExternalTool classes (AC-2)
+  - [x] 3.1 Delete `src/Infrastructure/ExternalTool/GenericGitResolver.php`
+  - [x] 3.2 Delete `src/Infrastructure/ExternalTool/GitRepositoryAnalyzer.php`
+  - [x] 3.3 Delete `src/Infrastructure/ExternalTool/GitRepositoryHealth.php`
+  - [x] 3.4 Delete `src/Infrastructure/ExternalTool/GitRepositoryInfo.php`
+  - [x] 3.5 Delete `src/Infrastructure/ExternalTool/GitRepositoryMetadata.php`
+  - [x] 3.6 Delete `src/Infrastructure/ExternalTool/GitTag.php`
+  - [x] 3.7 Delete `src/Infrastructure/ExternalTool/GitVersionParser.php`
+  - [x] 3.8 Delete `src/Infrastructure/ExternalTool/GitAnalysisException.php`
 
-- [ ] Task 4: Delete legacy GitSource (AC-3)
-  - [ ] 4.1 Delete `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php`
+- [x] Task 4: Delete legacy GitSource (AC-3)
+  - [x] 4.1 Delete `src/Infrastructure/Analyzer/VersionAvailability/Source/GitSource.php`
 
-- [ ] Task 5: Clean up services.yaml (AC-4)
-  - [ ] 5.1 Remove `GitProviderFactory` service block from `config/services.yaml`
-  - [ ] 5.2 Remove `GitHubClient` service block from `config/services.yaml`
-  - [ ] 5.3 Remove `GitRepositoryAnalyzer` service block from `config/services.yaml`
-  - [ ] 5.4 Remove `GitVersionParser` service block from `config/services.yaml`
-  - [ ] 5.5 Verify no other reference to deleted FQCNs remains in `services.yaml`
+- [x] Task 5: Clean up services.yaml (AC-4)
+  - [x] 5.1 Remove `GitProviderFactory` service block from `config/services.yaml`
+  - [x] 5.2 Remove `GitHubClient` service block from `config/services.yaml`
+  - [x] 5.3 Remove `GitRepositoryAnalyzer` service block from `config/services.yaml`
+  - [x] 5.4 Remove `GitVersionParser` service block from `config/services.yaml`
+  - [x] 5.5 Verify no other reference to deleted FQCNs remains in `services.yaml`
 
-- [ ] Task 6: Delete associated test files (AC-6)
-  - [ ] 6.1 Delete `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php`
-  - [ ] 6.2 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/AbstractGitProviderTest.php`
-  - [ ] 6.3 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/GitHubClientTest.php`
-  - [ ] 6.4 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/GitProviderFactoryTest.php`
-  - [ ] 6.5 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryAnalyzerTest.php`
-  - [ ] 6.6 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryHealthTest.php` (if exists)
-  - [ ] 6.7 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryMetadataTest.php` (if exists)
-  - [ ] 6.8 Delete `tests/Unit/Infrastructure/ExternalTool/GitTagTest.php` (if exists)
-  - [ ] 6.9 Delete `tests/Unit/Infrastructure/ExternalTool/GitVersionParserTest.php`
-  - [ ] 6.10 Delete `tests/Unit/Infrastructure/Analyzer/VersionAvailability/Source/GitSourceTest.php`
-  - [ ] 6.11 Remove now-empty `tests/Unit/Infrastructure/ExternalTool/GitProvider/` directory
+- [x] Task 6: Delete associated test files (AC-6)
+  - [x] 6.1 Delete `tests/Unit/Infrastructure/ExternalTool/GenericGitResolverTest.php`
+  - [x] 6.2 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/AbstractGitProviderTest.php`
+  - [x] 6.3 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/GitHubClientTest.php`
+  - [x] 6.4 Delete `tests/Unit/Infrastructure/ExternalTool/GitProvider/GitProviderFactoryTest.php`
+  - [x] 6.5 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryAnalyzerTest.php`
+  - [x] 6.6 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryHealthTest.php` (if exists)
+  - [x] 6.7 Delete `tests/Unit/Infrastructure/ExternalTool/GitRepositoryMetadataTest.php` (if exists)
+  - [x] 6.8 Delete `tests/Unit/Infrastructure/ExternalTool/GitTagTest.php` (if exists)
+  - [x] 6.9 Delete `tests/Unit/Infrastructure/ExternalTool/GitVersionParserTest.php`
+  - [x] 6.10 Delete `tests/Unit/Infrastructure/Analyzer/VersionAvailability/Source/GitSourceTest.php`
+  - [x] 6.11 Remove now-empty `tests/Unit/Infrastructure/ExternalTool/GitProvider/` directory
 
-- [ ] Task 7: Full verification (AC-7)
-  - [ ] 7.1 `composer test` — all tests pass
-  - [ ] 7.2 `composer sca:php` — PHPStan Level 8: 0 errors
-  - [ ] 7.3 `composer lint:php` — 0 issues
+- [x] Task 7: Full verification (AC-7)
+  - [x] 7.1 `composer test` — all tests pass
+  - [x] 7.2 `composer sca:php` — PHPStan Level 8: 0 errors
+  - [x] 7.3 `composer lint:php` — 0 issues
 
 ## Dev Notes
 
@@ -204,7 +204,15 @@ The `RepositoryUrlHandlerInterface` alias and the `RepositoryUrlHandler` service
 
 ### Implementation Notes
 
-_(to be filled in after implementation)_
+Pure deletion story. All 14 source files and 10+ test files removed without touching any surviving code.
+
+Additional scope beyond AC-6: integration test files also referenced deleted classes and required cleanup:
+- `tests/Integration/ExternalTool/GitRepositoryIntegrationTestTest.php` — deleted (entire file was for deleted subsystem)
+- `tests/Helper/validate_git_simple.php` — deleted (helper script for deleted subsystem)
+- `tests/Integration/AbstractIntegrationTestCase.php` — removed 3 helper methods (`assertGitRepositoryHealthValid`, `assertGitRepositoryMetadataValid`, `assertGitTagsValid`) and their imports
+- `tests/Integration/PerformanceReliabilityTestCase.php` — removed git client instantiation and `GitSource` from both `testDiverseNetworkConditions()` and `createAnalyzer()`; analyzer still functional with TER + Packagist sources
+
+All ACs satisfied. Quality gate: 1676 tests pass, PHPStan Level 8 clean, lint clean.
 
 ## File List
 
@@ -242,3 +250,4 @@ _(to be filled in after implementation)_
 ## Change Log
 
 - 2026-04-10: Story created — full deletion scope documented based on codebase audit.
+- 2026-04-12: Implementation complete — all legacy git provider files deleted, services.yaml cleaned, integration test files updated, all quality gates pass.

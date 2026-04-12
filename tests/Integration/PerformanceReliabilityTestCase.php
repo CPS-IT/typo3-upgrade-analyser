@@ -12,14 +12,9 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Integration;
 
-use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\GitSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\PackagistSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailability\Source\TerSource;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\VersionAvailabilityAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitHubClient;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitProvider\GitProviderFactory;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitRepositoryAnalyzer;
-use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\GitVersionParser;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\PackagistClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\ExternalTool\TerApiClient;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Http\HttpClientService;
@@ -416,20 +411,6 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
             $httpClientService = new HttpClientService($client, $this->createLogger());
             $terClient = new TerApiClient($httpClientService, $this->createLogger());
 
-            $gitHubClient = new GitHubClient(
-                $httpClientService,
-                $this->createLogger(),
-                new RepositoryUrlHandler(),
-                $this->getGitHubToken(),
-            );
-
-            $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
-            $gitAnalyzer = new GitRepositoryAnalyzer(
-                $providerFactory,
-                new GitVersionParser(new ComposerConstraintChecker()),
-                $this->createLogger(),
-            );
-
             $packagistClientInner = new PackagistClient(
                 $httpClientService,
                 $this->createLogger(),
@@ -443,7 +424,6 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
                 [
                     new TerSource($terClient, $this->createLogger(), $this->createCacheService()),
                     new PackagistSource($packagistClientInner, $this->createLogger(), $this->createCacheService()),
-                    new GitSource($gitAnalyzer, $this->createLogger(), $this->createCacheService()),
                 ],
             );
 
@@ -484,27 +464,12 @@ class PerformanceReliabilityTestCase extends AbstractIntegrationTestCase
             new RepositoryUrlHandler(),
         );
 
-        $gitHubClient = new GitHubClient(
-            $this->createHttpClientService(),
-            $this->createLogger(),
-            new RepositoryUrlHandler(),
-            $this->getGitHubToken(),
-        );
-
-        $providerFactory = new GitProviderFactory([$gitHubClient], $this->createLogger());
-        $gitAnalyzer = new GitRepositoryAnalyzer(
-            $providerFactory,
-            new GitVersionParser(new ComposerConstraintChecker()),
-            $this->createLogger(),
-        );
-
         return new VersionAvailabilityAnalyzer(
             $this->createCacheService(),
             $this->createLogger(),
             [
                 new TerSource($terClient, $this->createLogger(), $this->createCacheService()),
                 new PackagistSource($packagistClient, $this->createLogger(), $this->createCacheService()),
-                new GitSource($gitAnalyzer, $this->createLogger(), $this->createCacheService()),
             ],
         );
     }
