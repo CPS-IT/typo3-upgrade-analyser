@@ -83,7 +83,7 @@ final class CacheServiceTest extends TestCase
         ];
 
         // Allow any debug calls - we test functionality, not logging details
-        $this->logger->expects($this->any())->method('debug');
+        $this->logger->method('debug');
 
         $result = $this->cacheService->set($key, $data);
         $this->assertTrue($result);
@@ -98,7 +98,7 @@ final class CacheServiceTest extends TestCase
         $this->assertFalse(is_dir($cacheDir));
 
         // Allow any debug calls, we'll verify the directory creation by filesystem check
-        $this->logger->expects($this->any())->method('debug');
+        $this->logger->method('debug');
 
         $result = $this->cacheService->set('test_key', ['data' => 'value']);
         $this->assertTrue($result);

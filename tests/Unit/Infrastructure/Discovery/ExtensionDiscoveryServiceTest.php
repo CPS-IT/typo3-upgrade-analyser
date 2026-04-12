@@ -118,8 +118,8 @@ final class ExtensionDiscoveryServiceTest extends TestCase
     public function testDiscoverExtensionsWithEmptyInstallation(): void
     {
         // Allow any logging calls - we focus on testing functionality, not logging details
-        $this->logger->expects($this->any())->method('info');
-        $this->logger->expects($this->any())->method('debug');
+        $this->logger->method('info');
+        $this->logger->method('debug');
 
         $result = $this->service->discoverExtensions($this->tempDir);
 
@@ -444,8 +444,8 @@ final class ExtensionDiscoveryServiceTest extends TestCase
             ->willReturn($cachedData);
 
         // Allow any logging calls for this test - focus on functionality
-        $this->logger->expects($this->any())->method('debug');
-        $this->logger->expects($this->any())->method('info');
+        $this->logger->method('debug');
+        $this->logger->method('info');
 
         $result = $this->service->discoverExtensions($this->tempDir);
 
@@ -529,9 +529,9 @@ final class ExtensionDiscoveryServiceTest extends TestCase
         file_put_contents($installedJsonPath, '{"packages": [invalid json');
 
         // Allow any error logging calls for this test - focus on functionality
-        $this->logger->expects($this->any())->method('error');
-        $this->logger->expects($this->any())->method('info');
-        $this->logger->expects($this->any())->method('debug');
+        $this->logger->method('error');
+        $this->logger->method('info');
+        $this->logger->method('debug');
 
         $result = $this->service->discoverExtensions($this->tempDir);
 
