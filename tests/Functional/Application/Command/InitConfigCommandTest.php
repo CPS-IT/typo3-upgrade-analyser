@@ -10,12 +10,13 @@ declare(strict_types=1);
  * of the License or any later version.
  */
 
-namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
+namespace CPSIT\UpgradeAnalyzer\Tests\Functional\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\InitConfigCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Configuration\ConfigurationService;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -24,6 +25,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(InitConfigCommand::class)]
+#[Group('functional')]
 #[AllowMockObjectsWithoutExpectations]
 class InitConfigCommandTest extends TestCase
 {

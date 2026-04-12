@@ -10,7 +10,7 @@ declare(strict_types=1);
  * of the License or any later version.
  */
 
-namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Application\Command;
+namespace CPSIT\UpgradeAnalyzer\Tests\Functional\Application\Command;
 
 use CPSIT\UpgradeAnalyzer\Application\Command\AnalyzeCommand;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\AnalyzerInterface;
@@ -22,6 +22,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Discovery\InstallationDiscoveryServiceI
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportService;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -30,6 +31,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(AnalyzeCommand::class)]
+#[Group('functional')]
 #[AllowMockObjectsWithoutExpectations]
 class AnalyzeCommandTest extends TestCase
 {
@@ -121,19 +123,28 @@ class AnalyzeCommandTest extends TestCase
 
         try {
             // Mock the configuration service methods
-            $this->configurationService->expects(self::any())
+            $this->configurationService
                 ->method('withConfigPath')
                 ->willReturn($this->configurationService);
 
-            $this->configurationService->expects(self::any())
+            $this->configurationService
                 ->method('getInstallationPath')
                 ->willReturn($tempDir);
 
-            $this->configurationService->expects(self::any())
+            $this->configurationService
+                ->method('getAll')
+                ->willReturn([
+                    'analysis' => [
+                        'installation_path' => $tempDir,
+                        'target_version' => '12.4',
+                    ],
+                ]);
+
+            $this->configurationService
                 ->method('getTargetVersion')
                 ->willReturn('12.4');
 
-            $this->configurationService->expects(self::any())
+            $this->configurationService
                 ->method('get')
                 ->willReturnMap([
                     ['reporting.output_directory', 'var/reports/', $tempDir],
@@ -142,16 +153,16 @@ class AnalyzeCommandTest extends TestCase
 
             // Mock discovery services to return successful results
             $installationResult = InstallationDiscoveryResult::failed('Installation not found');
-            $this->installationDiscovery->expects(self::once())
+            $this->installationDiscovery->expects($this->once())
                 ->method('discoverInstallation')
                 ->willReturn($installationResult);
 
             $extensionResult = ExtensionDiscoveryResult::success([], ['PackageStates.php']);
-            $this->extensionDiscovery->expects(self::once())
+            $this->extensionDiscovery->expects($this->once())
                 ->method('discoverExtensions')
                 ->willReturn($extensionResult);
 
-            $this->logger->expects(self::atLeastOnce())
+            $this->logger->expects($this->atLeastOnce())
                 ->method('info');
 
             $this->commandTester->execute([
