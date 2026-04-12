@@ -23,6 +23,7 @@ class Version implements \Stringable
     private ?string $suffix;
     private bool $isBranchVersion = false;
     private ?string $originalVersion = null;
+    private bool $hasPatch = false;
 
     public function __construct(string $version)
     {
@@ -49,6 +50,20 @@ class Version implements \Stringable
         return $this->patch;
     }
 
+    /**
+     * Returns true when the patch number was explicitly present in the input string.
+     * Returns false when only major.minor was given (patch defaulted to 0).
+     *
+     * Important: this flag is preserved by toString() — a Version constructed from
+     * a two-component string (e.g. '13.4') will round-trip back to '13.4', keeping
+     * hasPatch() === false. Do NOT reconstruct a Version from version->toString()
+     * when the hasPatch distinction matters; use the original string instead.
+     */
+    public function hasPatch(): bool
+    {
+        return $this->hasPatch;
+    }
+
     public function getSuffix(): ?string
     {
         return $this->suffix;
@@ -61,7 +76,14 @@ class Version implements \Stringable
             return $this->originalVersion;
         }
 
-        $version = "{$this->major}.{$this->minor}.{$this->patch}";
+        // Preserve the original component count so that round-trips via toString() keep
+        // hasPatch() correct. A Version('13.4') serialises back to '13.4', not '13.4.0'.
+        if ($this->hasPatch) {
+            $version = "{$this->major}.{$this->minor}.{$this->patch}";
+        } else {
+            $version = "{$this->major}.{$this->minor}";
+        }
+
         if (null !== $this->suffix) {
             $version .= "-{$this->suffix}";
         }
@@ -152,10 +174,12 @@ class Version implements \Stringable
         $version = ltrim($version, 'v^~>=<');
 
         // Handle constraint formats like "^12.4" or "~12.4.0"
-        if (preg_match('/^[\^~>=<]*(\d+)\.(\d+)(?:\.(\d+))?(?:-([a-zA-Z0-9\-\.]+))?/', $version, $matches)) {
+        if (preg_match('/^[\^~>=<]*(\d+)\.(\d+)(?:\.(\d+))?(?:-([a-zA-Z0-9\-\.]+))?$/', $version, $matches)) {
+            $patchStr = $matches[3] ?? null;
             $this->major = (int) $matches[1];
             $this->minor = (int) $matches[2];
-            $this->patch = isset($matches[3]) ? (int) $matches[3] : 0;
+            $this->hasPatch = null !== $patchStr;
+            $this->patch = null !== $patchStr ? (int) $patchStr : 0;
             $this->suffix = $matches[4] ?? null;
         } else {
             throw new \InvalidArgumentException("Invalid version format: $version");
