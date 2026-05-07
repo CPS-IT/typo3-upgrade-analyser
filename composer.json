@@ -92,6 +92,7 @@
     "lint:editorconfig": "ec -n",
     "lint:php": "php-cs-fixer fix --dry-run",
     "lint:rector": "rector process --dry-run",
+    "phpstan:baseline": "phpstan --generate-baseline=phpstan-baseline.neon --allow-empty-baseline",
     "sbom": "@composer CycloneDX:make-sbom --output-file=sbom.json --output-format=JSON --validate",
     "sca": [
       "@sca:php"
@@ -118,6 +119,7 @@
     "lint:editorconfig": "Check EditorConfig compliance without modifying files",
     "lint:php": "Check PHP coding style without modifying files",
     "lint:rector": "Check Rector rules without applying changes",
+    "phpstan:baseline": "Generate Phpstan Baseline",
     "sbom": "Create a software bill of material",
     "sca": "Run static code analysis (PHPStan)",
     "sca:php": "Run PHPStan static analysis with 2GB memory limit",
