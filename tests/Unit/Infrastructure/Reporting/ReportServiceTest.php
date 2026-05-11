@@ -151,14 +151,16 @@ class ReportServiceTest extends TestCase
         // Assert: both formats produce a result, markdown has an error, json succeeds
         self::assertCount(2, $results);
 
-        $markdownResult = $results[0];
-        self::assertSame('report_markdown', $markdownResult->getId());
-        self::assertNotEmpty($markdownResult->getError());
-        self::assertStringContainsString('Twig render failed', $markdownResult->getError());
+        $byId = [];
+        foreach ($results as $r) {
+            $byId[$r->getId()] = $r;
+        }
+        self::assertArrayHasKey('report_markdown', $byId);
+        self::assertArrayHasKey('report_json', $byId);
 
-        $jsonResult = $results[1];
-        self::assertSame('report_json', $jsonResult->getId());
-        self::assertEmpty($jsonResult->getError());
+        self::assertNotEmpty($byId['report_markdown']->getError());
+        self::assertStringContainsString('Twig render failed', $byId['report_markdown']->getError());
+        self::assertEmpty($byId['report_json']->getError());
     }
 
     public function testGenerateReportHandlesErrors(): void
