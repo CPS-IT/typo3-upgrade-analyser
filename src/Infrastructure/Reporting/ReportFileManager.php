@@ -267,7 +267,11 @@ class ReportFileManager
 
     private function writeFile(string $path, string $content): void
     {
-        @file_put_contents($path, $content);
+        $written = file_put_contents($path, $content);
+        if (false === $written) {
+            $error = error_get_last();
+            throw new \RuntimeException(\sprintf('Failed to write report file "%s": %s', $path, $error['message'] ?? 'unknown error'));
+        }
     }
 
     private function getFileSize(string $path): int

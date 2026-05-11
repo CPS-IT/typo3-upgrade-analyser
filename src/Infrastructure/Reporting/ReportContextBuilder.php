@@ -73,7 +73,8 @@ readonly class ReportContextBuilder
         foreach ($extensions as $extension) {
             $extensionResults = array_filter(
                 $analysisResults,
-                static fn (ResultInterface $r): bool => $r instanceof AnalysisResult && $r->getExtension()->getKey() === $extension->getKey(),
+                static fn (ResultInterface $r): bool => $r instanceof AnalysisResult
+                    && $r->getExtension()->getKey() === $extension->getKey(),
             );
 
             $extensionContext = [
@@ -114,8 +115,8 @@ readonly class ReportContextBuilder
             'extension_data' => $extensionData,
             'target_version' => $targetVersion ?? '13.4', // Default fallback
             'discovery' => [
-                'installation' => reset($installationDiscovery) ?: null,
-                'extensions' => reset($extensionDiscovery) ?: null,
+                'installation' => !empty($installationDiscovery) ? reset($installationDiscovery) : null,
+                'extensions' => !empty($extensionDiscovery) ? reset($extensionDiscovery) : null,
             ],
             'analysis' => [
                 'version_availability' => $versionAnalysis,

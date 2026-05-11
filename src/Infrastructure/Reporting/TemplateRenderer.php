@@ -41,11 +41,11 @@ readonly class TemplateRenderer
     {
         return match ($format) {
             'markdown', 'md' => [
-                'content' => $this->twig->render('md/main-report.md.twig', $context),
+                'content' => $this->renderTemplate('md/main-report.md.twig', $context),
                 'filename' => 'analysis-report.md',
             ],
             'html' => [
-                'content' => $this->twig->render('html/main-report.html.twig', $context),
+                'content' => $this->renderTemplate('html/main-report.html.twig', $context),
                 'filename' => 'analysis-report.html',
             ],
             'json' => [
@@ -103,12 +103,12 @@ readonly class TemplateRenderer
     {
         return match ($format) {
             'markdown' => [
-                'content' => $this->twig->render('md/extension-detail.md.twig', $extensionContext),
+                'content' => $this->renderTemplate('md/extension-detail.md.twig', $extensionContext),
                 'filename' => $extensionKey . '.md',
                 'extension' => $extensionKey,
             ],
             'html' => [
-                'content' => $this->twig->render('html/extension-detail.html.twig', $extensionContext),
+                'content' => $this->renderTemplate('html/extension-detail.html.twig', $extensionContext),
                 'filename' => $extensionKey . '.html',
                 'extension' => $extensionKey,
             ],
@@ -177,12 +177,12 @@ readonly class TemplateRenderer
     {
         return match ($format) {
             'markdown' => [
-                'content' => $this->twig->render('md/rector-findings-detail.md.twig', $findingsContext),
+                'content' => $this->renderTemplate('md/rector-findings-detail.md.twig', $findingsContext),
                 'filename' => $extensionKey . '.md',
                 'extension' => $extensionKey,
             ],
             'html' => [
-                'content' => $this->twig->render('html/rector-findings-detail.html.twig', $findingsContext),
+                'content' => $this->renderTemplate('html/rector-findings-detail.html.twig', $findingsContext),
                 'filename' => $extensionKey . '.html',
                 'extension' => $extensionKey,
             ],
@@ -246,17 +246,33 @@ readonly class TemplateRenderer
     {
         return match ($format) {
             'markdown' => [
-                'content' => $this->twig->render('md/fractor-findings-detail.md.twig', $findingsContext),
+                'content' => $this->renderTemplate('md/fractor-findings-detail.md.twig', $findingsContext),
                 'filename' => $extensionKey . '.md',
                 'extension' => $extensionKey,
             ],
             'html' => [
-                'content' => $this->twig->render('html/fractor-findings-detail.html.twig', $findingsContext),
+                'content' => $this->renderTemplate('html/fractor-findings-detail.html.twig', $findingsContext),
                 'filename' => $extensionKey . '.html',
                 'extension' => $extensionKey,
             ],
             default => null, // Skip unsupported formats
         };
+    }
+
+    /**
+     * Render a Twig template, wrapping any Twig errors in a RuntimeException.
+     *
+     * @param array<string, mixed> $context
+     *
+     * @throws \RuntimeException
+     */
+    private function renderTemplate(string $template, array $context): string
+    {
+        try {
+            return $this->twig->render($template, $context);
+        } catch (\Twig\Error\Error $e) {
+            throw new \RuntimeException("Twig render failed for template '{$template}': " . $e->getMessage(), 0, $e);
+        }
     }
 
     /**

@@ -20,6 +20,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment as TwigEnvironment;
+use Twig\Error\RuntimeError as TwigRuntimeError;
 
 #[AllowMockObjectsWithoutExpectations]
 class TemplateRendererTest extends TestCase
@@ -463,6 +464,36 @@ class TemplateRendererTest extends TestCase
 
         // Assert
         self::assertEmpty($result);
+    }
+
+    public function testRenderMainReportThrowsRuntimeExceptionOnTwigError(): void
+    {
+        $this->twig->method('render')
+            ->willThrowException(new TwigRuntimeError('Template not found'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Twig render failed for template/');
+
+        $this->subject->renderMainReport([], 'markdown');
+    }
+
+    public function testRenderFractorFindingsDetailPagesThrowsRuntimeExceptionOnTwigError(): void
+    {
+        $this->twig->method('render')
+            ->willThrowException(new TwigRuntimeError('Template not found'));
+
+        $extension = $this->createMock(Extension::class);
+        $context = [
+            'extension_data' => [[
+                'extension' => $extension,
+                'fractor_analysis' => ['detailed_findings' => [['rule' => 'SomeRule']]],
+            ]],
+        ];
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Twig render failed for template/');
+
+        $this->subject->renderFractorFindingsDetailPages($context, 'markdown');
     }
 
     public function testRenderSingleRectorFindingsDetailPageContext(): void

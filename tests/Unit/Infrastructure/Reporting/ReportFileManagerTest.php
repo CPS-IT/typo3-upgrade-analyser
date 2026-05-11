@@ -253,13 +253,11 @@ class ReportFileManagerTest extends TestCase
             'filename' => 'bad-file.md',
         ];
 
-        // Act & Assert - This should fail when trying to write to a directory
-        // file_put_contents can actually succeed with a directory path on some systems
-        $result = $this->subject->writeReportFiles($mainReport, [], $this->tempDir);
+        // After hardening, writeFile() throws RuntimeException on file_put_contents failure
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Failed to write report file/');
 
-        // The result should still contain file metadata even if path is problematic
-        self::assertCount(1, $result);
-        self::assertSame('main_report', $result[0]['type']);
+        $this->subject->writeReportFiles($mainReport, [], $this->tempDir);
     }
 
     public function testFileSizeCalculation(): void

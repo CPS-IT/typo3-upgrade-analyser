@@ -90,7 +90,7 @@ readonly class ReportService
                     'main_report' => $reportResult->getValue('main_report')['path'] ?? null,
                     'extension_reports' => $reportResult->getValue('extension_reports_count'),
                 ]);
-            } catch (\Throwable $e) {
+            } catch (\RuntimeException|\Twig\Error\Error $e) {
                 $errorResult = new ReportingResult(
                     "report_{$format}",
                     "Report generation ({$format})",

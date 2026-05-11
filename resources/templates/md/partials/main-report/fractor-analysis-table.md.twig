@@ -5,7 +5,7 @@ This analyzer uses Fractor to identify code modernization opportunities and dete
 | Extension | Processed Files | Total Findings | Breaking Changes | Deprecations | Upgrade Readiness | Fix Time (hrs) |
 |-----------|-----------------|----------------|------------------|--------------|-------------------|----------------|
 {% for data in extension_data %}
-{% if data.fractor_analysis and data.fractor_analysis.total_findings > 0 %}
+{% if data.fractor_analysis %}
 | [{{ data.extension.key }}](extensions/{{ data.extension.key }}.md#fractor-analysis) | {{ data.fractor_analysis.processed_files }} | {{ data.fractor_analysis.total_findings }} | {{ data.fractor_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }} | {{ data.fractor_analysis.has_deprecations ? '📋 Yes' : '✅ No' }} | {{ "%.1f"|format(data.fractor_analysis.upgrade_readiness_score) }}/10 | {{ "%.1f"|format(data.fractor_analysis.estimated_fix_time_hours) }} |
 {% endif %}
 {% endfor %}
