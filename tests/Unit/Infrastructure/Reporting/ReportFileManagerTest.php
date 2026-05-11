@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Reporting;
 
 use CPSIT\UpgradeAnalyzer\Infrastructure\Reporting\ReportFileManager;
+use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
 
 class ReportFileManagerTest extends TestCase
@@ -244,20 +245,18 @@ class ReportFileManagerTest extends TestCase
 
     public function testWriteReportFilesHandlesFileWriteError(): void
     {
-        // Arrange - Create a directory where the file should be written
-        $badPath = $this->tempDir . '/bad-file.md';
-        mkdir($badPath, 0o755, true); // Create directory with same name as intended file
+        // Arrange - Mount a read-only directory via vfsStream so file_put_contents fails
+        vfsStream::setup('testroot', 0o444);
 
         $mainReport = [
             'content' => '# Content',
-            'filename' => 'bad-file.md',
+            'filename' => 'report.md',
         ];
 
-        // After hardening, writeFile() throws RuntimeException on file_put_contents failure
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to write report file/');
 
-        $this->subject->writeReportFiles($mainReport, [], $this->tempDir);
+        $this->subject->writeReportFiles($mainReport, [], vfsStream::url('testroot'));
     }
 
     public function testFileSizeCalculation(): void

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Reporting;
 
 use Twig\Environment as TwigEnvironment;
+use Twig\Error\Error;
 
 /**
  * Service for rendering report content in various formats.
@@ -270,8 +271,8 @@ readonly class TemplateRenderer
     {
         try {
             return $this->twig->render($template, $context);
-        } catch (\Twig\Error\Error $e) {
-            throw new \RuntimeException("Twig render failed for template '{$template}': " . $e->getMessage(), 0, $e);
+        } catch (Error $e) {
+            throw new \RuntimeException("Twig render failed for template '{$template}': " . $e->getMessage(), $e->getCode(), $e);
         }
     }
 

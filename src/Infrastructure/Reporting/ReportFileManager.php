@@ -267,6 +267,7 @@ class ReportFileManager
 
     private function writeFile(string $path, string $content): void
     {
+        error_clear_last();
         $written = file_put_contents($path, $content);
         if (false === $written) {
             $error = error_get_last();
