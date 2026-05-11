@@ -324,10 +324,7 @@ class MixedAnalysisIntegrationTestCase extends AbstractIntegrationTestCase
 
         // Assert risk order: system < popular < local
         $this->assertLessThan($risks['news'], $risks['core'], 'System extension should have lower risk than third-party');
-
-        if (isset($risks['local_test'])) {
-            $this->assertLessThan($risks['local_test'], $risks['news'], 'Third-party should have lower risk than local');
-        }
+        $this->assertLessThan($risks['local_test'], $risks['news'], 'Third-party should have lower risk than local');
 
         // All risk scores should be within valid range
         foreach ($risks as $key => $risk) {
