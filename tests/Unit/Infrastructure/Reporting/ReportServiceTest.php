@@ -111,6 +111,56 @@ class ReportServiceTest extends TestCase
         self::assertSame($files, $results[0]->getValue('output_files'));
     }
 
+    public function testGenerateReportCatchesRuntimeExceptionPerFormatWhileOtherFormatsSucceed(): void
+    {
+        // Arrange
+        $installation = new Installation('/test/path', new Version('12.0.0'));
+        $context = ['test' => 'context'];
+
+        $this->contextBuilder->method('buildReportContext')
+            ->willReturn($context);
+
+        $this->fileManager->method('ensureOutputDirectory')
+            ->willReturnCallback(static fn (string $base, string $format): string => "/test/{$format}/");
+
+        $this->templateRenderer->method('renderMainReport')
+            ->willReturnCallback(function (array $context, string $format): array {
+                if ('markdown' === $format) {
+                    throw new \RuntimeException('Twig render failed for markdown');
+                }
+
+                return ['content' => '{}', 'filename' => 'report.json'];
+            });
+
+        $this->templateRenderer->method('renderExtensionReports')->willReturn([]);
+        $this->templateRenderer->method('renderRectorFindingsDetailPages')->willReturn([]);
+        $this->templateRenderer->method('renderFractorFindingsDetailPages')->willReturn([]);
+
+        $jsonFiles = [['type' => 'main_report', 'path' => '/test/json/report.json', 'size' => 2]];
+        $this->fileManager->method('writeReportFilesWithRectorPages')
+            ->willReturn($jsonFiles);
+
+        // Act
+        $results = $this->subject->generateReport(
+            $installation,
+            [],
+            [],
+            ['markdown', 'json'],
+        );
+
+        // Assert: both formats produce a result, markdown has an error, json succeeds
+        self::assertCount(2, $results);
+
+        $markdownResult = $results[0];
+        self::assertSame('report_markdown', $markdownResult->getId());
+        self::assertNotEmpty($markdownResult->getError());
+        self::assertStringContainsString('Twig render failed', $markdownResult->getError());
+
+        $jsonResult = $results[1];
+        self::assertSame('report_json', $jsonResult->getId());
+        self::assertEmpty($jsonResult->getError());
+    }
+
     public function testGenerateReportHandlesErrors(): void
     {
         // Arrange

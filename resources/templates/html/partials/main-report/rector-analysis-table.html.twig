@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         {% for data in extension_data %}
-            {% if data.rector_analysis and data.rector_analysis.total_findings > 0 %}
+            {% if data.rector_analysis %}
                 <tr>
                     <td><strong><a href="extensions/{{ data.extension.key }}.html#typo3-rector-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
                     {% if data.rector_analysis %}
