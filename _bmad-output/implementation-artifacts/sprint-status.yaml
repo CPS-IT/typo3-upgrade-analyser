@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-04-12 (epic-2 retrospective completed; epic-2 marked done; epic resequencing flagged)
+last_updated: 2026-06-16 (pre-epic-3-reporting-hardening: Option B fix + Changed Files rename)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -95,7 +95,7 @@ development_status:
 
   # Pre-Epic-3: Reporting Hardening (must complete before Epic 3 streaming refactor)
   # Sprint change proposal 2026-04-12: Task 7 (zero-findings table fix #224) and Task 8 (remove unused templates #202) added
-  pre-epic-3-reporting-hardening: backlog                        # F-R-01/02/03/04 + #224 zero-findings fix + #202 remove unused templates
+  pre-epic-3-reporting-hardening: review                         # F-R-01/02/03/04 + #224 zero-findings fix + #202 remove unused templates
 
   # Epic 3: Memory-Safe Analysis for Large Installations
   epic-3: backlog
