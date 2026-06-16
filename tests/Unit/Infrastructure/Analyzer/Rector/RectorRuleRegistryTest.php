@@ -18,6 +18,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Ssch\TYPO3Rector\Set\Typo3LevelSetList;
 use Ssch\TYPO3Rector\Set\Typo3SetList;
 
 /**
@@ -43,8 +44,8 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // Should include TYPO3 12 set
-        $this->assertContains(Typo3SetList::TYPO3_12, $sets);
+        // Should use the accumulated level set, not individual version sets
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, $sets);
         // Should also include general sets
         $this->assertContains(Typo3SetList::GENERAL, $sets);
     }
@@ -58,8 +59,8 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // Should include TYPO3 13 set
-        $this->assertContains(Typo3SetList::TYPO3_13, $sets);
+        // Must use UP_TO_TYPO3_13 to accumulate v10+v11+v12+v13 deprecations — not only TYPO3_13
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
     }
 
     public function testGetSetsForVersionUpgradeMultipleVersions(): void
@@ -71,10 +72,33 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // Should include sets from both 12 and 13 since it's a major version upgrade
-        $this->assertContains(Typo3SetList::TYPO3_12, $sets);
-        $this->assertContains(Typo3SetList::TYPO3_13, $sets);
+        // UP_TO_TYPO3_13 already accumulates v10+v11+v12+v13 — one level set, not individual sets
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
         $this->assertContains(Typo3SetList::CODE_QUALITY, $sets); // Included for major version upgrades
+    }
+
+    public function testGetSetsForVersionUpgradeFrom13To14(): void
+    {
+        $currentVersion = new Version('13.4.0');
+        $targetVersion = new Version('14.0.0');
+
+        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+
+        $this->assertNotEmpty($sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_14, $sets);
+    }
+
+    public function testGetSetsForVersionUpgradeReturnsLevelSetNotIndividualSets(): void
+    {
+        $currentVersion = new Version('12.4.0');
+        $targetVersion = new Version('13.0.0');
+
+        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+
+        // Level set must be present
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
+        // Individual TYPO3_13 set must NOT be present directly — it is subsumed by the level set
+        $this->assertNotContains(Typo3SetList::TYPO3_13, $sets);
     }
 
     public function testGetSetsForSameVersion(): void

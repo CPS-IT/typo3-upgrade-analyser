@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix Rector Rule Set Selection (Bug #290)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
