@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix Hardcoded TCA/Overrides Skip in RectorConfigGenerator (Bug #291)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -21,20 +21,20 @@ so that TCA-related deprecations (inputDateTime, inputLink, indexed item arrays,
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Remove hardcoded TCA/Overrides skip pattern (AC: 1)
-  - [ ] In `src/Infrastructure/Analyzer/Rector/RectorConfigGenerator.php`, method `getSkipPatterns()`, remove the line `'*/Configuration/TCA/Overrides/*',` and its preceding comment
-  - [ ] Do NOT remove any other skip patterns
+- [x] Task 1: Remove hardcoded TCA/Overrides skip pattern (AC: 1)
+  - [x] In `src/Infrastructure/Analyzer/Rector/RectorConfigGenerator.php`, method `getSkipPatterns()`, remove the line `'*/Configuration/TCA/Overrides/*',` and its preceding comment
+  - [x] Do NOT remove any other skip patterns
 
-- [ ] Task 2: Update `RectorConfigGeneratorTest` (AC: 2–6, 7)
-  - [ ] `testGetSkipPatternsForRegularExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
-  - [ ] `testGetSkipPatternsForSystemExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
-  - [ ] `testGetSkipPatternsForTestExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
-  - [ ] Add `testTcaOverridesNotSkipped()`: assert that for a generic extension, the generated config does NOT contain `TCA/Overrides` as a skip pattern
+- [x] Task 2: Update `RectorConfigGeneratorTest` (AC: 2–6, 7)
+  - [x] `testGetSkipPatternsForRegularExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
+  - [x] `testGetSkipPatternsForSystemExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
+  - [x] `testGetSkipPatternsForTestExtension()`: add `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)`
+  - [x] Add `testTcaOverridesNotSkipped()`: assert that for a generic extension, the generated config does NOT contain `TCA/Overrides` as a skip pattern
 
-- [ ] Task 3: Quality gate (AC: 8)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca:php` — zero PHPStan errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 3: Quality gate (AC: 8)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -154,7 +154,7 @@ $this->assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content
 
 ### Agent Model Used
 
-_to be filled_
+claude-sonnet-4-6
 
 ### Debug Log References
 
@@ -162,7 +162,10 @@ None.
 
 ### Completion Notes List
 
-_to be filled_
+- Removed `'*/Configuration/TCA/Overrides/*'` and its preceding comment from `getSkipPatterns()` in `RectorConfigGenerator.php`. No other skip patterns touched.
+- Added `assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content)` to three existing test methods: regular, test, and system extension variants.
+- Added `testTcaOverridesNotSkipped()` asserting both `'TCA/Overrides'` and `'Configuration/TCA/Overrides'` are absent from generated config.
+- 1673 tests pass, PHPStan level 8 zero errors, PHP-CS-Fixer zero violations.
 
 ### File List
 
@@ -172,3 +175,4 @@ _to be filled_
 ## Change Log
 
 - 2026-06-16: Story created — fix Bug #291: remove hardcoded `*/Configuration/TCA/Overrides/*` skip pattern from `RectorConfigGenerator::getSkipPatterns()`.
+- 2026-06-16: Implementation complete — removed TCA/Overrides skip pattern; updated and extended RectorConfigGeneratorTest; all quality gates green.
