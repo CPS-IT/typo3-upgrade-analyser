@@ -263,6 +263,7 @@ class RectorConfigGeneratorTest extends TestCase
         $this->assertStringContainsString('*/Tests/*', $content);
         $this->assertStringContainsString('*/Documentation/*', $content);
         $this->assertStringNotContainsString('*/Migrations/*', $content); // Only for system extensions
+        $this->assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content);
     }
 
     public function testGetSkipPatternsForTestExtension(): void
@@ -288,6 +289,7 @@ class RectorConfigGeneratorTest extends TestCase
         $this->assertStringNotContainsString('*/Tests/*', $content); // Tests NOT skipped for test_extension
         $this->assertStringContainsString('*/Documentation/*', $content);
         $this->assertStringNotContainsString('*/Migrations/*', $content); // Only for system extensions
+        $this->assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content);
     }
 
     public function testGetSkipPatternsForSystemExtension(): void
@@ -311,6 +313,30 @@ class RectorConfigGeneratorTest extends TestCase
         }
 
         $this->assertStringContainsString('*/Migrations/*', $content); // Added for system extensions
+        $this->assertStringNotContainsString('*/Configuration/TCA/Overrides/*', $content);
+    }
+
+    public function testTcaOverridesNotSkipped(): void
+    {
+        $extension = new Extension('my_extension', 'My Extension', new Version('1.0.0'));
+        $context = new AnalysisContext(
+            new Version('12.4.0'),
+            new Version('13.0.0'),
+        );
+
+        $this->ruleRegistry
+            ->method('getSetsForVersionUpgrade')
+            ->willReturn(['Rule1']);
+
+        $configPath = $this->generator->generateConfig($extension, $context, '/path/to/extension');
+        $content = file_get_contents($configPath);
+
+        if (!$content) {
+            $this->fail('Config file not found');
+        }
+
+        $this->assertStringNotContainsString('TCA/Overrides', $content);
+        $this->assertStringNotContainsString('Configuration/TCA/Overrides', $content);
     }
 
     public function testGetExtensionPathForSystemExtension(): void
