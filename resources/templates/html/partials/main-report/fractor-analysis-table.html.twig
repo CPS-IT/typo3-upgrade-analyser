@@ -1,11 +1,19 @@
 <h3>Fractor Analysis</h3>
 <p>This analyzer uses Fractor to identify code modernization opportunities and detect outdated patterns that can be automatically improved.</p>
 
+{% set extensions_with_findings = extension_data|filter(d => d.fractor_analysis is not null and d.fractor_analysis.total_findings > 0) %}
+{% set extensions_passing = extension_data|filter(d => d.fractor_analysis is not null and d.fractor_analysis.total_findings == 0) %}
+
+{% if extensions_passing|length > 0 %}
+<p>{{ extensions_passing|length }} extension{{ extensions_passing|length > 1 ? 's' : '' }} analyzed with 0 findings.</p>
+{% endif %}
+
+{% if extensions_with_findings|length > 0 %}
 <table>
     <thead>
         <tr>
             <th>Extension</th>
-            <th>Processed Files</th>
+            <th>Affected Files</th>
             <th>Total Findings</th>
             <th>Breaking Changes</th>
             <th>Deprecations</th>
@@ -15,26 +23,18 @@
     </thead>
     <tbody>
         {% for data in extension_data %}
-            {% if data.fractor_analysis %}
+            {% if data.fractor_analysis and data.fractor_analysis.total_findings > 0 %}
                 <tr>
                     <td><strong><a href="extensions/{{ data.extension.key }}.html#fractor-analysis" style="color: #ff8700; text-decoration: none;">{{ data.extension.key }}</a></strong></td>
-                    {% if data.fractor_analysis %}
-                        <td>{{ data.fractor_analysis.processed_files }}</td>
-                        <td>{{ data.fractor_analysis.total_findings }}</td>
-                        <td>{{ data.fractor_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }}</td>
-                        <td>{{ data.fractor_analysis.has_deprecations ? '📋 Yes' : '✅ No' }}</td>
-                        <td>{{ "%.1f"|format(data.fractor_analysis.upgrade_readiness_score) }}/10</td>
-                        <td>{{ "%.1f"|format(data.fractor_analysis.estimated_fix_time_hours) }}</td>
-                    {% else %}
-                        <td>N/A</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
-                        <td>❓</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
-                    {% endif %}
+                    <td>{{ data.fractor_analysis.processed_files }}</td>
+                    <td>{{ data.fractor_analysis.total_findings }}</td>
+                    <td>{{ data.fractor_analysis.has_breaking_changes ? '⚠️ Yes' : '✅ No' }}</td>
+                    <td>{{ data.fractor_analysis.has_deprecations ? '📋 Yes' : '✅ No' }}</td>
+                    <td>{{ "%.1f"|format(data.fractor_analysis.upgrade_readiness_score) }}/10</td>
+                    <td>{{ "%.1f"|format(data.fractor_analysis.estimated_fix_time_hours) }}</td>
                 </tr>
             {% endif %}
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
