@@ -14,6 +14,7 @@ namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector;
 
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
+use Ssch\TYPO3Rector\Set\Typo3LevelSetList;
 use Ssch\TYPO3Rector\Set\Typo3SetList;
 
 /**
@@ -26,6 +27,18 @@ class RectorRuleRegistry
     public const string KEY_DESCRIPTION = 'description';
     public const string KEY_EFFORT = 'effort';
     public const string KEY_SEVERITY = 'severity';
+
+    /**
+     * Cumulative level sets keyed by target major version.
+     * Each level set accumulates all upgrade sets from v10 up to and including the target version.
+     */
+    private const array TYPO3_LEVEL_SETS = [
+        10 => Typo3LevelSetList::UP_TO_TYPO3_10,
+        11 => Typo3LevelSetList::UP_TO_TYPO3_11,
+        12 => Typo3LevelSetList::UP_TO_TYPO3_12,
+        13 => Typo3LevelSetList::UP_TO_TYPO3_13,
+        14 => Typo3LevelSetList::UP_TO_TYPO3_14,
+    ];
 
     /**
      * TYPO3 version-specific Rector sets mapping.
@@ -147,20 +160,27 @@ class RectorRuleRegistry
             return $sets;
         }
 
-        // Get all version-specific sets between source and target versions
-        foreach (self::TYPO3_VERSION_SETS as $versionString => $versionSets) {
-            $setVersion = new Version($versionString);
+        // Select the cumulative level set for the target major version.
+        // UP_TO_TYPO3_N chains all accumulated upgrade sets (v10 through N), ensuring every
+        // deprecation that must be cleared before target compatibility is included — not only
+        // the sets introduced in the target version itself.
+        $targetMajor = $toVersion->getMajor();
+        $levelSet = self::TYPO3_LEVEL_SETS[$targetMajor] ?? null;
 
-            // Include sets for versions greater than source and less than or equal to target
-            if ($setVersion->isGreaterThan($fromVersion) && $setVersion->isLessThanOrEqualTo($toVersion)) {
-                array_push($sets, ...$versionSets);
+        if (null === $levelSet) {
+            $this->logger->warning('No level set available for target version {version}', [
+                'to_version' => $toVersion->toString(),
+            ]);
 
-                $this->logger->info('Including sets for TYPO3 version {version}', [
-                    'version' => $versionString,
-                    'set_count' => \count($versionSets),
-                ]);
-            }
+            return $sets;
         }
+
+        $sets[] = $levelSet;
+
+        $this->logger->info('Selected level set for TYPO3 target version {version}', [
+            'target_major' => $targetMajor,
+            'level_set' => $levelSet,
+        ]);
 
         // Always include general sets for upgrades when at least one version is supported
         // (fromVersion is already validated above, so we always include general sets)
