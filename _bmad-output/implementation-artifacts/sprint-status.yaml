@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-06-17 (pre-epic-3-fix-rector-rule-sets: done; pre-epic-3-fix-rector-tca-skip: done)
+last_updated: 2026-06-17 (pre-epic-3-fix-rector-rule-sets: done; pre-epic-3-fix-rector-tca-skip: done; fractor bugfix stories added via sprint-change-proposal-2026-06-17)
 project: typo3-upgrade-analyser
 project_key: NOKEY
 tracking_system: file-system
@@ -98,6 +98,8 @@ development_status:
   pre-epic-3-reporting-hardening: review                         # F-R-01/02/03/04 + #224 zero-findings fix + #202 remove unused templates
   pre-epic-3-fix-rector-rule-sets: done                        # Bug #290: wrong set selection in getSetsForVersionUpgrade
   pre-epic-3-fix-rector-tca-skip: done                  # Bug #291: hardcoded TCA/Overrides skip in RectorConfigGenerator
+  pre-epic-3-fix-fractor-rule-sets: backlog                      # Bug: range-filter in FractorRuleRegistry (analogue of pre-epic-3-fix-rector-rule-sets)
+  pre-epic-3-fix-fractor-path-resolution: backlog                # Bug: public/-only fallback + missing is_dir guard in FractorAnalyzer (analogue of #292)
   pre-epic-3-fix-rector-path-resolution: done                  # Bug #292: public/-only path detection in Typo3RectorAnalyzer
 
   # Epic 3: Memory-Safe Analysis for Large Installations
