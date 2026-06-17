@@ -98,7 +98,7 @@ development_status:
   pre-epic-3-reporting-hardening: review                         # F-R-01/02/03/04 + #224 zero-findings fix + #202 remove unused templates
   pre-epic-3-fix-rector-rule-sets: done                        # Bug #290: wrong set selection in getSetsForVersionUpgrade
   pre-epic-3-fix-rector-tca-skip: done                  # Bug #291: hardcoded TCA/Overrides skip in RectorConfigGenerator
-  pre-epic-3-fix-rector-path-resolution: ready-for-dev           # Bug #292: public/-only path detection in Typo3RectorAnalyzer
+  pre-epic-3-fix-rector-path-resolution: done                  # Bug #292: public/-only path detection in Typo3RectorAnalyzer
 
   # Epic 3: Memory-Safe Analysis for Large Installations
   epic-3: backlog

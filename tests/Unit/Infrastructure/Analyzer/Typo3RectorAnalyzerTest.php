@@ -37,7 +37,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 
 #[CoversClass(Typo3RectorAnalyzer::class)]
 #[AllowMockObjectsWithoutExpectations]
@@ -45,7 +45,7 @@ class Typo3RectorAnalyzerTest extends TestCase
 {
     private Typo3RectorAnalyzer $analyzer;
     private MockObject $cacheService;
-    private NullLogger $logger;
+    private MockObject $logger;
     private MockObject $rectorExecutor;
     private MockObject $configGenerator;
     private MockObject $resultParser;
@@ -57,7 +57,7 @@ class Typo3RectorAnalyzerTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->logger = new NullLogger();
+        $this->logger = $this->createMock(LoggerInterface::class);
         $this->cacheService = $this->createMock(CacheService::class);
         $this->rectorExecutor = $this->createMock(RectorExecutor::class);
         $this->configGenerator = $this->createMock(RectorConfigGenerator::class);
@@ -122,7 +122,6 @@ class Typo3RectorAnalyzerTest extends TestCase
             ->willReturn(false);
 
         $this->assertFalse($this->analyzer->hasRequiredTools());
-        // NullLogger doesn't track records, but the warning was logged
     }
 
     public function testAnalyzeWithCacheHit(): void
@@ -499,6 +498,159 @@ class Typo3RectorAnalyzerTest extends TestCase
             }
         }
         $this->assertTrue($hasBreakingRecommendation);
+    }
+
+    public function testGetFallbackExtensionPathUsesWebDir(): void
+    {
+        $extension = new Extension('my_ext', 'My Extension', new Version('1.0.0'));
+        $context = new AnalysisContext(
+            new Version('11.5.0'),
+            new Version('12.4.0'),
+            [],
+            [
+                'installation_path' => '/test/path',
+                'custom_paths' => ['web-dir' => 'web'],
+            ],
+        );
+
+        // PathResolutionService fails so the fallback is used
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_CUSTOM,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::error(
+            PathTypeEnum::EXTENSION,
+            $metadata,
+            ['Forced failure to exercise fallback'],
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->willReturn($response);
+
+        $reflection = new \ReflectionClass($this->analyzer);
+        $method = $reflection->getMethod('getExtensionPath');
+
+        $path = $method->invoke($this->analyzer, $extension, $context);
+
+        $this->assertStringContainsString('web/typo3conf', $path);
+        $this->assertStringContainsString('my_ext', $path);
+    }
+
+    public function testGetFallbackExtensionPathDefaultsToPublic(): void
+    {
+        $extension = new Extension('my_ext', 'My Extension', new Version('1.0.0'));
+        $context = new AnalysisContext(
+            new Version('11.5.0'),
+            new Version('12.4.0'),
+            [],
+            [
+                'installation_path' => '/test/path',
+                'custom_paths' => [],
+            ],
+        );
+
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::error(
+            PathTypeEnum::EXTENSION,
+            $metadata,
+            ['Forced failure to exercise fallback'],
+        );
+
+        $this->pathResolutionService
+            ->expects($this->once())
+            ->method('resolvePath')
+            ->willReturn($response);
+
+        $reflection = new \ReflectionClass($this->analyzer);
+        $method = $reflection->getMethod('getExtensionPath');
+
+        $path = $method->invoke($this->analyzer, $extension, $context);
+
+        $this->assertStringContainsString('public/typo3conf', $path);
+        $this->assertStringContainsString('my_ext', $path);
+    }
+
+    public function testDoAnalyzeReturnsEmptyResultWhenPathNotFound(): void
+    {
+        $extension = new Extension('nonexistent_ext_xyz', 'Nonexistent Extension', new Version('1.0.0'));
+        $tempDir = sys_get_temp_dir();
+        $expectedExtensionPath = $tempDir . '/public/typo3conf/ext/nonexistent_ext_xyz';
+        $this->assertDirectoryDoesNotExist($expectedExtensionPath, 'Test precondition: extension path must not exist in temp dir');
+
+        $context = new AnalysisContext(
+            new Version('11.5.0'),
+            new Version('12.4.0'),
+            [],
+            [
+                'installation_path' => $tempDir,
+                'custom_paths' => [],
+            ],
+        );
+
+        // PathResolutionService fails so the fallback builds a non-existent path
+        $metadata = new PathResolutionMetadata(
+            PathTypeEnum::EXTENSION,
+            InstallationTypeEnum::COMPOSER_STANDARD,
+            'ExtensionPathResolutionStrategy',
+            1,
+        );
+        $response = PathResolutionResponse::error(
+            PathTypeEnum::EXTENSION,
+            $metadata,
+            ['Forced failure to exercise fallback'],
+        );
+
+        $this->pathResolutionService
+            ->method('resolvePath')
+            ->willReturn($response);
+
+        // Cache miss so doAnalyze() is actually called
+        $this->cacheService
+            ->method('get')
+            ->willReturn(null);
+
+        $this->rectorExecutor
+            ->method('getVersion')
+            ->willReturn('0.15.25');
+
+        $this->ruleRegistry
+            ->method('getSetsForVersionUpgrade')
+            ->willReturn([]);
+
+        // generateConfig must NEVER be called because the path does not exist
+        $this->configGenerator
+            ->expects($this->never())
+            ->method('generateConfig');
+
+        // Capture all warning calls; getExtensionPath() also logs one on service failure
+        $warningCalls = [];
+        $this->logger
+            ->method('warning')
+            ->willReturnCallback(static function (string $message, array $context) use (&$warningCalls): void {
+                $warningCalls[] = ['message' => $message, 'context' => $context];
+            });
+
+        $result = $this->analyzer->analyze($extension, $context);
+
+        $pathNotFoundWarnings = array_values(array_filter(
+            $warningCalls,
+            static fn (array $w): bool => str_contains($w['message'], 'Extension path does not exist'),
+        ));
+        $this->assertCount(1, $pathNotFoundWarnings, 'Expected exactly one path-not-found warning');
+        $this->assertSame('nonexistent_ext_xyz', $pathNotFoundWarnings[0]['context']['extension']);
+        $this->assertStringContainsString('nonexistent_ext_xyz', (string) $pathNotFoundWarnings[0]['context']['resolved_path']);
+
+        $this->assertNull($result->getMetric('total_findings'));
+        $this->assertEmpty($result->getRecommendations());
     }
 
     public function testGetExtensionPathWithPathResolutionServiceFailure(): void

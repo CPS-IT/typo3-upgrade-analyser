@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix public/-Only Path Detection in Typo3RectorAnalyzer (Bug #292)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -21,16 +21,16 @@ so that the tool never silently produces 0 findings due to a non-existent path b
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Fix `getFallbackExtensionPath()` to use the configured web dir (AC: 1, 2)
-  - [ ] In `src/Infrastructure/Analyzer/Typo3RectorAnalyzer.php`, method `getFallbackExtensionPath()`, change the default fallback:
+- [x] Task 1: Fix `getFallbackExtensionPath()` to use the configured web dir (AC: 1, 2)
+  - [x] In `src/Infrastructure/Analyzer/Typo3RectorAnalyzer.php`, method `getFallbackExtensionPath()`, change the default fallback:
     - Current: `$typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';`
     - New: `$webDir = $customPaths['web-dir'] ?? 'public'; $typo3confDir = $customPaths['typo3conf-dir'] ?? ($webDir . '/typo3conf');`
-  - [ ] This ensures that if `web-dir` is `'web'`, the fallback path is `web/typo3conf/ext/{key}` not `public/typo3conf/ext/{key}`
+  - [x] This ensures that if `web-dir` is `'web'`, the fallback path is `web/typo3conf/ext/{key}` not `public/typo3conf/ext/{key}`
 
-- [ ] Task 2: Add path existence check after `getExtensionPath()` (AC: 3, 4, 5)
-  - [ ] In `doAnalyze()`, after the `$extensionPath = $this->getExtensionPath($extension, $context);` call, add:
+- [x] Task 2: Add path existence check after `getExtensionPath()` (AC: 3, 4, 5)
+  - [x] In `doAnalyze()`, after the `$extensionPath = $this->getExtensionPath($extension, $context);` call, add:
     ```php
-    if (!is_dir($extensionPath)) {
+    if (!empty($installationPath) && !is_dir($extensionPath)) {
         $this->logger->warning('Extension path does not exist — skipping Rector analysis', [
             'extension' => $extension->getKey(),
             'resolved_path' => $extensionPath,
@@ -38,18 +38,18 @@ so that the tool never silently produces 0 findings due to a non-existent path b
         return $result;
     }
     ```
-  - [ ] The early return must occur before `generateRectorConfig()` to avoid passing a non-existent path to Rector
+  - [x] The early return must occur before `generateRectorConfig()` to avoid passing a non-existent path to Rector
 
-- [ ] Task 3: Update `Typo3RectorAnalyzerTest` (AC: 6, 7)
-  - [ ] Existing tests must pass without modification (verify with `composer test`)
-  - [ ] Add `testGetFallbackExtensionPathUsesWebDir()`: with `custom_paths['web-dir'] = 'web'` and no `custom_paths['typo3conf-dir']`, assert the resolved path contains `web/typo3conf`
-  - [ ] Add `testGetFallbackExtensionPathDefaultsToPublic()`: with empty `custom_paths`, assert the resolved path contains `public/typo3conf`
-  - [ ] Add `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`: set up context with `installation_path` pointing to a temp directory that does NOT contain the extension, assert that `analyze()` returns an `AnalysisResult` with 0 findings and that `configGenerator->generateConfig()` is never called
+- [x] Task 3: Update `Typo3RectorAnalyzerTest` (AC: 6, 7)
+  - [x] Existing tests must pass without modification (verify with `composer test`)
+  - [x] Add `testGetFallbackExtensionPathUsesWebDir()`: with `custom_paths['web-dir'] = 'web'` and no `custom_paths['typo3conf-dir']`, assert the resolved path contains `web/typo3conf`
+  - [x] Add `testGetFallbackExtensionPathDefaultsToPublic()`: with empty `custom_paths`, assert the resolved path contains `public/typo3conf`
+  - [x] Add `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`: set up context with `installation_path` pointing to a temp directory that does NOT contain the extension, assert that `analyze()` returns an `AnalysisResult` with 0 findings and that `configGenerator->generateConfig()` is never called
 
-- [ ] Task 4: Quality gate (AC: 8)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca:php` — zero PHPStan errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 4: Quality gate (AC: 8)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -160,7 +160,7 @@ Note: `doAnalyze()` is `protected` and called indirectly through `analyze()`. Th
 
 ### Agent Model Used
 
-_to be filled_
+claude-sonnet-4-6
 
 ### Debug Log References
 
@@ -168,7 +168,10 @@ None.
 
 ### Completion Notes List
 
-_to be filled_
+- Task 1: Replaced single `$typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf'` with a two-step assignment that first reads `web-dir` (defaulting to `'public'`), then builds `typo3conf` path from it. Uses `(string)` cast to satisfy PHPStan level 8 on mixed array key access.
+- Task 2: Added path existence guard in `doAnalyze()` after `getExtensionPath()`. Guarded with `!empty($installationPath)` to preserve legacy behavior when no installation path is configured (AC6 compatibility — the existing `testAnalyzeWithoutCacheHit` has no installation_path and uses a relative fallback path that cannot be meaningfully checked via `is_dir()`).
+- Task 3: Added three new tests covering AC1, AC2, and AC3. All 21 tests pass (2 pre-existing skips unrelated to this story).
+- Task 4: All quality gates pass — 1678 tests green, PHPStan level 8 zero errors, CS-Fixer zero violations.
 
 ### File List
 
@@ -178,3 +181,4 @@ _to be filled_
 ## Change Log
 
 - 2026-06-16: Story created — fix Bug #292: replace hardcoded `public/typo3conf` fallback with web-dir-aware construction; add path existence check with WARNING before Rector invocation.
+- 2026-06-17: Implementation complete — Task 1 (web-dir-aware fallback), Task 2 (path existence guard), Task 3 (3 new unit tests), Task 4 (all quality gates green). Story set to review.
