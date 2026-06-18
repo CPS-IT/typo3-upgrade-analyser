@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix public/-Only Path Detection in Typo3RectorAnalyzer (Bug #292)
 
-Status: review
+Status: done
 
 ## Story
 
