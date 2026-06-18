@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix web-dir-aware Fallback Path and Add is_dir Guard in FractorAnalyzer
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -22,18 +22,18 @@ so that the tool never silently produces 0 findings (or crashes) due to a non-ex
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Fix `getFallbackExtensionPath()` to derive typo3conf dir from web-dir (AC: 1, 2, 3)
-  - [ ] In `src/Infrastructure/Analyzer/FractorAnalyzer.php`, method `getFallbackExtensionPath()` (~line 325), replace:
+- [x] Task 1: Fix `getFallbackExtensionPath()` to derive typo3conf dir from web-dir (AC: 1, 2, 3)
+  - [x] In `src/Infrastructure/Analyzer/FractorAnalyzer.php`, method `getFallbackExtensionPath()` (~line 325), replace:
     - Current: `$typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';`
     - New:
       ```php
       $webDir = (string) ($customPaths['web-dir'] ?? 'public');
       $typo3confDir = $customPaths['typo3conf-dir'] ?? ($webDir . '/typo3conf');
       ```
-  - [ ] This ensures that if `web-dir` is `'htdocs'`, the fallback path is `htdocs/typo3conf/ext/{key}` not `public/typo3conf/ext/{key}`, while an explicit `typo3conf-dir` still wins.
+  - [x] This ensures that if `web-dir` is `'htdocs'`, the fallback path is `htdocs/typo3conf/ext/{key}` not `public/typo3conf/ext/{key}`, while an explicit `typo3conf-dir` still wins.
 
-- [ ] Task 2: Add path existence guard in `doAnalyze()` (AC: 4, 5, 6)
-  - [ ] In `doAnalyze()`, inside the existing `try` block, immediately after `$extensionPath = $this->getExtensionPath($extension, $context);` (~line 101) and BEFORE `$this->generateFractorConfig(...)`, add:
+- [x] Task 2: Add path existence guard in `doAnalyze()` (AC: 4, 5, 6)
+  - [x] In `doAnalyze()`, inside the existing `try` block, immediately after `$extensionPath = $this->getExtensionPath($extension, $context);` (~line 101) and BEFORE `$this->generateFractorConfig(...)`, add:
     ```php
     $installationPath = $context->getConfigurationValue('installation_path', '');
 
@@ -46,18 +46,18 @@ so that the tool never silently produces 0 findings (or crashes) due to a non-ex
         return $result;
     }
     ```
-  - [ ] The early `return $result;` returns the empty `AnalysisResult` constructed at the top of `doAnalyze()`. The `finally` block still runs `configGenerator->cleanup()` — this is correct and harmless.
+  - [x] The early `return $result;` returns the empty `AnalysisResult` constructed at the top of `doAnalyze()`. The `finally` block still runs `configGenerator->cleanup()` — this is correct and harmless.
 
-- [ ] Task 3: Update `FractorAnalyzerTest` (AC: 7, 8)
-  - [ ] Existing tests must pass without modification (verify with `composer test`).
-  - [ ] Add `testGetFallbackExtensionPathUsesWebDir()`: with `custom_paths['web-dir'] = 'htdocs'` and no `typo3conf-dir`, force the PathResolutionService mock to fail/return unsuccessful so the fallback path is used, then assert the resolved path contains `htdocs/typo3conf`.
-  - [ ] Add `testGetFallbackExtensionPathDefaultsToPublic()`: with empty `custom_paths`, force fallback and assert the resolved path contains `public/typo3conf`.
-  - [ ] Add `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`: set up context with `installation_path` pointing to a temp directory that does NOT contain the extension; assert `analyze()` returns an `AnalysisResult` with 0 findings and that `configGenerator->generateConfig()` is never called and `fractorExecutor->execute()` is never called.
+- [x] Task 3: Update `FractorAnalyzerTest` (AC: 7, 8)
+  - [x] Existing tests must pass without modification (verify with `composer test`).
+  - [x] Add `testGetFallbackExtensionPathUsesWebDir()`: with `custom_paths['web-dir'] = 'htdocs'` and no `typo3conf-dir`, force the PathResolutionService mock to fail/return unsuccessful so the fallback path is used, then assert the resolved path contains `htdocs/typo3conf`.
+  - [x] Add `testGetFallbackExtensionPathDefaultsToPublic()`: with empty `custom_paths`, force fallback and assert the resolved path contains `public/typo3conf`.
+  - [x] Add `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`: set up context with `installation_path` pointing to a temp directory that does NOT contain the extension; assert `analyze()` returns an `AnalysisResult` with 0 findings and that `configGenerator->generateConfig()` is never called and `fractorExecutor->execute()` is never called.
 
-- [ ] Task 4: Quality gate (AC: 9)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca:php` — zero PHPStan errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 4: Quality gate (AC: 9)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -163,12 +163,28 @@ For `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`:
 
 ### Agent Model Used
 
+claude-opus-4-8[1m]
+
 ### Debug Log References
+
+- `vendor/bin/phpunit --testsuite=Unit --no-coverage --filter FractorAnalyzerTest` — 23 tests, 54 assertions, OK (2 pre-existing skips).
+- `composer test` — 1681 tests, 6250 assertions, OK (pre-existing deprecations/skips only).
+- `composer sca:php` — PHPStan level 8, no errors over 292 files.
+- `composer lint:php` — PHP-CS-Fixer dry-run, no violations.
 
 ### Completion Notes List
 
+- Task 1: Replaced the hardcoded `'public/typo3conf'` fallback in `getFallbackExtensionPath()` with a web-dir-derived value. `web-dir` now drives the `typo3conf` directory; an explicit `typo3conf-dir` still overrides; absent `web-dir` defaults to `public` (backward compatible). `(string)` cast added for PHPStan level 8 mixed-array access.
+- Task 2: Added an `is_dir` guard in `doAnalyze()` immediately after path resolution. When `installation_path` is non-empty and the resolved path does not exist, a WARNING (extension key + resolved path) is logged and the empty `AnalysisResult` is returned before invoking Fractor. The `finally` cleanup still runs.
+- Task 3: Added `testGetFallbackExtensionPathUsesWebDir()`, `testGetFallbackExtensionPathDefaultsToPublic()`, and `testDoAnalyzeReturnsEmptyResultWhenPathNotFound()`. The Fractor test uses a real `NullLogger`, so the skip behavior is verified indirectly via `never()` expectations on `configGenerator->generateConfig()` and `fractorExecutor->execute()` plus 0-findings assertions. Existing tests unchanged.
+- Task 4: All quality gates pass.
+
 ### File List
+
+- src/Infrastructure/Analyzer/FractorAnalyzer.php (modified)
+- tests/Unit/Infrastructure/Analyzer/FractorAnalyzerTest.php (modified)
 
 ## Change Log
 
 - 2026-06-18: Story created — fix Fractor path resolution (analogue of Bug #292): web-dir-aware fallback in `getFallbackExtensionPath()` + `is_dir` guard with WARNING before Fractor invocation in `doAnalyze()`.
+- 2026-06-18: Implemented Tasks 1–4. Web-dir-aware fallback path and `is_dir` guard added to `FractorAnalyzer`; three unit tests added. All quality gates green. Status → review.

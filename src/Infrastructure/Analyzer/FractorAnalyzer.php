@@ -99,6 +99,16 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
         try {
             // Get extension path for analysis
             $extensionPath = $this->getExtensionPath($extension, $context);
+            $installationPath = $context->getConfigurationValue('installation_path', '');
+
+            if (!empty($installationPath) && !is_dir($extensionPath)) {
+                $this->logger->warning('Extension path does not exist — skipping Fractor analysis', [
+                    'extension' => $extension->getKey(),
+                    'resolved_path' => $extensionPath,
+                ]);
+
+                return $result;
+            }
 
             // Generate Fractor configuration
             $configPath = $this->generateFractorConfig($extension, $context, $extensionPath);
@@ -324,7 +334,8 @@ class FractorAnalyzer extends AbstractCachedAnalyzer
      */
     private function getFallbackExtensionPath(Extension $extension, string $installationPath, array $customPaths): string
     {
-        $typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';
+        $webDir = (string) ($customPaths['web-dir'] ?? 'public');
+        $typo3confDir = $customPaths['typo3conf-dir'] ?? ($webDir . '/typo3conf');
 
         // Handle direct extension path (for test fixtures)
         if ($typo3confDir === $extension->getKey()) {
