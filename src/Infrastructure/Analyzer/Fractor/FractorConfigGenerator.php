@@ -141,7 +141,6 @@ readonly class FractorConfigGenerator
 
         $content .= "use a9f\\Fractor\\Configuration\\FractorConfiguration;\n";
         $content .= "use a9f\\FractorTypoScript\\Configuration\\TypoScriptProcessorOption;\n";
-        $content .= "use a9f\\Typo3Fractor\\Set\\Typo3LevelSetList;\n";
         $content .= "use Helmich\\TypoScriptParser\\Parser\\Printer\\PrettyPrinterConfiguration;\n";
 
         $content .= "return FractorConfiguration::configure()\n";

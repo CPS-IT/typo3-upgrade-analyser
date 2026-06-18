@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor;
 
+use a9f\Typo3Fractor\Set\Typo3LevelSetList;
 use a9f\Typo3Fractor\Set\Typo3SetList;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use Psr\Log\LoggerInterface;
@@ -15,6 +16,15 @@ class FractorRuleRegistry
     private const string KEY_DESCRIPTION = 'description';
     private const string KEY_EFFORT = 'effort';
     private const string KEY_SEVERITY = 'severity';
+
+    /** @var array<int, string> */
+    private const array TYPO3_LEVEL_SETS = [
+        10 => Typo3LevelSetList::UP_TO_TYPO3_10,
+        11 => Typo3LevelSetList::UP_TO_TYPO3_11,
+        12 => Typo3LevelSetList::UP_TO_TYPO3_12,
+        13 => Typo3LevelSetList::UP_TO_TYPO3_13,
+        14 => Typo3LevelSetList::UP_TO_TYPO3_14,
+    ];
 
     /**
      * TYPO3 version-specific Fractor sets mapping.
@@ -88,9 +98,9 @@ class FractorRuleRegistry
     {
         $sets = [];
 
-        // Return empty for downgrades
-        if ($fromVersion->isGreaterThan($toVersion)) {
-            $this->logger->warning('Downgrade scenario detected - no sets applied', [
+        // Return empty for non-upgrades (downgrade or same version)
+        if (!$fromVersion->isLessThan($toVersion)) {
+            $this->logger->warning('Non-upgrade scenario detected - no sets applied', [
                 'from_version' => $fromVersion->toString(),
                 'to_version' => $toVersion->toString(),
             ]);
@@ -103,27 +113,22 @@ class FractorRuleRegistry
             return $sets;
         }
 
-        // Get all version-specific sets between source and target versions
-        foreach (self::TYPO3_VERSION_SETS as $versionString => $versionSets) {
-            $setVersion = new Version($versionString);
+        $targetMajor = $toVersion->getMajor();
+        $levelSet = self::TYPO3_LEVEL_SETS[$targetMajor] ?? null;
 
-            // Include sets for versions greater than source and less than or equal to target
-            if ($setVersion->isGreaterThan($fromVersion) && $setVersion->isLessThanOrEqualTo($toVersion)) {
-                array_push($sets, ...$versionSets);
+        if (null === $levelSet) {
+            $this->logger->warning('No level set for target version {version}', [
+                'to_version' => $toVersion->toString(),
+            ]);
 
-                $this->logger->info('Including sets for TYPO3 version {version}', [
-                    'version' => $versionString,
-                    'set_count' => \count($versionSets),
-                ]);
-            }
+            return $sets;
         }
 
-        $sets = array_unique($sets);
+        $sets[] = $levelSet;
 
-        $this->logger->info('Selected {count} Fractor sets for version upgrade', [
-            'count' => \count($sets),
-            'from_version' => $fromVersion->toString(),
-            'to_version' => $toVersion->toString(),
+        $this->logger->info('Selected level set for TYPO3 target version', [
+            'target_major' => $targetMajor,
+            'level_set' => $levelSet,
         ]);
 
         return $sets;

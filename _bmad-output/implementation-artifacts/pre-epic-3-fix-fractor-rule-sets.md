@@ -1,6 +1,6 @@
 # Story pre-epic-3: Fix FractorRuleRegistry Cumulative Set Selection
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -23,37 +23,37 @@ so that a v12→v13 upgrade analysis surfaces findings from all prior versions (
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `TYPO3_LEVEL_SETS` map and import to `FractorRuleRegistry` (AC: 1–4)
-  - [ ] Add `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` import
-  - [ ] Add private const `TYPO3_LEVEL_SETS` mapping major version int → `Typo3LevelSetList::UP_TO_TYPO3_N` for keys 10, 11, 12, 13, 14
-  - [ ] Do NOT remove `TYPO3_VERSION_SETS` — used by `getSetsForMajorVersion()`, `getVersionSpecificSets()`, `getSupportedVersions()`, `isVersionSupported()`, `getAllAvailableSets()`, `getSetSeverity()`, `getSetDescription()`, `getSetEffort()`
+- [x] Task 1: Add `TYPO3_LEVEL_SETS` map and import to `FractorRuleRegistry` (AC: 1–4)
+  - [x] Add `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` import
+  - [x] Add private const `TYPO3_LEVEL_SETS` mapping major version int → `Typo3LevelSetList::UP_TO_TYPO3_N` for keys 10, 11, 12, 13, 14
+  - [x] Do NOT remove `TYPO3_VERSION_SETS` — used by `getSetsForMajorVersion()`, `getVersionSpecificSets()`, `getSupportedVersions()`, `isVersionSupported()`, `getAllAvailableSets()`, `getSetSeverity()`, `getSetDescription()`, `getSetEffort()`
 
-- [ ] Task 2: Rewrite `getSetsForVersionUpgrade()` (AC: 1–7)
-  - [ ] Replace the `foreach (self::TYPO3_VERSION_SETS ...)` loop with a level set lookup
-  - [ ] Add a same-version/non-upgrade guard before the lookup: `if (!$fromVersion->isLessThan($toVersion)) { return $sets; }` — replaces the current downgrade-only `isGreaterThan` check; preserves both downgrade and same-version empty-return behavior
-  - [ ] Keep `isVersionSupported($fromVersion)` guard — still valid to reject unsupported source versions
-  - [ ] Level set lookup: `$levelSet = self::TYPO3_LEVEL_SETS[$toVersion->getMajor()] ?? null`
-  - [ ] If `$levelSet` is null (target major unsupported), log warning and return empty
-  - [ ] Add `$sets[] = $levelSet` (no GENERAL or CODE_QUALITY appends — Fractor has no equivalent)
-  - [ ] Remove `array_unique($sets)` call — with a single level set it is redundant; but keep if it causes no harm
+- [x] Task 2: Rewrite `getSetsForVersionUpgrade()` (AC: 1–7)
+  - [x] Replace the `foreach (self::TYPO3_VERSION_SETS ...)` loop with a level set lookup
+  - [x] Add a same-version/non-upgrade guard before the lookup: `if (!$fromVersion->isLessThan($toVersion)) { return $sets; }` — replaces the current downgrade-only `isGreaterThan` check; preserves both downgrade and same-version empty-return behavior
+  - [x] Keep `isVersionSupported($fromVersion)` guard — still valid to reject unsupported source versions
+  - [x] Level set lookup: `$levelSet = self::TYPO3_LEVEL_SETS[$toVersion->getMajor()] ?? null`
+  - [x] If `$levelSet` is null (target major unsupported), log warning and return empty
+  - [x] Add `$sets[] = $levelSet` (no GENERAL or CODE_QUALITY appends — Fractor has no equivalent)
+  - [x] Remove `array_unique($sets)` call — with a single level set it is redundant; but keep if it causes no harm
 
-- [ ] Task 3: Remove dead import from `FractorConfigGenerator::generateConfigFileContent()` (AC: 8)
-  - [ ] In `src/Infrastructure/Analyzer/Fractor/FractorConfigGenerator.php`, remove the line: `$content .= "use a9f\\Typo3Fractor\\Set\\Typo3LevelSetList;\n";` from `generateConfigFileContent()` (line 144)
-  - [ ] Check `FractorConfigGeneratorTest` for any assertion on this import line — if asserted, remove that assertion. (The test at line 126 `generateConfigContainsExpectedSkipPatterns` checks `*/Resources/Public/*` skip pattern, not the import — likely safe, but verify)
+- [x] Task 3: Remove dead import from `FractorConfigGenerator::generateConfigFileContent()` (AC: 8)
+  - [x] In `src/Infrastructure/Analyzer/Fractor/FractorConfigGenerator.php`, remove the line: `$content .= "use a9f\\Typo3Fractor\\Set\\Typo3LevelSetList;\n";` from `generateConfigFileContent()` (line 144)
+  - [x] Check `FractorConfigGeneratorTest` for any assertion on this import line — if asserted, remove that assertion. (The test at line 126 `generateConfigContainsExpectedSkipPatterns` checks `*/Resources/Public/*` skip pattern, not the import — likely safe, but verify)
 
-- [ ] Task 4: Update `FractorRuleRegistryTest` (AC: 9)
-  - [ ] Add `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` import to test class
-  - [ ] `testGetSetsForVersionUpgradeFrom11To12`: replace `assertContains(Typo3SetList::TYPO3_12, ...)` with `assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, ...)`
-  - [ ] `testGetSetsForVersionUpgradeFrom12To13`: replace `assertContains(Typo3SetList::TYPO3_13, ...)` with `assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, ...)`
-  - [ ] `testGetSetsForVersionUpgradeMultipleVersions` (v11→v13): remove `assertContains(Typo3SetList::TYPO3_12, ...)` and `assertContains(Typo3SetList::TYPO3_13, ...)`; add `assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, ...)`
-  - [ ] `testSetsAreUniqueAcrossVersions`: after fix each result contains a single level set path — `count == 1 == count(array_unique(...))` — test still passes; no change required, but verify
-  - [ ] Add `testGetSetsForVersionUpgradeFrom13To14`: asserts `UP_TO_TYPO3_14` is in result for v13→v14
-  - [ ] Add `testGetSetsForVersionUpgradeReturnsLevelSetNotIndividualSets`: for v12→v13, assert `UP_TO_TYPO3_13` present AND `Typo3SetList::TYPO3_13` is NOT directly in the returned array
+- [x] Task 4: Update `FractorRuleRegistryTest` (AC: 9)
+  - [x] Add `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` import to test class
+  - [x] `testGetSetsForVersionUpgradeFrom11To12`: replace `assertContains(Typo3SetList::TYPO3_12, ...)` with `assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, ...)`
+  - [x] `testGetSetsForVersionUpgradeFrom12To13`: replace `assertContains(Typo3SetList::TYPO3_13, ...)` with `assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, ...)`
+  - [x] `testGetSetsForVersionUpgradeMultipleVersions` (v11→v13): remove `assertContains(Typo3SetList::TYPO3_12, ...)` and `assertContains(Typo3SetList::TYPO3_13, ...)`; add `assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, ...)`
+  - [x] `testSetsAreUniqueAcrossVersions`: after fix each result contains a single level set path — `count == 1 == count(array_unique(...))` — test still passes; no change required, but verify
+  - [x] Add `testGetSetsForVersionUpgradeFrom13To14`: asserts `UP_TO_TYPO3_14` is in result for v13→v14
+  - [x] Add `testGetSetsForVersionUpgradeReturnsLevelSetNotIndividualSets`: for v12→v13, assert `UP_TO_TYPO3_13` present AND `Typo3SetList::TYPO3_13` is NOT directly in the returned array
 
-- [ ] Task 5: Quality gate (AC: 10)
-  - [ ] `composer test` — all tests green
-  - [ ] `composer sca:php` — zero PHPStan errors
-  - [ ] `composer lint:php` — zero violations
+- [x] Task 5: Quality gate (AC: 10)
+  - [x] `composer test` — all tests green
+  - [x] `composer sca:php` — zero PHPStan errors
+  - [x] `composer lint:php` — zero violations
 
 ## Dev Notes
 
@@ -198,6 +198,18 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None.
+
 ### Completion Notes List
 
+- Task 1: Added `TYPO3_LEVEL_SETS` private const (int→string map) and `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` import to `FractorRuleRegistry`. `TYPO3_VERSION_SETS` left intact — used by seven other methods.
+- Task 2: Replaced foreach range-filter loop with a single level-set lookup via `TYPO3_LEVEL_SETS[$targetMajor]`. Replaced downgrade-only `isGreaterThan` guard with `!isLessThan` to also cover same-version inputs (AC5). Removed now-redundant `array_unique` call.
+- Task 3: Removed dead `use a9f\Typo3Fractor\Set\Typo3LevelSetList;` line from `generateConfigFileContent()` — sets are embedded as file paths via `var_export`, never as class constants. `FractorConfigGeneratorTest` had no assertion on this line.
+- Task 4: Updated three stale `assertContains(Typo3SetList::TYPO3_N, ...)` assertions to `assertContains(Typo3LevelSetList::UP_TO_TYPO3_N, ...)`. Added `testGetSetsForVersionUpgradeFrom13To14` and `testGetSetsForVersionUpgradeReturnsLevelSetNotIndividualSets`.
+- Task 5: 1680 tests green, PHPStan level 8 zero errors, CS-Fixer zero violations.
+
 ### File List
+
+- src/Infrastructure/Analyzer/Fractor/FractorRuleRegistry.php
+- src/Infrastructure/Analyzer/Fractor/FractorConfigGenerator.php
+- tests/Unit/Infrastructure/Analyzer/Fractor/FractorRuleRegistryTest.php

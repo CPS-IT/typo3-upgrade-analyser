@@ -12,12 +12,14 @@ declare(strict_types=1);
 
 namespace CPSIT\UpgradeAnalyzer\Tests\Unit\Infrastructure\Analyzer\Fractor;
 
+use a9f\Typo3Fractor\Set\Typo3LevelSetList;
 use a9f\Typo3Fractor\Set\Typo3SetList;
 use CPSIT\UpgradeAnalyzer\Domain\ValueObject\Version;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Fractor\FractorRuleSeverity;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -42,9 +44,7 @@ class FractorRuleRegistryTest extends TestCase
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertNotEmpty($sets);
-
-        // Should include TYPO3 12 set
-        $this->assertContains(Typo3SetList::TYPO3_12, $sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, $sets);
     }
 
     public function testGetSetsForVersionUpgradeFrom12To13(): void
@@ -55,9 +55,7 @@ class FractorRuleRegistryTest extends TestCase
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertNotEmpty($sets);
-
-        // Should include TYPO3 13 set
-        $this->assertContains(Typo3SetList::TYPO3_13, $sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
     }
 
     public function testGetSetsForVersionUpgradeMultipleVersions(): void
@@ -67,11 +65,8 @@ class FractorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertNotEmpty($sets);
-
-        // Should include sets from both 12 and 13 since it's a major version upgrade
-        $this->assertContains(Typo3SetList::TYPO3_12, $sets);
-        $this->assertContains(Typo3SetList::TYPO3_13, $sets);
+        $this->assertCount(1, $sets); // single cumulative level set, no duplicated version sets
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
     }
 
     public function testGetSetsForSameVersion(): void
@@ -102,6 +97,55 @@ class FractorRuleRegistryTest extends TestCase
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertEmpty($sets); // 9.5 is not supported as source version
+    }
+
+    public function testGetSetsForUnsupportedTargetMajorReturnsEmptyAndWarns(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('No level set for target version'), $this->anything());
+        $registry = new FractorRuleRegistry($logger);
+
+        // Source 14 is supported and below target; target major 15 has no level set.
+        $sets = $registry->getSetsForVersionUpgrade(new Version('14.0.0'), new Version('15.0.0'));
+
+        $this->assertEmpty($sets);
+    }
+
+    public function testGetSetsForDowngradeLogsWarning(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('Non-upgrade scenario'), $this->anything());
+        $registry = new FractorRuleRegistry($logger);
+
+        $sets = $registry->getSetsForVersionUpgrade(new Version('13.0.0'), new Version('12.0.0'));
+
+        $this->assertEmpty($sets);
+    }
+
+    public function testGetSetsForVersionUpgradeFrom13To14(): void
+    {
+        $currentVersion = new Version('13.0.0');
+        $targetVersion = new Version('14.0.0');
+
+        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+
+        $this->assertNotEmpty($sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_14, $sets);
+    }
+
+    public function testGetSetsForVersionUpgradeReturnsLevelSetNotIndividualSets(): void
+    {
+        $currentVersion = new Version('12.4.0');
+        $targetVersion = new Version('13.0.0');
+
+        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
+        $this->assertNotContains(Typo3SetList::TYPO3_13, $sets);
     }
 
     public function testGetSetSeverity(): void
