@@ -153,7 +153,7 @@ Two changes in `Typo3RectorAnalyzer`:
    ```php
    // Before (buggy):
    $typo3confDir = $customPaths['typo3conf-dir'] ?? 'public/typo3conf';
-   
+
    // After (fixed):
    $webDir = (string) ($customPaths['web-dir'] ?? 'public');
    $typo3confDir = $customPaths['typo3conf-dir'] ?? ($webDir . '/typo3conf');
