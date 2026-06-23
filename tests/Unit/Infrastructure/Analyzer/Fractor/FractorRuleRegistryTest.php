@@ -28,12 +28,10 @@ use Psr\Log\NullLogger;
 class FractorRuleRegistryTest extends TestCase
 {
     private FractorRuleRegistry $registry;
-    private NullLogger $logger;
 
     protected function setUp(): void
     {
-        $this->logger = new NullLogger();
-        $this->registry = new FractorRuleRegistry($this->logger);
+        $this->registry = new FractorRuleRegistry(new NullLogger());
     }
 
     public function testGetSetsForVersionUpgradeFrom11To12(): void
@@ -65,7 +63,7 @@ class FractorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertCount(1, $sets); // single cumulative level set, no duplicated version sets
+        $this->assertCount(1, $sets);
         $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
     }
 
@@ -76,17 +74,8 @@ class FractorRuleRegistryTest extends TestCase
 
         $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
-        $this->assertEmpty($sets);
-    }
-
-    public function testGetSetsForDowngrade(): void
-    {
-        $currentVersion = new Version('13.0.0');
-        $targetVersion = new Version('12.0.0');
-
-        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
-
-        $this->assertEmpty($sets);
+        $this->assertCount(1, $sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, $sets);
     }
 
     public function testGetSetsForUnsupportedVersion(): void
@@ -107,8 +96,11 @@ class FractorRuleRegistryTest extends TestCase
             ->with($this->stringContains('No level set for target version'), $this->anything());
         $registry = new FractorRuleRegistry($logger);
 
-        // Source 14 is supported and below target; target major 15 has no level set.
-        $sets = $registry->getSetsForVersionUpgrade(new Version('14.0.0'), new Version('15.0.0'));
+        $currentVersion = new Version('14.0.0');
+        $targetVersion = new Version('999.0.0');
+
+        // Source 14 is supported and below target; target major 999 has no level set.
+        $sets = $registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertEmpty($sets);
     }
@@ -118,10 +110,13 @@ class FractorRuleRegistryTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())
             ->method('warning')
-            ->with($this->stringContains('Non-upgrade scenario'), $this->anything());
+            ->with($this->stringContains('Downgrade scenario detected'), $this->anything());
         $registry = new FractorRuleRegistry($logger);
 
-        $sets = $registry->getSetsForVersionUpgrade(new Version('13.0.0'), new Version('12.0.0'));
+        $currentVersion = new Version('13.0.0');
+        $targetVersion = new Version('12.0.0');
+
+        $sets = $registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertEmpty($sets);
     }

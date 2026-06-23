@@ -98,9 +98,9 @@ class FractorRuleRegistry
     {
         $sets = [];
 
-        // Return empty for non-upgrades (downgrade or same version)
-        if (!$fromVersion->isLessThan($toVersion)) {
-            $this->logger->warning('Non-upgrade scenario detected - no sets applied', [
+        // Return empty for downgrades
+        if ($fromVersion->isGreaterThan($toVersion)) {
+            $this->logger->warning('Downgrade scenario detected - no sets applied', [
                 'from_version' => $fromVersion->toString(),
                 'to_version' => $toVersion->toString(),
             ]);
@@ -127,7 +127,8 @@ class FractorRuleRegistry
         $sets[] = $levelSet;
 
         $this->logger->info('Selected level set for TYPO3 target version', [
-            'target_major' => $targetMajor,
+            'from_version' => $fromVersion->toString(),
+            'to_version' => $toVersion->toString(),
             'level_set' => $levelSet,
         ]);
 
