@@ -17,6 +17,7 @@ use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorChangeType;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleRegistry;
 use CPSIT\UpgradeAnalyzer\Infrastructure\Analyzer\Rector\RectorRuleSeverity;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Ssch\TYPO3Rector\Set\Typo3LevelSetList;
 use Ssch\TYPO3Rector\Set\Typo3SetList;
@@ -27,12 +28,10 @@ use Ssch\TYPO3Rector\Set\Typo3SetList;
 class RectorRuleRegistryTest extends TestCase
 {
     private RectorRuleRegistry $registry;
-    private NullLogger $logger;
 
     protected function setUp(): void
     {
-        $this->logger = new NullLogger();
-        $this->registry = new RectorRuleRegistry($this->logger);
+        $this->registry = new RectorRuleRegistry(new NullLogger());
     }
 
     public function testGetSetsForVersionUpgradeFrom11To12(): void
@@ -44,9 +43,8 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // Should use the accumulated level set, not individual version sets
         $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, $sets);
-        // Should also include general sets
+        $this->assertContains(Typo3SetList::CODE_QUALITY, $sets);
         $this->assertContains(Typo3SetList::GENERAL, $sets);
     }
 
@@ -59,7 +57,6 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // Must use UP_TO_TYPO3_13 to accumulate v10+v11+v12+v13 deprecations — not only TYPO3_13
         $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
     }
 
@@ -72,9 +69,9 @@ class RectorRuleRegistryTest extends TestCase
 
         $this->assertNotEmpty($sets);
 
-        // UP_TO_TYPO3_13 already accumulates v10+v11+v12+v13 — one level set, not individual sets
         $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_13, $sets);
-        $this->assertContains(Typo3SetList::CODE_QUALITY, $sets); // Included for major version upgrades
+        $this->assertContains(Typo3SetList::CODE_QUALITY, $sets);
+        $this->assertContains(Typo3SetList::GENERAL, $sets);
     }
 
     public function testGetSetsForVersionUpgradeFrom13To14(): void
@@ -112,14 +109,21 @@ class RectorRuleRegistryTest extends TestCase
         $this->assertNotEmpty($sets);
         $this->assertContains(Typo3SetList::GENERAL, $sets);
         $this->assertContains(Typo3SetList::CODE_QUALITY, $sets);
+        $this->assertContains(Typo3LevelSetList::UP_TO_TYPO3_12, $sets);
     }
 
-    public function testGetSetsForDowngrade(): void
+    public function testGetSetsForDowngradeLogsWarning(): void
     {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('Downgrade scenario detected'), $this->anything());
+        $registry = new RectorRuleRegistry($logger);
+
         $currentVersion = new Version('13.0.0');
         $targetVersion = new Version('12.0.0');
 
-        $sets = $this->registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
+        $sets = $registry->getSetsForVersionUpgrade($currentVersion, $targetVersion);
 
         $this->assertEmpty($sets);
     }
