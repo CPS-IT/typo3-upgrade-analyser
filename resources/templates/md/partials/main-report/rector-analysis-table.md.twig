@@ -2,10 +2,16 @@
 
 This analyzer uses TYPO3 Rector to detect deprecated code patterns, breaking changes, and upgrade requirements.
 
-{% set extensions_with_findings = extension_data|filter(d => d.rector_analysis is not null and d.rector_analysis.total_findings > 0) %}
-{% set extensions_passing = extension_data|filter(d => d.rector_analysis is not null and d.rector_analysis.total_findings == 0) %}
-{% if extensions_passing|length > 0 %}
-{{ extensions_passing|length }} extension{{ extensions_passing|length > 1 ? 's' : '' }} analyzed with 0 findings.
+{% set total_rector_findings = 0 %}
+{% for d in extension_data %}
+    {% if d.rector_analysis is not null %}
+        {% set total_rector_findings = total_rector_findings + d.rector_analysis.total_findings %}
+    {% endif %}
+{% endfor %}
+{% set analyzed_extensions = extension_data|filter(d => d.rector_analysis is not null) %}
+{% set extensions_with_findings = analyzed_extensions|filter(d => d.rector_analysis.total_findings > 0) %}
+{% if analyzed_extensions|length > 0 %}
+{{ analyzed_extensions|length }} extension{{ analyzed_extensions|length > 1 ? 's' : '' }} analyzed with {{ total_rector_findings }} finding{{ total_rector_findings != 1 ? 's' : '' }}.
 
 {% endif %}
 {% if extensions_with_findings|length > 0 %}
