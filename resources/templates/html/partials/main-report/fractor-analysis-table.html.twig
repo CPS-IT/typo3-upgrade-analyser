@@ -1,11 +1,17 @@
 <h3>Fractor Analysis</h3>
 <p>This analyzer uses Fractor to identify code modernization opportunities and detect outdated patterns that can be automatically improved.</p>
 
-{% set extensions_with_findings = extension_data|filter(d => d.fractor_analysis is not null and d.fractor_analysis.total_findings > 0) %}
-{% set extensions_passing = extension_data|filter(d => d.fractor_analysis is not null and d.fractor_analysis.total_findings == 0) %}
+{% set total_fractor_findings = 0 %}
+{% for d in extension_data %}
+    {% if d.fractor_analysis is not null %}
+        {% set total_fractor_findings = total_fractor_findings + d.fractor_analysis.total_findings %}
+    {% endif %}
+{% endfor %}
 
-{% if extensions_passing|length > 0 %}
-    <p>{{ extensions_passing|length }} extension{{ extensions_passing|length > 1 ? 's' : '' }} analyzed with 0 findings.</p>
+{% set analyzed_extensions = extension_data|filter(d => d.fractor_analysis is not null) %}
+{% set extensions_with_findings = analyzed_extensions|filter(d => d.fractor_analysis.total_findings > 0) %}
+{% if analyzed_extensions|length > 0 %}
+    <p>{{ analyzed_extensions|length }} extension{{ analyzed_extensions|length > 1 ? 's' : '' }} analyzed with {{ total_fractor_findings }} finding{{ total_fractor_findings != 1 ? 's' : '' }}.</p>
 {% endif %}
 
 {% if extensions_with_findings|length > 0 %}
